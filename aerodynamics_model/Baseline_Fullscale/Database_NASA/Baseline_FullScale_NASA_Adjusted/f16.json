@@ -1,0 +1,38 @@
+{
+    "aerodynamics": {
+        "database_directory": "new_tables/",
+        "database_list": [
+            "C(x,y,z,l,m,n)o(alpha,beta,elevator).csv",
+            "DC(x,y,z,l,m,n),f(alpha,beta).csv",
+            "DC(x,z,m),sb(alpha).csv",
+            "DC(x,z,m),qbar(alpha).csv",
+            "DC(x,z,m)qbar,f(alpha).csv",
+            "DCm(alpha).csv",
+            "DCm,ds(alpha,elevator).csv",
+            "DC(y,l,n),aileron(alpha,beta).csv",
+            "DC(y,l,n)aileron,f(alpha,beta).csv",
+            "DC(y,l,n),rudder(alpha,beta).csv",
+            "DC(y,l,n),rbar(alpha).csv",
+            "DC(y,l,n)rbar,f(alpha).csv",
+            "DC(y,l,n),pbar(alpha).csv",
+            "DC(y,l,n)pbar,f(alpha).csv",
+            "DC(l,n),beta(alpha).csv"
+        ],
+        "input_variables": {
+            "alpha[deg]": 20,
+            "beta[deg]": 1.0,
+            "elevator[deg]": 1.0,
+            "lef[deg]": 1.0,
+            "sb[deg]": 1.0,
+            "aileron[deg]": 1.0,
+            "rudder[deg]": 1.0,
+            "cBar[ft]": 11.32,
+            "b[ft]": 30.0,
+            "p[deg/s]": 1.0,
+            "q[deg/s]": 1.0,
+            "r[deg/s]": 1.0,
+            "V[ft/s]": 200.0,
+            "xcgShift": 0.0
+        }
+    }
+}

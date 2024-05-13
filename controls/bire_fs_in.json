@@ -1,0 +1,157 @@
+{
+    "simulation" : {
+        "constant_density" : false,
+        "time_step[sec]" : 0.01,
+        "total_time[sec]" : 60.0,
+        "integrator" : "odeint",
+        "nonlinear_dynamics" : true,
+        "use_quaternions" : true,
+        "limit_input" : true,
+        "limit_input_rates" : true,
+        "include_compressibility" : true,
+        "use_Anderson_corrections" : true,
+        "include_stall" : true,
+        "simulate_uncontrolled" : false,
+        "use_fitted_thrust_model" : true,
+        "BIRE" : true,
+        "full_scale" : true
+    },
+    "aircraft" : {
+        "wing_area[ft^2]" : 300.0,
+        "wing_span[ft]" : 30.0,
+        "wing_aerodynamic_mean_chord[ft]" : 11.32,
+        "CG_shift[ft]" : [0.0, 0.0, 0.0],
+        "thrust" : {
+            "location[ft]" : [0.0, 0.0, 0.0],
+            "direction" : [1.0, 0.0, 0.0]
+        }
+    },
+    "gust" : {
+        "amplitude[ft/s]" : 80.0,
+        "directions(body-fixed)" : [1.0,1.0,0.5],
+        "damping_rate[1/s]" : 1.0,
+        "frequency[rad/s]" : 5.0,
+        "init_time[s]" : 1000.0
+    },
+    "disturbance" : {
+        "type" : "none"
+    },
+    "controller" : {
+        "enforce_update_frequency" : false,
+        "update_frequency[hz]__" : 10000.0,
+        "type" : "LQR",
+        "name" : "LQR",
+        "LQR_harris" : {
+            "note" : "",
+            "Q" : [1.0e-1, 1.0e-1, 1.0e-1, 
+                1.0e0, 1.0e0, 1.0e0,
+                0.0, 0.0, 0.0, 
+                1.0e5, 1.0e5, 0.0],
+            "Q1a" : [7.10179848569, 5.25249016002, 3.64756261112, 1111.11111111],
+            "Q2a" : [0.0, 0.0, 0.0, 0.0],
+            "R" : [50.0e4, 50.0e4, 50.0e4, 50.0e2],
+            "notes" : "currently set up same as Hk3, need to test other things to make actually HK4"
+        },
+        "LQR" : {
+            "note" : "_current",
+            "Q" : [1.0e-6, 1.0e-6, 1.0e-6, 
+                1.0e0, 1.0e0, 1.0e0,
+                0.0, 0.0, 1.0e-6, 
+                1.0e0, 1.0e0, 0.0],
+            "Q1a" : [0.0e0, 0.0e0, 0.0e0, 0.0e0],
+            "Q2a" : [0.0, 0.0, 0.0, 0.0],
+            "R" : [5.0e0, 5.0e0, 5.0e0, 5.0e-2]
+        },
+        "LQR_T2" : {
+            "note" : "",
+            "Q" : [1.0e-6, 1.0e-6, 1.0e-6, 
+                1.0e0, 1.0e0, 1.0e0,
+                0.0, 0.0, 1.0e-6, 
+                1.0e0, 1.0e0, 0.0],
+            "Q1a" : [0.0e0, 0.0e0, 0.0e0, 0.0e0],
+            "Q2a" : [0.0, 0.0, 0.0, 0.0],
+            "R" : [5.0e-2, 5.0e-2, 5.0e0, 5.0e0]
+        },
+        "LQR_current_sct" : {
+            "note" : "",
+            "Q" : [5.0e-4, 1.0e-5, 1.0e-3, 
+                1.0e0, 5.0e1, 5.0e1,
+                0.0, 0.0, 5.0e-5, 
+                1.0e-1, 1.0e0, 0.0],
+            "Q1a" : [0.0e0, 0.0e0, 0.0e0, 0.0e0],
+            "Q2a" : [0.0, 0.0, 0.0, 0.0],
+            "R" : [1.0e2, 1.0e2, 1.0e2, 1.0e0]
+        }
+    },
+    "actuators" : {
+        "order" : 1,
+        "quantized_actuators" : false,
+        "aileron" : {
+            "lag[s]" : 0.0495,
+            "limits[deg]" : [-21.5,21.5],
+            "rate_limits[deg/s]" : [-80.0,80.0],
+            "quantization_steps" : 10000
+        },
+        "elevator" : {
+            "lag[s]" : 0.0495,
+            "limits[deg]" : [-25.0,25.0],
+            "rate_limits[deg/s]" : [-60.0,60.0],
+            "quantization_steps" : 10000
+        },
+        "BIRE" : {
+            "lag[s]" : 0.0495,
+            "limits[deg]" : [-90.0,90.0],
+            "rate_limits[deg/s]" : [-50.0,50.0],
+            "acceleration_limits[deg/s^2]" : [-5383.840093906387,5383.840093906387],
+            "quantization_steps" : 10000
+        },
+        "throttle" : {
+            "lag[s]" : "model",
+            "limits[perc]" : [0.0,1.0],
+            "rate_limits[perc/s]" : [-1.0,1.0],
+            "quantization_steps" : 10000
+        }
+    },
+    "initial" : {
+        "mach" : 0.6,
+        "airspeed[ft/s]_" : 634.0,
+        "airspeed[ft/s]__" : 634.4133153512273,
+        "longitude[deg]" : 0.0,
+        "latitude[deg]" : 0.0,
+        "altitude[ft]" : 15000.0,
+        "heading[deg]" : 0.0,
+        "type" : "trim",
+        "state_types" : ["state", "trim"],
+        "state" : {
+            "elevation_angle[deg]" : 2.6049673655509071,
+            "bank_angle[deg]" : 0.0,
+            "alpha[deg]" : 2.6049673655509071,
+            "beta[deg]" : 0.0,
+            "p[deg/s]" : 0.0,
+            "q[deg/s]" : 0.0,
+            "r[deg/s]" : 0.0,
+            "aileron[deg]" : 0.0,
+            "elevator[deg]" : 0.0592093883133905,
+            "rudder[deg]" : 0.0,
+            "throttle" :  0.2726875730515020
+        },
+        "trim" : {
+            "type" : "sct",
+            "type_options" : [["sct: requires bank_angle[deg]"],
+            ["shss: requires *bank_angle[deg] or sideslip_angle[deg]."],
+            ["both types require *elevation_angle[deg] or climb_angle[deg]."],
+            ["vc: requires climb_angle[deg]= +-90."],
+            ["Starred ’*’ inputs override"]],
+            "___elevation_angle[deg]" : 0.0,
+            "climb_angle[deg]" : 0.0,
+            "bank_angle[deg]" : 0.0,
+            "___sideslip_angle[deg]" : 0.0,
+            "solver" : {
+                "finite_difference_step_size" : 0.001,
+                "relaxation_factor" : 0.1,
+                "tolerance" : 1.0e-9
+            },
+            "verbose_trim" : false
+        }
+    }
+}

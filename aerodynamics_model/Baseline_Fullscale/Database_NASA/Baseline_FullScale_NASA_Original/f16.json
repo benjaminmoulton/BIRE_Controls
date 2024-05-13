@@ -1,0 +1,39 @@
+{
+    "aerodynamics": {
+        "database_directory": "F16-NASAData/",
+        "database_list": [
+            "C(x,y,z,l,m,n)(dh,b,a).csv",
+            "C(x,y,z,l,m,n),lef(b,a).csv",
+            "dC(x,z,m),sb(a).csv",
+            "dC(x,z,m)_q,lef(a).csv",
+            "C(x,z,m)_q(a).csv",
+            "C(y,n,l),da=20(b,a).csv",
+            "C(y,n,l),da=20,lef(b,a).csv",
+            "C(y,n,l),dr=30(b,a).csv",
+            "C(y,n,l)_r(a).csv",
+            "dC(y,n,l)_r,lef(a).csv",
+            "C(y,n,l)_p(a).csv",
+            "dC(y,n,l)_p,lef(a).csv",
+            "dC(n,l)_b(a).csv",
+            "ndh(dh).csv",
+            "dCm(a).csv",
+            "dCm,ds(dh,a).csv"
+        ],
+        "input_variables": {
+            "alpha[deg]": 20.0,
+            "beta[deg]": 1.0,
+            "dh[deg]": 1.0,
+            "lef[deg]": 1.0,
+            "sb[deg]": 1.0,
+            "da[deg]": 1.0,
+            "dr[deg]": 1.0,
+            "cBar[ft]": 11.32,
+            "b[ft]": 30.0,
+            "p[deg/s]": 1.0,
+            "q[deg/s]": 1.0,
+            "r[deg/s]": 1.0,
+            "V[ft/s]": 200.0,
+            "xcgShift": 0.0
+        }
+    }
+}

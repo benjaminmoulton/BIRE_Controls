@@ -1,0 +1,18 @@
+{
+    "aircraft" : {
+        "BIRE" : false
+        },
+    "equilibrium_state" : {
+        "V[ft/s]" : 222.5211,
+        "altitude[ft]" : 1000,
+        "gamma[deg]" : 30.0,
+        "phi[deg]" : 30.0,
+        "cg_shift" : [1.0, 0.0, 0.0]
+        },
+    "trim_inputs" : {
+        "Gamma" : 0.1,
+        "fixed_point" : false,
+        "shss" :  false,
+        "compressible" : false,
+        }
+}

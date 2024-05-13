@@ -1,0 +1,166 @@
+{
+  "simulation": {
+    "constant_density": false,
+    "time_step[sec]": 0.1,
+    "total_time[sec]": 50.0,
+    "wind_magnitude[ft/s]": 0.0,
+    "wind_direction[deg]": 120.0
+  },
+  "aircraft": {
+    "wing_area[ft^2]": 300.0,
+    "wing_span[ft]": 30.0,
+    "weight[lbf]": 20500.0,
+    "weight_BIRE[lbf]": 21000.0,
+    "Ixx[slug-ft^2]": 9496.0,
+    "Iyy[slug-ft^2]": 55814.0,
+    "Izz[slug-ft^2]": 63100.0,
+    "Ixy[slug-ft^2]": 0.0,
+    "Ixz[slug-ft^2]": 982.0,
+    "Iyz[slug-ft^2]": 0.0,
+    "Ixx_BIRE[slug-ft^2]": 9280.0,
+    "Iyy_BIRE[slug-ft^2]": 58288.0,
+    "Izz_BIRE[slug-ft^2]": 65606.0,
+    "Ixy_BIRE[slug-ft^2]": 0.0,
+    "Ixz_BIRE[slug-ft^2]": -5.0,
+    "Iyz_BIRE[slug-ft^2]": 0.0,
+    "dI_BIRE[slug-ft^2]": 161.0,
+    "hx[slug-ft^2/s]": 160.0,
+    "hy[slug-ft^2/s]": 0.0,
+    "hz[slug-ft^2/s]": 0.0,
+    "CG_shift[ft]": [ 1.0, 0.0, 0.0 ],
+    "thrust": {
+      "location[ft]": [ 0.0, 0.0, 0.0 ],
+      "direction": [ 1.0, 0.0, 0.0 ],
+      "T0[lbf]": 29550,
+      "T1[lbf-s/ft]": 0.0,
+      "T2[lbf-s^2/ft^2]": 0.0,
+      "a": 0.84
+    },
+    "landing": {
+      "front_gear_location[ft]": [ 9.69, 0.0, 2.78 ],
+      "front_wheel_location[ft]": [ 10.37, 0.0, 6.21 ],
+      "front_gear_length[ft]": 3.496755639,
+      "right_gear_location[ft]": [ -2.44, 1.33, 1.31 ],
+      "right_wheel_location[ft]": [ -2.66, 4.06, 6.23 ],
+      "right_gear_length[ft]": 5.645564631,
+      "left_gear_location[ft]": [ -2.44, -1.33, 1.31 ],
+      "left_wheel_location[ft]": [ -2.66, -4.06, 6.23 ],
+      "left_gear_length[ft]": 5.645564631,
+      "k_array[lbf/ft]": [ 37500.0, 37500.0, 37500.0 ],
+      "c_array[lbf-s/ft]": [ 7500.0, 7500.0, 7500.0 ]
+    }
+  },
+  "initial": {
+    "airspeed[ft/s]": 634.0,
+    "altitude[ft]": 8000,
+    "heading[deg]": 100.0,
+    "ground_track[deg]": 0.0,
+    "latitude[deg]": 41.780678,
+    "longitude[deg]": -111.849168,
+    "type": "trim",
+    "state_types": [ "state", "trim" ],
+    "state": {
+      "elevation_angle[deg]": 16.0,
+      "bank_angle[deg]": 0.0,
+      "alpha[deg]": 17.0,
+      "beta[deg]": 0.0,
+      "p[deg/s]": 0.0,
+      "q[deg/s]": 0.0,
+      "r[deg/s]": 0.0,
+      "aileron[deg]": 0.0,
+      "elevator[deg]": 0.3,
+      "rudder[deg]": 0.0,
+      "throttle": 0.3
+    },
+    "trim": {
+      "type": "sct",
+      "type_options": [
+        [ "sct:  steady-coordinated turn requires bank_angle[deg]" ],
+        [ "shss: steady-heading sideslip requires *bank_angle[deg] or sideslip_angle[deg]." ],
+        [ "sct and shss require *elevation_angle[deg] or climb_angle[deg]." ],
+        [ "Starred '*' inputs override" ]
+      ],
+      "*elevation_angle[deg]": 0.0,
+      "climb_angle[deg]": 0.0,
+      "bank_angle[deg]": 60.0,
+      "*sideslip_angle[deg]": 0.0,
+      "solver": {
+        "finite_difference_step_size": 0.01,
+        "relaxation_factor": 0.1,
+        "tolerance": 1.0e-9,
+        "verbose": false
+      }
+    }
+  },
+  "aerodynamics": {
+    "BIRE": false,
+    "gust_magnitude[ft/s]": 10.0,
+    "gust_scales": [ 1.0, 1.0, 0.5 ],
+    "ground_effect": {
+      "use_ground_effect": false,
+      "taper_ratio": 0.3
+    },
+    "stall": {
+      "use_stall_model": true,
+      "alpha_blend[deg]": 25.0,
+      "blending_factor": 40.0
+    },
+    "CL": {
+      "CL_0": 0.0456,
+      "CL_alpha": 3.5791,
+      "CL_qbar": 3.3916,
+      "CL_de": 0.5652
+    },
+    "CS": {
+      "CS_beta": -0.9008,
+      "CS_pbar": -0.0153,
+      "CS_Lpbar": 0.3318,
+      "CS_rbar": 0.4357,
+      "CS_da": 0.0656,
+      "CS_dr": 0.1698
+    },
+    "CD": {
+      "CD_0": 0.0218,
+      "CD_L": -0.0036,
+      "CD_L2": 0.1834,
+      "CD_S2": 0.6081,
+      "CD_pbar": 0.0,
+      "CD_Spbar": 0.0768,
+      "CD_qbar": 0.0368,
+      "CD_Lqbar": 0.775,
+      "CD_L2qbar": -0.1844,
+      "CD_rbar": 0.0,
+      "CD_Srbar": -0.7239,
+      "CD_de": -0.0032,
+      "CD_Lde": 0.1775,
+      "CD_de2": 0.2854,
+      "CD_da": 0.0,
+      "CD_Sda": 0.1118,
+      "CD_dr": 0.0,
+      "CD_Sdr": 0.1604
+    },
+    "C_l": {
+      "Cl_beta": -0.0787,
+      "Cl_pbar": -0.3182,
+      "Cl_rbar": 0.0469,
+      "Cl_Lrbar": 0.1067,
+      "Cl_da": -0.0741,
+      "Cl_dr": 0.0257
+    },
+    "Cm": {
+      "Cm_0": -0.0077,
+      "Cm_alpha": 0.1375,
+      "Cm_qbar": -4.8503,
+      "Cm_de": -0.5881
+    },
+    "Cn": {
+      "Cn_beta": 0.2426,
+      "Cn_pbar": 0.0131,
+      "Cn_Lpbar": -0.1005,
+      "Cn_rbar": -0.1787,
+      "Cn_da": -0.0276,
+      "Cn_Lda": 0.0077,
+      "Cn_dr": -0.0877
+    }
+  }
+}

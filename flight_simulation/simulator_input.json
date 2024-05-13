@@ -1,0 +1,87 @@
+{
+    "simulation": {
+        "constant_density": true,
+        "time_step[sec]": 0.01,
+        "total_time[sec]": 400,
+        "rk4_integration": true
+    },
+    "perturbations": {
+        "time_start[sec]": 1.0,
+        "time_duration[sec]": 0.02,
+        "delta_da[deg]": 0.0,
+        "delta_de[deg]": 0.0,
+        "delta_dr[deg]": 0.0,
+        "delta_q[deg/s]": 1.0
+    },
+    "aircraft": {
+        "BIRE": false,
+        "prop_fit_model": false,
+        "CG_shift[ft]": [
+            1.0,
+            0.0,
+            0.0
+        ]
+    },
+    "initial": {
+        "airspeed[ft/s]": 634,
+        "longitude[deg]": 111.8338,
+        "latitude[deg]": 41.737,
+        "altitude[ft]": 15000.0,
+        "heading[deg]": 0.0,
+        "type": "trim",
+        "state_types": [
+            "state",
+            "trim"
+        ],
+        "trim": {
+            "type": "sct",
+            "type_options": [
+                [
+                    "sct: requires bank_angle[deg]"
+                ],
+                [
+                    "shss: requires *bank_angle[deg] or sideslip_angle[deg]."
+                ],
+                [
+                    "both types require *elevation_angle[deg] or climb_angle[deg]."
+                ],
+                [
+                    "vc: requires climb_angle[deg]= +-90."
+                ],
+                [
+                    "Starred \u00e2\u20ac\u2122*\u00e2\u20ac\u2122 inputs override"
+                ]
+            ],
+            "___elevation_angle[deg]": 0.0,
+            "climb_angle[deg]": 0.0,
+            "bank_angle[deg]": 0.0,
+            "___sideslip_angle[deg]": 0.0,
+            "solver": {
+                "finite_difference_step_size": 0.01,
+                "relaxation_factor": 0.1,
+                "tolerance": 1e-09
+            }
+        },
+        "state": {
+            "elevation_angle[deg]": 2.884611758775198,
+            "bank_angle[deg]": 9.999999999999998,
+            "alpha[deg]": 2.929001662364337,
+            "beta[deg]": 0.0001872827541641,
+            "p[deg/s]": -0.0257304071685572,
+            "q[deg/s]": 0.0886716922002824,
+            "r[deg/s]": 0.5028821558901988,
+            "aileron[deg]": 0.0060829678941783,
+            "elevator[deg]": -1.6224195741370122,
+            "rudder[deg]": -0.0244306699570641,
+            "throttle": 0.2734534150108573
+        }
+    },
+    "aerodynamics": {
+        "stall_model": {
+            "use_stall_model": false
+        },
+        "compressibility_model": {
+            "use_comp_model": false
+        }
+    }
+}

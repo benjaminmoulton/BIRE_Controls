@@ -1,0 +1,110 @@
+{
+    "CL": {
+        "CL_0": 0.0456,
+        "CL_alpha": 3.5791,
+        "CL_qbar": 3.3916,
+        "CL_de": 0.5652
+    },
+    "CS": {
+        "CS_beta": -0.9009,
+        "CS_pbar": -0.0153,
+        "CS_Lpbar": 0.3318,
+        "CS_rbar": 0.4357,
+        "CS_da": 0.0656,
+        "CS_dr": 0.1698
+    },
+    "CD": {
+        "CD_0": 0.0218,
+        "CD_L": -0.034,
+        "CD_L2": 0.1834,
+        "CD_S2": 0.6081,
+        "CD_Spbar": 0.0768,
+        "CD_qbar": 0.0368,
+        "CD_Lqbar": 0.775,
+        "CD_L2qbar": -0.1844,
+        "CD_Srbar": -0.7239,
+        "CD_de": -0.0032,
+        "CD_Lde": 0.1775,
+        "CD_de2": 0.2854,
+        "CD_Sda": 0.1118,
+        "CD_Sdr": 0.1604
+    },
+    "Cell": {
+        "Cl_beta": -0.0786,
+        "Cl_pbar": -0.3182,
+        "Cl_rbar": 0.0469,
+        "Cl_Lrbar": 0.1067,
+        "Cl_da": -0.0741,
+        "Cl_dr": 0.0257
+    },
+    "Cm": {
+        "Cm_0": -0.0097,
+        "Cm_alpha": 0.1766,
+        "Cm_qbar": -4.8503,
+        "Cm_de": -0.5881
+    },
+    "Cn": {
+        "Cn_beta": 0.2426,
+        "Cn_pbar": 0.0131,
+        "Cn_Lpbar": -0.1005,
+        "Cn_rbar": -0.1787,
+        "Cn_da": -0.0276,
+        "Cn_Lda": 0.0077,
+        "Cn_dr": -0.0899
+    },
+    "Dr_hunsaker_checking_model" : {
+        "CL" : {
+            "CL_0" : 0.0535,
+            "CL_alpha" : 3.84,
+            "CL_qbar" : 27.3,
+            "CL_de" : 0.511
+        },
+        "CS" : {
+            "CS_beta" : -1.098,
+            "CS_pbar" : 0.098,
+            "CS_Lpbar" : 0.0,
+            "CS_rbar" : 1.121,
+            "CS_da" : 0.078,
+            "CS_dr" : 0.168
+        },
+        "CD" : {
+            "CD_0" : 0.0425,
+            "CD_L" : -0.1154,
+            "CD_L2" : 0.2427,
+            "CD_S2" : 0.788,
+            "CD_Spbar" : 0.0,
+            "CD_qbar" : -1.966,
+            "CD_Lqbar" : 6.183,
+            "CD_L2qbar" : 0.0,
+            "CD_Srbar" : 0.0,
+            "CD_de" : -0.02,
+            "CD_Lde" : 0.198,
+            "CD_de2" : 0.352,
+            "CD_Sda" : 0.0,
+            "CD_Sdr" : 0.0
+        },
+        "Cell" : {
+            "Cl_beta" : -0.1048,
+            "Cl_pbar" : -0.375,
+            "Cl_rbar" : -0.053,
+            "Cl_Lrbar" : 0.283,
+            "Cl_da" : -0.1172,
+            "Cl_dr" : 0.03
+        },
+        "Cm" : {
+            "Cm_0" : -0.062,
+            "Cm_alpha" : 0.087,
+            "Cm_qbar" : -5.9,
+            "Cm_de" : -0.59
+        },
+        "Cn" : {
+            "Cn_beta" : 0.227,
+            "Cn_pbar" : -0.0075,
+            "Cn_Lpbar" : -0.0338,
+            "Cn_rbar" : -0.467,
+            "Cn_da" : -0.0351,
+            "Cn_Lda" : 0.014,
+            "Cn_dr" : -0.088
+        }
+    }
+}

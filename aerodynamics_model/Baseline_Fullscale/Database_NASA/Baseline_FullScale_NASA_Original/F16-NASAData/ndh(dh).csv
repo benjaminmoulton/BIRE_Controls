@@ -1,0 +1,7 @@
+numberIndependentVariables,"""=""",1.0
+dh[deg],ndh,
+-25.0,1,
+-10.0,1,
+0.0,1,
+10.0,1,
+25.0,0.95,
