@@ -1090,7 +1090,6 @@ class BIREAero:
 
         # stall
         if enforce_stall:
-
             # implement stall effects
             [CL,CD,Cm] = self._stall_correction(alpha,CL,CD,Cm)
 

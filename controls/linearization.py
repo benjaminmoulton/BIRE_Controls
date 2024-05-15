@@ -1743,6 +1743,7 @@ class linearization:
         our_ax.legend()
         our_fig.savefig(folder +case_name+ "output_colerr_channels."+pt,**savedict)
         # our_ax.cla()
+        plt.close("all")
 
 
 def Anderson_correction_der_coeff(coeff, Lambda, RA, M):

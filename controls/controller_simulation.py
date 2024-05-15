@@ -30,8 +30,10 @@ sys.path.insert(1, aero_directory)
 sys.path.insert(1, mass_directory)
 sys.path.insert(1, turb_directory)
 
+import os as os
 from os import mkdir, rmdir, walk, remove, listdir
 from os.path import exists as path_exists
+from platform import system as sysplat
 
 from f16_aero import F16Aero
 from SAL_f16_aero import SALF16Aero
@@ -41,6 +43,11 @@ from SAL_thrust import TGEAR,PDOT
 from inertia_model import InertiaModel
 from turbulence import ZeroTurbulence, DampedSinusoidGust, VonKarmanTurbulence
 from hunsaker_atm import stdatm_english as stdatm_hunsaker, gravity_english
+
+def rwfn(file_name,sep="/"):
+    if sysplat() == "Windows":
+        file_name = (file_name).replace("/",sep)
+    return file_name
 
 class Aircraft:
     """ A class which simulates the flight of an aircraft.
@@ -711,7 +718,6 @@ class Aircraft:
         print("|" * len(thrust_string))
 
 
-
     def run_trim(self,a_guess=None,b_guess=None,phi_guess=None,u_guess=None,
         verbose=True,no_report=False,imax=1000):
         # report
@@ -1351,8 +1357,8 @@ class Aircraft:
             dx[16:20] = self._limit_input_accelerations(dx[16:20])
         
         # integral states
-        r = self._get_reference(t)[self.xPi]
-        dx[self.xIi] = x[self.xPi]*1. - r
+        r = self._get_reference(t)[self.xPi_eul]
+        dx[self.xIi_eul] = x[self.xPi_eul]*1. - r
 
         return dx
 
@@ -1529,8 +1535,8 @@ class Aircraft:
             dx[12:20] = self._actuation_dynamics(x,u)
         
         # integral states
-        r = self._get_reference(t)[self.xPi]
-        dx[self.xIi] = x[self.xPi]*1. - r
+        r = self._get_reference(t)[self.xPi_eul]
+        dx[self.xIi_eul] = x[self.xPi_eul]*1. - r
 
         return dx
 
@@ -3104,6 +3110,7 @@ class Aircraft:
         plot_second_set = kwargs.get("plot_second_set",False)
         plot_input_limits_zoomed = kwargs.get("plot_input_limits_zoomed",True)
         plot_norm = kwargs.get("plot_norm",False) # True) # 
+        plot_ul_bounds = kwargs.get("plot_upp_and_low",False)
 
         # determine where to save plots
         folder = kwargs.get("plotting_directory","")
@@ -3169,6 +3176,15 @@ class Aircraft:
                 varr = self.varr[:,:i_zoom+1] - uhat_eq[:,:i_zoom+1]
             Del = r"$\Delta$"
             predir = predir + "del_" + "zm_"*is_zoomed
+
+            # upper and lower plotting
+            if plot_ul_bounds:
+                xupp = self.xarr_upp - xhat_eq[:,:i_zoom+1]
+                aupp = self.aerox_upp - aerohat_eq[:,:i_zoom+1]
+                uupp = self.uarr_upp - uhat_eq[:,:i_zoom+1]
+                xlow = self.xarr_low - xhat_eq[:,:i_zoom+1]
+                alow = self.aerox_low - aerohat_eq[:,:i_zoom+1]
+                ulow = self.uarr_low - uhat_eq[:,:i_zoom+1]
         else:
             tarr = self.tarr[:i_zoom+1]
             xarr = self.xarr[:,:i_zoom+1]
@@ -3180,6 +3196,14 @@ class Aircraft:
                 varr = self.varr[:,:i_zoom+1]
             Del = r""
             predir = predir + "zm_"*is_zoomed
+            # upper and lower plotting
+            if plot_ul_bounds:
+                xupp = self.xarr_upp
+                aupp = self.aerox_upp
+                uupp = self.uarr_upp
+                xlow = self.xarr_low
+                alow = self.aerox_low
+                ulow = self.uarr_low
         
         # error and integral states
         if self.tracking:
@@ -5122,6 +5146,14 @@ def monte_carlo_perturbations(filename,rtdst_1sg=[5.,5.,5.],
     # succ_folder = file_folder + "/succ_plots"
     sens_folder = file_folder + "/sensitivity"
     errs_folder = file_folder + "/errs_plots"
+    plot_dict["plot_delta"] = plot_dict.get("plot_delta",True)
+    plot_dict["zoom_deltas"] = plot_dict.get("zoom_deltas",False)
+    plot_dict["plot_full"] = plot_dict.get("plot_full",True)
+    plot_dict["zoom_full"] = plot_dict.get("zoom_full",False)
+    delta_tf_folder = file_folder + "/delta"
+    delta_zm_folder = file_folder + "/delta_zoom"
+    full__tf_folder = file_folder + "/full"
+    full__zm_folder = file_folder + "/full_zoom"
     if save_data and path_exists(file_folder):
         # step through and remove every file, then delete folder
         # fail folder
@@ -5148,9 +5180,45 @@ def monte_carlo_perturbations(filename,rtdst_1sg=[5.,5.,5.],
                 remove(errs_folder + "/" + filename)
             # delete folder
             rmdir(errs_folder)
+        
+        # delete / create folders
+        if path_exists(delta_tf_folder):
+            for filename in listdir(delta_tf_folder):
+                remove(delta_tf_folder + "/" + filename)
+            # delete folder
+            if not(plot_dict["plot_delta"]):
+                rmdir(delta_tf_folder)
+        elif plot_dict["plot_delta"]:
+            mkdir(delta_tf_folder)
+        if path_exists(delta_zm_folder):
+            for filename in listdir(delta_zm_folder):
+                remove(delta_zm_folder + "/" + filename)
+            # delete folder
+            if not(plot_dict["zoom_deltas"]):
+                rmdir(delta_zm_folder)
+        elif plot_dict["zoom_deltas"]:
+            mkdir(delta_zm_folder)
+        if path_exists(full__tf_folder):
+            for filename in listdir(full__tf_folder):
+                remove(full__tf_folder + "/" + filename)
+            # delete folder
+            if not(plot_dict["plot_full"]):
+                rmdir(full__tf_folder)
+        elif plot_dict["plot_full"]:
+            mkdir(full__tf_folder)
+        if path_exists(full__zm_folder):
+            for filename in listdir(full__zm_folder):
+                remove(full__zm_folder + "/" + filename)
+            # delete folder
+            if not(plot_dict["zoom_full"]):
+                rmdir(full__zm_folder)
+        elif plot_dict["zoom_full"]:
+            mkdir(full__zm_folder)  
         # other
         for filename in listdir(file_folder):
-            remove(file_folder + "/" + filename)
+            if filename not in \
+                ["full","sensitivity","delta","delta_zoom","full_zoom"]:
+                remove(file_folder + "/" + filename)
         # # delete folder
         # rmdir(file_folder)
     elif save_data:
@@ -5333,6 +5401,15 @@ def monte_carlo_perturbations(filename,rtdst_1sg=[5.,5.,5.],
     rows = [3,4,5,9,10,11]
     r_track[rows] = np.rad2deg(r_track[rows])
     ###################################
+    # save upper, lower, and average stable responses
+    tnum = int(aircraft.tf/aircraft.dt) + 1
+    xupp = np.zeros((aircraft.x_trim_euler.shape[0],tnum))
+    xlow = xupp*0.; xavg = xupp*0.
+    uupp = np.zeros((aircraft.u_trim.shape[0],tnum))
+    ulow = uupp*0.; uavg = uupp*0.
+    aupp = np.zeros((4,tnum))
+    alow = aupp*0.; aavg = aupp*0.
+    ###################################
     for i in range(num):
         # create shift
         pshift = p_vals[i]
@@ -5351,7 +5428,7 @@ def monte_carlo_perturbations(filename,rtdst_1sg=[5.,5.,5.],
 
         # call run sim
         try:
-            xr,_ = aircraft.run_simulation(report_trim=report_trim,
+            xr,ur = aircraft.run_simulation(report_trim=report_trim,
                 mrrr=mrrr,delta_x0=dx0,actr_warm_start=actr_warm_start,
                 save_matrices=False,report_simulation=False)
             
@@ -5450,6 +5527,18 @@ def monte_carlo_perturbations(filename,rtdst_1sg=[5.,5.,5.],
             #     plt.savefig(succ_folder + "/" + "succ_{:04d}".format(i+1))
             #     afl.cla()
             #     ctr.cla()
+            #
+            # save max, min, and avg
+            xavg = xavg + xr
+            xupp = np.array([xupp,xr]).max(axis=0)
+            xlow = np.array([xlow,xr]).min(axis=0)
+            uavg = uavg + ur
+            uupp = np.array([uupp,ur]).max(axis=0)
+            ulow = np.array([ulow,ur]).min(axis=0)
+            ar = aircraft.aerox*1.
+            aavg = aavg + ar
+            aupp = np.array([aupp,ar]).max(axis=0)
+            alow = np.array([alow,ar]).min(axis=0)
         else:
             case_run_text += " Unstable"
             case_run_text += " >>"
@@ -5576,107 +5665,10 @@ def monte_carlo_perturbations(filename,rtdst_1sg=[5.,5.,5.],
             f.close()
     print("finished simulating {}...".format(run_name))
 
-    # # determine smallest ellipsoid
-    # if num - stables.sum() >= 3:
-    #     print("can do it")
-    #     r = ( disturbs[0,:]**2. + disturbs[1,:]**2. + disturbs[2,:]**2. )**0.5
-    #     ri = np.argsort(r)
-    #     x1,y1,z1 = disturbs[:,ri[0]]
-    #     x2,y2,z2 = disturbs[:,ri[1]]
-    #     x3,y3,z3 = disturbs[:,ri[2]]
-
-    #     AA = y3**2.*z2**2. - y2**2.*z3**2.
-    #     BB = y1**2.*z3**2. - y3**2.*z1**2.
-    #     CC = y2**2.*z1**2. - y1**2.*z2**2.
-    #     DD = x2**2.*z3**2. - x3**2.*z2**2.
-    #     EE = x3**2.*z1**2. - x1**2.*z3**2.
-    #     FF = x1**2.*z2**2. - x2**2.*z1**2.
-    #     GG = x3**2.*y2**2. - x2**2.*y3**2.
-    #     HH = x1**2.*y3**2. - x3**2.*y1**2.
-    #     II = x2**2.*y1**2. - x1**2.*y2**2.
-
-    #     a = ( abs( (x1**2.*AA + x2**2.*BB + x3**2.*CC )/(AA + BB + CC) ) )**0.5
-    #     b = ( abs( (y1**2.*DD + y2**2.*EE + y3**2.*FF )/(DD + EE + FF) ) )**0.5
-    #     c = ( abs( (z1**2.*GG + z2**2.*HH + z3**2.*II )/(GG + HH + II) ) )**0.5
-    #     sgn = lambda v : "+" if v > 0. else "-"
-    #     csgn = sgn( (x1**2.*AA + x2**2.*BB + x3**2.*CC )/(AA + BB + CC) )
-    #     bsgn = sgn( (y1**2.*DD + y2**2.*EE + y3**2.*FF )/(DD + EE + FF) )
-    #     asgn = sgn( (z1**2.*GG + z2**2.*HH + z3**2.*II )/(GG + HH + II) )
-
-
-    #     print("a sign =",asgn,"a =",a)
-    #     print("b sign =",bsgn,"b =",b)
-    #     print("c sign =",csgn,"c =",c)
-    #     ell = lambda x,y,z,a,b,c : (x/a)**2. + (y/b)**2. + (z/c)**2.
-    #     print(ell(x1,y1,z1,a,b,c),"== 1",abs(ell(x1,y1,z1,a,b,c)-1.)<=1.0e-12)
-    #     print(ell(x2,y2,z2,a,b,c),"== 1",abs(ell(x2,y2,z2,a,b,c)-1.)<=1.0e-12)
-    #     print(ell(x3,y3,z3,a,b,c),"== 1",abs(ell(x3,y3,z3,a,b,c)-1.)<=1.0e-12)
-    #     print()
-    #     print("det =",np.linalg.det([[x1,y1,z1],[x2,y2,z2],[x3,y3,z3]]))
-    #     print()
-
-
-    #     #######
-
-    #     A = x2**2.*y1**2. - x1**2.*y2**2.
-    #     B = x1**2.*y3**2. - x3**2.*y1**2.
-    #     C = x3**2.*z1**2. - x1**2.*z3**2.
-    #     D = x1**2.*z2**2. - x2**2.*z1**2.
-    #     E = y1**2.*z3**2. - y3**2.*z1**2.
-    #     F = y2**2.*z1**2. - y1**2.*z2**2.
-    #     G = y3**2.*z2**2. - y2**2.*z3**2.
-    #     H = x2**2.*z3**2. - x3**2.*z2**2.
-    #     I = x3**2.*y2**2. - x2**2.*y3**2.
-    #     ACmBD = -A*C + B*D
-    #     x2mx1 = x2**2. - x1**2.
-    #     x3mx1 = x3**2. - x1**2.
-
-    #     # unsimp
-    #     c0 = ( abs( (ACmBD)/(-B*x2mx1 - A*x3mx1) ) )**0.5
-    #     b0 = ( abs( (A)/(x2**2*(1 - z1**2/c0**2) - x1**2*(1 - z2**2/c0**2)) ) )**0.5
-    #     a0 = ( abs( (x1**2)/(1 - y1**2/b0**2 - z1**2/c0**2) ) )**0.5
-    #     sgn = lambda v : "+" if v > 0. else "-"
-    #     csgn = sgn( (ACmBD)/(-B*x2mx1 - A*x3mx1) )
-    #     bsgn = sgn( (A)/(x2**2*(1 - z1**2/c0**2) - x1**2*(1 - z2**2/c0**2)) )
-    #     asgn = sgn( (x1**2)/(1 - y1**2/b0**2 - z1**2/c0**2) )
-    #     a,b,c = a0,b0,c0
-    #     print("P1:",x1,y1,z1,"Q "+sgn(x1)+sgn(y1)+sgn(z1))
-    #     print("P2:",x2,y2,z2,"Q "+sgn(x2)+sgn(y2)+sgn(z2))
-    #     print("P3:",x3,y3,z3,"Q "+sgn(x3)+sgn(y3)+sgn(z3))
-    #     # print("AA =",AA)
-    #     # print("BB =",BB)
-    #     # print("CC =",CC)
-    #     # print("DD =",DD)
-    #     # print("EE =",EE)
-    #     # print("FF =",FF)
-    #     # print("GG =",GG)
-    #     # print("HH =",HH)
-    #     # print("II =",II)
-    #     # print("a**2 =", (x1**2*AA + x2**2*BB + x3**2*CC )/(AA + BB + CC) )
-    #     # print("b**2 =", (y1**2*DD + y2**2*EE + y3**2*FF )/(DD + EE + FF) )
-    #     # print("c**2 =", (z1**2*GG + z2**2*HH + z3**2*II )/(GG + HH + II) )
-    #     # print("A =",A)
-    #     # print("B =",B)
-    #     # print("C =",C)
-    #     # print("D =",D)
-    #     # print("E =",E)
-    #     # print("F =",F)
-    #     # print("G =",G)
-    #     # print("H =",H)
-    #     # print("I =",I)
-    #     # print("a**2 =", (ACmBD)/(-B*x2mx1 - A*x3mx1) )
-    #     # print("b**2 =", (A)/(x2**2*(1 - z1**2/c0**2) - x1**2*(1 - z2**2/c0**2)) )
-    #     # print("c**2 =", (x1**2)/(1 - y1**2/b0**2 - z1**2/c0**2) )
-    #     print("a sign =",asgn,"a =",a)
-    #     print("b sign =",bsgn,"b =",b)
-    #     print("c sign =",csgn,"c =",c)
-    #     ell = lambda x,y,z,a,b,c : (x/a)**2. + (y/b)**2. + (z/c)**2.
-    #     print(ell(x1,y1,z1,a,b,c),"== 1",abs(ell(x1,y1,z1,a,b,c)-1.)<=1.0e-12)
-    #     print(ell(x2,y2,z2,a,b,c),"== 1",abs(ell(x2,y2,z2,a,b,c)-1.)<=1.0e-12)
-    #     print(ell(x3,y3,z3,a,b,c),"== 1",abs(ell(x3,y3,z3,a,b,c)-1.)<=1.0e-12)
-    # else:
-    #     print("no can do boss")
-    # quit()
+    # divide average responses
+    if counter > 0:
+        xavg = xavg/counter
+        uavg = uavg/counter
 
     # determine stable-coloring tuples
     clrs = []
@@ -5696,223 +5688,39 @@ def monte_carlo_perturbations(filename,rtdst_1sg=[5.,5.,5.],
             ms.append(mss)
             zord.append( k )
         else:
-            # # check if within 95% of ellipse
-            # lto = disturbs[0,k]**2./dis90[0]**2. + \
-            #     disturbs[1,k]**2./dis90[1]**2. + disturbs[2,k]**2./dis90[2]**2.
-            if True: # lto <= 0.99: # 
-            #     clrs.append( (1.0,0.0,0.0) ) # red
-            # else:
-                # clrs.append( (0.5,0.0,1.0) ) # purple
-                clrs.append( "w" ) # (1.0,1.0,1.0) ) # white
-                mec.append( "k" ) # (0.0,0.0,0.0) )
-                ms.append(msu)
+            clrs.append( "w" ) # (1.0,1.0,1.0) ) # white
+            mec.append( "k" ) # (0.0,0.0,0.0) )
+            ms.append(msu)
             zord.append( k+num )
-    
-    # # set zorder by magnitude of disturbance
-    # dismags = ( disturbs[0,:]**2. + disturbs[1,:]**2. + disturbs[2,:]**2.)**0.5
-    # zord = np.argsort(dismags).tolist()
-
     
     # create plot
     if save_data:
         print("creating plots...")
+
+        print("    average response plots...")
+        # set plotted line as average
+        aircraft.xarr = xavg*1.
+        aircraft.uarr = uavg*1.
+        aircraft.aerox = aavg*1.
+        aircraft.xarr_upp = xupp*1.
+        aircraft.uarr_upp = uupp*1.
+        aircraft.aerox_upp = aupp*1.
+        aircraft.xarr_low = xlow*1.
+        aircraft.uarr_low = ulow*1.
+        aircraft.aerox_low = alow*1.
+        plot_dict["plotting_directory"] = file_folder + "/"
+        plot_dict["plot_upp_and_low"] = True
+        aircraft.plot_results(**plot_dict)
 
         # model error plots
         print("    model error plots...")
         #
         savedict = dict(transparent=False,format="pdf",dpi=300.0)
         err_counter = 0
-        if False:
-            if simulation["BIRE"]:
-                # determine which plots will have data
-                # aero
-                # plots to review
-                reorg_plots = {
-                    "CL" : ["0","a"],
-                    "CS" : ["0"],
-                    "Cl" : ["0"],
-                    "Cm" : ["0","b","de"],
-                    "Cn" : ["0","a","b","de"]
-                }
-                reorg_types = [
-                    ("A","z","w","phi"),
-                    ("phi","z","w","A"),
-                    ("w","z","A","phi")
-                ]; reg_types = [reorg_types[0]]
-                fig, ax = plt.subplots(1,2,layout="constrained")
-                for i in aero_err_percs:
-                    for j in aero_err_percs[i]:
-                        
-                        # determine how many plots to make
-                        if i in reorg_plots and j in reorg_plots[i]:
-                            plot_types = reorg_types
-                        else:
-                            plot_types = reg_types
-
-                        coeff = errors["aero"][i][j]
-                        # check that plotting a useful plot
-                        if coeff["A"] or coeff["w"] or coeff["phi"] or coeff["z"]:
-                            # run through plots to produce
-                            for k in range(len(plot_types)):
-                                # pull out plot axes
-                                xname = plot_types[k][0]
-                                yname = plot_types[k][1]
-                                zname = plot_types[k][2]
-                                aname = plot_types[k][3]
-                                # formulate plot
-                                x = aero_err_percs[i][j][xname]
-                                y = aero_err_percs[i][j][yname]
-                                z = aero_err_percs[i][j][zname]
-                                a = aero_err_percs[i][j][aname]
-                                # for k in range(num):
-                                [ax[0].plot(x[k],y[k],c=clrs[k],marker="o",\
-                                    zorder=zord[k]) for k in range(num)]
-                                [ax[1].plot(z[k],a[k],c=clrs[k],marker="o",\
-                                    zorder=zord[k]) for k in range(num)]
-                                xlabel = "$C_{" + i[1] + "," + j + "}$"
-                                ylabel = "$C_{" + i[1] + "," + j + "}$"
-                                ax[0].set_xlabel(xlabel + " " + xname)
-                                ax[0].set_ylabel(ylabel + " " + yname)
-                                ax[1].set_xlabel(xlabel + " " + zname)
-                                ax[1].set_ylabel(ylabel + " " + aname)
-                                fig.savefig(file_folder+"/aero_{:02d}_".format(\
-                                    err_counter)+i+"_"+j+".pdf",**savedict)
-                                err_counter += 1
-                                ax[0].cla()
-                                ax[1].cla()
-                plt.close(fig)
-                # inertia
-                fig, ax = plt.subplots(1,2,layout="constrained")
-                for i in iner_err_percs:
-                    if i not in ["hx","hy","hz","W"]:
-                        coeff = errors["inertia"][i]
-                        if coeff["A"] or coeff["w"] or coeff["p"] or coeff["z"]:
-                            # formulate plot
-                            x = iner_err_percs[i]["A"]
-                            y = iner_err_percs[i]["z"]
-                            z = iner_err_percs[i]["w"]
-                            a = iner_err_percs[i]["p"]
-                            [ax[0].plot(x[k],y[k],c=clrs[k],marker="o",\
-                                zorder=zord[k]) for k in range(num)]
-                            [ax[1].plot(z[k],a[k],c=clrs[k],marker="o",\
-                                zorder=zord[k]) for k in range(num)]
-                            xlabel = "$I_{" + i[1:] + "}$"
-                            ylabel = "$I_{" + i[1:] + "}$"
-                            ax[0].set_xlabel(xlabel + " A")
-                            ax[0].set_ylabel(ylabel + " z")
-                            ax[1].set_xlabel(xlabel + " w")
-                            ax[1].set_ylabel(ylabel + " p")
-                            fig.savefig(file_folder+"/iner_{:02d}_".format(\
-                                err_counter)+i+".pdf",**savedict)
-                            err_counter += 1
-                            ax[0].cla()
-                            ax[1].cla()
-                plt.close(fig)
-                # formulate plot with W
-                if errors["inertia"]["W"]:
-                    fig, ax = plt.subplots(layout="constrained")
-                    x = iner_err_percs["W"]
-                    y = iner_err_percs["Ixx"]["z"]
-                    [ax.plot(x[k],y[k],c=clrs[k],marker="o",\
-                        zorder=zord[k]) for k in range(num)]
-                    xlabel = "$W$"
-                    ylabel = "$I_{xx}$"
-                    ax.set_xlabel(xlabel)
-                    ax.set_ylabel(ylabel + " z")
-                    fig.savefig(file_folder+"/iner_{:02d}_".format(err_counter)+\
-                        "W__Ixx_z"+".pdf",**savedict)
-                    err_counter += 1
-                    plt.close()
-                # gyroscopic
-                plots = [
-                    "hx,hy","hx,hz"
-                ]
-                for i,plot in enumerate(plots):
-                    i0,i1 = plot.split(",")
-
-                    if errors["inertia"][i0] or errors["inertia"][i1]:
-                        # formulate plot
-                        fig, ax = plt.subplots(layout="constrained")
-                        x = iner_err_percs[i0]
-                        y = iner_err_percs[i1]
-                        [ax.plot(x[k],y[k],c=clrs[k],marker="o",\
-                            zorder=zord[k]) for k in range(num)]
-                        xlabel = "$" + i0[0] + "_" + i0[1] + "$"
-                        ylabel = "$" + i1[0] + "_" + i1[1] + "$"
-                        ax.set_xlabel(xlabel)
-                        ax.set_ylabel(ylabel)
-                        fig.savefig(file_folder+"/iner_{:02d}_".format(err_counter)+\
-                            i0+"__"+i1+".pdf",**savedict)
-                        err_counter += 1
-                        plt.close(fig)
-            else:
-                plots = [
-                    "CL_0,CL_a", "CL_q,CL_de",
-                    "CS_b,CS_r", "CS_p,CS_Lp", "CS_da,CS_dr",
-                    "CD_0,CD_L","CD_L2,CD_S2", "CD_Sp,CD_Sr", "CD_q,CD_Lq",
-                    "CD_de,CD_Lde","CD_L2q,CD_de2","CD_Sda,CD_Sdr",
-                    "Cl_b,Cl_p", "Cl_r,Cl_Lr", "Cl_da,Cl_dr",
-                    "Cm_0,Cm_a","Cm_q,Cm_de",
-                    "Cn_b,Cn_r","Cn_p,Cn_Lp","Cn_da,Cn_Lda","Cn_da,Cn_dr"
-                ]
-                # run through plots
-                # aero
-                fig, ax = plt.subplots(layout="constrained")
-                for i,plot in enumerate(plots):
-                    i0,i1 = plot.split(",")
-                    i00,i01 = i0.split("_")
-                    i10,i11 = i1.split("_")
-                    # if there is an error applied
-                    if errors["aero"][i00][i01] or errors["aero"][i10][i11]:
-                        # formulate plot
-                        x = aero_err_percs[i00][i01]
-                        y = aero_err_percs[i10][i11]
-                        [ax.plot(x[k],y[k],c=clrs[k],marker="o",\
-                            zorder=zord[k]) for k in range(num)]
-                        xlabel = "$C_{" + i00[1] + "," + i01 + "}$"
-                        ylabel = "$C_{" + i10[1] + "," + i11 + "}$"
-                        ax.set_xlabel(xlabel)
-                        ax.set_ylabel(ylabel)
-                        fig.savefig(file_folder+"/aero_{:02d}_".format(err_counter)+\
-                            i0+"__"+i1+".pdf",**savedict)
-                        err_counter += 1
-                        ax.cla()
-                plt.close(fig)
-                # inertia
-                plots = [
-                    "Ixx,Iyy","Izz,W","Ixy,Ixz","Iyz,Ixz","hx,hy","hx,hz"
-                ]
-                fig, ax = plt.subplots(layout="constrained")
-                for i,plot in enumerate(plots):
-                    i0,i1 = plot.split(",")
-                    # if there is an error applied
-                    if errors["inertia"][i0] or errors["inertia"][i1]:
-                        # formulate plot
-                        x = iner_err_percs[i0]
-                        y = iner_err_percs[i1]
-                        [ax.plot(x[k],y[k],c=clrs[k],marker="o",\
-                            zorder=zord[k]) for k in range(num)]
-                        if i1[0] == "h":
-                            xlabel = "$" + i0[0] + "_" + i0[1] + "$"
-                        else:
-                            xlabel = "$I_{" + i0[1:] + "}$"
-                        if i1 == "W":
-                            ylabel = "$" + i1 + "$"
-                        elif i1[0] == "h":
-                            ylabel = "$" + i1[0] + "_" + i1[1] + "$"
-                        else:
-                            ylabel = "$I_{" + i1[1:] + "}$"
-                        ax.set_xlabel(xlabel)
-                        ax.set_ylabel(ylabel)
-                        fig.savefig(file_folder+"/iner_{:02d}_".format(err_counter)+\
-                            i0+"__"+i1+".pdf",**savedict)
-                        err_counter += 1
-                        ax.cla()
-                plt.close(fig)
-        #
         #
         # legend
-        plt.rcParams["text.usetex"] = True
+        # for some reason this was a problem
+        # plt.rcParams["text.usetex"] = True
         n_pts = 5
         lgnd_elms_sp = []
         ts = np.linspace(aircraft.tf/n_pts,aircraft.tf,n_pts)
