@@ -348,7 +348,7 @@ class DynamicInversionAircraft(Aircraft):
         Aircraft.__init__(self,input_dict,folder_prefix = "track")
         self.tracking = True
         self.about_SCT = False # True # 
-        self.is_MC = False # True # 
+        self.is_MC = True # False # 
     
     def _get_control(self,t,x,is_controlled=True,given_control=False,u="o",
         force_control_to_inputs=False):
@@ -393,7 +393,7 @@ class DynamicInversionAircraft(Aircraft):
                 v = - np.matmul(self.Lin_Model.K,e) \
                     - np.matmul(self.Lin_Model.KI,eI)
                 
-                delta = np.matmul(Binv, - np.matmul(A,e) - np.matmul(A,dref) + v)
+                delta = np.matmul(Binv,-np.matmul(A,e) - np.matmul(A,dref) + v)
                 u = np.concatenate((delta + self.u_trim[0:3],[self.u_trim[3]]))
 
 
@@ -468,7 +468,7 @@ class DynamicInversionAircraft(Aircraft):
             # initialize run2 trim (SCT w/ phitrim = 30 deg)
             dum = self.phi_trim*1.
             if (self.is_MC and not self.about_SCT) or \
-                (not self.is_MC and self.about_SCT):
+                (not self.is_MC and not self.about_SCT):
                 self.phi_trim = 0.0
             else:
                 self.phi_trim = np.deg2rad(30.0)
@@ -1283,7 +1283,7 @@ if __name__ == "__main__":
     ]
 
     run_base_fs = {
-        "aircraft_class" : FeedbackLinearizationAircraft,
+        "aircraft_class" : DynamicInversionAircraft,
         "actr_warm_start" : False,
         "num" : 1000,
         "final_time" : 5., # 120., # 
@@ -1318,7 +1318,7 @@ if __name__ == "__main__":
         "include_stall_derivatives" : False, # True, # 
         "skip_simulation" : False, # True, # 
         "skip_video" : True, # False, # 
-        "name_end" : "_" + f1 + "_MRAC_2" # "_LAC_1" # "_TK_8" # "_DI_1" # 
+        "name_end" : "_" + f1 + "_DI_1" # "_MRAC_2" # "_LAC_1" # "_TK_8" # 
         # "name_end" : "_" + f1 + "_TK_8_no_act_no_cgshift"
         # 4 -- incr wt on tau, decr wt on da,de
         # 5 -- decr wt on da
@@ -1347,7 +1347,7 @@ if __name__ == "__main__":
     p_tr_deg = -1.0380901589473488
     q_tr_deg =  5.2594941135694429
     r_tr_deg =  9.1097110268117127
-    p_comm = 15.0 # 23.0 # 17.0 # 20.0 # 22.0 # 
+    p_comm = 22.0 # 15.0 # 23.0 # 17.0 # 20.0 # 
     base_rc_dict["reference"] = {
         "deg2rad_states" : [3,4,5],
         "3" : [
@@ -1408,10 +1408,10 @@ if __name__ == "__main__":
     # zt_p,zt_q,zt_r =  0.7 , 0.7 , 0.7 # Me
     # wn_p,wn_q,wn_r =  8.0 , 8.0 , 8.0 # Me
     #
-    # run_base_rc["aircraft_class"] = DynamicInversionAircraft
-    # # DI_1 & DI_2
-    # zt_p,zt_q,zt_r =  0.6 , 0.6 , 0.6 # Dr Harris
-    # wn_p,wn_q,wn_r =  8.0 , 8.0 , 8.0 # Dr Harris
+    run_base_rc["aircraft_class"] = DynamicInversionAircraft
+    # DI_1 & DI_2
+    zt_p,zt_q,zt_r =  0.6 , 0.6 , 0.6 # Dr Harris
+    wn_p,wn_q,wn_r =  8.0 , 8.0 , 8.0 # Dr Harris
     
     # base_rc_dict["controller"]["gains"][ "K"] = \
     #     bire_rc_dict["controller"]["gains"][ "K"] = np.diag([
@@ -1424,9 +1424,9 @@ if __name__ == "__main__":
     # run_base_rc["aircraft_class"] = LinearAdaptiveAircraft
     # # LAC_1
     # run_base_rc["state_threshold"] += [1.]*18
-    run_base_rc["aircraft_class"] = ModelReferenceAdaptiveAircraft
-    # MRAC_1
-    run_base_rc["state_threshold"] += [1.]*21
+    # run_base_rc["aircraft_class"] = ModelReferenceAdaptiveAircraft
+    # # MRAC_1
+    # run_base_rc["state_threshold"] += [1.]*21
     # base_rc_dict["simulation"]["integrator"] = "rk4" 
     run_base_rc["track_check_time"] = \
         run_base_fs["final_time"] = run_base_rc["final_time"] = 10.0 # 10.0 # 
@@ -1451,11 +1451,11 @@ if __name__ == "__main__":
     #     "sct_on_5" : False
     # }
     # run_base_rc["trim_bank"] = 30.0
-    # # run_single_simulation(bire_fs_dict,rtdst_1sg=di,**run_bire_fs,**plot_vars)
-    # # run_single_simulation(base_fs_dict,rtdst_1sg=di,**run_base_fs,**plot_vars)
-    # # run_single_simulation(bire_rc_dict,rtdst_1sg=di,**run_bire_rc,**plot_vars)
+    # run_single_simulation(bire_fs_dict,rtdst_1sg=di,**run_bire_fs,**plot_vars)
+    run_single_simulation(base_fs_dict,rtdst_1sg=di,**run_base_fs,**plot_vars)
+    # run_single_simulation(bire_rc_dict,rtdst_1sg=di,**run_bire_rc,**plot_vars)
     # run_single_simulation(base_rc_dict,rtdst_1sg=di,**run_base_rc,**plot_vars)
-    # quit()
+    quit()
 
     # # # # run monte carlo perturbation analysis
     # base_rc_dict["reference"] = {
@@ -1474,8 +1474,8 @@ if __name__ == "__main__":
     # di = [300. ,100., 60.] # TK_9
     # di = [300. ,130., 50.] # DI_1
     # di = [300. ,130., 50.] # DI_2
-    # di = [ 50. , 30.,  3.] # LAC_1
-    # di = [  1.5,  5.,  1.] # MRAC_1
+    # # di = [ 50. , 30.,  3.] # LAC_1
+    # # di = [  1.5,  5.,  1.] # MRAC_1
     # # # di = [0.,0.,0.]
     # # monte_carlo_perturbations(bire_fs_dict,rtdst_1sg=di,**run_bire_fs,**plot_vars)
     # # monte_carlo_perturbations(base_fs_dict,rtdst_1sg=di,**run_base_fs,**plot_vars)
@@ -1483,32 +1483,32 @@ if __name__ == "__main__":
     # monte_carlo_perturbations(base_rc_dict,rtdst_1sg=di,**run_base_rc,**plot_vars)
     # quit()
     # #
-    # single axis pqr dispersions
-    ###########################################################################
-    base_rc_dict["reference"] = {
-        "deg2rad_states" : [3,4,5],
-        "3" : [[ 0.0, p_tr_deg],[ 2.0, p_tr_deg]],
-        "4" : [[ 0.0, q_tr_deg],[ 2.0, q_tr_deg]],
-        "5" : [[ 0.0, r_tr_deg],[ 2.0, r_tr_deg]],
-        "sct_on_5" : False
-    }
-    run_base_rc["trim_bank"] = 30.0
-    run_base_fs["num"] = run_base_rc["num"] = 1000 # 10 # 
-    ###########################################################################
-    disa = [[1000.,0.,0.],[0.,300.,0.],[0.,0.,175.]] # TK_8
-    disa = [[ 500.,0.,0.],[0.,200.,0.],[0.,0.,120.]] # TK_9
-    disa = [[ 500.,0.,0.],[0.,200.,0.],[0.,0.,120.]] # DI_1
-    disa = [[ 500.,0.,0.],[0.,200.,0.],[0.,0.,120.]] # DI_2
-    disa = [[ 100.,0.,0.],[0., 50.,0.],[0.,0., 50.]] # LAC_1
-    disa = [[  20.,0.,0.],[0., 10.,0.],[0.,0., 10.]] # MRAC_1
-    disa = [[  20.,0.,0.],[0., 10.,0.],[0.,0., 10.]] # MRAC_2
-    for i in [0]: # range(3): # 
-        ds = disa[i]
-        # monte_carlo_perturbations(bire_fs_dict,rtdst_1sg=ds,**run_bire_fs,**plot_vars)
-        # monte_carlo_perturbations(base_fs_dict,rtdst_1sg=ds,**run_base_fs,**plot_vars)
-        # monte_carlo_perturbations(bire_rc_dict,rtdst_1sg=ds,**run_bire_rc,**plot_vars)
-        monte_carlo_perturbations(base_rc_dict,rtdst_1sg=ds,**run_base_rc,**plot_vars)
-    quit()
+    # # single axis pqr dispersions
+    # ###########################################################################
+    # base_rc_dict["reference"] = {
+    #     "deg2rad_states" : [3,4,5],
+    #     "3" : [[ 0.0, p_tr_deg],[ 2.0, p_tr_deg]],
+    #     "4" : [[ 0.0, q_tr_deg],[ 2.0, q_tr_deg]],
+    #     "5" : [[ 0.0, r_tr_deg],[ 2.0, r_tr_deg]],
+    #     "sct_on_5" : False
+    # }
+    # run_base_rc["trim_bank"] = 30.0
+    # run_base_fs["num"] = run_base_rc["num"] = 1000 # 10 # 
+    # ###########################################################################
+    # disa = [[1000.,0.,0.],[0.,300.,0.],[0.,0.,175.]] # TK_8
+    # disa = [[ 500.,0.,0.],[0.,200.,0.],[0.,0.,120.]] # TK_9
+    # disa = [[ 500.,0.,0.],[0.,200.,0.],[0.,0.,120.]] # DI_1
+    # disa = [[ 500.,0.,0.],[0.,200.,0.],[0.,0.,120.]] # DI_2
+    # disa = [[ 100.,0.,0.],[0., 50.,0.],[0.,0., 50.]] # LAC_1
+    # disa = [[  20.,0.,0.],[0., 10.,0.],[0.,0., 10.]] # MRAC_1
+    # disa = [[  20.,0.,0.],[0., 10.,0.],[0.,0., 10.]] # MRAC_2
+    # for i in [0]: # range(3): # 
+    #     ds = disa[i]
+    #     # monte_carlo_perturbations(bire_fs_dict,rtdst_1sg=ds,**run_bire_fs,**plot_vars)
+    #     # monte_carlo_perturbations(base_fs_dict,rtdst_1sg=ds,**run_base_fs,**plot_vars)
+    #     # monte_carlo_perturbations(bire_rc_dict,rtdst_1sg=ds,**run_bire_rc,**plot_vars)
+    #     monte_carlo_perturbations(base_rc_dict,rtdst_1sg=ds,**run_base_rc,**plot_vars)
+    # quit()
     # #
     # # single FM error dispersions
     # names = ["CL","CS","CD","Cl","Cm","Cn"]

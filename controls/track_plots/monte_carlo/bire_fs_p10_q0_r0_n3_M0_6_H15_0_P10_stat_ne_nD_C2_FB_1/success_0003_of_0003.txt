@@ -1,7 +1,0 @@
-   1 Dp =    18.268 Dq =     0.000 Dr =     0.000 |Dx| =     0.003,   Stable ->  p  r  q
-   2 Dp =   -30.783 Dq =     0.000 Dr =     0.000 |Dx| =     0.007,   Stable ->  r  q  p
-   3 Dp =     9.581 Dq =     0.000 Dr =     0.000 |Dx| =     0.001,   Stable ->  p  r  q
-   3/   3 cases stable
-|Dx| threshold is        1.0
-   0 cases tc early was not tc true
-
