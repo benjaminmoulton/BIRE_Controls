@@ -152,6 +152,10 @@
                 "tolerance" : 1.0e-9
             },
             "verbose_trim" : false
+        },
+        "trim_guess_bananas" : {
+            "elevator[deg]" : 10.0,
+            "BIRE[deg]" : 10.0
         }
     }
 }

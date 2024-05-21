@@ -360,6 +360,8 @@ class Aircraft:
             else:
                 self.beta_trim=trim.get("sideslip_angle[deg]",0.)*self.dtor
         elif self.trim_type == "spu":
+            self.given_bank = True
+            self.phi_trim = 0.0 * self.dtor
             self.q_trim = trim.get("pitch_rate[deg/s]",0.0) * self.dtor
         solver = trim.get("solver",{})
         self.NR_dx  = solver.get("finite_difference_step_size",0.01)
@@ -5576,6 +5578,12 @@ def monte_carlo_perturbations(filename,rtdst_1sg=[5.,5.,5.],
                 Dx_norm = max(Dx_norm_track,Dx_norm)
         except:
             xr,ur = xupp*0.0,uupp*0.0
+            x_zero = xr[:,-1]*1.
+            # Lin = aircraft.Lin_Model
+            if aircraft.tracking:
+                dx = x_zero - r_track
+            else:
+                dx = x_zero - (aircraft.x_trim_euler_deg)
             Dx_norm = 13.0
         
         case_run_text += " |Dx| = {:>9.3f},".format(Dx_norm)
