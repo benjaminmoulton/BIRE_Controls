@@ -1212,6 +1212,25 @@ if __name__ == "__main__":
     base_rc_dict = json.loads( open(base_rc_file).read() )
     bire_rc_dict = json.loads( open(bire_rc_file).read() )
 
+    # trim for baseline, determine LQR for controller code example
+    V = 520.0
+    H = 0.0
+    compr = False
+    stall = False
+    #
+    base_fs_dict["initial"].pop("mach")
+    base_fs_dict["initial"]["airspeed[ft/s]"] = V
+    base_fs_dict["initial"]["altitude[ft]"] = H
+    base_fs_dict["simulation"]["include_compressibility"] = compr
+    base_fs_dict["simulation"]["include_stall"] = stall
+    base_fs_dict["simulation"]["use_fitted_thrust_model"] = False
+    base = Aircraft(base_fs_dict)
+    base._report_trim_solution()
+    # build linearized system
+    base._build_controller(save_matrices=False,mrrr=[0,1,2,6,7,8,9,10,11],
+        mrrc=[3],drop_actrs=True,run_freq=False)
+    quit()
+
     # # build controller
     # build_base_controller(base_rc_dict,"RC_base_control_design")
     # quit()

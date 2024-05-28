@@ -158,33 +158,33 @@ if __name__ == "__main__":
             bire_dict["initial"]["trim"]["sideslip_angle[deg]"] = 15.0
         # MAX crosswind is about 12 deg beta at V = 222 ft/s (max crosswind is 45.5709 ft/s)
     base_dict["initial"]["trim"]["type"] = \
-        bire_dict["initial"]["trim"]["type"] = "spu" # "shss" # "sct" # 
+        bire_dict["initial"]["trim"]["type"] = "vc" # "spu" # "shss" # "sct" # 
     bire_dict["initial"]["trim"]["pitch_rate[deg/s]"] = 10.0
     bire = Aircraft(bire_dict) # base_dict) # 
     # bire.run_trim()
 
-    # numerical trim
-    bire.use_quaternions = False
-    x0 = np.zeros((16,))
-    V = flight_conditions[f1]["V"]*1.
-    x0[0] = V
-    qrad = np.deg2rad(bire_dict["initial"]["trim"]["pitch_rate[deg/s]"])
-    x0[4] = qrad
-    zf = -flight_conditions[f1]["h"]*1.
-    x0[8] = zf
-    x0[x0 == 0.0] = 0.1
-    dyn = lambda x : np.linalg.norm(bire._nonlinear_euler_dynamics(0.0,x,
-        is_controlled=True,given_control=True,u=x[12:17],
-        force_control_to_inputs=False))
-    bounds = ((V-100.,V+100.),(-100.0,+100.0),(-200.0,+200.0),
-              (-0.0,+0.0),(+qrad,+qrad),(-0.0,+0.0),
-              (-0.0,+0.0),(-0.0,+0.0),(+zf,+zf),
-              (-0.0,+0.0),(+qrad,+qrad),(-0.0,+0.0),
-              (bire.min_da,bire.max_da),(bire.min_de,bire.max_de),
-              (bire.min_dr,bire.max_dr),(bire.min_tau,bire.max_tau))
-    res = minimize(dyn,x0,bounds=bounds)
-    print(res.x)
-    # quit()
+    # # numerical trim
+    # bire.use_quaternions = False
+    # x0 = np.zeros((16,))
+    # V = flight_conditions[f1]["V"]*1.
+    # x0[0] = V
+    # qrad = np.deg2rad(bire_dict["initial"]["trim"]["pitch_rate[deg/s]"])
+    # x0[4] = qrad
+    # zf = -flight_conditions[f1]["h"]*1.
+    # x0[8] = zf
+    # x0[x0 == 0.0] = 0.1
+    # dyn = lambda x : np.linalg.norm(bire._nonlinear_euler_dynamics(0.0,x,
+    #     is_controlled=True,given_control=True,u=x[12:17],
+    #     force_control_to_inputs=False))
+    # bounds = ((V-100.,V+100.),(-100.0,+100.0),(-200.0,+200.0),
+    #           (-0.0,+0.0),(+qrad,+qrad),(-0.0,+0.0),
+    #           (-0.0,+0.0),(-0.0,+0.0),(+zf,+zf),
+    #           (-0.0,+0.0),(+qrad,+qrad),(-0.0,+0.0),
+    #           (bire.min_da,bire.max_da),(bire.min_de,bire.max_de),
+    #           (bire.min_dr,bire.max_dr),(bire.min_tau,bire.max_tau))
+    # res = minimize(dyn,x0,bounds=bounds)
+    # print(res.x)
+    # # quit()
 
     print()
     bire.use_quaternions = True
