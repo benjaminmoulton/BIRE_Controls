@@ -2089,42 +2089,85 @@ class LinearQuadraticTrackingAircraft(Aircraft):
                     I = np.eye(3)
                     A = np.block([[Z,I],[Z,A_tr]]) # np.block([[Z,I],[Z,A_tr]])
                     B = np.block([[Z],[B_tr]])
-                    # Q = np.diag([1.0e+0,1.0e+0,1.0e+0]+[1.0e+0,1.0e+0,1.0e+0])
-                    Q = np.diag([1.]*6)
-                    R = np.diag([1.]*3)
+                    H = np.block([[Z,I]])
+                    Q = np.block([[I,Z],[Z,I]]) # mm(H.T,H) # 
+                    ri = 5.0e+0
+                    R = np.diag([1.]*3)*ri
                     C = np.eye(6) # np.block([[Z,Z],[Z,I]])
                     # initialize K
                     Kshape = (3,6)
                     Kflat = (18,)
                     k0,_,_ = co.lqr(A,B,Q,R)
-                    # print(k0)
+                    print(k0)
                     # k0 = np.zeros(Kshape)
                     # k0 = np.ones(Kshape)
+                    # k0 = np.block([[I,I]])
                     K0 = k0.reshape(Kflat)
                     r0 = np.ones((3,1))
-                    G = -np.block([[I],[Z]])
-                    F = np.block([[Z],[-I]])
-                    def minJ(K,Q,C,R,A,B,G,F,r0):
+                    G = np.block([[-I],[ Z]])
+                    F = np.block([[ Z],[-I]])
+                    V = Z*0.
+                    def minJ(K,A,B,C,Q,R,F,G,H,V,r0):
                         K = K.reshape(Kshape)
-                        QCKRKC = Q + mm(C.T,mm(K.T,mm(R,mm(K,C))))
+                        CKRKC = mm(C.T,mm(K.T,mm(R,mm(K,C))))
+                        CKRKC = (CKRKC.T + CKRKC)/2.
+                        QCKRKC = Q + CKRKC
                         Ac = A - mm(B,mm(K,C))
                         Bc = G - mm(B,mm(K,F))
                         P = co.lyap(Ac.T,QCKRKC)
                         # print(Ac)
                         Acinv = np.linalg.solve(Ac,np.eye(Ac.shape[0]))
                         X = mm(Acinv,mm(Bc,mm(r0,mm(r0.T,mm(Bc.T,Acinv.T)))))
-                        J = 0.5*np.trace(mm(P,X))
-                        print(J)
+                        ebar = mm(1. + mm(H,mm(Acinv,Bc)),r0)
+                        J = 0.5*np.trace(mm(P,X)) \
+                            + 0.5*mm(ebar.T,mm(V,ebar))[0,0]
+                        J = abs(J)
+                        # print(J)
                         return J
-                    res = minimize(minJ,K0,args=(Q,C,R,A,B,G,F,r0),
-                        method="Nelder-Mead")#,options=dict(maxiter=200))
+                    def gradminJ(K,A,B,C,Q,R,F,G,H,V,r0):
+                        K = K.reshape(Kshape)
+                        CKRKC = mm(C.T,mm(K.T,mm(R,mm(K,C))))
+                        CKRKC = (CKRKC.T + CKRKC)/2.
+                        QCKRKC = Q + CKRKC
+                        Ac = A - mm(B,mm(K,C))
+                        Bc = G - mm(B,mm(K,F))
+                        P = co.lyap(Ac.T,QCKRKC)
+                        # print(Ac)
+                        Acinv = np.linalg.solve(Ac,np.eye(Ac.shape[0]))
+                        xbar = -mm(Acinv,mm(Bc,r0))
+                        ybar = mm(C,xbar) + mm(F,r0)
+                        X = mm(xbar,xbar.T)
+                        ebar = mm(1. + mm(H,mm(Acinv,Bc)),r0)
+                        #
+                        S = co.lyap(Ac,X)
+                        #
+                        J = 0.5*np.trace(mm(P,X)) \
+                            + 0.5*mm(ebar.T,mm(V,ebar))[0,0]
+                        J = abs(J)
+                        #
+                        dJdK = mm(R,mm(K,mm(C,mm(S,C.T)))) \
+                            - mm(B.T,mm(P,mm(S,C.T))) \
+                            + mm(B.T,mm(Acinv.T,mm(P \
+                                + mm(H.T,mm(V,H)),mm(xbar,ybar.T)))) \
+                            - mm(B.T,mm(Acinv.T,mm(H.T,mm(V,mm(r0,ybar.T)))))
+                        dJdK = dJdK.reshape(Kflat)
+                        # print(J)
+                        # print("dJdK shape =",dJdK.shape)
+                        return J,dJdK
+                    res = minimize(minJ, # gradminJ, # 
+                        K0,args=(A,B,C,Q,R,F,G,H,V,r0),
+                        jac=None, # True, # 
+                        method="Nelder-Mead") # ) # "SLSQP") # 
                     # print("success =",res.success)
                     # print(res.message)
                     # print(res.x)
-                    # print(res)
+                    print(res)
+                    # if not res.success:
+                    #     quit()
                     # quit()
                     # K,_,K_eigs = co.lqr(A,B,Q,R)
                     K = res.x.reshape(Kshape)*1.0
+                    # K = k0*1.0
                     self.KI_DI,self.KP_DI = K[:,0:3],K[:,3:6]
                     # print(K)
                     print(self.KI_DI)
@@ -2147,7 +2190,7 @@ class LinearQuadraticTrackingAircraft(Aircraft):
                 e = w - ref
                 
                 delta = - np.matmul(self.KP_DI,e) - np.matmul(self.KI_DI,eI)
-                u = np.concatenate((delta + self.u_trim[0:3],[self.u_trim[3]]))
+                u = np.concatenate((delta,[self.u_trim[3]])) #  + self.u_trim[0:3]
 
 
                 # # integral states
@@ -2876,7 +2919,7 @@ if __name__ == "__main__":
     t_zero = 0.0
     p_time = t_zero + 2.0 # 1.0 # 
     t_end = 0.0 # 25.0 # 
-    tf = t_end + p_time + 8.0 #+ 10.0 # # + 20.0 # 
+    tf = 2.0 # t_end + p_time + 8.0 #+ 10.0 # # + 20.0 # 
     bire_fs_dict["reference"] = bire_rc_dict["reference"] = {
         "deg2rad_states" : [3,4,5],
         "3" : [ [0.0, 0.0], [t_zero, 0.0], [t_zero, p_comm], [p_time, p_comm], [p_time, p_tr_deg] ],
@@ -2902,7 +2945,7 @@ if __name__ == "__main__":
     # # #
     # blm = 150.0 # 150.0 # 250.0 # 500.0 # 1000.0 # 50.0
     # bire_fs_dict["actuators"][    "BIRE"]["rate_limits[deg/s]"] = [-blm,blm]
-    # # #
+    # # # #
     # bire_fs_dict["simulation"][      "limit_input"] = False # True # 
     # bire_fs_dict["simulation"]["limit_input_rates"] = False # True # 
     # #########################################################################

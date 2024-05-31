@@ -1214,7 +1214,7 @@ if __name__ == "__main__":
 
     # trim for baseline, determine LQR for controller code example
     V = 520.0
-    H = 0.0
+    H = 2000.0
     compr = False
     stall = False
     #

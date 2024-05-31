@@ -1,5 +1,8 @@
 import sympy as sy
 import numpy as np
+from matplotlib import pyplot as plt
+from matplotlib import colors
+import matplotlib as mpl
 
 def print_to_latex(expr):
 
@@ -9,6 +12,79 @@ def print_to_latex(expr):
     print(expr)
 
     return expr
+
+def plot_determinants(Cc,no_spades=False,no_clubs=False,filename="Cc",
+        save_fig=True,show_fig=False,filetype="pdf"):
+    a_mag = 40.0
+    a_num = 41
+    a_lst = np.deg2rad(np.linspace(-a_mag,a_mag,a_num))
+    dB_mag = 90.0
+    dB_num = 91
+    dB_lst = np.deg2rad(np.linspace(-dB_mag,dB_mag,dB_num))
+    dets = np.zeros((a_num,dB_num))
+    invs = np.zeros((dB_num,2))
+    for ia in range(a_num):
+        ai = a_lst[ia]
+        Cci = Cc.replace(a,ai)
+        print("a = {:> 7.2f}".format(np.rad2deg(ai)))
+        for idB in range(dB_num):
+            dBi = dB_lst[idB]
+            Ccj = Cci.replace(dB,dBi)
+            Ccj = np.array(Ccj).astype(np.float64)
+            dets[ia,idB] = np.linalg.det(np.matmul(Ccj.T,Ccj))
+            # invs -- da, de
+            if ia == 0:
+                # al
+                invs[idB,0] = Ccj[0,0]
+                # em - el*am/al
+                invs[idB,1] = Ccj[1,1] - Ccj[1,0]*Ccj[0,1]/Ccj[0,0]
+    # plot
+    fig,ax  = plt.subplots(constrained_layout=True)
+    # A,DB = np.meshgrid(a_lst,dB_lst)
+    cmap = mpl.cm.BuPu
+    CS = ax.contourf(np.rad2deg(dB_lst),np.rad2deg(a_lst),dets*1.0e3,
+        levels=np.linspace(0.,10.0,num=15),cmap=cmap)
+    fig.colorbar(CS)
+    title = r"$|C_c^T C_c|$ x 1e3"
+    tadd = r""
+    if no_spades or no_clubs:
+        tadd += r","
+    if no_spades:
+        tadd += r" no $\spadesuit$"
+    if no_clubs:
+        tadd += r" no $\clubsuit$"
+    ax.set_title(title+tadd)
+    ax.set_xlabel(r"Tail Rotation, $\delta_B$ [deg]")
+    ax.set_ylabel(r"Angle of Attack, $\alpha$ [deg]")
+
+    # invs plot
+    if not no_clubs:
+        fgi,axi = plt.subplots(constrained_layout=True)
+        axi.plot(np.rad2deg(dB_lst),invs[:,0],c="k",ls="-",label=r"$a_\ell$")
+        axi.plot(np.rad2deg(dB_lst),invs[:,1],c="k",ls="--",
+                label=r"$e_m - e_\ell \frac{a_m}{a_\ell}$")
+        axi.legend()
+        axi.set_title(r"Denominators"+tadd)
+        axi.set_xlabel(r"Tail Rotation, $\delta_B$ [deg]")
+        axi.set_ylabel("Denominator")
+
+    # save or show
+    folder = "da_de_CcTCc_determinant/"
+    add = ""
+    if no_spades:
+        add += r"_no_spades"
+    if no_clubs:
+        add += r"_no_clubs"
+    if save_fig:
+        fig.savefig(folder+filename+add+"."+filetype,dpi=300.0)
+        if not no_clubs:
+            fgi.savefig(folder+"invs"+add+"."+filetype,dpi=300.0)
+    if show_fig:
+        plt.show()
+    else:
+        plt.close("all")
+    
+    return
 
 
 if __name__ == "__main__":
@@ -64,7 +140,7 @@ if __name__ == "__main__":
     
     # set to vals
     #
-    use_numerical = False # True # 
+    use_numerical = True # False # 
     if use_numerical:
         # other
         bw = 30.0
@@ -346,6 +422,114 @@ if __name__ == "__main__":
     # I = I*mat([[kp,0,0],[0,kq,0],[0,0,kr]])
     wdot = Iinv*(M + hmat*w + Sigma)
     # wdot = Iinv*(w)
+
+    
+    # change plot text parameters
+    plt.rcParams["font.family"] = "Serif"
+    plt.rcParams["font.size"] = 14.0
+    plt.rcParams["axes.labelsize"] = 14.0
+    plt.rcParams['lines.linewidth'] = 1.0
+    plt.rcParams["xtick.minor.visible"] = True
+    plt.rcParams["ytick.minor.visible"] = True
+    plt.rcParams["xtick.direction"] = plt.rcParams["ytick.direction"] = "in"
+    plt.rcParams["xtick.bottom"] = plt.rcParams["xtick.top"] = True
+    plt.rcParams["ytick.left"] = plt.rcParams["ytick.right"] = True
+    plt.rcParams["xtick.major.width"] = plt.rcParams["ytick.major.width"] = 1.0
+    plt.rcParams["xtick.minor.width"] = plt.rcParams["ytick.minor.width"] = 1.0
+    plt.rcParams["xtick.major.size"] = plt.rcParams["ytick.major.size"] = 5.0
+    plt.rcParams["xtick.minor.size"] = plt.rcParams["ytick.minor.size"] = 2.5
+    plt.rcParams["mathtext.fontset"] = "dejavuserif"
+    plt.rcParams['figure.dpi'] = 300.0
+
+    # test pseudo inverse
+    if False:
+        # test pseudo inverse
+        CL1_zz = CL0_z + CLa_z*a
+        CL1_AA = CL0_A + CLa_A*a
+        c1 = cos(dB); c2 = cos(2*dB); c22 = c2**2
+        s1 = sin(dB); s2 = sin(2*dB)
+        Cc = mat([
+            [Clda_z + Clda_A*c2, Clde_A*s1],
+            [Cmda_z + Cmda_A*s2, Cmde_z + Cmde_A*c1],
+            [CnLda_z*CL1_zz + Cnda_z + (CnLda_A*CL1_zz + CnLda_z*CL1_AA)*c2 + CnLda_A*CL1_AA*c22,
+                Cnde_A*c1]
+        ])
+        print("Cc"+"_no_spades"*False+"_no_clubs"*False)
+        plot_determinants(Cc,False,False)
+        # no spades
+        Cc = mat([
+            [Clda_z + Clda_A*c2, 0],
+            [0, Cmde_z + Cmde_A*c1],
+            [CnLda_z*CL1_zz + Cnda_z + (CnLda_A*CL1_zz + CnLda_z*CL1_AA)*c2 + CnLda_A*CL1_AA*c22,
+                Cnde_A*c1]
+        ])
+        print("Cc"+"_no_spades"* True+"_no_clubs"*False)
+        plot_determinants(Cc,True,False)
+        # no clubs
+        Cc = mat([
+            [Clda_z + Clda_A*c2, Clde_A*s1],
+            [Cmda_z + Cmda_A*s2, Cmde_z + Cmde_A*c1],
+            [CnLda_z*CL1_zz + Cnda_z + 0, Cnde_A*c1]
+        ])
+        print("Cc"+"_no_spades"*False+"_no_clubs"* True)
+        plot_determinants(Cc,False,True)
+        # no spades or clubs
+        Cc = mat([
+            [Clda_z + Clda_A*c2, 0],
+            [0, Cmde_z + Cmde_A*c1],
+            [CnLda_z*CL1_zz + Cnda_z + 0, Cnde_A*c1]
+        ])
+        print("Cc"+"_no_spades"* True+"_no_clubs"* True)
+        plot_determinants(Cc,True,True)
+    # quit()
+
+    # analytic solution for desired moment
+    print("moment coeff eqs")
+    print("Cl =",Cl)
+    print("Cm =",Cm)
+    print("Cn =",Cn)
+    print()
+    #
+    # determine analytic dB
+    Cld = sym("Cld")
+    Cmd = sym("Cmd")
+    Cnd = sym("Cnd")
+    da_term = sy.collect(Cl,da).coeff(da,1)
+    da_eq = 1/da_term*(Cld - sy.collect(Cl,da).coeff(da,0))
+    #
+    Cm_rep = Cm.subs(da,da_eq)
+    de_term = sy.collect(Cm_rep,de).coeff(de,1)
+    # print(de_term)
+    de_eq = 1/de_term*(Cmd - sy.collect(Cm_rep,de).coeff(de,0))
+    #
+    print("eq in terms of dB")
+    da_rep = da_eq.subs(de,de_eq)
+    Cn_rep = Cnd - Cn.subs(da,da_rep).subs(de,de_eq)
+    Cn_rep = Cn_rep*da_term*de_term
+    dB_eq = sy.collect(Cn_rep,dB)
+    print("da =",da_eq)
+    print("de =",de_eq)
+    print("dB =",dB_eq)
+    print()
+
+    # # assume
+    # print("trig simp")
+    # dB_eq = sy.trigsimp(dB_eq)
+    # print("dB =",dB_eq)
+    # print()
+
+    # replace dB
+    print("replace dB")
+    dB_eq = simp(dB_eq.subs(dB,sy.acos(dB))) # frac(1,2)*
+    dB_eq = sy.collect(dB_eq,dB)
+    print("dB =",dB_eq)
+    print()
+    print("collect in terms of dB")
+    print("dB =",sy.collect(exp(dB_eq),dB))
+    print()
+
+
+    quit()
 
     # Lyapunov function
     # print(wdot.shape)
