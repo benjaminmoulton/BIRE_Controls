@@ -1522,6 +1522,129 @@ class MomentFeedbackLinearizationAircraft(Aircraft):
         self.pseudo_inverse_method = True # False # 
         if self.is_compressible:
             raise TypeError("Cannot run this controller with compressibility!")
+        
+        # use LQR to design v
+        I = np.eye(3)
+        Z = np.zeros((3,3))
+        A = np.block([[Z,I],[Z,Z]])
+        B = np.block([[Z],[I]])
+        C = np.eye(6)
+        Q = np.diag([4.2e+3,4.2e+3,4.2e+3] + [1.0e+0,1.0e+0,1.0e+0])
+        Q[0,2] = Q[2,0] = 5.0e1 # 4.2e+3
+        Q[1,2] = Q[2,1] = 5.0e1 # 4.2e+3
+        # Q[3,5] = Q[5,3] = 1.0e+0
+        # Q[4,5] = Q[5,4] = 1.0e+0
+        N = np.array([
+            [ 0.0e+0, 0.0e+0, 2.0e+3],
+            [ 0.0e+0, 0.0e+0, 1.0e+2],
+            [ 0.0e+0, 0.0e+0, 0.0e+0],
+            [ 0.0e+0, 0.0e+0, 0.0e+0],
+            [ 0.0e+0, 0.0e+0, 0.0e+0],
+            [ 0.0e+0, 0.0e+0, 0.0e+0]
+        ])
+        R = np.diag([1.0e+0,1.0e+0] + [1.0e+3])
+        # # similar response to SMD system
+        # Q = np.diag([4.2e+3]*3 + [1.0e+0]*3)
+        # R = np.diag([1.0e+0,1.0e+0,1.0e+0])
+        # N = np.zeros((6,3))
+        K,_,K_eigs = co.lqr(A,B,Q,R,N)
+        self.KI_DI,self.KP_DI = K[:,0:3],K[:,3:6]
+        self.KI_DI = self.KI_DI*0.0
+        # print(K)
+        print(K_eigs)
+        rep2D(self.KI_DI,"KI",decimals=3)# print("KI =",self.KI_DI)
+        rep2D(self.KP_DI,"KP",decimals=3)# print("KP =",self.KP_DI)
+
+        # closed-loop simulation
+        # change plot text parameters
+        plt.rcParams["font.family"] = "Serif"
+        plt.rcParams["font.size"] = 8.0
+        plt.rcParams["axes.labelsize"] = 8.0
+        plt.rcParams['axes.xmargin'] = 0
+        plt.rcParams['lines.linewidth'] = 0.75 # 1.0
+        plt.rcParams["xtick.minor.visible"] = True
+        plt.rcParams["ytick.minor.visible"] = True
+        plt.rcParams["xtick.direction"] = plt.rcParams["ytick.direction"] = "in"
+        plt.rcParams["xtick.bottom"] = plt.rcParams["xtick.top"] = True
+        plt.rcParams["ytick.left"] = plt.rcParams["ytick.right"] = True
+        plt.rcParams["xtick.major.width"] = plt.rcParams["ytick.major.width"] = 0.75
+        plt.rcParams["xtick.minor.width"] = plt.rcParams["ytick.minor.width"] = 0.75
+        plt.rcParams["xtick.major.size"] = plt.rcParams["ytick.major.size"] = 5.0
+        plt.rcParams["xtick.minor.size"] = plt.rcParams["ytick.minor.size"] = 2.5
+        plt.rcParams["mathtext.fontset"] = "dejavuserif"
+        plt.rcParams['figure.dpi'] = 300.0
+        x0 = np.zeros((6,))
+        has_actuators = False
+        limit_actuators = False
+        limit_actuator_rates = False
+        # # include actuator dynamics
+        has_actuators = True
+        limit_actuators = False # True # 
+        limit_actuator_rates = False # True # 
+        x0 = np.zeros((9,))
+        S = np.diag([1./0.0495]*3)
+        A = np.block([[A,np.block([[Z],[I]])],[Z,Z,-S]])
+        B = np.block([[Z],[Z],[S]])
+        C = np.block([C,np.block([[Z],[Z]])])
+        #
+        x0[3] = -self._get_reference(0.0)[3]
+        def dyn(t,x,has_actuators,limit_actuators,limit_actuator_rates): 
+            if has_actuators:
+                if limit_actuators:
+                    x[6] = max(min(x[6],self.max_da),self.min_da)
+                    x[7] = max(min(x[7],self.max_de),self.min_de)
+                    x[8] = max(min(x[8],self.max_dr),self.min_dr)
+            dx = np.matmul(A-np.matmul(B,np.matmul(K,C)),x)
+            if has_actuators:
+                if limit_actuator_rates:
+                    dx[6] = max(min(dx[6],self.max_dadot),self.min_dadot)
+                    dx[7] = max(min(dx[7],self.max_dedot),self.min_dedot)
+                    dx[8] = max(min(dx[8],self.max_drdot),self.min_drdot)
+            return dx
+        
+        # simulate
+        ts  = np.linspace(0.0,10.0,num=1001)
+        ts0 = np.linspace(0.0, 2.0,num= 201)
+        args = (has_actuators,limit_actuators,limit_actuator_rates)
+        xs0 = odeint(dyn,x0,ts0,args=args,tfirst=True).T
+        x1 = xs0[:,-1]
+        x1[3] = x1[3] - x0[3] - self._get_reference(2.1)[3]
+        x1[4] = x1[4] - x0[4] - self._get_reference(2.1)[4]
+        x1[5] = x1[5] - x0[5] - self._get_reference(2.1)[5]
+        ts1 = np.linspace(2.0,10.0,num= 801)
+        xs1 = odeint(dyn,x1,ts1,args=args,tfirst=True).T
+        xs = np.concatenate((xs0[:,:-1],xs1),axis=1)
+        # print(xs.shape)
+        xs = np.rad2deg(xs)
+        us = np.array([-np.matmul(np.matmul(K,C),xsi) for xsi in xs.T]).T
+        fgs,axs = plt.subplots(1,3,
+            figsize=(6.0,3.0),dpi=300.0,sharex=True,constrained_layout=True)
+        lss = ["-","--","-."]
+        names = ["p","q","r"]
+        cnms = ["$\delta_a$","$\delta_e^B$","$\delta_B$"]
+        for i in range(3):#xs.shape[0]):
+            par = dict(c="k",ls=lss[i],lw=0.5)
+            axs[0].plot(ts,xs[i  ],label=r"$\int e_{"+names[i]+r"} \, dt$",**par)
+            axs[1].plot(ts,xs[i+3],label=     r"$e_{"+names[i]+r"}$"      ,**par)
+            if has_actuators:
+                axs[2].plot(ts,xs[i+6],c="0.5",ls=lss[i],lw=0.5)
+            axs[2].plot(ts,us[i  ],label=cnms[i],**par)
+        axs[1].set_xlim(ts[0],ts[-1])
+        axs[0].set_ylabel("integrator [$^\circ$]")
+        axs[1].set_ylabel("error [$^\circ$/s]")
+        axs[2].set_ylabel("control [$^\circ$]")
+        axs[0].legend()
+        axs[1].legend()
+        axs[2].legend()
+        plt.show()
+
+        quit()
+    
+    def __del__(self):
+        # report gain matrix
+        rep2D(self.KI_DI,"KI",decimals=3)
+        rep2D(self.KP_DI,"KP",decimals=3)
+        pass
     
     def _get_control(self,t,x,is_controlled=True,given_control=False,u="o",
         force_control_to_inputs=False):
@@ -1621,8 +1744,9 @@ class MomentFeedbackLinearizationAircraft(Aircraft):
                 w  = np.array([  p,  q,  r])
                 eI = np.array([epI,eqI,erI])
                 e = w - ref
-                LM = self.Lin_Model
-                v = - np.matmul(LM.K,e) - np.matmul(LM.KI,eI)
+                # LM = self.Lin_Model
+                # v = - np.matmul(LM.K,e) - np.matmul(LM.KI,eI)
+                v = - np.matmul(self.KP_DI,e) - np.matmul(self.KI_DI,eI)
                 Md = np.matmul(I,(v - np.matmul(Iinv,np.matmul(hmat,w) + Om)))
                 if self.pseudo_inverse_method:
                     # run through a cycle of dB's and determine which minimizes 
@@ -2087,12 +2211,20 @@ class LinearQuadraticTrackingAircraft(Aircraft):
                     B_tr = self.Lin_Model.B_min
                     Z = np.zeros((3,3))
                     I = np.eye(3)
-                    A = np.block([[Z,I],[Z,A_tr]]) # np.block([[Z,I],[Z,A_tr]])
-                    B = np.block([[Z],[B_tr]])
-                    H = np.block([[Z,I]])
-                    Q = np.block([[I,Z],[Z,I]]) # mm(H.T,H) # 
-                    ri = 5.0e+0
-                    R = np.diag([1.]*3)*ri
+                    A = np.block([[A_tr,Z],[I,Z]]) # np.block([[Z,I],[Z,A_tr]])
+                    B = np.block([[B_tr],[Z]])
+                    H = np.block([[I,Z]])
+                    # print(np.linalg.matrix_rank(co.obsv(A,H))) # A,H unobsv
+                    # quit()
+                    Q = mm(H.T,H) # np.block([[I,Z],[Z,I]]) # 
+                    # Q[0:3,0:3] = np.diag([1.e-1,1.e+1,5.0e+0])
+                    # Q[3:6,3:6] = np.diag([1.e+0,1.e+2,5.0e+1])
+                    Q[0:3,0:3] = np.diag([1.e+0]*3)
+                    Q[3:6,3:6] = np.diag([1.e+1]*3)
+                    # A,Q obsv
+                    if np.linalg.matrix_rank(co.obsv(A,Q**0.5)) < 6:
+                        raise ValueError("A,sqrt(Q) must be observable!!!")
+                    R = np.diag([1.e-2]*2 + [10.0])
                     C = np.eye(6) # np.block([[Z,Z],[Z,I]])
                     # initialize K
                     Kshape = (3,6)
@@ -2103,9 +2235,9 @@ class LinearQuadraticTrackingAircraft(Aircraft):
                     # k0 = np.ones(Kshape)
                     # k0 = np.block([[I,I]])
                     K0 = k0.reshape(Kflat)
-                    r0 = np.ones((3,1))
-                    G = np.block([[-I],[ Z]])
-                    F = np.block([[ Z],[-I]])
+                    r0 = np.deg2rad(np.ones((3,1))) # r0 = np.deg2rad(np.array([[1.0],[0.0],[0.0]]))
+                    G = np.block([[ Z],[-I]])
+                    F = np.block([[-I],[ Z]])
                     V = Z*0.
                     def minJ(K,A,B,C,Q,R,F,G,H,V,r0):
                         K = K.reshape(Kshape)
@@ -2155,20 +2287,29 @@ class LinearQuadraticTrackingAircraft(Aircraft):
                         # print("dJdK shape =",dJdK.shape)
                         return J,dJdK
                     res = minimize(minJ, # gradminJ, # 
-                        K0,args=(A,B,C,Q,R,F,G,H,V,r0),
+                        K0,args=(A,B,C,Q,R,F,G,H,V,r0),#np.array([[1.0],[0.0],[0.0]])),
                         jac=None, # True, # 
-                        method="Nelder-Mead") # ) # "SLSQP") # 
-                    # print("success =",res.success)
-                    # print(res.message)
-                    # print(res.x)
+                        method="SLSQP") # "Nelder-Mead") # ) # 
+                    # Kp = res.x.reshape(Kshape)*1.0
+                    # res = minimize(minJ, # gradminJ, # 
+                    #     K0,args=(A,B,C,Q,R,F,G,H,V,np.array([[0.0],[1.0],[0.0]])),
+                    #     jac=None, # True, # 
+                    #     method="SLSQP") # "Nelder-Mead") # ) # 
+                    # Kq = res.x.reshape(Kshape)*1.0
+                    # res = minimize(minJ, # gradminJ, # 
+                    #     K0,args=(A,B,C,Q,R,F,G,H,V,np.array([[0.0],[0.0],[1.0]])),
+                    #     jac=None, # True, # 
+                    #     method="SLSQP") # "Nelder-Mead") # ) # 
+                    # Kr = res.x.reshape(Kshape)*1.0
                     print(res)
-                    # if not res.success:
-                    #     quit()
-                    # quit()
-                    # K,_,K_eigs = co.lqr(A,B,Q,R)
+                    if not res.success:
+                        raise ValueError("LQT optimization failed!!")
+                    # K = (Kp + Kq + Kr)/3.
                     K = res.x.reshape(Kshape)*1.0
+                    cl_evals,cl_evecs = np.linalg.eig(A - mm(B,mm(K,C)))
+                    print("eval cl =",cl_evals)
                     # K = k0*1.0
-                    self.KI_DI,self.KP_DI = K[:,0:3],K[:,3:6]
+                    self.KP_DI,self.KI_DI = K[:,0:3],K[:,3:6]
                     # print(K)
                     print(self.KI_DI)
                     print(self.KP_DI)
@@ -2187,10 +2328,11 @@ class LinearQuadraticTrackingAircraft(Aircraft):
                 erI     = x_euler[self.xIi_eul[2]]
                 w  = np.array([  p,  q,  r])
                 eI = np.array([epI,eqI,erI])
-                e = w - ref
+                trim_slice = self.x_trim[self.Lin_Model.Cslice]
+                e = (w - trim_slice) - (ref - trim_slice)
                 
                 delta = - np.matmul(self.KP_DI,e) - np.matmul(self.KI_DI,eI)
-                u = np.concatenate((delta,[self.u_trim[3]])) #  + self.u_trim[0:3]
+                u = np.concatenate((delta + self.u_trim[0:3],[self.u_trim[3]]))
 
 
                 # # integral states
@@ -2817,31 +2959,31 @@ if __name__ == "__main__":
     #     [     0.0,     0.0,wn_r**2.]
     # ]).tolist()
     # # # 
-    # run_bire_rc["aircraft_class"] = \
-    #     run_bire_fs["aircraft_class"] = MomentFeedbackLinearizationAircraft
-    # run_bire_fs["name_end"] = "_" + f1 + "_MFBL_1"
-    # run_bire_rc["name_end"] = "_LGN"   + "_MFBL_1"
-    # zt_p,zt_q,zt_r =  0.6 , 0.6 , 0.6
-    # wn_p,wn_q,wn_r =  8.0 , 8.0 , 8.0 
-    # # #
-    # bire_rc_dict["controller"]["gains"][ "K"] = \
-    #     bire_fs_dict["controller"]["gains"][ "K"] = np.array([
-    #     [2.*zt_p*wn_p,         0.0,  -zt_r*wn_r], #         0.0], # 
-    #     [         0.0,2.*zt_q*wn_q,  -zt_r*wn_r], #         0.0], # 
-    #     [         0.0,         0.0,2.*zt_r*wn_r]
-    # ]).tolist()
-    # bire_rc_dict["controller"]["gains"]["KI"] = \
-    #     bire_fs_dict["controller"]["gains"]["KI"] = np.array([
-    #     [wn_p**2.,     0.0,wn_r**2.], #      0.0], # 
-    #     [     0.0,wn_q**2.,     0.0],
-    #     [     0.0,     0.0,wn_r**2.]
-    # ]).tolist()
+    run_bire_rc["aircraft_class"] = \
+        run_bire_fs["aircraft_class"] = MomentFeedbackLinearizationAircraft
+    run_bire_fs["name_end"] = "_" + f1 + "_MFBL_1"
+    run_bire_rc["name_end"] = "_LGN"   + "_MFBL_1"
+    zt_p,zt_q,zt_r =  0.6 , 0.6 , 0.6
+    wn_p,wn_q,wn_r =  8.0 , 8.0 , 8.0 
+    # #
+    bire_rc_dict["controller"]["gains"][ "K"] = \
+        bire_fs_dict["controller"]["gains"][ "K"] = np.array([
+        [2.*zt_p*wn_p,         0.0,  -zt_r*wn_r], #         0.0], # 
+        [         0.0,2.*zt_q*wn_q,  -zt_r*wn_r], #         0.0], # 
+        [         0.0,         0.0,2.*zt_r*wn_r]
+    ]).tolist()
+    bire_rc_dict["controller"]["gains"]["KI"] = \
+        bire_fs_dict["controller"]["gains"]["KI"] = np.array([
+        [wn_p**2.,     0.0,wn_r**2.], #      0.0], # 
+        [     0.0,wn_q**2.,     0.0],
+        [     0.0,     0.0,wn_r**2.]
+    ]).tolist()
     # #
     # # 
-    run_bire_fs["aircraft_class"] = LinearQuadraticTrackingAircraft
-    # LQT_1
-    run_bire_fs["name_end"] = "_" + f1 + "_LQT_1"
-    run_bire_rc["name_end"] = "_LGN"   + "_LQT_1"
+    # run_bire_fs["aircraft_class"] = LinearQuadraticTrackingAircraft
+    # # LQT_1
+    # run_bire_fs["name_end"] = "_" + f1 + "_LQT_1"
+    # run_bire_rc["name_end"] = "_LGN"   + "_LQT_1"
     # #
     # run_bire_fs["aircraft_class"] = LinearAdaptiveAircraft
     # # LAC_1
@@ -2919,7 +3061,7 @@ if __name__ == "__main__":
     t_zero = 0.0
     p_time = t_zero + 2.0 # 1.0 # 
     t_end = 0.0 # 25.0 # 
-    tf = 2.0 # t_end + p_time + 8.0 #+ 10.0 # # + 20.0 # 
+    tf = 10.0 # t_end + p_time + 8.0 #+ 10.0 # # + 20.0 # 
     bire_fs_dict["reference"] = bire_rc_dict["reference"] = {
         "deg2rad_states" : [3,4,5],
         "3" : [ [0.0, 0.0], [t_zero, 0.0], [t_zero, p_comm], [p_time, p_comm], [p_time, p_tr_deg] ],
@@ -2943,8 +3085,8 @@ if __name__ == "__main__":
     # bire_fs_dict["actuators"]["elevator"]["lag[s]"] = new_lag
     # bire_fs_dict["actuators"][    "BIRE"]["lag[s]"] = new_lag
     # # #
-    # blm = 150.0 # 150.0 # 250.0 # 500.0 # 1000.0 # 50.0
-    # bire_fs_dict["actuators"][    "BIRE"]["rate_limits[deg/s]"] = [-blm,blm]
+    blm = 150.0 # 100.0 # 250.0 # 500.0 # 1000.0 # 50.0
+    bire_fs_dict["actuators"][    "BIRE"]["rate_limits[deg/s]"] = [-blm,blm]
     # # # #
     # bire_fs_dict["simulation"][      "limit_input"] = False # True # 
     # bire_fs_dict["simulation"]["limit_input_rates"] = False # True # 

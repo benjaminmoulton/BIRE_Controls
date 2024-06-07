@@ -645,7 +645,9 @@ class Aircraft:
             ph,th,ps = self._euler_angles(x)
         else:
             ph, th, ps = x[ 9], x[10], x[11]
-        clm = th - a
+        
+        # climb angle
+        clm = asin((x[0]*sin(th) - (x[1]*sin(ph) + x[2]*cos(ph))*cos(th))/V)
 
         thrust_string = "    {:<23s} : {:>23.16f}   {:>23.16}".format(\
             "thrust[lbf]",T,"")
@@ -687,8 +689,8 @@ class Aircraft:
                 "\"rudder[deg,rad]\"",u[2]*self.rtod,u[2]))
         print("    {:<23s} : {:> 23.16f}".format("\"throttle\"",u[3]))
         print(thrust_string)
-        print("    {:<23s} : {:> 23.16f}".format("\"load factor\"",\
-            self._load_factors(x,u)[2]))
+        print("    {:<23s} : {:> 23.16f}".format("\"stbly load factor\"",\
+            self._load_factors(x,u,axis="stab")[2]))
         print("    {:<23s} : {:> 8}{}".format("\"iterations\"",iter," "*13))
         print("=" * len(thrust_string))
 
@@ -2068,8 +2070,9 @@ class Aircraft:
         return ex
 
 
-    def _load_factors(self,x,u):
-        """Method whichs determines the loading on the aircraft
+    def _load_factors(self,x,u,axis="stab"):
+        """Method whichs determines the loading on the aircraft, in one of
+        three specified types of axes.
         
         Returns
         -------
@@ -2082,9 +2085,38 @@ class Aircraft:
         normal_load_factor : float
             The load factor on the aircraft in the normal direction.
         """
+        poss_axes = ["body","wind","stab"]
+        if axis not in poss_axes:
+            raise ValueError("Load factor axis type '{}'".format(axis) 
+                + " not supported. Must be one of " 
+                + "[{},{},{}]".format(poss_axes[0],poss_axes[1],poss_axes[2]))
 
         # determine forces
         Fx,Fy,Fz,_,_,_,g = self._aerodynamics(x,u)
+
+        # multiply by corresponding axis type
+        Vu,Vv,Vw = x[0], x[1], x[2]
+        a = atan2(Vw,Vu)
+        V = (Vu * Vu + Vv * Vv + Vw * Vw)**0.5
+        b = asin(Vv/V)
+        ca = cos(a); sa = sin(a)
+        cb = cos(b); sb = sin(b)
+        if axis == "body":
+            M = np.eye(3)
+        elif axis == "stab":
+            M = np.array([
+                [ ca,0.0, sa],
+                [0.0,1.0,0.0],
+                [-sa,0.0, ca]
+            ])
+        elif axis == "wind":
+            M = np.array([
+                [ ca*cb,    sb, sa*cb],
+                [-ca*sb,    cb,-sa*sb],
+                [   -sa,   0.0,    ca]
+            ])
+        # multiply
+        [Fx,Fy,Fz] = np.matmul(M,[Fx,Fy,Fz])
 
         # read in mass properties
         W = self.inertia_model.W
@@ -3241,6 +3273,7 @@ class Aircraft:
         plt.rcParams["font.family"] = "Serif"
         plt.rcParams["font.size"] = 8.0
         plt.rcParams["axes.labelsize"] = 8.0
+        plt.rcParams['axes.xmargin'] = 0
         plt.rcParams['lines.linewidth'] = 0.75 # 1.0
         plt.rcParams["xtick.minor.visible"] = True
         plt.rcParams["ytick.minor.visible"] = True
@@ -3853,7 +3886,66 @@ class Aircraft:
         min_lim = max(min_delta,min_max)
         surf_axs.set_ylim((min_lim,max_lim))
 
+        # finite diffs (1)st and (2)nd order, (c)entered, (f)orward, (b)ackward
+        # (l)ower and (h)igher accuracy
+        # centered
+        F1cl = lambda a,t : (a[2:]-a[:-2])/(t[2:]-t[:-2])
+        F1ch = lambda a,t : (-a[4:]+8.*(a[3:-1]-a[1:-3])+a[:-4])\
+            /3./(t[4:]-t[:-4])
+        F2cl = lambda a,t : (a[2:]-2.*a[1:-1]+a[:-2])/((t[2:]-t[:-2])/2.)**2.
+        F2ch = lambda a,t : (-a[4:]+16.*(a[3:-1]+a[1:-3])-30.*a[2:-2]-a[:-4])\
+            /12./((t[4:]-t[:-4])/4.)**2.
+        # forward
+        F1fl = lambda a,t : (a[1:]-a[:-1])/(t[1:]-t[:-1])
+        F1fh = lambda a,t : (-a[2:]+4.*a[1:-1]-3.*a[:-2])/2./(t[1:-1]-t[:-2])
+        F2fl = lambda a,t : (a[2:]-2.*a[1:-1]+a[:-2])/(t[1:-1]-t[:-2])**2.
+        F2fh = lambda a,t : (-a[3:]+4.*a[2:-1]-5.*a[1:-2]+2.*a[:-3])\
+            /(t[1:-2]-t[:-3])**2.
+        # backward
+        F1bl = lambda a,t : (a[1:]-a[:-1])/(t[1:]-t[:-1])
+        F1bh = lambda a,t : (3*a[2:]-4.*a[1:-1]+a[:-2])/2./(t[2:]-t[1:-1])
+        F2bl = lambda a,t : (a[2:]-2.*a[1:-1]+a[:-2])/(t[2:]-t[1:-1])**2.
+        F2bh = lambda a,t : (2.*a[3:]-5.*a[2:-1]+4.*a[1:-2]-a[:-3])\
+            /(t[3:]-t[1:-2])**2.
+        #
+        _dxl = lambda a,t : np.concatenate((F1fl(a[:2],t[:2]),F1cl(a,t),\
+            F1bl(a[-2:],t[-2:])),axis=0)
+        _dxh = lambda a,t : np.concatenate((F1fh(a[:4],t[:4]),F1ch(a,t),\
+            F1bh(a[-4:],t[-4:])),axis=0)
+        ddxl = lambda a,t : np.concatenate((F2fl(a[:3],t[:3]),F2cl(a,t),\
+            F2fl(a[-3:],t[-3:])),axis=0)
+        ddxh = lambda a,t : np.concatenate((F2fh(a[:5],t[:5]),F2ch(a,t),\
+            F2bh(a[-5:],t[-5:])),axis=0)
+        # de2 = lambda a,t : F1ca(a,t)
 
+        # # ex
+        # plt.close("all")
+        # tf = 100.0
+        # num = 1001
+        # ts   = np.linspace(0.0,tf,num=num)
+        # __f = lambda x :  np.sin(x) + 1.0e-4*   x**3. + 1.0e-4*   x**2. + 153.0
+        # _df = lambda x :  np.cos(x) + 1.0e-4*3.*x**2. + 1.0e-4*2.*x
+        # ddf = lambda x : -np.sin(x) + 1.0e-4*6.*x     + 1.0e-4*2.
+        # xs   = __f(ts)
+        # dxa  = _df(ts)
+        # ddxa = ddf(ts)
+        # dxl  = _dxl(xs,ts)
+        # ddxl = ddxl(xs,ts)
+        # dxh  = _dxh(xs,ts)
+        # ddxh = ddxh(xs,ts)
+
+        # h = np.average(ts[1:]-ts[:-1])+ts*0.0
+
+        # fig, axs = plt.subplots(2,1,figsize=(6.0,3.0),
+        #     constrained_layout=True,sharex=True)
+        # axs[0].plot(ts,dxa,"k") # dxa - 
+        # axs[0].plot(ts,dxl,"m") # dxa - 
+        # axs[0].plot(ts,dxh,"y") # dxa - 
+        # axs[1].plot(ts,ddxa,"k") # ddxa - 
+        # axs[1].plot(ts,ddxl,"m") # ddxa - 
+        # axs[1].plot(ts,ddxh,"y") # ddxa - 
+        # plt.show()
+        # quit()
         
         udot_fig, udot_axs = plt.subplots(4,1,**subdict)
 
@@ -3876,22 +3968,27 @@ class Aircraft:
                 else:
                     iupp = xupp[12:16]
                     ilow = xlow[12:16]
-            udot =  inputs*0.
-            udot[:,1:-1] = ( inputs[:,2:] - inputs[:,:-2] ) \
-                / ( tarr[2:] - tarr[:-2] )
-            udot[:,0] = udot[:,1]*1.
-            udot[:,-1] = udot[:,-2]*1.
+            # udot =  inputs*0.
+            # udot[:,1:-1] = ( inputs[:,2:] - inputs[:,:-2] ) \
+            #     / ( tarr[2:] - tarr[:-2] )
+            # udot[:,0] = udot[:,1]*1.
+            # udot[:,-1] = udot[:,-2]*1.
+            udot = np.vstack([_dxl(inputs[k],tarr) for k in range(len(inputs))])
             if plot_ul_bounds:
-                udpp =  iupp*0.
-                udpp[:,1:-1] = ( iupp[:,2:] - iupp[:,:-2] ) \
-                    / ( tarr[2:] - tarr[:-2] )
-                udpp[:,0] = udpp[:,1]*1.
-                udpp[:,-1] = udpp[:,-2]*1.
-                udow =  ilow*0.
-                udow[:,1:-1] = ( ilow[:,2:] - ilow[:,:-2] ) \
-                    / ( tarr[2:] - tarr[:-2] )
-                udow[:,0] = udow[:,1]*1.
-                udow[:,-1] = udow[:,-2]*1.
+                # udpp =  iupp*0.
+                # udpp[:,1:-1] = ( iupp[:,2:] - iupp[:,:-2] ) \
+                #     / ( tarr[2:] - tarr[:-2] )
+                # udpp[:,0] = udpp[:,1]*1.
+                # udpp[:,-1] = udpp[:,-2]*1.
+                udpp = np.vstack([_dxl(iupp[k],tarr) \
+                    for k in range(len(inputs))])
+                # udow =  ilow*0.
+                # udow[:,1:-1] = ( ilow[:,2:] - ilow[:,:-2] ) \
+                #     / ( tarr[2:] - tarr[:-2] )
+                # udow[:,0] = udow[:,1]*1.
+                # udow[:,-1] = udow[:,-2]*1.
+                udow = np.vstack([_dxl(ilow[k],tarr) \
+                    for k in range(len(inputs))])
             udot_lbl = "cent diff resp"
         # grid, axis labels, legends
         udot_axs[0].grid(which="major",lw=0.6,ls="-",c="0.75")
@@ -3925,7 +4022,7 @@ class Aircraft:
         udot_axs[2].plot(tarr, udot[2],c=c,ls="-")
         udot_axs[3].plot(tarr, udot[3],c=c,ls="-")
         ## limits ##
-        if self.order >= 1:
+        if self.order >= 1 and self._limit_input_rates:
             udot_axs[0].plot(tarr,zrs+np.rad2deg(self.min_dadot),c="0.25",ls="--")
             udot_axs[0].plot(tarr,zrs+np.rad2deg(self.max_dadot),c="0.25",ls="--")
             udot_axs[1].plot(tarr,zrs+np.rad2deg(self.min_dedot),c="0.25",ls="--")
@@ -3948,15 +4045,21 @@ class Aircraft:
             uddt =  inputs * 0.0
             uddt[:,1:-1] = ( inputs[:,2:] - inputs[:,:-2] ) \
                 / ( tarr[2:] - tarr[:-2] )
+            uddt = np.vstack([_dxl(inputs[k],tarr) \
+                for k in range(len(inputs))])
             if plot_ul_bounds:
                 derp = xupp[16:20]
-                uddp = derp*0.0
-                uddp[:,1:-1] = ( derp[:,2:] - derp[:,:-2] ) \
-                / ( tarr[2:] - tarr[:-2] )
+                # uddp = derp*0.0
+                # uddp[:,1:-1] = ( derp[:,2:] - derp[:,:-2] ) \
+                # / ( tarr[2:] - tarr[:-2] )
+                uddp = np.vstack([_dxl(derp[k],tarr) \
+                    for k in range(len(inputs))])
                 derw = xlow[16:20]
-                uddw = derw*0.0
-                uddw[:,1:-1] = ( derw[:,2:] - derw[:,:-2] ) \
-                / ( tarr[2:] - tarr[:-2] )
+                # uddw = derw*0.0
+                # uddw[:,1:-1] = ( derw[:,2:] - derw[:,:-2] ) \
+                # / ( tarr[2:] - tarr[:-2] )
+                uddw = np.vstack([_dxl(derw[k],tarr) \
+                    for k in range(len(inputs))])
             uddt_lbl = "1st ord cent diff"
         else:
             if self.order == 0:
@@ -3970,19 +4073,25 @@ class Aircraft:
                 else:
                     iupp = xupp[12:16]
                     ilow = xlow[12:16]
-            uddt =  inputs * 0.0
-            uddt[:,1:-1] = ( inputs[:,2:] - 2.*inputs[:,1:-1] + \
-                inputs[:,:-2] ) \
-                / ( (tarr[2:] - tarr[:-2])/2.)**2.
+            # uddt =  inputs * 0.0
+            # uddt[:,1:-1] = ( inputs[:,2:] - 2.*inputs[:,1:-1] + \
+            #     inputs[:,:-2] ) \
+            #     / ( (tarr[2:] - tarr[:-2])/2.)**2.
+            uddt = np.vstack([ddxl(inputs[k],tarr) \
+                for k in range(len(inputs))])
             if plot_ul_bounds:
-                uddp =  iupp*0.
-                uddp[:,1:-1] = ( iupp[:,2:] - 2.*iupp[:,1:-1] + \
-                    iupp[:,:-2] ) \
-                    / ( (tarr[2:] - tarr[:-2])/2.)**2.
-                uddw =  ilow*0.
-                uddw[:,1:-1] = ( ilow[:,2:] - 2.*ilow[:,1:-1] + \
-                    ilow[:,:-2] ) \
-                    / ( (tarr[2:] - tarr[:-2])/2.)**2.
+                # uddp =  iupp*0.
+                # uddp[:,1:-1] = ( iupp[:,2:] - 2.*iupp[:,1:-1] + \
+                #     iupp[:,:-2] ) \
+                #     / ( (tarr[2:] - tarr[:-2])/2.)**2.
+                uddp = np.vstack([ddxl(iupp[k],tarr) \
+                    for k in range(len(inputs))])
+                # uddw =  ilow*0.
+                # uddw[:,1:-1] = ( ilow[:,2:] - 2.*ilow[:,1:-1] + \
+                #     ilow[:,:-2] ) \
+                #     / ( (tarr[2:] - tarr[:-2])/2.)**2.
+                uddw = np.vstack([ddxl(ilow[k],tarr) \
+                    for k in range(len(inputs))])
             uddt_lbl = "2nd ord cent diff"
         
         uddt_fig, uddt_axs = plt.subplots(4,1,**subdict)
@@ -4029,18 +4138,19 @@ class Aircraft:
         uddt_axs[3].plot(tarr, uddt[3],c=c,ls="-")
         
         # set xlimits
-        vels_axs[  0].set_xlim((0.,perc_zoom*tarr[-1]))
-        aero_axs[  0].set_xlim((0.,perc_zoom*tarr[-1]))
-        rate_axs[  0].set_xlim((0.,perc_zoom*tarr[-1]))
+        # print(perc_zoom,tarr[-1])
+        vels_axs[  0].set_xlim((0.,perc_zoom*self.tf))
+        aero_axs[  0].set_xlim((0.,perc_zoom*self.tf))
+        rate_axs[  0].set_xlim((0.,perc_zoom*self.tf))
         if self.tracking:
-            errs_axs    .set_xlim((0.,perc_zoom*tarr[-1]))
-            igrs_axs    .set_xlim((0.,perc_zoom*tarr[-1]))
-        posn_axs[  0].set_xlim((0.,perc_zoom*tarr[-1]))
-        ornt_axs[  0].set_xlim((0.,perc_zoom*tarr[-1]))
-        ctrl_axs[  0].set_xlim((0.,perc_zoom*tarr[-1]))
-        surf_axs     .set_xlim((0.,perc_zoom*tarr[-1]))
-        udot_axs[  0].set_xlim((0.,perc_zoom*tarr[-1]))
-        uddt_axs[  0].set_xlim((0.,perc_zoom*tarr[-1]))
+            errs_axs    .set_xlim((0.,perc_zoom*self.tf))
+            igrs_axs    .set_xlim((0.,perc_zoom*self.tf))
+        posn_axs[  0].set_xlim((0.,perc_zoom*self.tf))
+        ornt_axs[  0].set_xlim((0.,perc_zoom*self.tf))
+        ctrl_axs[  0].set_xlim((0.,perc_zoom*self.tf))
+        surf_axs     .set_xlim((0.,perc_zoom*self.tf))
+        udot_axs[  0].set_xlim((0.,perc_zoom*self.tf))
+        uddt_axs[  0].set_xlim((0.,perc_zoom*self.tf))
         # set legend font
         fnt = 8.0
         if plot_second_set:
@@ -6999,10 +7109,10 @@ if __name__ == "__main__":
         "actr_warm_start" : False,
         "num" : 1000,
         "final_time" : 15., # 120., # 
-        # "time_step" : 0.01,
+        "time_step" : 0.001,
         "initial_mach" : flight_conditions[f1]["m"]*1.,
         "initial_altitude" : flight_conditions[f1]["h"]*1.,
-        "trim_bank" : 30.0, # 75.5224878, # 78.463041, # 80.4059318, # 60.0, # 
+        "trim_bank" : 0.0, # 75.5224878, # 78.463041, # 80.4059318, # 60.0, # 
         "trim_climb" : 0.0,
         "start_climbing" : False,
         "end_gs_climbing" : False,
@@ -7087,15 +7197,15 @@ if __name__ == "__main__":
     # #####
 
     bire_dict["controller"]["LQR"] = {
-        # "note" : "_current",
-        # "Q" : [1.0e-6, 1.0e-6, 1.0e-6, # ### BK_3
-        #     1.0e0, 1.0e0, 1.0e0,
-        #     0.0, 0.0, 1.0e-6, 
-        #     1.0e0, 1.0e0, 0.0],
-        # "Q1a" : [0.0e0, 0.0e0, 0.0e0, 0.0e0],
-        # "Q2a" : [0.0, 0.0, 0.0, 0.0],
-        # "R" : [5.0e0, 5.0e0, 5.0e0, 5.0e-2]
-        # # #
+        "note" : "_current",
+        "Q" : [1.0e-6, 1.0e-6, 1.0e-6, # ### BK_3
+            1.0e0, 1.0e0, 1.0e0,
+            0.0, 0.0, 1.0e-6, 
+            1.0e0, 1.0e0, 0.0],
+        "Q1a" : [0.0e0, 0.0e0, 0.0e0, 0.0e0],
+        "Q2a" : [0.0, 0.0, 0.0, 0.0],
+        "R" : [5.0e0, 5.0e0, 5.0e0, 5.0e-2]
+        # # # #
         # "note" : "_current_sctA",
         # "Q" : [1.0e-5, 1.0e-6, 5.0e-6, # ### hs
         #        1.5e-2, 1.0e+1, 2.0e+0, # 
@@ -7104,21 +7214,21 @@ if __name__ == "__main__":
         # "Q1a" : [0.0e0, 0.0e0, 0.0e0, 0.0e0],
         # "Q2a" : [0.0e0, 0.0e0, 0.0e0, 0.0e0],
         # "R" : [1.0e+0, 1.0e+0, 1.0e+0, 1.0e+0] # 
-        # # #
-        "note" : "_current_sctB",
-        "Q" : [1.0e-5, 5.0e-7, 2.0e-6, # ### aft 
-               5.0e-3, 1.0e+1, 1.0e+0, # 
-               0.0e+0, 0.0e+0, 2.0e-7, # 
-               1.0e-3, 2.0e-3, 0.0e+0], # 
-        "Q1a" : [0.0e0, 0.0e0, 0.0e0, 0.0e0],
-        "Q2a" : [0.0e0, 0.0e0, 0.0e0, 0.0e0],
-        "R" : [1.0e+0, 5.0e+0, 2.0e+0, 1.0e+0] # 
-        # # #
+        # # # #
+        # "note" : "_current_sctB",
+        # "Q" : [1.0e-5, 5.0e-7, 2.0e-6, # ### aft 
+        #        5.0e-3, 1.0e+1, 1.0e+0, # 
+        #        0.0e+0, 0.0e+0, 2.0e-7, # 
+        #        1.0e-3, 2.0e-3, 0.0e+0], # 
+        # "Q1a" : [0.0e0, 0.0e0, 0.0e0, 0.0e0],
+        # "Q2a" : [0.0e0, 0.0e0, 0.0e0, 0.0e0],
+        # "R" : [1.0e+0, 5.0e+0, 2.0e+0, 1.0e+0] # 
+        # # # #
     }
     base_dict["controller"]["LQR"] = {**bire_dict["controller"]["LQR"]}
     # run_bire["FM_errors"][0] = 0.03
     # run_bire["FM_errors"][2] = 0.1
-    run_base["name_end"] = run_bire["name_end"] = "_" + f1 + "_BK_agt" # _hs" # _aaab" # 
+    run_base["name_end"] = run_bire["name_end"] = "_" + f1 + "_BK_3" # _hs" # "_BK_agt" # _aaab" # 
     run_base["has_turbulence"] = run_bire["has_turbulence"] = False # True # 
     run_base["has_model_error"] = run_bire["has_model_error"] = False # True # 
 
@@ -7747,9 +7857,10 @@ if __name__ == "__main__":
     di = [90.,10.,2.5]
     # di = [0.,0.,0.0]
     plot_vars["plot_full"] = False # True # 
-    plot_vars["plot_delta"] = True
-    plot_vars["zoom_deltas"] = False # True # 
-    plot_vars["format"] = "png"
+    plot_vars["plot_delta"] = True # False # 
+    plot_vars["zoom_deltas"] = True # False # 
+    plot_vars["zoom_full"] = False # True # 
+    plot_vars["format"] = "pdf" # "png" # 
     plot_vars["zoom_fraction"] = 1./15.
     run_base["trim_bank"] = run_bire["trim_bank"] = 0.0
     run_base["gain_steps"] = run_bire["gain_steps"] = 2
@@ -7757,26 +7868,26 @@ if __name__ == "__main__":
     # # #
     run_bire["num"] = run_base["num"] = 1
     ###########################################################################
-    di = [0.,0.,0.]
-    di = [1.,1.,0.3]
-    # run_bire["name_end"] = "_" + f1 + "_LP_1"
-    run_bire["name_end"] = "_" + f1 + "_FB_1"
-    run_bire["aircraft_class"] = BIRELyapSIGNAircraft # 
-    run_bire["mrrr"] = [0,1,2,6,7,8,9,10,11]
-    run_bire["mrrc"] = [3]
-    bire_dict["controller"] = {
-        "enforce_update_frequency" : False,
-        "update_frequency[hz]" : 100.0,
-        "type" : "gains",
-        "name" : "gains",
-        "gains" : {
-            "K" : [ [ -10.0,  0.0,  12.0],
-                    [  0.0, -5.0, -4.0],
-                    [  0.0,  4.0, 30.0]]
-        }
-    }
+    # di = [0.,0.,0.]
+    # di = [1.,1.,0.3]
+    # # run_bire["name_end"] = "_" + f1 + "_LP_1"
+    # run_bire["name_end"] = "_" + f1 + "_FB_1"
+    # run_bire["aircraft_class"] = BIRELyapSIGNAircraft # 
+    # run_bire["mrrr"] = [0,1,2,6,7,8,9,10,11]
+    # run_bire["mrrc"] = [3]
+    # bire_dict["controller"] = {
+    #     "enforce_update_frequency" : False,
+    #     "update_frequency[hz]" : 100.0,
+    #     "type" : "gains",
+    #     "name" : "gains",
+    #     "gains" : {
+    #         "K" : [ [ -10.0,  0.0,  12.0],
+    #                 [  0.0, -5.0, -4.0],
+    #                 [  0.0,  4.0, 30.0]]
+    #     }
+    # }
     run_bire["final_time"] = 15.0 # 5.0 # 
-    bire_dict["simulation"]["integrator"] = "rk4"
+    # bire_dict["simulation"]["integrator"] = "rk4"
     # bire_dict["simulation"]["include_compressibility"] = False
     # bire_dict["simulation"]["use_Anderson_corrections"] = False
     # bire_dict["simulation"]["include_stall"] = False

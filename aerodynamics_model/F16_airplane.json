@@ -32,7 +32,7 @@
             "CD1": -0.00132,
             "CD2": 0.00624,
             "geometry": {
-                "outline_points": "64A204.txt"
+                "outline_points" : "64A204.txt"
             }
         },
         "NACA_0005": {
