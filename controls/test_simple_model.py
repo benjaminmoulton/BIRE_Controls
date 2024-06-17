@@ -1869,8 +1869,8 @@ if __name__ == "__main__":
     bire_dict["simulation"]["use_quaternions"] = False
     # bire_dict["simulation"]["include_compressibility"] = False
     # bire_dict["simulation"]["include_stall"] = False
-    bire_dict["initial"]["mach"] = 0.2
-    bire_dict["initial"]["altitude[ft]"] = 1000.
+    bire_dict["initial"]["mach"] = 0.6
+    bire_dict["initial"]["altitude[ft]"] = 15000.
     # bire_dict["initial"].pop("mach")
     # bire_dict["initial"]["airspeed[ft/s]"] = 100.
     # bire_dict["initial"]["altitude[ft]"] = 0.
@@ -1881,13 +1881,14 @@ if __name__ == "__main__":
     ts = np.linspace(0.,tf,num=num)
 
     u_fun = lambda t : np.array([
-        bire.u_trim[0] + np.sin(t)*bire.max_da/5.,
-        bire.u_trim[1] + np.sin(t)*bire.max_de/5.,
-        bire.u_trim[2] + np.sin(t)*bire.max_dr/5.,
-        bire.u_trim[3] + np.sin(t)*bire.max_tau/100.
+        bire.u_trim[0] + np.sin(t)*bire.max_da/2.,
+        bire.u_trim[1] + np.sin(t)*bire.max_de/2.,
+        bire.u_trim[2] + np.sin(t)*bire.max_dr/1.5,
+        bire.u_trim[3] + np.sin(t)*bire.max_tau/50.
     ])
-    print(np.rad2deg(bire.max_da/5.), np.rad2deg(bire.max_de/5.), 
-        np.rad2deg(bire.max_dr/5.), bire.max_tau/100.)
+    # print(np.rad2deg(bire.max_da/2.), np.rad2deg(bire.max_de/2.), 
+    #     np.rad2deg(bire.max_dr/1.5), bire.max_tau/50.)
+    # quit()
     dynamics = lambda t,x : bire._dynamics(t,x,True,True,u_fun(t))
     xs_nlin = odeint(dynamics,bire.x_trim,ts,tfirst=True,
                     # atol=1e-10,rtol=1e-10
@@ -1988,7 +1989,7 @@ if __name__ == "__main__":
         axs.append(ax)
     for i in range(4):
         for j in range(3):
-            axs[i][j].plot(ts,xs_nlin[j+i*3],"k",label="NL")
+            axs[i][j].plot(ts,xs_nlin[j+i*3],"k-",marker="o",markevery=100,ms=2.0,label="NL")
             axs[i][j].plot(ts,xs_lin [j+i*3],"r",label="L")
             axs[i][j].plot(ts,xs_knln[j+i*3],"m",label="NL no C")
             axs[i][j].plot(ts,xs_knlS[j+i*3],"m--",label="NL no C S")

@@ -57,27 +57,29 @@ if __name__ == "__main__":
     # run at SCT
     trim_type = "sct"
     # altitude
-    H = 0.0
+    H = 0.0 # 30000.0 # 
     # mach
-    M = 0.8
+    M = 0.95 # 0.8 # 
     # gs of the case # 9.08 ~ 9 gs (add a bit more because relation on line 27 is approx)
     #     see trim output results (stbly load factor) to ammend for accuracy
     n = 9.08
     # simplification to put in terms of bank angle
     phi_trim = np.rad2deg(np.arccos(1.0/n))
     # cg shift (in ft) from nominal location in NASA report
-    cg_shift = [0.0,0.0,0.0]
+    cg_shift = [3.24876,0.0,0.0]
     # left stabilator wing root location wrt nominal location (do not add cgshift to this number)
-    ls_loc = [-13.1,-0.37*9.2,0.05]
+    ls_loc = [-13.1 - 1.68,-0.37*9.2,0.05]
     # weight
-    W = 20500.0
+    W = 28056.0 # 27304.0 # 20500.0 # 
     # #
     ## compressibility parameters
-    include_compressibility = False # True # 
+    include_compressibility = True # False # 
     # if compressible, whether to use Anderson (True) or Prandtl-Glauert (False) corrections
     use_anderson = True # False # 
     # whether to include a the stall model (probably want this to stay False)
     include_stall = False # True # 
+    # simple thrust model
+    use_simple_thrust_model = False # True # 
 
     ###########################################################################
     ###########################################################################
@@ -93,6 +95,7 @@ if __name__ == "__main__":
     base_dict["simulation"]["include_compressibility"] = include_compressibility
     base_dict["simulation"]["use_Anderson_corrections"] = use_anderson
     base_dict["simulation"]["include_stall"] = include_stall
+    base_dict["simulation"]["use_fitted_thrust_model"] = not use_simple_thrust_model
     # cg
     base_dict["aircraft"]["CG_shift[ft]"] = cg_shift
     # trim params
@@ -202,12 +205,12 @@ if __name__ == "__main__":
     Cm_ls = FMls["inviscid"]["Cm"]["h_stab_left"] + FMls["viscous"]["Cm"]["h_stab_left"]
     Cn_ls = FMls["inviscid"]["Cn"]["h_stab_left"] + FMls["viscous"]["Cn"]["h_stab_left"]
     fmls = [CL_ls,CS_ls,CD_ls,Cl_ls,Cm_ls,Cn_ls]
-    CL_rs = FMrs["inviscid"]["CL"]["h_stab_left"] + FMrs["viscous"]["CL"]["h_stab_left"]
-    CS_rs = FMrs["inviscid"]["CS"]["h_stab_left"] + FMrs["viscous"]["CS"]["h_stab_left"]
-    CD_rs = FMrs["inviscid"]["CD"]["h_stab_left"] + FMrs["viscous"]["CD"]["h_stab_left"]
-    Cl_rs = FMrs["inviscid"]["Cl"]["h_stab_left"] + FMrs["viscous"]["Cl"]["h_stab_left"]
-    Cm_rs = FMrs["inviscid"]["Cm"]["h_stab_left"] + FMrs["viscous"]["Cm"]["h_stab_left"]
-    Cn_rs = FMrs["inviscid"]["Cn"]["h_stab_left"] + FMrs["viscous"]["Cn"]["h_stab_left"]
+    CL_rs = FMrs["inviscid"]["CL"]["h_stab_right"] + FMrs["viscous"]["CL"]["h_stab_right"]
+    CS_rs = FMrs["inviscid"]["CS"]["h_stab_right"] + FMrs["viscous"]["CS"]["h_stab_right"]
+    CD_rs = FMrs["inviscid"]["CD"]["h_stab_right"] + FMrs["viscous"]["CD"]["h_stab_right"]
+    Cl_rs = FMrs["inviscid"]["Cl"]["h_stab_right"] + FMrs["viscous"]["Cl"]["h_stab_right"]
+    Cm_rs = FMrs["inviscid"]["Cm"]["h_stab_right"] + FMrs["viscous"]["Cm"]["h_stab_right"]
+    Cn_rs = FMrs["inviscid"]["Cn"]["h_stab_right"] + FMrs["viscous"]["Cn"]["h_stab_right"]
     fmrs = [CL_rs,CS_rs,CD_rs,Cl_rs,Cm_rs,Cn_rs]
     
     # correct for compressibility, stall

@@ -44,10 +44,10 @@ from inertia_model import InertiaModel
 from turbulence import ZeroTurbulence, DampedSinusoidGust, VonKarmanTurbulence
 from hunsaker_atm import stdatm_english as stdatm_hunsaker, gravity_english
 
-def rwfn(file_name,sep="/"):
-    if sysplat() == "Windows":
-        file_name = (file_name).replace("/",sep)
-    return file_name
+# def rwfn(file_name,sep="/"):
+#     if sysplat() == "Windows":
+#         file_name = (file_name).replace("/",sep)
+#     return file_name
 
 class Aircraft:
     """ A class which simulates the flight of an aircraft.
@@ -3139,6 +3139,8 @@ class Aircraft:
         perc_zoom = kwargs.get("percent_zoom", 1.0)
         is_zoomed = perc_zoom < 1.
         i_zoom = int(self.tarr.shape[0]*perc_zoom) + 1
+        save_states = kwargs.get("save_states",False)
+        plot_full = kwargs.get("plot_full",True)
         first_label = kwargs.get("first_set_label","controlled")
         second_label = kwargs.get("second_set_label","uncontrolled")
         plot_second_set = kwargs.get("plot_second_set",False)
@@ -4166,25 +4168,83 @@ class Aircraft:
             # udot_axs[0].legend(fontsize=fnt)
             # uddt_axs[0].legend(fontsize=fnt)
         # save figs
-        vels_fig.savefig(predir+"velocities."+format,**savedict)
-        aero_fig.savefig(predir+"aero_angles."+format,**savedict)
-        rate_fig.savefig(predir+"rates."+format,**savedict)
-        if self.tracking:
-            errs_fig.savefig(predir+"errors."+format,**savedict)
-            igrs_fig.savefig(predir+"integrator_states."+format,**savedict)
-        posn_fig.savefig(predir+"position."+format,**savedict)
-        ornt_fig.savefig(predir+"orientation."+format,**savedict)
-        ctrl_fig.savefig(predir+"inputs_all."+format,**savedict)
-        surf_fig.savefig(predir+"inputs_surfaces."+format,**savedict)
-        udot_fig.savefig(predir+"actuation_rates."+format,**savedict)
-        uddt_fig.savefig(predir+"actuation_acceleration."+format,**savedict)
-        # show or close
+        if not(save_states and not(plot_full)):
+            vels_fig.savefig(predir+"velocities."+format,**savedict)
+            aero_fig.savefig(predir+"aero_angles."+format,**savedict)
+            rate_fig.savefig(predir+"rates."+format,**savedict)
+            if self.tracking:
+                errs_fig.savefig(predir+"errors."+format,**savedict)
+                igrs_fig.savefig(predir+"integrator_states."+format,**savedict)
+            posn_fig.savefig(predir+"position."+format,**savedict)
+            ornt_fig.savefig(predir+"orientation."+format,**savedict)
+            ctrl_fig.savefig(predir+"inputs_all."+format,**savedict)
+            surf_fig.savefig(predir+"inputs_surfaces."+format,**savedict)
+            udot_fig.savefig(predir+"actuation_rates."+format,**savedict)
+            uddt_fig.savefig(predir+"actuation_acceleration."+format,**savedict)
+
+        # save states
+        if save_states:
+            print("         saving states...")
+            # file name
+            save_file = folder[:-(len(folder.split("/")[-2])+1)] + prename
+            save_file += "states_output.csv"
+
+            # build header
+            li = 16
+            lh = li + 8
+            hd = ""
+            # time
+            hd += ("{:>{}s},").format("time [s]",lh)
+            # velocities
+            vel = ["V{}b [ft/s]".format(sub) for sub in ["x","y","z"]]
+            hd += ("{:>{}s},"*3).format(vel[0],lh,vel[1],lh,vel[2],lh)
+            # fix start and end to align
+            hd = hd[3:-1]
+            # rates
+            pqr = ["{} [deg/s]".format(sub) for sub in ["p","q","r"]]
+            hd += (",{:>{}s}"*3).format(pqr[0],lh,pqr[1],lh,pqr[2],lh)
+            # position
+            psn = ["{}f [ft]".format(sub) for sub in ["x","y","z"]]
+            hd += (",{:>{}s}"*3).format(psn[0],lh,psn[1],lh,psn[2],lh)
+            # position
+            orn = ["{} [deg]".format(sub) for sub in ["phi","theta","psi"]]
+            hd += (",{:>{}s}"*3).format(orn[0],lh,orn[1],lh,orn[2],lh)
+            # actuator states
+            de = de.replace("^","")
+            acts_list = ["da","d"+de,"d"+dr,"tau"]
+            act = ["{} [deg]".format(sub) for sub in acts_list[:3]]
+            act += ["{} [per-unit]".format(acts_list[3])]
+            hd += (",{:>{}s}"*4).format(act[0],lh,act[1],lh,act[2],lh,act[3],lh)
+            # actuatordot states
+            act = ["{}dot [deg/s]".format(sub) for sub in acts_list[:3]]
+            act += ["{}dot [per-unit/s]".format(acts_list[3])]
+            hd += (",{:>{}s}"*4).format(act[0],lh,act[1],lh,act[2],lh,act[3],lh)
+            # actuatordotdot states
+            act = ["{}ddot [deg/s/s]".format(sub) for sub in acts_list[:3]]
+            act += ["{}ddot [per-unit/s/s]".format(acts_list[3])]
+            hd += (",{:>{}s}"*4).format(act[0],lh,act[1],lh,act[2],lh,act[3],lh)
+
+            # build array
+            arr = xarr.T*1.0
+            # add in time
+            arr = np.hstack((tarr[:,np.newaxis],arr))
+            # add in dot
+            arr = np.hstack((arr,udot.T))
+            # add in ddot
+            arr = np.hstack((arr,uddt.T))
+
+            # save file
+            np.savetxt(save_file,arr,fmt="% ."+str(li)+"e",delimiter=", ",
+                       header=hd)
+
+            # quit()
+
+        # show or close figures
         if show:
             plt.show()
         else:
             plt.close("all")
 
-        print
         return
 
 
@@ -4197,10 +4257,12 @@ class Aircraft:
         zm_frc = kwargs.get("zoom_fraction",1.0)
         plot_full = kwargs.get("plot_full",True)
         plot_delta = kwargs.get("plot_delta",True)
+        output_states = kwargs.get("output_states",False)
 
         # plot full results
-        if plot_full:
-            self._plot_results(plot_deltas=False, **kwargs)
+        if output_states or plot_full:
+            self._plot_results(plot_deltas=False, save_states=output_states, 
+                               **kwargs)
         if zm_full:
             self._plot_results(plot_deltas=False, percent_zoom=zm_frc,**kwargs)
 
@@ -7109,7 +7171,7 @@ if __name__ == "__main__":
         "actr_warm_start" : False,
         "num" : 1000,
         "final_time" : 15., # 120., # 
-        "time_step" : 0.001,
+        "time_step" : 0.01,
         "initial_mach" : flight_conditions[f1]["m"]*1.,
         "initial_altitude" : flight_conditions[f1]["h"]*1.,
         "trim_bank" : 0.0, # 75.5224878, # 78.463041, # 80.4059318, # 60.0, # 
@@ -7862,45 +7924,14 @@ if __name__ == "__main__":
     plot_vars["zoom_full"] = False # True # 
     plot_vars["format"] = "pdf" # "png" # 
     plot_vars["zoom_fraction"] = 1./15.
+    # plot_vars["output_states"] = True # False # 
     run_base["trim_bank"] = run_bire["trim_bank"] = 0.0
     run_base["gain_steps"] = run_bire["gain_steps"] = 2
     run_base["skip_simulation"] = run_bire["skip_simulation"] = False
     # # #
     run_bire["num"] = run_base["num"] = 1
     ###########################################################################
-    # di = [0.,0.,0.]
-    # di = [1.,1.,0.3]
-    # # run_bire["name_end"] = "_" + f1 + "_LP_1"
-    # run_bire["name_end"] = "_" + f1 + "_FB_1"
-    # run_bire["aircraft_class"] = BIRELyapSIGNAircraft # 
-    # run_bire["mrrr"] = [0,1,2,6,7,8,9,10,11]
-    # run_bire["mrrc"] = [3]
-    # bire_dict["controller"] = {
-    #     "enforce_update_frequency" : False,
-    #     "update_frequency[hz]" : 100.0,
-    #     "type" : "gains",
-    #     "name" : "gains",
-    #     "gains" : {
-    #         "K" : [ [ -10.0,  0.0,  12.0],
-    #                 [  0.0, -5.0, -4.0],
-    #                 [  0.0,  4.0, 30.0]]
-    #     }
-    # }
-    run_bire["final_time"] = 15.0 # 5.0 # 
-    # bire_dict["simulation"]["integrator"] = "rk4"
-    # bire_dict["simulation"]["include_compressibility"] = False
-    # bire_dict["simulation"]["use_Anderson_corrections"] = False
-    # bire_dict["simulation"]["include_stall"] = False
-    # bire_dict["actuators"]["order"] = 0
-    # run_bire["state_threshold"] = [
-    #     10., 15., 15.,
-    #     20., 10., 10., # 
-    #     1., 1., 50., # 
-    #     25., 10., 1., # 
-    #     # 5., 5., 5., 0.05
-    # ]
-    # bire_dict["simulation"]["limit_input"] = False
-    # bire_dict["simulation"]["limit_input_rates"] = False
+    run_bire["final_time"] = 15.0 # 1.0 # 5.0 # 
     ###########################################################################
     run_single_simulation(bire_dict,rtdst_1sg=di,**run_bire,**plot_vars)
     # run_single_simulation(base_dict,rtdst_1sg=di,**run_base,**plot_vars)
