@@ -99,6 +99,7 @@ if __name__ == "__main__":
     sin = sy.sin
     cos = sy.cos
     tan = sy.tan
+    atan2 = sy.atan2
     sqrt = sy.sqrt
     mat = sy.Matrix
     pi = sy.pi
@@ -442,8 +443,9 @@ if __name__ == "__main__":
     plt.rcParams['figure.dpi'] = 300.0
 
     # test pseudo inverse
-    if False:
+    if False: # True: # 
         # test pseudo inverse
+        # Cmde_z = 0.05 + Cmde_z*0
         CL1_zz = CL0_z + CLa_z*a
         CL1_AA = CL0_A + CLa_A*a
         c1 = cos(dB); c2 = cos(2*dB); c22 = c2**2
@@ -481,55 +483,55 @@ if __name__ == "__main__":
         ])
         print("Cc"+"_no_spades"* True+"_no_clubs"* True)
         plot_determinants(Cc,True,True)
-    # quit()
+        quit()
 
-    # analytic solution for desired moment
-    print("moment coeff eqs")
-    print("Cl =",Cl)
-    print("Cm =",Cm)
-    print("Cn =",Cn)
-    print()
-    #
-    # determine analytic dB
-    Cld = sym("Cld")
-    Cmd = sym("Cmd")
-    Cnd = sym("Cnd")
-    da_term = sy.collect(Cl,da).coeff(da,1)
-    da_eq = 1/da_term*(Cld - sy.collect(Cl,da).coeff(da,0))
-    #
-    Cm_rep = Cm.subs(da,da_eq)
-    de_term = sy.collect(Cm_rep,de).coeff(de,1)
-    # print(de_term)
-    de_eq = 1/de_term*(Cmd - sy.collect(Cm_rep,de).coeff(de,0))
-    #
-    print("eq in terms of dB")
-    da_rep = da_eq.subs(de,de_eq)
-    Cn_rep = Cnd - Cn.subs(da,da_rep).subs(de,de_eq)
-    Cn_rep = Cn_rep*da_term*de_term
-    dB_eq = sy.collect(Cn_rep,dB)
-    print("da =",da_eq)
-    print("de =",de_eq)
-    print("dB =",dB_eq)
-    print()
-
-    # # assume
-    # print("trig simp")
-    # dB_eq = sy.trigsimp(dB_eq)
+    # # analytic solution for desired moment
+    # print("moment coeff eqs")
+    # print("Cl =",Cl)
+    # print("Cm =",Cm)
+    # print("Cn =",Cn)
+    # print()
+    # #
+    # # determine analytic dB
+    # Cld = sym("Cld")
+    # Cmd = sym("Cmd")
+    # Cnd = sym("Cnd")
+    # da_term = sy.collect(Cl,da).coeff(da,1)
+    # da_eq = 1/da_term*(Cld - sy.collect(Cl,da).coeff(da,0))
+    # #
+    # Cm_rep = Cm.subs(da,da_eq)
+    # de_term = sy.collect(Cm_rep,de).coeff(de,1)
+    # # print(de_term)
+    # de_eq = 1/de_term*(Cmd - sy.collect(Cm_rep,de).coeff(de,0))
+    # #
+    # print("eq in terms of dB")
+    # da_rep = da_eq.subs(de,de_eq)
+    # Cn_rep = Cnd - Cn.subs(da,da_rep).subs(de,de_eq)
+    # Cn_rep = Cn_rep*da_term*de_term
+    # dB_eq = sy.collect(Cn_rep,dB)
+    # print("da =",da_eq)
+    # print("de =",de_eq)
     # print("dB =",dB_eq)
     # print()
 
-    # replace dB
-    print("replace dB")
-    dB_eq = simp(dB_eq.subs(dB,sy.acos(dB))) # frac(1,2)*
-    dB_eq = sy.collect(dB_eq,dB)
-    print("dB =",dB_eq)
-    print()
-    print("collect in terms of dB")
-    print("dB =",sy.collect(exp(dB_eq),dB))
-    print()
+    # # # assume
+    # # print("trig simp")
+    # # dB_eq = sy.trigsimp(dB_eq)
+    # # print("dB =",dB_eq)
+    # # print()
+
+    # # replace dB
+    # print("replace dB")
+    # dB_eq = simp(dB_eq.subs(dB,sy.acos(dB))) # frac(1,2)*
+    # dB_eq = sy.collect(dB_eq,dB)
+    # print("dB =",dB_eq)
+    # print()
+    # print("collect in terms of dB")
+    # print("dB =",sy.collect(exp(dB_eq),dB))
+    # print()
 
 
-    quit()
+    # quit()
 
     # Lyapunov function
     # print(wdot.shape)
@@ -559,31 +561,43 @@ if __name__ == "__main__":
     Vdot = Vdot.replace(Cl_sym,Cl).replace(Cm_sym,Cm).replace(Cn_sym,Cn)
     print("Vdot =",Vdot)
     print()
+
+    # replace
+    em = sym("em")
+    en = sym("en")
+    Vdot = Vdot.replace(de,sqrt(em**2 + en**2))
+    Vdot = Vdot.replace(dB,atan2(en,em))
+    Vdot = simp(Vdot)
+    print("Vdot =",Vdot)
+    print()
+
+
+    quit()
     # Vdot = exp(Vdot)
     # Vdot = sy.collect(sy.collect(sy.collect(Vdot,da),de),dB)
     # print("Vdot =",Vdot)
     # print()
-    quit()
+    # quit()
     # print("ASSUMING dB = 0")
     # Vdot = Vdot.replace(dB,0)
     # print("Vdot =",Vdot)
     # print()
     # print(sy.collect(Vdot,da,evaluate=False)[da])
-    Vdot_da  = Vdot.coeff(da,1)
-    Vdot_de  = Vdot.coeff(de,1)
-    Vdot_base = exp( Vdot - Vdot_da*da - Vdot_de*de )
-    # Vdot_base = sy.collect(Vdot_base,dB)
-    Vdot_base = sy.collect(Vdot_base,p)
-    Vdot_base = sy.collect(Vdot_base,q)
-    Vdot_base = sy.collect(Vdot_base,r)
-    Vdot_base = sy.collect(Vdot_base,b)
-    Vdot_base = sy.collect(Vdot_base,a)
-    print("-"*15)
-    print("Vdot_da   =",Vdot_da)
-    print("Vdot_de   =",Vdot_de)
-    print("Vdot_base =",Vdot_base)
-    print("-"*15)
-    print()
+    # Vdot_da  = Vdot.coeff(da,1)
+    # Vdot_de  = Vdot.coeff(de,1)
+    # Vdot_base = exp( Vdot - Vdot_da*da - Vdot_de*de )
+    # # Vdot_base = sy.collect(Vdot_base,dB)
+    # Vdot_base = sy.collect(Vdot_base,p)
+    # Vdot_base = sy.collect(Vdot_base,q)
+    # Vdot_base = sy.collect(Vdot_base,r)
+    # Vdot_base = sy.collect(Vdot_base,b)
+    # Vdot_base = sy.collect(Vdot_base,a)
+    # print("-"*15)
+    # print("Vdot_da   =",Vdot_da)
+    # print("Vdot_de   =",Vdot_de)
+    # print("Vdot_base =",Vdot_base)
+    # print("-"*15)
+    # print()
     # assume alpha , beta <= +20 deg (somehow), V <= 634 ft/s
     Vdot_fbk = Vdot*1
     Vdot_fbk = Vdot_fbk.replace(V,634.0)

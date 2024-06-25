@@ -513,6 +513,327 @@ def true_nonlinear_no_comp(self,t,x,
     return dx
 
 
+def nonlinear_noC_psdolin(self,t,x,
+    is_controlled=True,given_control=False,u="o",
+    use_stall=True,force_control_to_inputs=False):
+
+    # get control
+    u,inputs = self._get_control(t,x,is_controlled,given_control,u,
+        force_control_to_inputs = force_control_to_inputs)
+
+    # disturbance model
+    ## INTSTATE
+    V = (x[0]**2. + x[1]**2. + x[2]**2.)**0.5
+    Du,Dv,Dw,Dp,Dq,Dr = self.get_disturbance(t,V)
+    Vg = [Du,Dv,Dw]
+    Wg = [Dp,Dq,Dr]
+
+    # get aero forces
+    ###########################################################################
+    # Fx,Fy,Fz,Mx,My,Mz,g = self._aerodynamics(x,inputs,Vg=Vg,Wg=Wg)
+    # def _aerodynamics(self,x,u,Vg=[0.0,0.0,0.0],Wg=[0.0,0.0,0.0],
+    #     is_trim=False,is_VAB_format=False):
+    is_trim=False
+    is_VAB_format=False
+    # aero conditions
+    ## INTSTATE
+    if is_VAB_format:
+        Vu = x[0]*cos(x[1])*cos(x[2]) + Vg[0]
+        Vv = x[0]*sin(x[2])           + Vg[1]
+        Vw = x[0]*sin(x[1])*cos(x[2]) + Vg[2]
+    else:
+        Vu,Vv,Vw = x[0]+Vg[0], x[1]+Vg[1], x[2]+Vg[2]
+    a = atan2(Vw,Vu)
+    V = (Vu * Vu + Vv * Vv + Vw * Vw)**0.5
+    b = asin(Vv/V)
+    _,g,_,_,rho,sos = self.stdatm(-x[8])
+    # ##############################
+    # g = 32.12780074195162
+    # ##############################
+    M = V / sos
+
+    # nondimensionalize rates
+    ## INTSTATE
+    pbar = (x[3]+Wg[0])*self.bw/2./V
+    qbar = (x[4]+Wg[1])*self.cw/2./V
+    rbar = (x[5]+Wg[2])*self.bw/2./V
+
+    # pass in controls state
+    ail = u[0]
+    ele = u[1]
+    rud = u[2]
+    thr = u[3]
+
+    ###########################################################################
+    # # use aircraft model
+    # aero_results = self.aero_model.aero_results(*[
+    #     a,b,pbar,qbar,rbar,ail,ele,rud,
+    #     self.is_compressible,M,self.use_anderson,self.has_stall
+    # ])
+    # # add in errors
+    # [CL, CS, CD, Cl, Cm, Cn] = [aero_results[i]*(1. + self.FM_errors[i]) \
+    #     for i in range(len(aero_results))]
+    
+    # BAM
+    BAM = self.aero_model
+    dB = rud
+    de = ele
+    da = ail
+    alpha = a
+    beta = b
+
+    # coefficients
+    #
+    CL0 = BAM.CL_0_A*sin(BAM.CL_0_w*dB + BAM.CL_0_p) + BAM.CL_0_z + BAM.CL_0_d
+    CLa = BAM.CL_a_A*sin(BAM.CL_a_w*dB + BAM.CL_a_p) + BAM.CL_a_z + BAM.CL_a_d
+    CLb = BAM.CL_b_A*sin(BAM.CL_b_w*dB + BAM.CL_b_p) + BAM.CL_b_z + BAM.CL_b_d
+    CLp = BAM.CL_p_A*sin(BAM.CL_p_w*dB + BAM.CL_p_p) + BAM.CL_p_z + BAM.CL_p_d
+    CLq = BAM.CL_q_A*sin(BAM.CL_q_w*dB + BAM.CL_q_p) + BAM.CL_q_z + BAM.CL_q_d
+    CLr = BAM.CL_r_A*sin(BAM.CL_r_w*dB + BAM.CL_r_p) + BAM.CL_r_z + BAM.CL_r_d
+    CLda = BAM.CL_da_A*sin(BAM.CL_da_w*dB + BAM.CL_da_p) + BAM.CL_da_z + BAM.CL_da_d
+    CLde = BAM.CL_de_A*sin(BAM.CL_de_w*dB + BAM.CL_de_p) + BAM.CL_de_z + BAM.CL_de_d
+    #
+    CS0 = BAM.CS_0_A*sin(BAM.CS_0_w*dB + BAM.CS_0_p) + BAM.CS_0_z + BAM.CS_0_d
+    CSa = BAM.CS_a_A*sin(BAM.CS_a_w*dB + BAM.CS_a_p) + BAM.CS_a_z + BAM.CS_a_d
+    CSb = BAM.CS_b_A*sin(BAM.CS_b_w*dB + BAM.CS_b_p) + BAM.CS_b_z + BAM.CS_b_d
+    CSp = BAM.CS_p_A*sin(BAM.CS_p_w*dB + BAM.CS_p_p) + BAM.CS_p_z + BAM.CS_p_d
+    CSLp = BAM.CS_Lp_A*sin(BAM.CS_Lp_w*dB + BAM.CS_Lp_p) + BAM.CS_Lp_z + BAM.CS_Lp_d
+    CSq = BAM.CS_q_A*sin(BAM.CS_q_w*dB + BAM.CS_q_p) + BAM.CS_q_z + BAM.CS_q_d
+    CSr = BAM.CS_r_A*sin(BAM.CS_r_w*dB + BAM.CS_r_p) + BAM.CS_r_z + BAM.CS_r_d
+    CSda = BAM.CS_da_A*sin(BAM.CS_da_w*dB + BAM.CS_da_p) + BAM.CS_da_z + BAM.CS_da_d
+    CSde = BAM.CS_de_A*sin(BAM.CS_de_w*dB + BAM.CS_de_p) + BAM.CS_de_z + BAM.CS_de_d
+    #
+    CD0 = BAM.CD_0_A*sin(BAM.CD_0_w*dB + BAM.CD_0_p) + BAM.CD_0_z + BAM.CD_0_d
+    CDL = BAM.CD_L_A*sin(BAM.CD_L_w*dB + BAM.CD_L_p) + BAM.CD_L_z + BAM.CD_L_d
+    CDL2 = BAM.CD_L2_A*sin(BAM.CD_L2_w*dB + BAM.CD_L2_p) + BAM.CD_L2_z + BAM.CD_L2_d
+    CDS = BAM.CD_S_A*sin(BAM.CD_S_w*dB + BAM.CD_S_p) + BAM.CD_S_z + BAM.CD_S_d
+    CDS2 = BAM.CD_S2_A*sin(BAM.CD_S2_w*dB + BAM.CD_S2_p) + BAM.CD_S2_z + BAM.CD_S2_d
+    CDp = BAM.CD_p_A*sin(BAM.CD_p_w*dB + BAM.CD_p_p) + BAM.CD_p_z + BAM.CD_p_d
+    CDSp = BAM.CD_Sp_A*sin(BAM.CD_Sp_w*dB + BAM.CD_Sp_p) + BAM.CD_Sp_z + BAM.CD_Sp_d
+    CDq = BAM.CD_q_A*sin(BAM.CD_q_w*dB + BAM.CD_q_p) + BAM.CD_q_z + BAM.CD_q_d
+    CDLq = BAM.CD_Lq_A*sin(BAM.CD_Lq_w*dB + BAM.CD_Lq_p) + BAM.CD_Lq_z + BAM.CD_Lq_d
+    CDL2q = BAM.CD_L2q_A*sin(BAM.CD_L2q_w*dB + BAM.CD_L2q_p) + BAM.CD_L2q_z + BAM.CD_L2q_d
+    CDr = BAM.CD_r_A*sin(BAM.CD_r_w*dB + BAM.CD_r_p) + BAM.CD_r_z + BAM.CD_r_d
+    CDSr = BAM.CD_Sr_A*sin(BAM.CD_Sr_w*dB + BAM.CD_Sr_p) + BAM.CD_Sr_z + BAM.CD_Sr_d
+    CDda = BAM.CD_da_A*sin(BAM.CD_da_w*dB + BAM.CD_da_p) + BAM.CD_da_z + BAM.CD_da_d
+    CDSda = BAM.CD_Sda_A*sin(BAM.CD_Sda_w*dB + BAM.CD_Sda_p) + BAM.CD_Sda_z + BAM.CD_Sda_d
+    CDde = BAM.CD_de_A*sin(BAM.CD_de_w*dB + BAM.CD_de_p) + BAM.CD_de_z + BAM.CD_de_d
+    CDLde = BAM.CD_Lde_A*sin(BAM.CD_Lde_w*dB + BAM.CD_Lde_p) + BAM.CD_Lde_z + BAM.CD_Lde_d
+    CDde2 = BAM.CD_de2_A*sin(BAM.CD_de2_w*dB + BAM.CD_de2_p) + BAM.CD_de2_z + BAM.CD_de2_d
+    #
+    Cl0 = BAM.Cl_0_A*sin(BAM.Cl_0_w*dB + BAM.Cl_0_p) + BAM.Cl_0_z + BAM.Cl_0_d
+    Cla = BAM.Cl_a_A*sin(BAM.Cl_a_w*dB + BAM.Cl_a_p) + BAM.Cl_a_z + BAM.Cl_a_d
+    Clb = BAM.Cl_b_A*sin(BAM.Cl_b_w*dB + BAM.Cl_b_p) + BAM.Cl_b_z + BAM.Cl_b_d
+    Clp = BAM.Cl_p_A*sin(BAM.Cl_p_w*dB + BAM.Cl_p_p) + BAM.Cl_p_z + BAM.Cl_p_d
+    Clq = BAM.Cl_q_A*sin(BAM.Cl_q_w*dB + BAM.Cl_q_p) + BAM.Cl_q_z + BAM.Cl_q_d
+    Clr = BAM.Cl_r_A*sin(BAM.Cl_r_w*dB + BAM.Cl_r_p) + BAM.Cl_r_z + BAM.Cl_r_d
+    ClLr = BAM.Cl_Lr_A*sin(BAM.Cl_Lr_w*dB + BAM.Cl_Lr_p) + BAM.Cl_Lr_z + BAM.Cl_Lr_d
+    Clda = BAM.Cl_da_A*sin(BAM.Cl_da_w*dB + BAM.Cl_da_p) + BAM.Cl_da_z + BAM.Cl_da_d
+    Clde = BAM.Cl_de_A*sin(BAM.Cl_de_w*dB + BAM.Cl_de_p) + BAM.Cl_de_z + BAM.Cl_de_d
+    #
+    Cm0 = BAM.Cm_0_A*sin(BAM.Cm_0_w*dB + BAM.Cm_0_p) + BAM.Cm_0_z + BAM.Cm_0_d
+    Cma = BAM.Cm_a_A*sin(BAM.Cm_a_w*dB + BAM.Cm_a_p) + BAM.Cm_a_z + BAM.Cm_a_d
+    Cmb = BAM.Cm_b_A*sin(BAM.Cm_b_w*dB + BAM.Cm_b_p) + BAM.Cm_b_z + BAM.Cm_b_d
+    Cmp = BAM.Cm_p_A*sin(BAM.Cm_p_w*dB + BAM.Cm_p_p) + BAM.Cm_p_z + BAM.Cm_p_d
+    Cmq = BAM.Cm_q_A*sin(BAM.Cm_q_w*dB + BAM.Cm_q_p) + BAM.Cm_q_z + BAM.Cm_q_d
+    Cmr = BAM.Cm_r_A*sin(BAM.Cm_r_w*dB + BAM.Cm_r_p) + BAM.Cm_r_z + BAM.Cm_r_d
+    Cmda = BAM.Cm_da_A*sin(BAM.Cm_da_w*dB + BAM.Cm_da_p) + BAM.Cm_da_z + BAM.Cm_da_d
+    Cmde = BAM.Cm_de_A*sin(BAM.Cm_de_w*dB + BAM.Cm_de_p) + BAM.Cm_de_z + BAM.Cm_de_d
+    #
+    Cn0 = BAM.Cn_0_A*sin(BAM.Cn_0_w*dB + BAM.Cn_0_p) + BAM.Cn_0_z + BAM.Cn_0_d
+    Cna = BAM.Cn_a_A*sin(BAM.Cn_a_w*dB + BAM.Cn_a_p) + BAM.Cn_a_z + BAM.Cn_a_d
+    Cnb = BAM.Cn_b_A*sin(BAM.Cn_b_w*dB + BAM.Cn_b_p) + BAM.Cn_b_z + BAM.Cn_b_d
+    Cnp = BAM.Cn_p_A*sin(BAM.Cn_p_w*dB + BAM.Cn_p_p) + BAM.Cn_p_z + BAM.Cn_p_d
+    CnLp = BAM.Cn_Lp_A*sin(BAM.Cn_Lp_w*dB + BAM.Cn_Lp_p) + BAM.Cn_Lp_z + BAM.Cn_Lp_d
+    Cnq = BAM.Cn_q_A*sin(BAM.Cn_q_w*dB + BAM.Cn_q_p) + BAM.Cn_q_z + BAM.Cn_q_d
+    Cnr = BAM.Cn_r_A*sin(BAM.Cn_r_w*dB + BAM.Cn_r_p) + BAM.Cn_r_z + BAM.Cn_r_d
+    Cnda = BAM.Cn_da_A*sin(BAM.Cn_da_w*dB + BAM.Cn_da_p) + BAM.Cn_da_z + BAM.Cn_da_d
+    CnLda = BAM.Cn_Lda_A*sin(BAM.Cn_Lda_w*dB + BAM.Cn_Lda_p) + BAM.Cn_Lda_z + BAM.Cn_Lda_d
+    Cnde = BAM.Cn_de_A*sin(BAM.Cn_de_w*dB + BAM.Cn_de_p) + BAM.Cn_de_z + BAM.Cn_de_d
+    #
+    A_CL1 = BAM.CL_0_A*sin(BAM.CL_0_w*dB + BAM.CL_0_p) \
+        + (BAM.CL_a_A*sin(BAM.CL_a_w*dB + BAM.CL_a_p))*a
+    z_CL1 = BAM.CL_0_z + BAM.CL_0_d + (BAM.CL_a_z + BAM.CL_a_d)*a
+    A_ClLr = BAM.Cl_Lr_A*sin(BAM.Cl_Lr_w*dB + BAM.Cl_Lr_p)
+    z_ClLr = BAM.Cl_Lr_z + BAM.Cl_Lr_d
+    A_CnLp = BAM.Cn_Lp_A*sin(BAM.Cn_Lp_w*dB + BAM.Cn_Lp_p)
+    z_CnLp = BAM.Cn_Lp_z + BAM.Cn_Lp_d
+    A_CnLda = BAM.Cn_Lda_A*sin(BAM.Cn_Lda_w*dB + BAM.Cn_Lda_p)
+    z_CnLda = BAM.Cn_Lda_z + BAM.Cn_Lda_d
+
+    # def _CL(BAM, alpha, beta, pbar, qbar, rbar, da, de, dB):
+    CL1 = CL0 + CLa*alpha
+    CL = (CL1 + CLb*beta + CLp*pbar + CLq*qbar + CLr*rbar + CLda*da + CLde*de)
+    # return CL
+
+    # def _CS(BAM, alpha, beta, pbar, qbar, rbar, da, de, dB):
+    # CL1 = BAM._CL0(dB) + BAM._CL_alpha(dB)*alpha
+    CS = (CS0 + CSa*alpha + CSb*beta + \
+        (CSp + CSLp*CL1)*pbar + CSq*qbar + CSr*rbar + CSda*da + CSde*de)
+    # return CS
+
+    # def _CD(BAM, alpha, beta, pbar, qbar, rbar, da, de, dB):
+    # CL1 = BAM._CL0(dB) + BAM._CL_alpha(dB)*alpha
+    CS1 = CS0 + CSb*beta
+    CD = (CD0 + CDL*CL1 + CDL2*CL1**2 + CDS*CS1 + CDS2*CS1**2 + \
+        (CDp + CDSp*CS1)*pbar +(CDq + CDLq*CL1 + CDL2q*CL1**2)*qbar + \
+        (CDr + CDSr*CS1)*rbar + (CDda + CDSda*CS1)*da + 
+        (CDde + CDLde*CL1)*de + CDde2*de**2)
+    # return CD
+
+    # def _Cl(BAM, alpha, beta, pbar, qbar, rbar, da, de, dB):
+    # CL1 = BAM._CL0(dB) + BAM._CL_alpha(dB)*alpha
+    Cl = (Cl0 + Cla*alpha + Clb*beta + Clp*pbar + Clq*qbar + \
+        (Clr)*rbar \
+        + Clda*da + Clde*de)
+    # return Cl
+
+    # def _Cm(BAM, alpha, beta, pbar, qbar, rbar, da, de, dB):
+    Cm = (Cm0 + Cma*alpha + Cmb*beta + Cmp*pbar + \
+        Cmq*qbar + Cmr*rbar + Cmda*da + Cmde*de)
+    # return Cm
+
+    # def _Cn(BAM, alpha, beta, pbar, qbar, rbar, da, de, dB):
+    # CL1 = BAM._CL0(dB) + BAM._CL_alpha(dB)*alpha
+    Cn = (Cn0 + Cna*alpha + Cnb*beta \
+        + (Cnp)*pbar \
+        + Cnq*qbar + Cnr*rbar \
+        + (Cnda)*da \
+        + Cnde*de)
+    # return Cn
+
+    # stall
+    if use_stall:
+        S_M = 7.0
+        S_ab = np.deg2rad(45.0)
+        # determine flat plate forces and moment
+        CLplate = 2.*np.sign(a)*np.sin(a)**2.*np.cos(a)
+        CDplate = 2.*np.sin(abs(a))**1.5
+        Cmplate = -0.8 * sin(a)
+
+        # determine stall sigmoid
+        expMmin = np.exp(-S_M*(a-S_ab))
+        expMplu = np.exp(S_M*(a+S_ab))
+        sig = (1. + expMmin + expMplu)/(1. + expMmin)/(1. + expMplu)
+
+        # add stall effects
+        CL = (1. - sig)*CL + sig*CLplate
+        CD = (1. - sig)*CD + sig*CDplate
+        Cm = (1. - sig)*Cm + sig*Cmplate
+    
+    
+
+    ###########################################################################
+
+    # thrust forces
+    ## INTSTATE
+    T = self._get_thrust_model(thr,thr,-x[8],V,M,is_trim)
+    FP = T  * self.T_dir
+    MP = [
+        FP[2] * self.T_loc[1] - FP[1] * self.T_loc[2],
+        FP[0] * self.T_loc[2] - FP[2] * self.T_loc[0],
+        FP[1] * self.T_loc[0] - FP[0] * self.T_loc[1]
+    ]
+
+    # aero forces
+    ca = cos(a); sa = sin(a)
+    cb = cos(b); sb = sin(b)
+    dynF = 0.5 * rho * V*V * self.Sw
+    Fx = FP[0] + dynF * (  CL*sa - CS*ca*sb - CD*ca*cb)
+    Fy = FP[1] + dynF * (  CS*cb - CD*sb)
+    Fz = FP[2] + dynF * (- CL*ca - CS*sa*sb - CD*sa*cb)
+    Mx = MP[0] + Cl * dynF * self.bw
+    My = MP[1] + Cm * dynF * self.cw
+    Mz = MP[2] + Cn * dynF * self.bw
+    # # SAL ay
+    # self._SAL_ay = Fy/self.inertia_model.W
+
+    # add in CG effects
+    cg = self.cgshift
+    Mx -= Fz * cg[1] - Fy * cg[2]
+    My -= Fx * cg[2] - Fz * cg[0]
+    Mz -= Fy * cg[0] - Fx * cg[1]
+
+    # return Fx,Fy,Fz,Mx,My,Mz,g
+
+    ###########################################################################
+
+    # read in mass properties
+    W = self.inertia_model.W
+    Ixx,Iyy,Izz,Ixy,Ixz,Iyz = self.inertia_model.inertia_results(u[3])
+    Im1 = self.inertia_model.inverse_tensor(u[3])
+    hx,hy,hz = self.inertia_model.angular_momentum_results()
+
+    ## INTSTATE
+    Vu = x[0]
+    Vv = x[1]
+    Vw = x[2]
+    p = x[3]
+    q = x[4]
+    r = x[5]
+    
+    dx = x * 0.
+    
+    ## INTSTATE
+    ph,th,ps = x[9],x[10],x[11] # self._euler_angles(x) # 
+    cp = cos(ph); sp = sin(ph)
+    ct = cos(th); st = sin(th)
+    cs = cos(ps); ss = sin(ps)
+
+    # u,v,w
+    ## INTSTATE
+    dx[0] = g/W*Fx - g*st    + r*Vv - q*Vw
+    dx[1] = g/W*Fy + g*sp*ct + p*Vw - r*Vu
+    dx[2] = g/W*Fz + g*cp*ct + q*Vu - p*Vv
+
+    # rhs for p,q,r
+    pq = p*q; pr = p*r; qr = q*r
+    p2, q2, r2 = p**2., q**2., r**2.
+    rhs0 = r*hy - q*hz + Mx + (Iyy-Izz)*qr + Iyz*(q2-r2) + Ixz*pq - Ixy*pr
+    rhs1 = p*hz - r*hx + My + (Izz-Ixx)*pr + Ixz*(r2-p2) + Ixy*qr - Iyz*pq
+    rhs2 = q*hx - p*hy + Mz + (Ixx-Iyy)*pq + Ixy*(p2-q2) + Iyz*pr - Ixz*qr
+    # p,q,r
+    ## INTSTATE
+    dx[3] = Im1[0][0]*rhs0 + Im1[0][1]*rhs1 + Im1[0][2]*rhs2
+    dx[4] = Im1[1][0]*rhs0 + Im1[1][1]*rhs1 + Im1[1][2]*rhs2
+    dx[5] = Im1[2][0]*rhs0 + Im1[2][1]*rhs1 + Im1[2][2]*rhs2
+    
+    # x,y,z
+    mat = [
+        [ct*cs, sp*st*cs - cp*ss, cp*st*cs + sp*ss],
+        [ct*ss, sp*st*ss + cp*cs, cp*st*ss - sp*cs],
+        [-st, sp*ct, cp*ct]
+    ]
+    ## INTSTATE
+    dx[6] = mat[0][0]*Vu + mat[0][1]*Vv + mat[0][2]*Vw
+    dx[7] = mat[1][0]*Vu + mat[1][1]*Vv + mat[1][2]*Vw
+    dx[8] = mat[2][0]*Vu + mat[2][1]*Vv + mat[2][2]*Vw
+
+    
+    # euler angles
+    mat = [
+        [1., sp*st/ct, cp*st/ct],
+        [0., cp, -sp],
+        [0., sp/ct, cp/ct]
+    ]
+    ## INTSTATE
+    dx[ 9] = mat[0][0]*p + mat[0][1]*q + mat[0][2]*r
+    dx[10] = mat[1][0]*p + mat[1][1]*q + mat[1][2]*r
+    dx[11] = mat[2][0]*p + mat[2][1]*q + mat[2][2]*r
+
+    # actuator dynamics
+    if self.order == 1:
+        dx[12:16] = self._actuation_dynamics(x,u)
+    elif self.order == 2:
+        dx[12:20] = self._actuation_dynamics(x,u)
+    
+    # integral states
+    r = self._get_reference(t)[self.xPi]
+    dx[self.xIi] = r - x[self.xPi]*1.
+
+    return dx
+
+
 def nonlinear_noC_noSp(self,t,x,
     is_controlled=True,given_control=False,u="o",
     use_stall=True,force_control_to_inputs=False):
@@ -1918,6 +2239,13 @@ if __name__ == "__main__":
     
     # simple dynamics
     x0 = bire.x_trim*1.0
+    dynamics = lambda t,x : nonlinear_noC_psdolin(bire,t,x,True,True,u_fun(t),use_stall)
+    xs_psln = odeint(dynamics,x0,ts,tfirst=True,
+                    # atol=1e-10,rtol=1e-10
+                    ).T
+    
+    # simple dynamics
+    x0 = bire.x_trim*1.0
     dynamics = lambda t,x : nonlinear_noC_noSp(bire,t,x,True,True,u_fun(t),use_stall)
     xs_nS__ = odeint(dynamics,x0,ts,tfirst=True,
                     # atol=1e-10,rtol=1e-10
@@ -1993,9 +2321,10 @@ if __name__ == "__main__":
             axs[i][j].plot(ts,xs_lin [j+i*3],"r",label="L")
             axs[i][j].plot(ts,xs_knln[j+i*3],"m",label="NL no C")
             axs[i][j].plot(ts,xs_knlS[j+i*3],"m--",label="NL no C S")
-            axs[i][j].plot(ts,xs_nS__[j+i*3],"y",label=r"NL no C S $\spadesuit$")
-            axs[i][j].plot(ts,xs_nSC_[j+i*3],"b",label=r"NL no C S $\spadesuit$ $\clubsuit$")
-            axs[i][j].plot(ts,xs_nSCD[j+i*3],"c",label=r"NL no C S $\spadesuit$ $\clubsuit$ $\diamondsuit$")
+            axs[i][j].plot(ts,xs_psln[j+i*3],"b",label="NL no C S psdolin")
+            # axs[i][j].plot(ts,xs_nS__[j+i*3],"y",label=r"NL no C S $\spadesuit$")
+            # axs[i][j].plot(ts,xs_nSC_[j+i*3],"b",label=r"NL no C S $\spadesuit$ $\clubsuit$")
+            # axs[i][j].plot(ts,xs_nSCD[j+i*3],"c",label=r"NL no C S $\spadesuit$ $\clubsuit$ $\diamondsuit$")
             # axs[i][j].plot(ts,xs_simp[j+i*3],"b",label="smp nonlin")
             axs[i][j].set_xlim(ts[0],ts[-1])
             axs[i][j].set_yscale("symlog")
@@ -2007,8 +2336,8 @@ if __name__ == "__main__":
     # save figs
     save_figs = True # False # 
     save_folder = "da_de_CcTCc_determinant/simpler_system_plots/"
-    save_names = ["vels","rats","posn","ornt"]
-    file_type = "pdf" # "png" # 
+    save_names = ["pslin_vels","pslin_rats","pslin_posn","pslin_ornt"]
+    file_type = "png" # "pdf" # 
     dpi = 300.0
     if save_figs:
         for i in range(4):

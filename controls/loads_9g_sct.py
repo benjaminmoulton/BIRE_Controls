@@ -57,29 +57,30 @@ if __name__ == "__main__":
     # run at SCT
     trim_type = "sct"
     # altitude
-    H = 0.0 # 30000.0 # 
+    H = 20000.0 # 30000.0 # 
     # mach
-    M = 0.95 # 0.8 # 
+    M = 0.9 # 0.8 # 
     # gs of the case # 9.08 ~ 9 gs (add a bit more because relation on line 27 is approx)
     #     see trim output results (stbly load factor) to ammend for accuracy
-    n = 9.08
+    n = 9.1
     # simplification to put in terms of bank angle
     phi_trim = np.rad2deg(np.arccos(1.0/n))
     # cg shift (in ft) from nominal location in NASA report
-    cg_shift = [3.24876,0.0,0.0]
+    cg_shift = [3.24876,0.0,0.0] # ?
+    cg_shift = [-1.0512378273258989,0.0,0.0] # cg shift to put cg at 316.9 in aft of nose
     # left stabilator wing root location wrt nominal location (do not add cgshift to this number)
     ls_loc = [-13.1 - 1.68,-0.37*9.2,0.05]
     # weight
-    W = 28056.0 # 27304.0 # 20500.0 # 
+    W = 27303.0 # 28056.0 # 27304.0 # 20500.0 # 
     # #
     ## compressibility parameters
     include_compressibility = True # False # 
     # if compressible, whether to use Anderson (True) or Prandtl-Glauert (False) corrections
-    use_anderson = True # False # 
+    use_anderson = False # True # 
     # whether to include a the stall model (probably want this to stay False)
     include_stall = False # True # 
     # simple thrust model
-    use_simple_thrust_model = False # True # 
+    use_simple_thrust_model = True # False # 
 
     ###########################################################################
     ###########################################################################
@@ -256,7 +257,7 @@ if __name__ == "__main__":
     print("trim_type =", trim_type)
     print("H =", H)
     print("M =", M)
-    print("n =", n)
+    print("n (est.) =", n)
     print("phi_trim =", phi_trim)
     print("cg_shift [ft]", cg_shift)
     print("left stabilator root location from nominal [ft]", ls_loc)

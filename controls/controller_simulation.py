@@ -3746,6 +3746,7 @@ class Aircraft:
                 ornt_axs[0].legend()
 
         
+        svuc = uarr*0.0
         for i in range(run_len + 1):
             # if controlled or uncontrolled
             if i == 0:
@@ -3760,6 +3761,7 @@ class Aircraft:
                 else:
                     ctrl = xarr[12:16]
                 ctrl_i1 = ctrl*1.
+                svuc = ctrl*1.
                 if plot_ul_bounds:
                     if self.order == 0:
                         cupp = uupp
@@ -4225,9 +4227,11 @@ class Aircraft:
             hd += (",{:>{}s}"*4).format(act[0],lh,act[1],lh,act[2],lh,act[3],lh)
 
             # build array
-            arr = xarr.T*1.0
+            arr = xarr[:12].T*1.0
             # add in time
             arr = np.hstack((tarr[:,np.newaxis],arr))
+            # add in control
+            arr = np.hstack((arr,svuc.T))
             # add in dot
             arr = np.hstack((arr,udot.T))
             # add in ddot
