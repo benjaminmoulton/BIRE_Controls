@@ -1072,6 +1072,7 @@ class Aircraft:
 
         # read in mass properties
         W = self.inertia_model.W
+        # W = W*self.stdatm(0.0)[1]/self.stdatm(-x[8])[1] # Hunsaker
         Ixx,Iyy,Izz,Ixy,Ixz,Iyz = self.inertia_model.inertia_results(u[3])
         hx,hy,hz = self.inertia_model.angular_momentum_results()
 

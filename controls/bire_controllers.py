@@ -1188,7 +1188,7 @@ class DynamicInversionAircraft(Aircraft):
         self.tracking = True
         self.about_SCT = True # False # 
         self.is_MC = False # True # 
-        self.LQDI = True # False # 
+        self.LQDI = False # True # 
         self.LQR_CL = True # False # 
         self.first_LQDI_step = True # False # 
         #
@@ -3400,7 +3400,7 @@ if __name__ == "__main__":
     plot_vars["zoom_deltas"] = False
     plot_vars["format"] = "png" # "pdf" # 
     # plot_vars["format"] = "pdf" # "png" # 
-    # plot_vars["output_states"] = True # False # 
+    plot_vars["output_states"] = True # False # 
     plot_vars["plot_norm"] = False # True # 
     #
     di = [0.,0.,0.]
@@ -3408,24 +3408,24 @@ if __name__ == "__main__":
     run_base_fs["num"] = run_bire_fs["num"] = \
         run_base_rc["num"] = run_bire_rc["num"] = 1  
     ##
-    # # # # NDI_1
-    # run_bire_fs["aircraft_class"] = NonlinearDynamicInversionAircraft
-    # run_bire_fs["name_end"] = "_" + f1 + "_NDI_1"
-    # run_bire_rc["name_end"] = "_LGN"   + "_NDI_1"
-    # zt_p,zt_q,zt_r =  0.6 , 0.6 , 0.6
-    # wn_p,wn_q,wn_r =  8.0 , 8.0 , 8.0 
-    # #
-    # # # TNDI_1
-    run_bire_fs["aircraft_class"] = TransformedNonlinearDynamicInversionAircraft
-    run_bire_fs["name_end"] = "_" + f1 + "_TNDI_1"
-    run_bire_rc["name_end"] = "_LGN"   + "_TNDI_1"
+    # # # NDI_1
+    run_bire_fs["aircraft_class"] = NonlinearDynamicInversionAircraft
+    run_bire_fs["name_end"] = "_" + f1 + "_NDI_1"
+    run_bire_rc["name_end"] = "_LGN"   + "_NDI_1"
     zt_p,zt_q,zt_r =  0.6 , 0.6 , 0.6
     wn_p,wn_q,wn_r =  8.0 , 8.0 , 8.0 
+    # #
+    # # # # TNDI_1
+    # run_bire_fs["aircraft_class"] = TransformedNonlinearDynamicInversionAircraft
+    # run_bire_fs["name_end"] = "_" + f1 + "_TNDI_2"
+    # run_bire_rc["name_end"] = "_LGN"   + "_TNDI_2"
+    # zt_p,zt_q,zt_r =  0.6 , 0.6 , 0.6
+    # wn_p,wn_q,wn_r =  8.0 , 8.0 , 8.0 
     #
     # run_bire_rc["aircraft_class"] = \
     #     run_bire_fs["aircraft_class"] = DynamicInversionAircraft
-    # run_bire_fs["name_end"] = "_" + f1 + "_DI_3"
-    # run_bire_rc["name_end"] = "_LGN"   + "_DI_3"
+    # run_bire_fs["name_end"] = "_" + f1 + "_DI_4"
+    # run_bire_rc["name_end"] = "_LGN"   + "_DI_4"
     # # DI_1
     # # zt_p,zt_q,zt_r =  0.7 , 0.7 , 0.7 
     # # wn_p,wn_q,wn_r = 10.0 ,10.0 ,10.0 
@@ -3565,10 +3565,10 @@ if __name__ == "__main__":
     # q_tr_deg =  0.5703966435396264
     # r_tr_deg =  1.2232195495061524
     # #######################################################################
-    # # 30 deg bank fullscale BIRE
-    # p_tr_deg = -0.0820880039056245
-    # q_tr_deg =  0.8352580178704386
-    # r_tr_deg =  1.4467093243808735
+    # 30 deg bank fullscale BIRE
+    p_tr_deg = -0.0820880039056245
+    q_tr_deg =  0.8352580178704386
+    r_tr_deg =  1.4467093243808735
     # # (0) tail
     # p_tr_deg = -0.0800043056586719
     # q_tr_deg =  0.8353731041767737
@@ -3594,11 +3594,28 @@ if __name__ == "__main__":
     # q_tr_deg =  1.5598776114662467
     # r_tr_deg =  1.8589897474721753
     # #######################################################################
+    # # 50 deg bank fullscale BIRE
+    # # (0) tail
+    # p_tr_deg = -0.1755564353175651
+    # q_tr_deg =  2.6372142861590873
+    # r_tr_deg =  2.2128855348515439
+    # #######################################################################
+    # # 60 deg bank fullscale BIRE
+    # # (0) tail
+    # p_tr_deg = -0.2654216358834438
+    # q_tr_deg =  4.3218126454667702
+    # r_tr_deg =  2.4951996942473698
+    # #######################################################################
     # # 10 deg bank RC scale BIRE w/o stall
     # p_tr_deg = -0.3294739663431505
     # q_tr_deg =  0.5582409457023837
     # r_tr_deg =  3.1659417263281258
-    p_comm = 5.0 # 15.0 # 17.5 # 12.5 # 20.0 # 30.0 # 15.0 # 10.0 # 5.5 # 7.5 # 
+    p_bfcm = 15.0 # 17.5 # # 30.0 # 10.0 # 5.5 # 7.5 # 
+    r_comm = 0.0    # 
+    p_comm = p_bfcm # 
+    a_tr_rad =  np.deg2rad(2.6447774345355031)
+    r_comm = p_bfcm*np.sin(a_tr_rad) # 
+    p_comm = p_bfcm*np.cos(a_tr_rad) # 
     t_zero = 0.0
     p_time = t_zero + 2.0 # 1.5 # 1.0 # 
     t_end = 0.0 # 25.0 # 
@@ -3607,7 +3624,7 @@ if __name__ == "__main__":
         "deg2rad_states" : [3,4,5],
         "3" : [ [0.0, 0.0], [t_zero, 0.0], [t_zero, p_comm], [p_time, p_comm], [p_time, p_tr_deg] ],
         "4" : [ [0.0, 0.0], [t_zero, 0.0], [t_zero,    0.0], [p_time,    0.0], [p_time, q_tr_deg] ],
-        "5" : [ [0.0, 0.0], [t_zero, 0.0], [t_zero,    0.0], [p_time,    0.0], [p_time, r_tr_deg] ],
+        "5" : [ [0.0, 0.0], [t_zero, 0.0], [t_zero, r_comm], [p_time, r_comm], [p_time, r_tr_deg] ],
         "sct_on_5" : False
     }
     run_bire_fs["track_check_time"] = run_bire_rc["track_check_time"] = \
@@ -3637,8 +3654,9 @@ if __name__ == "__main__":
     # bire_fs_dict["actuators"]["elevator"]["lag[s]"] = new_lag
     # bire_fs_dict["actuators"][    "BIRE"]["lag[s]"] = new_lag
     # # #
-    # blm = 500.0 # 150.0 # 1000.0 # 100.0 # 500.0 # 50.0
-    # bire_fs_dict["actuators"][    "BIRE"]["rate_limits[deg/s]"] = [-blm,blm]
+    blm = 500.0 # 150.0 # 1000.0 # 100.0 # 500.0 # 50.0
+    bire_fs_dict["actuators"][    "BIRE"]["rate_limits[deg/s]"] = [-blm,blm]
+    run_bire_fs["name_end"] = "_" + f1 + "_NDI_L500"
     # # # #
     # bire_fs_dict["simulation"][      "limit_input"] = False # True # 
     # bire_fs_dict["simulation"]["limit_input_rates"] = False # True # 
@@ -3653,7 +3671,7 @@ if __name__ == "__main__":
     #     "5" : [[ 0.0, r_tr_deg],[ 2.0, r_tr_deg]],
     #     "sct_on_5" : False
     # }
-    # run_bire_fs["trim_bank"] = 10.0 # 30.0 # 
+    # run_bire_fs["trim_bank"] = 60.0 # 10.0 # 30.0 # 
     # di = [0.0,0.0,0.0]
     run_single_simulation(bire_fs_dict,rtdst_1sg=di,**run_bire_fs,**plot_vars)
     # run_single_simulation(base_fs_dict,rtdst_1sg=di,**run_base_fs,**plot_vars)

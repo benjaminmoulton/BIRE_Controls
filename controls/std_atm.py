@@ -37,6 +37,7 @@ def stdatm_si(H):
 
     # calculate gravitational constant
     G = 3.96271559301397625e+14 / (6356766.0 + H)**2.
+    # G = 9.80665 * (6356766.0 / (6356766.0 + H))**2. # Hunsaker gravity
 
     # check range, determine T and P
     if   Z <    0.0:

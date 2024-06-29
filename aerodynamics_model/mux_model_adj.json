@@ -106,5 +106,7 @@
             "Cn_Lda" : 0.014,
             "Cn_dr" : -0.088
         }
+    },
+    "Christian_Model" : {
     }
 }

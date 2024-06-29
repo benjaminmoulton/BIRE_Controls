@@ -348,7 +348,7 @@ class DynamicInversionAircraft(Aircraft):
         Aircraft.__init__(self,input_dict,folder_prefix = "track")
         self.tracking = True
         self.about_SCT = False # True # 
-        self.is_MC = True # False # 
+        self.is_MC = False # True # 
     
     def _get_control(self,t,x,is_controlled=True,given_control=False,u="o",
         force_control_to_inputs=False):
@@ -637,6 +637,258 @@ class DynamicInversionAircraft(Aircraft):
         else:
             return repstr,Lin_Model
 
+
+class DynamicInversionWashoutAircraft(Aircraft):
+    """A default class for calculating and containing the mass properties of a
+    Cuboid.
+
+    Parameters
+    ----------
+    input_vars : dict , optional
+        Must be a python dictionary
+    """
+    def __init__(self,input_dict={}):
+
+        # invoke init of parent
+        Aircraft.__init__(self,input_dict,folder_prefix = "track")
+        self.tracking = True
+        self.about_SCT = False # True # 
+        self.is_MC = False # True # 
+        self.rw_ind = self.x_trim.shape[0]-1
+        self.rw_ind_eul = self.rw_ind-1
+        lag = 0.8#e-2
+        self.rw_S = 1./lag
+        #
+        self.additional_states = 1
+        # add in additional states to ref
+        self.r_ints += [lambda j,t_i : 0.0]*self.additional_states
+    
+    def _get_control(self,t,x,is_controlled=True,given_control=False,u="o",
+        force_control_to_inputs=False):
+        # build control or pass through
+        if not given_control:
+            if is_controlled and (not(self.enforce_update_frequency) or 
+                (self.enforce_update_frequency and self.can_update) ):
+                if self.use_quaternions:
+                    x_euler = self.quat2euler_state(x)
+                else:
+                    x_euler = x*1.
+                    # reset angles
+                    x_euler[9:12] = quat_2_euler(euler_2_quat(x_euler[9:12]))
+                #
+                ref = self._get_reference(t)[self.Lin_Model.Cslice]
+                # per dave, full stick should be 270 deg/s in aileron
+                # 120 deg/s in elevator
+                # 60 deg/s in rudder
+                #
+
+                # feedback linearization
+
+                #-------------------#
+                # STATE DEFINITIONS #
+                #-------------------#
+                p       = x_euler[3]
+                q       = x_euler[4]
+                r       = -x_euler[self.rw_ind_eul] # x_euler[5] # 
+                epI     = x_euler[self.xIi_eul[0]]
+                eqI     = x_euler[self.xIi_eul[1]]
+                erI     = x_euler[self.xIi_eul[2]]
+                w  = np.array([  p,  q,  r])
+                eI = np.array([epI,eqI,erI])
+                if self.about_SCT: # t > 2.0 and 
+                    x_trim = self.x_sct_trim_euler
+                else:
+                    x_trim = self.x_trim
+                dref = ref - x_trim[3:6]
+                e = w - ref
+                A = self.Lin_Model.A_min
+                Binv = self.Lin_Model.Binv_min
+                v = - np.matmul(self.Lin_Model.K,e) \
+                    - np.matmul(self.Lin_Model.KI,eI)
+                
+                delta = np.matmul(Binv,-np.matmul(A,e) - np.matmul(A,dref) + v)
+                u = np.concatenate((delta + self.u_trim[0:3],[self.u_trim[3]]))
+
+
+                # # integral states
+                # if len(self.xIi_eul):
+                #     u[uslc] = u[uslc] - np.matmul(K_I,intg)
+                #     # u[uslc] = u[uslc] - [kI*intg[0],kI*intg[1],kI*intg[2]]
+                if self.order > 0:
+                    q = 1*self.use_quaternions
+                    inputs = x[12+q:16+q]*1.
+                else:
+                    inputs = u*1.
+                # #
+                self.u_til_next_update = u*1.
+                self.can_update = False
+            elif is_controlled and self.enforce_update_frequency and \
+                not(self.can_update):
+                u = self.u_til_next_update*1.
+                if self.order > 0:
+                    q = 1*self.use_quaternions
+                    ## INTSTATE
+                    inputs = x[12+q:16+q]*1.
+                else:
+                    inputs = u*1.
+            else:
+                inputs = u = self.Lin_Model.uhat_eq*1.
+        elif given_control:
+            if u[0] == "o":
+                raise TypeError("Control input required.")
+            else:
+                if self.order > 0 and not force_control_to_inputs:
+                    q = 1*self.use_quaternions
+                    inputs = x[12+q:16+q]*1.
+                else:
+                    inputs = u*1.
+        
+        # limit actuators
+        # u = self._limit_input(u)
+        inputs = self._limit_input(inputs)
+        if self.order > 0:
+            q = 1*self.use_quaternions
+            x[12+q:16+q] = np.array(inputs)*1.
+        # quantize actuators
+        inputs = self._quantize_input(inputs)
+
+        return u,inputs
+
+    def _initialize_state(self,a_guess=None,b_guess=None,phi_guess=None,
+        u_guess=None,run2=False,no_report=False):
+        # run trim at condition
+        u_trim,x_trim = self.run_trim(a_guess,b_guess,phi_guess,u_guess,
+            verbose=self.verbose_trim,no_report=no_report)
+        ## INTSTATE
+        x_trim_euler = np.delete(x_trim,9)
+        x_trim_euler[9:12] = self._euler_angles(x_trim)
+        x_trim_euler[12:] = x_trim[13:]*1.
+        deg_ind = [3,4,5,9,10,11] + (self.order>=1)*[12,13,14] \
+            + (self.order>1)*[15,16,17]
+        x_trim_euler_deg = x_trim_euler*1.
+        x_trim_euler_deg[deg_ind] = np.rad2deg(x_trim_euler[deg_ind])
+        u_trim_deg = u_trim*1.
+        u_trim_deg[0:3] = np.rad2deg(u_trim_deg[0:3])
+        if not self.use_quaternions:
+            x_trim = x_trim_euler*1.
+        
+        # add in L0 and K0
+        self.rw0 = np.array([x_trim[5]])
+        x_trim = np.concatenate((x_trim,self.rw0))
+        x_trim_euler = np.concatenate((x_trim_euler,self.rw0))
+        x_trim_euler_deg = np.concatenate((x_trim_euler_deg,self.rw0))
+        #
+        if not(run2):
+            self.u_trim = u_trim
+            self.x_trim = x_trim
+            self.x_trim_euler = x_trim_euler
+            self.x_trim_euler_deg = x_trim_euler_deg
+            self.u_trim_deg = u_trim_deg
+        else:
+            self.u_trim2 = u_trim
+            self.x_trim2 = x_trim
+            self.x_trim2_euler = x_trim_euler
+            self.x_trim2_euler_deg = x_trim_euler_deg
+            self.u_trim2_deg = u_trim_deg
+
+        # if state not given, determine
+        if self.state_type == "state":
+            u0,x0 = self._given_state()
+        elif self.state_type == "trim":
+            u0,x0 = u_trim*1.,x_trim*1.
+        
+        # save initial state and controls globally
+        self.x0 = x0
+        self.u = u0
+        self.t_u_next_update = 0.0
+        self.can_update = True
+
+    def _nonlinear_quaternion_dynamics(self,t,x,
+        is_controlled=True,given_control=False,u="o",
+        force_control_to_inputs=False):
+
+        # get control
+        u,inputs = self._get_control(t,x,is_controlled,given_control,u,
+            force_control_to_inputs = force_control_to_inputs)
+
+        # disturbance model
+        ## INTSTATE
+        V = (x[0]**2. + x[1]**2. + x[2]**2.)**0.5
+        Du,Dv,Dw,Dp,Dq,Dr = self.get_disturbance(t,V)
+        Vg = [Du,Dv,Dw]
+        Wg = [Dp,Dq,Dr]
+
+        # get aero forces
+        Fx,Fy,Fz,Mx,My,Mz,g = self._aerodynamics(x,inputs,Vg=Vg,Wg=Wg)
+
+        # read in mass properties
+        W = self.inertia_model.W
+        Ixx,Iyy,Izz,Ixy,Ixz,Iyz = self.inertia_model.inertia_results(inputs[3])
+        Im1 = self.inertia_model.inverse_tensor(inputs[3])
+        hx,hy,hz = self.inertia_model.angular_momentum_results()
+
+        ## INTSTATE
+        Vu = x[0]
+        Vv = x[1]
+        Vw = x[2]
+        p = x[3]
+        q = x[4]
+        yaw = r = x[5]
+        
+        dx = x * 0.
+
+        # u,v,w
+        ## INTSTATE
+        dx[0] = g/W*Fx + 2.*g*(x[10]*x[12] - x[11]*x[ 9]) + r*Vv - q*Vw
+        dx[1] = g/W*Fy + 2.*g*(x[11]*x[12] + x[10]*x[ 9]) + p*Vw - r*Vu
+        dx[2] = g/W*Fz + \
+            g*(x[12]*x[12] + x[ 9]*x[ 9] - x[10]*x[10] - x[11]*x[11]) + \
+            q*Vu - p*Vv
+
+        # rhs for p,q,r
+        pq = p*q; pr = p*r; qr = q*r
+        p2, q2, r2 = p**2., q**2., r**2.
+        rhs0 = r*hy - q*hz + Mx + (Iyy-Izz)*qr + Iyz*(q2-r2) + Ixz*pq - Ixy*pr
+        rhs1 = p*hz - r*hx + My + (Izz-Ixx)*pr + Ixz*(r2-p2) + Ixy*qr - Iyz*pq
+        rhs2 = q*hx - p*hy + Mz + (Ixx-Iyy)*pq + Ixy*(p2-q2) + Iyz*pr - Ixz*qr
+        # p,q,r
+        ## INTSTATE
+        dx[3] = Im1[0][0]*rhs0 + Im1[0][1]*rhs1 + Im1[0][2]*rhs2
+        dx[4] = Im1[1][0]*rhs0 + Im1[1][1]*rhs1 + Im1[1][2]*rhs2
+        dx[5] = Im1[2][0]*rhs0 + Im1[2][1]*rhs1 + Im1[2][2]*rhs2
+        
+        ud = Vu
+        vd = Vv
+        wd = Vw
+        ## INTSTATE
+        EFvels = body_2_fixed([ud,vd,wd],[x[ 9],x[10],x[11],x[12]])
+        dx[6] = EFvels[0]
+        dx[7] = EFvels[1]
+        dx[8] = EFvels[2]
+
+        
+        # e0,ex,ey,ez
+        ## INTSTATE
+        dx[ 9] = -0.5 * ( x[10]*x[3] + x[11]*x[4] + x[12]*x[5])
+        dx[10] =  0.5 * ( x[ 9]*x[3] - x[12]*x[4] + x[11]*x[5])
+        dx[11] =  0.5 * ( x[12]*x[3] + x[ 9]*x[4] - x[10]*x[5])
+        dx[12] =  0.5 * (-x[11]*x[3] + x[10]*x[4] + x[ 9]*x[5])
+
+        # actuator dynamics
+        if self.order == 1:
+            dx[13:17] = self._actuation_dynamics(x,u)
+        elif self.order == 2:
+            dx[13:21] = self._actuation_dynamics(x,u)
+        
+        # integral states
+        r = self._get_reference(t)[self.xPi]
+        e = x[self.xPi] - r
+        dx[self.xIi] = e
+
+        # Khat
+        dx[self.rw_ind] = self.rw_S*(yaw - x[self.rw_ind])
+
+        return dx
 
 
 class LinearAdaptiveAircraft(Aircraft):
@@ -1212,24 +1464,43 @@ if __name__ == "__main__":
     base_rc_dict = json.loads( open(base_rc_file).read() )
     bire_rc_dict = json.loads( open(bire_rc_file).read() )
 
-    # trim for baseline, determine LQR for controller code example
-    V = 520.0
-    H = 2000.0
-    compr = False
-    stall = False
-    #
-    base_fs_dict["initial"].pop("mach")
-    base_fs_dict["initial"]["airspeed[ft/s]"] = V
-    base_fs_dict["initial"]["altitude[ft]"] = H
-    base_fs_dict["simulation"]["include_compressibility"] = compr
-    base_fs_dict["simulation"]["include_stall"] = stall
-    base_fs_dict["simulation"]["use_fitted_thrust_model"] = False
-    base = Aircraft(base_fs_dict)
-    base._report_trim_solution()
-    # build linearized system
-    base._build_controller(save_matrices=False,mrrr=[0,1,2,6,7,8,9,10,11],
-        mrrc=[3],drop_actrs=True,run_freq=False)
-    quit()
+    # # trim for baseline, determine LQR for controller code example
+    # V = 520.0
+    # H = 19400.0
+    # compr = False
+    # stall = False
+    # phi_trim = 45.0
+    # #
+    # base_fs_dict["initial"].pop("mach")
+    # base_fs_dict["initial"]["airspeed[ft/s]"] = V
+    # base_fs_dict["initial"]["altitude[ft]"] = H
+    # base_fs_dict["initial"]["trim"]["bank_angle[deg]"] = phi_trim
+    # base_fs_dict["simulation"]["include_compressibility"] = compr
+    # base_fs_dict["simulation"]["include_stall"] = stall
+    # base_fs_dict["simulation"]["use_fitted_thrust_model"] = False
+    # # base_fs_dict["initial"]["trim"]["type"] = "shss"
+    # # base_fs_dict["initial"]["type"] = "trim"
+    # # base_fs_dict["initial"]["state"] = {
+    # #         "elevation_angle[deg]" : 0.0,
+    # #         "bank_angle[deg]" : 0.0,
+    # #         "alpha[deg]" : 0.0,
+    # #         "beta[deg]" : 0.0,
+    # #         "p[deg/s]" : 0.0,
+    # #         "q[deg/s]" : 0.0,
+    # #         "r[deg/s]" : 0.0,
+    # #         "aileron[deg]" : 0.0,
+    # #         "elevator[deg]" : 0.0,
+    # #         "rudder[deg]" : 0.0,
+    # #         "throttle" :  0.0
+    # #     }
+    # base = Aircraft(base_fs_dict)
+    # # print(base.inertia_model.W)
+    # # print(base.cgshift)
+    # base._report_trim_solution()
+    # # # build linearized system
+    # # base._build_controller(save_matrices=False,mrrr=[0,1,2,6,7,8,9,10,11],
+    # #     mrrc=[3],drop_actrs=True,run_freq=False)
+    # quit()
 
     # # build controller
     # build_base_controller(base_rc_dict,"RC_base_control_design")
@@ -1337,7 +1608,7 @@ if __name__ == "__main__":
         "include_stall_derivatives" : False, # True, # 
         "skip_simulation" : False, # True, # 
         "skip_video" : True, # False, # 
-        "name_end" : "_" + f1 + "_DI_1" # "_MRAC_2" # "_LAC_1" # "_TK_8" # 
+        "name_end" : "_" + f1 + "_DIW_1" # "_MRAC_2" # "_LAC_1" # "_TK_8" # 
         # "name_end" : "_" + f1 + "_TK_8_no_act_no_cgshift"
         # 4 -- incr wt on tau, decr wt on da,de
         # 5 -- decr wt on da
@@ -1366,7 +1637,10 @@ if __name__ == "__main__":
     p_tr_deg = -1.0380901589473488
     q_tr_deg =  5.2594941135694429
     r_tr_deg =  9.1097110268117127
-    p_comm = 22.0 # 15.0 # 23.0 # 17.0 # 20.0 # 
+    a_tr_rad =  np.deg2rad(5.5459539651510905)
+    p_bdfx = 22.0 # 15.0 # 23.0 # 17.0 # 20.0 # 
+    p_comm = p_bdfx # p_bdfx*np.cos(a_tr_rad) # 
+    r_comm = 0.0    # p_bdfx*np.sin(a_tr_rad) # 
     base_rc_dict["reference"] = {
         "deg2rad_states" : [3,4,5],
         "3" : [
@@ -1380,8 +1654,8 @@ if __name__ == "__main__":
             [ 2.0, q_tr_deg]
         ],
         "5" : [
-            [ 0.0, 0.0],
-            [ 2.0, 0.0],
+            [ 0.0,r_comm],
+            [ 2.0,r_comm],
             [ 2.0, r_tr_deg]
         ],
         "sct_on_5" : False
@@ -1406,7 +1680,7 @@ if __name__ == "__main__":
     plot_vars["plot_delta"] = False # True # 
     plot_vars["zoom_deltas"] = False
     plot_vars["format"] = "png" # "pdf" # 
-    plot_vars["format"] = "pdf" # "png" # 
+    # plot_vars["format"] = "pdf" # "png" # 
     plot_vars["plot_norm"] = False # True # 
     #
     di = [0.,0.,0.]
@@ -1427,19 +1701,21 @@ if __name__ == "__main__":
     # zt_p,zt_q,zt_r =  0.7 , 0.7 , 0.7 # Me
     # wn_p,wn_q,wn_r =  8.0 , 8.0 , 8.0 # Me
     #
-    run_base_rc["aircraft_class"] = DynamicInversionAircraft
+    run_base_rc["aircraft_class"] = DynamicInversionWashoutAircraft
     # DI_1 & DI_2
     zt_p,zt_q,zt_r =  0.6 , 0.6 , 0.6 # Dr Harris
     wn_p,wn_q,wn_r =  8.0 , 8.0 , 8.0 # Dr Harris
+    run_base_rc["name_end"] = "_" + f1 + "_DIW_1"
+    run_base_rc["state_threshold"] += [1.]
     
-    # base_rc_dict["controller"]["gains"][ "K"] = \
-    #     bire_rc_dict["controller"]["gains"][ "K"] = np.diag([
-    #     2.*zt_p*wn_p,2.*zt_q*wn_q,2.*zt_r*wn_r
-    # ]).tolist()
-    # base_rc_dict["controller"]["gains"]["KI"] = \
-    #     bire_rc_dict["controller"]["gains"]["KI"] = np.diag([
-    #     wn_p**2.,wn_q**2.,wn_r**2.
-    # ]).tolist()
+    base_rc_dict["controller"]["gains"][ "K"] = \
+        bire_rc_dict["controller"]["gains"][ "K"] = np.diag([
+        2.*zt_p*wn_p,2.*zt_q*wn_q,2.*zt_r*wn_r
+    ]).tolist()
+    base_rc_dict["controller"]["gains"]["KI"] = \
+        bire_rc_dict["controller"]["gains"]["KI"] = np.diag([
+        wn_p**2.,wn_q**2.,wn_r**2.
+    ]).tolist()
     # run_base_rc["aircraft_class"] = LinearAdaptiveAircraft
     # # LAC_1
     # run_base_rc["state_threshold"] += [1.]*18
@@ -1471,9 +1747,9 @@ if __name__ == "__main__":
     # }
     # run_base_rc["trim_bank"] = 30.0
     # run_single_simulation(bire_fs_dict,rtdst_1sg=di,**run_bire_fs,**plot_vars)
-    run_single_simulation(base_fs_dict,rtdst_1sg=di,**run_base_fs,**plot_vars)
+    # run_single_simulation(base_fs_dict,rtdst_1sg=di,**run_base_fs,**plot_vars)
     # run_single_simulation(bire_rc_dict,rtdst_1sg=di,**run_bire_rc,**plot_vars)
-    # run_single_simulation(base_rc_dict,rtdst_1sg=di,**run_base_rc,**plot_vars)
+    run_single_simulation(base_rc_dict,rtdst_1sg=di,**run_base_rc,**plot_vars)
     quit()
 
     # # # # run monte carlo perturbation analysis

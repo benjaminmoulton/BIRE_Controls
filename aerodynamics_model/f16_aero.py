@@ -146,7 +146,8 @@ class F16Aero:
 
     def _CD(self, alpha, beta, pbar, qbar, rbar, da, de, dr):
         CL1 = self._CL(alpha, 0., 0., 0., 0., 0., 0., 0.)
-        CS1 = self._CS(0., beta, 0., 0., 0., 0., 0., 0.)
+        CS1 = self._CS(0., beta, 0., 0., 0., 0., 0., 0.) ## Christian model
+        # CS1 = self._CS(alpha, beta, pbar, qbar, rbar, da, de, dr) ## Hunsaker model
         CD = (self.CD0 + self.CDL*CL1 + self.CDL2*CL1**2 + self.CDS2*CS1**2 +
               (self.CDSp*CS1)*pbar +
               (self.CDq + self.CDLq*CL1 + self.CDL2q*CL1**2)*qbar +

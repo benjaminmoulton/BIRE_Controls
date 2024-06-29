@@ -4,6 +4,7 @@ from matplotlib import pyplot as plt
 from matplotlib.lines import Line2D
 from controller_simulation import Aircraft#,monte_carlo_perturbations,run_single_simulation
 from os import mkdir, rmdir, walk, remove, listdir
+from linearization import linearization
 
 if __name__ == "__main__":
 
@@ -17,6 +18,7 @@ if __name__ == "__main__":
     
     # flight conditions
     flight_conditions = {
+        "A1" : { "m" : 0.2 , "h" :     0., "V" : 222., "Re" :        0. },
         "T1" : { "m" : 0.2 , "h" :  1000., "V" : 222., "Re" : 15641000. },
         "T2" : { "m" : 0.19, "h" : 15000., "V" : 201., "Re" :  9919000. },
         "C1" : { "m" : 0.8 , "h" :  1000., "V" : 890., "Re" : 62563000. },
@@ -24,32 +26,75 @@ if __name__ == "__main__":
         "C3" : { "m" : 0.8 , "h" : 30000., "V" : 796., "Re" : 25828000. }
     }
 
-    # settings
+    # settings 
+    ## Continue from bire_fs_shss_T1_M02_H010_CGp10p00p00_B14
     run_bire = True # False # 
-    run_sct = True # False # 
+    run_sct  = False # True # 
     run_fs = True
     skip_run = True # False # 
-    if run_sct: trim_bank_degs = [70.0] # np.linspace(0.0,75.0,num=16).tolist() # [10.0] # [60.0] # np.linspace(0.0,75.0,num=16).tolist() # 
-    else: trim_beta_degs = [0.0]
-    fc = "C2" # "T1" # 
-    mfc = flight_conditions[fc]["m"] # 0.2 # 
-    hfc = flight_conditions[fc]["h"] # 1000.0 # 
-    cgshift = [0.5,0.0,0.0] # [0.5,0.0,0.0] # [1.0,0.0,0.0] # [0.0,0.0,0.0] # 
+    if run_sct: trim_bank_degs = [0.0] # np.linspace(0.0,75.0,num=16).tolist() # [10.0] # [60.0] # np.linspace(0.0,75.0,num=16).tolist() # 
+    else: trim_beta_degs = [0.0] # np.linspace(0.0,16.0,num=9).tolist() # np.linspace(0.0,16.0,num=9).tolist() # [14.0,16.0] # [0.0] # 
+    fc = "T1" # "C2" # "A1" # 
+    cgshift = [0.0,0.0,0.0] # [0.5,0.0,0.0] # [1.0,0.0,0.0] # [0.5,0.0,0.0] # 
+    include_compressibility =  True # False # 
+    use_Anderson_corrections =  True # False # 
+    include_stall =  True # False # 
+    plot_negative_xcg = False # True # 
+    plot_inverted_trims = False # True # 
+    plot_alternate_trims = True # False # 
     #
     # other settings
-    run_num = 20 # 1000 # 
-    a_scale = 20.0
-    if run_sct: b_scale = 20.0
-    else: p_scale = 180.0
-    u_scale = np.array([20.0,20.0,70.0]) # 30.0]) # 
+    run_num = 1000 # 20 # 
+    mfc = flight_conditions[fc]["m"] # 0.2 # 
+    hfc = flight_conditions[fc]["h"] # 1000.0 # 
+    a_scale = 20.0 # 0.02 # 0.0 # 
+    b_scale = 20.0 # 0.2 # 0.0 # 
+    p_scale = 180.0 # 0.0 # 
+    u_scale = np.array([20.0,20.0,70.0,1.0]) # np.array([0.1,0.2,20.0,0.02]) # np.array([0.0]*4) # 
+    a_shift = 0.0 # 3.17 # 
+    b_shift = 0.0 # 0.0 # 
+    p_shift = 0.0 # 0.0 # 
+    u_shift = np.array([0.0,0.0,0.0,0.0]) # np.array([0.0,-0.05,0.0,0.276]) # 
     # set up run
     craftdict = bire_dict if run_bire else base_dict
-    trim_type = "sct" if run_sct  else "shss"
-    scale_type = "fs" if run_fs else "rc"
-    folder = "trim_files/"
+    trim_type = "sct" if run_sct else "shss"
+    scale_type = "fs" if run_fs  else "rc"
+    folder = "trim_files/" + fc + "_" + trim_type + "/"
     d3 = "B" if run_bire else "r"
+    pdBm = "+" # "$/$" # 
+    ndBm = "_" # "$-$" # "x" # 
+    odBm = "o"
+    odrm = "d"
+    xcg_shade = lambda xcg : xcg*0.5 + (abs(xcg)>0.0)*0.25
+
+    
+    # initialize aircraft
+    # set to initial params
+    craftdict["simulation"] = craftdict.get("simulation",{})
+    craftdict["simulation"]["include_compressibility"] = include_compressibility
+    craftdict["simulation"]["use_Anderson_corrections"] = use_Anderson_corrections
+    craftdict["simulation"]["include_stall"] = include_stall
+    craftdict["aircraft"] = craftdict.get("aircraft",{})
+    craftdict["aircraft"]["CG_shift[ft]"] = cgshift
+    craftdict["initial"] = craftdict.get("initial",{})
+    craftdict["initial"]["mach"] = mfc
+    craftdict["initial"]["altitude[ft]"] = hfc
+    craftdict["initial"].pop("airspeed[ft/s]",None)
+    craftdict["initial"]["type"] = "trim"
+    craftdict["initial"]["trim"] = craftdict["initial"].get("trim",{})
+    craftdict["initial"]["trim"]["type"] = trim_type
+    craftdict["initial"]["trim"].pop("elevation_angle[deg]",None)
+    craftdict["initial"]["trim"]["climb_angle[deg]"] = 0.0
+    if run_sct:
+        craftdict["initial"]["trim"]["bank_angle[deg]"] = 0.0
+        craftdict["initial"]["trim"].pop("sideslip_angle[deg]",None)
+    else:
+        craftdict["initial"]["trim"]["sideslip_angle[deg]"] = 0.0
+        craftdict["initial"]["trim"].pop("bank_angle[deg]",None)
 
     if not(skip_run):
+        # initialize
+        craft = Aircraft(craftdict)
         # determine vars of interest
         if run_sct: loopvars = trim_bank_degs
         else: loopvars = trim_beta_degs
@@ -74,63 +119,48 @@ if __name__ == "__main__":
             # open this file if it exists
             try: 
                 run_dict = json.loads( open(folder + run_file).read() )
-                print("success")
             except: run_dict = {}
             
             # pull in saved trim states
-            x_trims=[]; u_trims=[]; CFM_trims=[]; guess_trims=[]; final_i_trims=[]
+            x_trims=[]; u_trims=[]; CFM_trims=[]
+            guess_trims=[]; final_i_trims=[]; Lin_trims = [];
             for case in run_dict:
                 x_trims.append(run_dict[case]["x_trim_euler"])
                 u_trims.append(run_dict[case]["u_trim"])
                 CFM_trims.append(run_dict[case]["CFM_trim"])
                 guess_trims.append(run_dict[case]["guess_trim"])
                 final_i_trims.append(run_dict[case]["final_i_trim"])
+                Lin_trims.append(run_dict[case]["Linearized_system_trim"])
             
-            # initialize aircraft
-            # set to initial params
-            craftdict["aircraft"] = craftdict.get("aircraft",{})
-            craftdict["aircraft"]["CG_shift[ft]"] = cgshift
-            craftdict["initial"] = craftdict.get("initial",{})
-            craftdict["initial"]["mach"] = mfc
-            craftdict["initial"]["altitude"] = hfc
-            craftdict["initial"].pop("airspeed[ft/s]",None)
-            craftdict["initial"]["type"] = "trim"
-            craftdict["initial"]["trim"] = craftdict["initial"].get("trim",{})
-            craftdict["initial"]["trim"]["type"] = trim_type
-            craftdict["initial"]["trim"].pop("elevation_angle[deg]",None)
-            craftdict["initial"]["trim"]["climb_angle[deg]"] = 0.0
+            num_b4 = len(x_trims)
+
+            # initialize aircraft -- change settings!!
             if run_sct:
-                craftdict["initial"]["trim"]["bank_angle[deg]"] = trim_bank_deg
-                craftdict["initial"]["trim"].pop("sideslip_angle[deg]",None)
+                craft.phi_trim = np.deg2rad(trim_bank_deg)
+                # craftdict["initial"]["trim"].pop("sideslip_angle[deg]",None)
             else:
-                craftdict["initial"]["trim"]["sideslip_angle[deg]"] = trim_beta_deg
-                craftdict["initial"]["trim"].pop("bank_angle[deg]",None)
-            # initialize
-            craft = Aircraft(craftdict)
+                craft.beta_trim = np.deg2rad(trim_beta_deg)
+                # craftdict["initial"]["trim"].pop("bank_angle[deg]",None)
+            
 
             # run trims
             print("\nseeking trims...")
         
             # randomize initial guesses
-            if run_sct:
-                statement="randomizing, Dxcg = {:> 4.1f} ft, phi = {:> 5.1f} deg,".\
-                    format(cgshift[0],trim_bank_deg)+\
-                    " is BIRE = "+str(run_bire)+" ..."
-            else:
-                statement="randomizing, Dxcg = {:> 4.1f} ft, beta = {:> 5.1f} deg,".\
-                    format(cgshift[0],trim_beta_deg)+\
-                    " is BIRE = "+str(run_bire)+" ..."
+            statement = "running " + run_name + " ..."
             print(statement)
-            ags = np.deg2rad((np.random.random(size=(run_num,))*2. - 1.)*a_scale)
+            ags = np.deg2rad((np.random.random(size=(run_num,))*2. - 1.)*a_scale + a_shift)
             if run_sct:
-                bgs = np.deg2rad((np.random.random(size=(run_num,))*2. - 1.)*b_scale)
+                bgs = np.deg2rad((np.random.random(size=(run_num,))*2. - 1.)*b_scale + b_shift)
             else:
-                pgs = np.deg2rad((np.random.random(size=(run_num,))*2. - 1.)*p_scale)
+                pgs = np.deg2rad((np.random.random(size=(run_num,))*2. - 1.)*p_scale + p_shift)
             ugs = np.random.random(size=(run_num,4))#*0.
-            ugs[:,0:3] = np.deg2rad((ugs[:,0:3]*2. - 1.)*u_scale)
+            ugs[:,0:3] = np.deg2rad((ugs[:,0:3]*2. - 1.)*u_scale[0:3] + u_shift[0:3])
+            ugs[:,3] = ugs[:,3]*u_scale[3] + u_shift[3]
             #
             tol = craft.NR_tol#*1.0e+1
             # run
+            found = ""
             for i in range(run_num):
                 # run trim
                 if run_sct:
@@ -162,7 +192,6 @@ if __name__ == "__main__":
                 report +=",de={:> 6.2f}".format(    np.rad2deg(ugs[i,1]))
                 report +=",d{}={:> 6.2f}".format(d3,np.rad2deg(ugs[i,2]))
                 report +=",tau={:> 5.2f}".format(              ugs[i,3] )
-                report +=", {:> 4d} new".format(len(x_trims))
                 #
                 if not(craft.trim_failed) and not(have_found_before):
                     x_trims.append(craft.x_trim_euler[0:12].tolist())
@@ -190,34 +219,57 @@ if __name__ == "__main__":
                     # # # # #
                     guess_trims.append(guess_dict)
                     final_i_trims.append(craft.trim_iter+0)
-                    print(report+", *** found new trim")
+                    found = ", *** found new trim"
                 else:
-                    print(report)
+                    found = ""
+                report +=", was {:>2d} now {:>2d}".format(num_b4,len(x_trims))
+                print(report+found)
                 
                 # occasional reminder
                 if (i+1) % 25 == 0:
                     print(statement)
 
-            # save to file
-            print("\nsaving to file",run_name,"...")
-            # create datadict
-            data_dict = {}
-            for j in range(len(x_trims)):
-                case = str(j)
-                data_dict[case] = {}
-                data_dict[case]["x_trim_euler"] = x_trims[j]
-                data_dict[case]["u_trim"] = u_trims[j]
-                data_dict[case]["CFM_trim"] = CFM_trims[j]
-                data_dict[case]["guess_trim"] = guess_trims[j]
-                data_dict[case]["final_i_trim"] = final_i_trims[j]
-            # save
-            with open(folder+run_file, "w") as f:
-                json.dump(data_dict, f, indent=4)
+            # Build linearized systems
+            for i in range(num_b4,len(x_trims)):
+                print("running linearization for trim {}...".format(i+1))
 
+                # build linearized system
+                Lin_Model = craft._build_controller(
+                    x_tr=np.array(x_trims[i]+u_trims[i]),
+                    u_tr=np.array(u_trims[i]),
+                    report=False,save_matrices=False,
+                    mrrr=[6,7,11],mrrc=None,drop_actrs=True,run_freq=False,
+                    turn_off_warnings=True,skip_reporting=True)[1]
+                
+                # print(Lin_Model.A_min)
+                Lin_trims.append(dict(A=Lin_Model.A_min.tolist(),
+                    B=Lin_Model.B_min.tolist()))
+
+            # save to file (if we found more)
+            if len(x_trims) > num_b4:
+                print("\nsaving to file",run_name,"...")
+                # create datadict
+                data_dict = {}
+                for j in range(len(x_trims)):
+                    case = str(j)
+                    data_dict[case] = {}
+                    data_dict[case]["x_trim_euler"] = x_trims[j]
+                    data_dict[case]["u_trim"] = u_trims[j]
+                    data_dict[case]["CFM_trim"] = CFM_trims[j]
+                    data_dict[case]["guess_trim"] = guess_trims[j]
+                    data_dict[case]["final_i_trim"] = final_i_trims[j]
+                    data_dict[case]["Linearized_system_trim"] = Lin_trims[j]
+                # save
+                with open(folder+run_file, "w") as f:
+                    json.dump(data_dict, f, indent=4)
+            else:
+                print("\nnot saving to file",run_name,
+                    ", no new trim sols found")
+    
     # plot trim values
     if skip_run:
         # report
-        print("plotting {} {} ...\n".format(scale_type,trim_type))
+        print("plotting {} {} {} ...\n".format(scale_type,trim_type,fc))
         # initialize values dict
         trims = {}
         # read in all values
@@ -307,14 +359,15 @@ if __name__ == "__main__":
                     # craft type
                     if cname == "bire":
                         if np.rad2deg(sol["u_trim"][2]) > 5.0:
-                            kdict |= dict(marker = "+")
+                            kdict |= dict(marker = pdBm)
                         elif np.rad2deg(sol["u_trim"][2]) < -5.0:
-                            kdict |= dict(marker = "_")
+                            kdict |= dict(marker = ndBm) # 
                         else:
-                            kdict |= dict(marker = "o")
-                    else              : kdict |= dict(marker = "d")
+                            kdict |= dict(marker = odBm)
+                    else              : kdict |= dict(marker = odrm)
                     # cg loc
-                    kdict |= dict(color = str(xcg*0.75))
+                    kdict |= dict(color = str(xcg_shade(xcg)))
+                    # neg xcgs
                     if xcg == -1.0:
                         kdict["color"] = "b"
                     elif xcg == -0.5:
@@ -323,12 +376,16 @@ if __name__ == "__main__":
                         kdict["color"] = "y"
                     elif xcg == -0.1:
                         kdict["color"] = "g"
+                    if np.rad2deg(abs(sol["angles"][k])) > 90.0:
+                        kdict["color"] = "m"
                     # others
                     kdict |= rest_dict
                     # PLOTS!
-                    # if abs(np.rad2deg(sol["u_trim"][2])) > 5.0:
-                    #     continue
-                    if xcg < 0.0:
+                    if abs(np.rad2deg(sol["u_trim"][2])) > 5.0 and not(plot_alternate_trims):
+                        continue
+                    if xcg < 0.0 and not(plot_negative_xcg):
+                        continue
+                    if np.rad2deg(abs(sol["angles"][k])) > 90.0 and not(plot_inverted_trims):
                         continue
                     # aileron
                     axs[0].plot(ivr,np.rad2deg(sol["u_trim"][0]),**kdict)
@@ -340,6 +397,7 @@ if __name__ == "__main__":
                     axs[3].plot(ivr,           sol["u_trim"][3] ,**kdict)
                     # sideslip / bank
                     axs[4].plot(ivr,np.rad2deg(sol["angles"][k]),**kdict)
+                    # aoa
                     axs[5].plot(ivr,np.rad2deg(sol["angles"][0]),**kdict)
                     #
                     # # CFM
@@ -366,12 +424,12 @@ if __name__ == "__main__":
         axs[5].set_ylabel(r"Angle of attack, $\alpha$ [$^\circ$]")
         # legend
         sp = [
-            Line2D([0], [0],color=str(0.0  ),marker="o",**rest_dict),
-            Line2D([0], [0],color=str(0.0  ),marker="d",**rest_dict),
-            Line2D([0], [0],color=str(0.375),marker="o",**rest_dict),
-            Line2D([0], [0],color=str(0.75 ),marker="o",**rest_dict),
-            Line2D([0], [0],color=str(0.0  ),marker="+",**rest_dict),
-            Line2D([0], [0],color=str(0.0  ),marker="_",**rest_dict)
+            Line2D([0], [0],color=str(xcg_shade(0.0)),marker=odBm,**rest_dict),
+            Line2D([0], [0],color=str(xcg_shade(0.0)),marker=odrm,**rest_dict),
+            Line2D([0], [0],color=str(xcg_shade(0.5)),marker=odBm,**rest_dict),
+            Line2D([0], [0],color=str(xcg_shade(1.0)),marker=odBm,**rest_dict),
+            Line2D([0], [0],color=str(xcg_shade(0.0)),marker=pdBm,**rest_dict),
+            Line2D([0], [0],color=str(xcg_shade(0.0)),marker=ndBm,**rest_dict)
         ]
         lbls = [
             "BIRE",
