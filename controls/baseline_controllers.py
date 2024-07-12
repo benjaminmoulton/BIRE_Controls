@@ -1163,7 +1163,6 @@ class LinearAdaptiveAircraft(Aircraft):
         return dx
 
 
-
 class ModelReferenceAdaptiveAircraft(Aircraft):
     """A default class for calculating and containing the mass properties of a
     Cuboid.
@@ -1292,7 +1291,6 @@ class ModelReferenceAdaptiveAircraft(Aircraft):
 
         return u,inputs
 
-
     def _initialize_state(self,a_guess=None,b_guess=None,phi_guess=None,
         u_guess=None,run2=False,no_report=False):
         # run trim at condition
@@ -1340,7 +1338,6 @@ class ModelReferenceAdaptiveAircraft(Aircraft):
         self.u = u0
         self.t_u_next_update = 0.0
         self.can_update = True
-
 
     def _nonlinear_quaternion_dynamics(self,t,x,
         is_controlled=True,given_control=False,u="o",
@@ -1443,11 +1440,153 @@ class ModelReferenceAdaptiveAircraft(Aircraft):
 
         return dx
 
-
     def _add_to_delta_x0(self,delta_x0):
         delta_x0[self.xminds] = delta_x0[self.xPi]*1.
         return delta_x0
 
+
+class PIDAircraft(Aircraft):
+    """A default class for calculating and containing the mass properties of a
+    Cuboid.
+
+    Parameters
+    ----------
+    input_vars : dict , optional
+        Must be a python dictionary
+    """
+    def __init__(self,input_dict={}):
+
+        # invoke init of parent
+        Aircraft.__init__(self,input_dict,folder_prefix = "track")
+        self.tracking = True
+        
+        # gains
+        self.kPda = +1.0e-1; self.kIda = +1.0e+0; self.kDda = +5.0e-2 # +1.0e+0
+        self.kPde = +2.0e-1; self.kIde = +2.0e+0; self.kDde = +5.0e-3 # +1.0e-1
+        self.kPdr = +1.0e+0; self.kIdr = +5.0e+0; self.kDdr = +5.0e-2 # +1.0e+0
+
+        self._reinitialize()
+
+    def _reinitialize(self):
+        
+        # previous values
+        self.prev_e = np.zeros((3,))
+        self.prev_eint = self.u_trim[:3]/np.array([self.kIda,self.kIde,self.kIdr])
+        self.prev_t = -self.dt
+        # update timing
+        self.enforce_update_frequency = True
+        self.dt_u_update = self.dt
+        self.can_update = True
+        self.prev_e = np.zeros((3,))
+        self.prev_eint = self.u_trim[:3]/np.array([self.kIda,self.kIde,self.kIdr])
+        self.prev_t = -self.dt
+        # update timing
+        self.enforce_update_frequency = True
+        self.dt_u_update = self.dt
+        self.can_update = True
+
+    def _get_control(self,t,x,is_controlled=True,given_control=False,u="o",
+        force_control_to_inputs=False):
+        # build control or pass through
+        if not given_control:
+            if is_controlled and (not(self.enforce_update_frequency) or 
+                (self.enforce_update_frequency and self.can_update) ):
+                if self.use_quaternions:
+                    x_euler = self.quat2euler_state(x)
+                else:
+                    x_euler = x*1.
+                    # reset angles
+                    x_euler[9:12] = quat_2_euler(euler_2_quat(x_euler[9:12]))
+                #
+                ref = self._get_reference(t)[self.Lin_Model.Cslice]
+                # per dave, full stick should be 270 deg/s in aileron
+                # 120 deg/s in elevator
+                # 60 deg/s in rudder
+                #
+
+                # feedback linearization
+
+                #-------------------#
+                # STATE DEFINITIONS #
+                #-------------------#
+                p       = x_euler[3]
+                q       = x_euler[4]
+                r       = x_euler[5]
+                w  = np.array([  p,  q,  r])
+                e = w - ref
+                # print(t,t - self.prev_t)
+                eint =  self.prev_eint + e *(t - self.prev_t)
+                edot = (e - self.prev_e   )/(t - self.prev_t)
+                self.prev_e = e; self.prev_eint = eint; self.prev_t = t
+                u = self.u_trim*1.0
+                u[0] = + self.kPda*e[0] + self.kIda*eint[0] + self.kDda*edot[0]
+                u[1] = + self.kPde*e[1] + self.kIde*eint[1] + self.kDde*edot[1]
+                u[2] = + self.kPdr*e[2] + self.kIdr*eint[2] + self.kDdr*edot[2]
+                # u[3] = self.u_trim[3]
+
+
+                # # integral states
+                # if len(self.xIi_eul):
+                #     u[uslc] = u[uslc] - np.matmul(K_I,intg)
+                #     # u[uslc] = u[uslc] - [kI*intg[0],kI*intg[1],kI*intg[2]]
+                if self.order > 0:
+                    q = 1*self.use_quaternions
+                    inputs = x[12+q:16+q]*1.
+                else:
+                    inputs = u*1.
+                # #
+                self.u_til_next_update = u*1.
+                self.can_update = False
+            elif is_controlled and self.enforce_update_frequency and \
+                not(self.can_update):
+                u = self.u_til_next_update*1.
+                if self.order > 0:
+                    q = 1*self.use_quaternions
+                    ## INTSTATE
+                    inputs = x[12+q:16+q]*1.
+                else:
+                    inputs = u*1.
+            else:
+                inputs = u = self.Lin_Model.uhat_eq*1.
+        elif given_control:
+            if u[0] == "o":
+                raise TypeError("Control input required.")
+            else:
+                if self.order > 0 and not force_control_to_inputs:
+                    q = 1*self.use_quaternions
+                    inputs = x[12+q:16+q]*1.
+                else:
+                    inputs = u*1.
+        
+        # limit actuators
+        # u = self._limit_input(u)
+        inputs = self._limit_input(inputs)
+        if self.order > 0:
+            q = 1*self.use_quaternions
+            x[12+q:16+q] = np.array(inputs)*1.
+        # quantize actuators
+        inputs = self._quantize_input(inputs)
+
+        return u,inputs
+
+    def _rk4(self,t0,x0,dt):
+
+        # calculate k values
+        self.t_u_next_update = 1.0e+3
+        self.can_update = True
+        ht = 0.5 * dt
+        k1 = self._dynamics(t0   ,x0        )
+        self.can_update = False
+        k2 = self._dynamics(t0+ht,x0 + ht*k1)
+        k3 = self._dynamics(t0+ht,x0 + ht*k2)
+
+        # calculate derivatives
+        ks = (k1 + 2.*(k2 + k3) + self._dynamics(t0+dt,x0 + dt*k3)) / 6.
+
+        # update x1
+        x1 = x0 + dt*ks
+
+        return x1
     
 
 if __name__ == "__main__":
@@ -1638,7 +1777,7 @@ if __name__ == "__main__":
     q_tr_deg =  5.2594941135694429
     r_tr_deg =  9.1097110268117127
     a_tr_rad =  np.deg2rad(5.5459539651510905)
-    p_bdfx = 22.0 # 15.0 # 23.0 # 17.0 # 20.0 # 
+    p_bdfx = 15.0 # 22.0 # 23.0 # 17.0 # 20.0 # 
     p_comm = p_bdfx # p_bdfx*np.cos(a_tr_rad) # 
     r_comm = 0.0    # p_bdfx*np.sin(a_tr_rad) # 
     base_rc_dict["reference"] = {
@@ -1680,7 +1819,7 @@ if __name__ == "__main__":
     plot_vars["plot_delta"] = False # True # 
     plot_vars["zoom_deltas"] = False
     plot_vars["format"] = "png" # "pdf" # 
-    # plot_vars["format"] = "pdf" # "png" # 
+    plot_vars["format"] = "pdf" # "png" # 
     plot_vars["plot_norm"] = False # True # 
     #
     di = [0.,0.,0.]
@@ -1701,21 +1840,27 @@ if __name__ == "__main__":
     # zt_p,zt_q,zt_r =  0.7 , 0.7 , 0.7 # Me
     # wn_p,wn_q,wn_r =  8.0 , 8.0 , 8.0 # Me
     #
-    run_base_rc["aircraft_class"] = DynamicInversionWashoutAircraft
-    # DI_1 & DI_2
-    zt_p,zt_q,zt_r =  0.6 , 0.6 , 0.6 # Dr Harris
-    wn_p,wn_q,wn_r =  8.0 , 8.0 , 8.0 # Dr Harris
-    run_base_rc["name_end"] = "_" + f1 + "_DIW_1"
-    run_base_rc["state_threshold"] += [1.]
+    # run_base_rc["aircraft_class"] = DynamicInversionWashoutAircraft
+    # # DI_1 & DI_2
+    # zt_p,zt_q,zt_r =  0.6 , 0.6 , 0.6 # Dr Harris
+    # wn_p,wn_q,wn_r =  8.0 , 8.0 , 8.0 # Dr Harris
+    # run_base_rc["name_end"] = "_" + f1 + "_DIW_1"
+    # run_base_rc["state_threshold"] += [1.]
     
-    base_rc_dict["controller"]["gains"][ "K"] = \
-        bire_rc_dict["controller"]["gains"][ "K"] = np.diag([
-        2.*zt_p*wn_p,2.*zt_q*wn_q,2.*zt_r*wn_r
-    ]).tolist()
-    base_rc_dict["controller"]["gains"]["KI"] = \
-        bire_rc_dict["controller"]["gains"]["KI"] = np.diag([
-        wn_p**2.,wn_q**2.,wn_r**2.
-    ]).tolist()
+    # base_rc_dict["controller"]["gains"][ "K"] = \
+    #     bire_rc_dict["controller"]["gains"][ "K"] = np.diag([
+    #     2.*zt_p*wn_p,2.*zt_q*wn_q,2.*zt_r*wn_r
+    # ]).tolist()
+    # base_rc_dict["controller"]["gains"]["KI"] = \
+    #     bire_rc_dict["controller"]["gains"]["KI"] = np.diag([
+    #     wn_p**2.,wn_q**2.,wn_r**2.
+    # ]).tolist()
+    # #
+    run_base_rc["aircraft_class"] = PIDAircraft
+    # PID_1
+    run_base_rc["name_end"] = "_" + f1 + "_PID_1"
+    base_rc_dict["simulation"]["integrator"] = "rk4" 
+    # #
     # run_base_rc["aircraft_class"] = LinearAdaptiveAircraft
     # # LAC_1
     # run_base_rc["state_threshold"] += [1.]*18
@@ -1737,7 +1882,7 @@ if __name__ == "__main__":
     # ] # + [1.]*18 #  # 
     # base_rc_dict["aircraft"]["CG_shift[ft]"] = [0.]*3
     # run_base_rc["has_turbulence"] = True
-    # #########################################################################
+    #########################################################################
     # base_rc_dict["reference"] = {
     #     "deg2rad_states" : [3,4,5],
     #     "3" : [[ 0.0, p_tr_deg],[ 2.0, p_tr_deg]],
@@ -1769,8 +1914,9 @@ if __name__ == "__main__":
     # di = [300. ,100., 60.] # TK_9
     # di = [300. ,130., 50.] # DI_1
     # di = [300. ,130., 50.] # DI_2
-    # # di = [ 50. , 30.,  3.] # LAC_1
-    # # di = [  1.5,  5.,  1.] # MRAC_1
+    # di = [ 50. , 30.,  3.] # LAC_1
+    # di = [  1.5,  5.,  1.] # MRAC_1
+    # di = [120. ,130., 60.] # PID_1
     # # # di = [0.,0.,0.]
     # # monte_carlo_perturbations(bire_fs_dict,rtdst_1sg=di,**run_bire_fs,**plot_vars)
     # # monte_carlo_perturbations(base_fs_dict,rtdst_1sg=di,**run_base_fs,**plot_vars)
@@ -1797,7 +1943,8 @@ if __name__ == "__main__":
     # disa = [[ 100.,0.,0.],[0., 50.,0.],[0.,0., 50.]] # LAC_1
     # disa = [[  20.,0.,0.],[0., 10.,0.],[0.,0., 10.]] # MRAC_1
     # disa = [[  20.,0.,0.],[0., 10.,0.],[0.,0., 10.]] # MRAC_2
-    # for i in [0]: # range(3): # 
+    # disa = [[ 180.,0.,0.],[0.,300.,0.],[0.,0.,140.]] # PID_1
+    # for i in [2]: # range(3): # 
     #     ds = disa[i]
     #     # monte_carlo_perturbations(bire_fs_dict,rtdst_1sg=ds,**run_bire_fs,**plot_vars)
     #     # monte_carlo_perturbations(base_fs_dict,rtdst_1sg=ds,**run_base_fs,**plot_vars)

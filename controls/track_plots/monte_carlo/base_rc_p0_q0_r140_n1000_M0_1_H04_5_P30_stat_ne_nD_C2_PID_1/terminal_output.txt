@@ -1,0 +1,1170 @@
+|Dx| threshold is        1.0
+state_threshold is
+ 10.000 15.000 15.000
+  0.500  0.500  0.500
+  1.000  1.000 50.000
+ 25.000 10.000  1.000
+  5.000  5.000  5.000
+  0.050
+    x_{tr} = \begin{bmatrix}
+          99.3608 &    0.0589 &   11.2886 &   -0.0181 &    0.0918 &    0.1590 &         0 &         0 &     -4500 &    0.5236 &    0.0984 &         0 \\
+    \end{bmatrix}^T \\
+    \delta_{tr} = \begin{bmatrix}
+           0.0023 &   -0.0667 &   -0.0036 &    0.1805 &         0 &         0 &         0 \\
+    \end{bmatrix}^T , \quad
+    u_{tr} = \begin{bmatrix}
+           0.0023 &   -0.0667 &   -0.0036 &    0.1805 \\
+    \end{bmatrix}^T 
+
+    A_{full} &= \begin{bmatrix}
+           -0.0285 &     0.1573 &     0.2562 &    -0.0001 &   -11.2699 &     0.0580 &          0 &          0 &   -32.0047 \\
+           -0.1593 &    -0.8411 &    -0.0187 &    11.4702 &    -0.0001 &   -98.7710 &          0 &    27.7169 &    -1.5792 \\
+           -0.2757 &     0.0175 &    -3.2776 &    -0.0589 &    97.6194 &    -0.0001 &          0 &   -16.0023 &    -2.7353 \\
+           -0.0089 &    -1.9383 &     0.0217 &   -11.8262 &    -0.1108 &     3.4765 &          0 &          0 &          0 \\
+            0.0243 &    -0.0000 &    -0.1919 &     0.1543 &    -2.6272 &    -0.0300 &          0 &          0 &          0 \\
+            0.0006 &     0.6186 &     0.0004 &    -0.1863 &     0.0270 &    -0.6566 &          0 &          0 &          0 \\
+           -0.0982 &     0.4976 &     0.8618 &          0 &          0 &          0 &          0 &    -5.5663 &   -99.8435 \\
+                 0 &          0 &          0 &          1 &     0.0493 &     0.0855 &          0 &          0 &     0.1854 \\
+                 0 &          0 &          0 &          0 &     0.8660 &    -0.5000 &          0 &    -0.1836 &          0 \\
+    \end{bmatrix} \\
+    B_{full} &= \begin{bmatrix}
+            0.0018 &     2.2672 &    -0.0013 &    20.1410 \\
+            5.8613 &    -0.0020 &    15.1716 &          0 \\
+            0.0002 &   -50.5678 &    -0.0002 &          0 \\
+         -181.7167 &    -0.0000 &    63.3924 &          0 \\
+                 0 &   -57.2021 &    -0.0000 &          0 \\
+           -5.6152 &     0.0002 &   -21.2853 &          0 \\
+                 0 &          0 &          0 &          0 \\
+                 0 &          0 &          0 &          0 \\
+                 0 &          0 &          0 &          0 \\
+    \end{bmatrix} 
+
+    A &= \begin{bmatrix}
+          -11.8262 &    -0.1108 &     3.4765 \\
+            0.1543 &    -2.6272 &    -0.0300 \\
+           -0.1863 &     0.0270 &    -0.6566 \\
+    \end{bmatrix} \\
+    B &= \begin{bmatrix}
+        -181.7167 &   -0.0000 &   63.3924 \\
+                0 &  -57.2021 &   -0.0000 \\
+          -5.6152 &    0.0002 &  -21.2853 \\
+    \end{bmatrix} 
+
+    \lambda_{ol} = \begin{bmatrix}
+                0 \\
+                0 \\
+                0 \\
+          11.7659 \\
+           0.7146 \\
+           2.6295 \\
+    \end{bmatrix} 
+
+    \chi_{ol} = \left\{
+        \begin{bmatrix}
+                   1     +0j \\        0     +0j \\        0     +0j \\        0     +0j \\        0     +0j \\        0     +0j \\
+        \end{bmatrix},
+        \begin{bmatrix}
+                   0     +0j \\        1     +0j \\        0     +0j \\        0     +0j \\        0     +0j \\        0     +0j \\
+        \end{bmatrix},
+        \begin{bmatrix}
+                   0     +0j \\        0     +0j \\        1     +0j \\        0     +0j \\        0     +0j \\        0     +0j \\
+        \end{bmatrix},
+        \begin{bmatrix}
+              0.0847     +0j \\  -0.0014     +0j \\   0.0014     +0j \\   0.9961     +0j \\  -0.0168     +0j \\   0.0167     +0j \\
+        \end{bmatrix},\right. \\
+\left.        \begin{bmatrix}
+              0.2429     +0j \\   0.0074     +0j \\   0.7765     +0j \\   0.1736     +0j \\   0.0053     +0j \\   0.5549     +0j \\
+        \end{bmatrix},
+        \begin{bmatrix}
+             -0.0063     +0j \\   0.3554     +0j \\  -0.0055     +0j \\  -0.0167     +0j \\   0.9344     +0j \\  -0.0143     +0j \\
+        \end{bmatrix}
+    \right\} 
+
+eigenvalues table :::
+        $       0     +0j$ & mode &  -0.000 &    -    &    -    &    -    &    -     &    -    & Level  \\
+        $       0     +0j$ & mode &  -0.000 &    -    &    -    &    -    &    -     &    -    & Level  \\
+        $       0     +0j$ & mode &  -0.000 &    -    &    -    &    -    &    -     &    -    & Level  \\
+        $ 11.7659     +0j$ & mode & -11.766 &    -    &    -    &    -    &    0.059 &    -    & Level  \\
+        $  0.7146     +0j$ & mode &  -0.715 &    -    &    -    &    -    &    0.970 &    -    & Level  \\
+        $  2.6295     +0j$ & mode &  -2.629 &    -    &    -    &    -    &    0.264 &    -    & Level  \\
+
+controllability rank = 3
+
+    K_P = \begin{bmatrix}
+           9.8000 &         0 &         0 \\
+                0 &    9.8000 &         0 \\
+                0 &         0 &    9.8000 \\
+    \end{bmatrix} 
+
+K_P = [[   9.8000000000000007,   0.0000000000000000,   0.0000000000000000],
+       [   0.0000000000000000,   9.8000000000000007,   0.0000000000000000],
+       [   0.0000000000000000,   0.0000000000000000,   9.8000000000000007]]
+
+    K_I = \begin{bmatrix}
+               49 &         0 &         0 \\
+                0 &        49 &         0 \\
+                0 &         0 &        49 \\
+    \end{bmatrix} 
+
+K_I = [[  49.0000000000000000,   0.0000000000000000,   0.0000000000000000],
+       [   0.0000000000000000,  49.0000000000000000,   0.0000000000000000],
+       [   0.0000000000000000,   0.0000000000000000,  49.0000000000000000]]
+
+    \lambda_{cl} = \begin{bmatrix}
+        -1765.5766 \\
+        -558.1859 \\
+        -226.2485 \\
+          -4.9809 \\
+          -5.0214 \\
+          -5.0971 \\
+    \end{bmatrix} 
+
+    \chi_{cl} = \left\{
+        \begin{bmatrix}
+              0.0006     +0j \\       -0     +0j \\        0     +0j \\  -0.9994     +0j \\   0.0001     +0j \\  -0.0353     +0j \\
+        \end{bmatrix},
+        \begin{bmatrix}
+                   0     +0j \\  -0.0018     +0j \\        0     +0j \\  -0.0001     +0j \\   1.0000     +0j \\  -0.0001     +0j \\
+        \end{bmatrix},
+        \begin{bmatrix}
+              0.0016     +0j \\        0     +0j \\   0.0041     +0j \\  -0.3715     +0j \\  -0.0001     +0j \\  -0.9284     +0j \\
+        \end{bmatrix},
+        \begin{bmatrix}
+              0.1967     +0j \\  -0.0067     +0j \\  -0.0009     +0j \\  -0.9798     +0j \\   0.0336     +0j \\   0.0047     +0j \\
+        \end{bmatrix},\right. \\
+\left.        \begin{bmatrix}
+             -0.0023     +0j \\   0.1953     +0j \\  -0.0018     +0j \\   0.0114     +0j \\  -0.9806     +0j \\   0.0090     +0j \\
+        \end{bmatrix},
+        \begin{bmatrix}
+              0.0679     +0j \\   0.0006     +0j \\   0.1802     +0j \\  -0.3458     +0j \\  -0.0031     +0j \\  -0.9183     +0j \\
+        \end{bmatrix}
+    \right\} 
+
+eigenvalues table :::
+        $-1765.5766     +0j$ & mode &  1765.577 &    -    &    -    &    -    &    -     &   0.001 & Level  \\
+        $-558.1859     +0j$ & mode &  558.186 &    -    &    -    &    -    &    -     &   0.002 & Level  \\
+        $-226.2485     +0j$ & mode &  226.249 &    -    &    -    &    -    &    -     &   0.004 & Level  \\
+        $ -4.9809     +0j$ & mode &   4.981 &    -    &    -    &    -    &    -     &   0.201 & Level  \\
+        $ -5.0214     +0j$ & mode &   5.021 &    -    &    -    &    -    &    -     &   0.199 & Level  \\
+        $ -5.0971     +0j$ & mode &   5.097 &    -    &    -    &    -    &    -     &   0.196 & Level  \\
+
+   1 Dp =     0.000 Dq =     0.000 Dr =   138.150 |Dx| =     0.005,   Stable ->  p  q  r
+   2 Dp =     0.000 Dq =     0.000 Dr =  -121.598 |Dx| =     0.007,   Stable ->  r  p  q
+   3 Dp =     0.000 Dq =     0.000 Dr =    68.431 |Dx| =     0.001,   Stable ->  p  q  r
+   4 Dp =     0.000 Dq =     0.000 Dr =    26.135 |Dx| =     0.000,   Stable ->  q  p  r
+   5 Dp =     0.000 Dq =     0.000 Dr =   -81.708 |Dx| =     0.002,   Stable ->  r  p  q
+   6 Dp =     0.000 Dq =     0.000 Dr =  -127.310 |Dx| =     0.009,   Stable ->  r  p  q
+   7 Dp =     0.000 Dq =     0.000 Dr =   -30.697 |Dx| =     0.000,   Stable ->  r  p  q
+   8 Dp =     0.000 Dq =     0.000 Dr =   199.189 |Dx| =     0.014,   Stable ->  p  q  r
+   9 Dp =     0.000 Dq =     0.000 Dr =    88.245 |Dx| =     0.001,   Stable ->  p  q  r
+  10 Dp =     0.000 Dq =     0.000 Dr =   -81.381 |Dx| =     0.002,   Stable ->  r  p  q
+  11 Dp =     0.000 Dq =     0.000 Dr =   100.435 |Dx| =     0.002,   Stable ->  p  q  r
+  12 Dp =     0.000 Dq =     0.000 Dr =   231.067 |Dx| =     0.020,   Stable ->  p  q  r
+  13 Dp =     0.000 Dq =     0.000 Dr =   300.037 |Dx| =     0.044,   Stable ->  r  p  q
+  14 Dp =     0.000 Dq =     0.000 Dr =  -239.853 |Dx| =     0.475,   Stable ->  r  p  q
+  15 Dp =     0.000 Dq =     0.000 Dr =   100.594 |Dx| =     0.002,   Stable ->  p  q  r
+  16 Dp =     0.000 Dq =     0.000 Dr =   115.343 |Dx| =     0.003,   Stable ->  p  q  r
+  17 Dp =     0.000 Dq =     0.000 Dr =  -112.866 |Dx| =     0.006,   Stable ->  r  p  q
+  18 Dp =     0.000 Dq =     0.000 Dr =  -260.370 |Dx| =     1.066, Unstable >> ->  r  p  q
+  19 Dp =     0.000 Dq =     0.000 Dr =   175.754 |Dx| =     0.010,   Stable ->  p  q  r
+  20 Dp =     0.000 Dq =     0.000 Dr =   -64.835 |Dx| =     0.001,   Stable ->  r  p  q
+  21 Dp =     0.000 Dq =     0.000 Dr =  -225.974 |Dx| =     0.265,   Stable ->  r  p  q
+  22 Dp =     0.000 Dq =     0.000 Dr =  -149.460 |Dx| =     0.018,   Stable ->  r  p  q
+  23 Dp =     0.000 Dq =     0.000 Dr =   101.825 |Dx| =     0.002,   Stable ->  p  q  r
+  24 Dp =     0.000 Dq =     0.000 Dr =   304.441 |Dx| =     0.052,   Stable ->  r  p  q
+  25 Dp =     0.000 Dq =     0.000 Dr =   129.765 |Dx| =     0.004,   Stable ->  p  q  r
+  26 Dp =     0.000 Dq =     0.000 Dr =  -120.008 |Dx| =     0.007,   Stable ->  r  p  q
+  27 Dp =     0.000 Dq =     0.000 Dr =   177.039 |Dx| =     0.010,   Stable ->  p  q  r
+  28 Dp =     0.000 Dq =     0.000 Dr =  -261.299 |Dx| =     1.105, Unstable >> ->  r  p  q
+  29 Dp =     0.000 Dq =     0.000 Dr =   138.773 |Dx| =     0.005,   Stable ->  p  q  r
+  30 Dp =     0.000 Dq =     0.000 Dr =   129.285 |Dx| =     0.004,   Stable ->  p  q  r
+  31 Dp =     0.000 Dq =     0.000 Dr =   250.726 |Dx| =     0.022,   Stable ->  p  q  r
+  32 Dp =     0.000 Dq =     0.000 Dr =   137.276 |Dx| =     0.005,   Stable ->  p  q  r
+  33 Dp =     0.000 Dq =     0.000 Dr =   159.805 |Dx| =     0.007,   Stable ->  p  q  r
+  34 Dp =     0.000 Dq =     0.000 Dr =    17.068 |Dx| =     0.000,   Stable ->  q  p  r
+  35 Dp =     0.000 Dq =     0.000 Dr =   -45.361 |Dx| =     0.000,   Stable ->  r  p  q
+  36 Dp =     0.000 Dq =     0.000 Dr =     6.096 |Dx| =     0.000,   Stable ->  q  p  r
+  37 Dp =     0.000 Dq =     0.000 Dr =   270.642 |Dx| =     0.023,   Stable ->  p  r  q
+  38 Dp =     0.000 Dq =     0.000 Dr =   -77.124 |Dx| =     0.002,   Stable ->  r  p  q
+  39 Dp =     0.000 Dq =     0.000 Dr =    -5.211 |Dx| =     0.000,   Stable ->  r  p  q
+  40 Dp =     0.000 Dq =     0.000 Dr =   -61.838 |Dx| =     0.001,   Stable ->  r  p  q
+  41 Dp =     0.000 Dq =     0.000 Dr =    96.848 |Dx| =     0.002,   Stable ->  p  q  r
+  42 Dp =     0.000 Dq =     0.000 Dr =    70.123 |Dx| =     0.001,   Stable ->  p  q  r
+  43 Dp =     0.000 Dq =     0.000 Dr =   287.647 |Dx| =     0.029,   Stable ->  p  r  q
+  44 Dp =     0.000 Dq =     0.000 Dr =   307.342 |Dx| =     0.057,   Stable ->  r  p  q
+  45 Dp =     0.000 Dq =     0.000 Dr =   161.881 |Dx| =     0.008,   Stable ->  p  q  r
+  46 Dp =     0.000 Dq =     0.000 Dr =   128.674 |Dx| =     0.004,   Stable ->  p  q  r
+  47 Dp =     0.000 Dq =     0.000 Dr =   -14.729 |Dx| =     0.000,   Stable ->  r  p  q
+  48 Dp =     0.000 Dq =     0.000 Dr =  -204.366 |Dx| =     0.103,   Stable ->  r  p  q
+  49 Dp =     0.000 Dq =     0.000 Dr =    27.302 |Dx| =     0.000,   Stable ->  q  p  r
+  50 Dp =     0.000 Dq =     0.000 Dr =     9.966 |Dx| =     0.000,   Stable ->  q  p  r
+  48/  50 conv, est  960/ 1000 for base_rc_p0_q0_r140_n1000_M0_1_H04_5_P30_stat_ne_nD_C2_PID_1
+  51 Dp =     0.000 Dq =     0.000 Dr =  -154.019 |Dx| =     0.021,   Stable ->  r  p  q
+  52 Dp =     0.000 Dq =     0.000 Dr =    34.809 |Dx| =     0.000,   Stable ->  p  q  r
+  53 Dp =     0.000 Dq =     0.000 Dr =   140.505 |Dx| =     0.005,   Stable ->  p  q  r
+  54 Dp =     0.000 Dq =     0.000 Dr =  -120.203 |Dx| =     0.007,   Stable ->  r  p  q
+  55 Dp =     0.000 Dq =     0.000 Dr =   128.074 |Dx| =     0.004,   Stable ->  p  q  r
+  56 Dp =     0.000 Dq =     0.000 Dr =    61.933 |Dx| =     0.001,   Stable ->  p  q  r
+  57 Dp =     0.000 Dq =     0.000 Dr =   -71.648 |Dx| =     0.001,   Stable ->  r  p  q
+  58 Dp =     0.000 Dq =     0.000 Dr =    20.025 |Dx| =     0.000,   Stable ->  q  p  r
+  59 Dp =     0.000 Dq =     0.000 Dr =   110.044 |Dx| =     0.002,   Stable ->  p  q  r
+  60 Dp =     0.000 Dq =     0.000 Dr =   -20.984 |Dx| =     0.000,   Stable ->  r  p  q
+  61 Dp =     0.000 Dq =     0.000 Dr =    -4.244 |Dx| =     0.000,   Stable ->  r  p  q
+  62 Dp =     0.000 Dq =     0.000 Dr =   189.043 |Dx| =     0.012,   Stable ->  p  q  r
+  63 Dp =     0.000 Dq =     0.000 Dr =    82.700 |Dx| =     0.001,   Stable ->  p  q  r
+  64 Dp =     0.000 Dq =     0.000 Dr =    79.668 |Dx| =     0.001,   Stable ->  p  q  r
+  65 Dp =     0.000 Dq =     0.000 Dr =   -66.057 |Dx| =     0.001,   Stable ->  r  p  q
+  66 Dp =     0.000 Dq =     0.000 Dr =   103.216 |Dx| =     0.002,   Stable ->  p  q  r
+  67 Dp =     0.000 Dq =     0.000 Dr =   214.775 |Dx| =     0.017,   Stable ->  p  q  r
+  68 Dp =     0.000 Dq =     0.000 Dr =  -127.664 |Dx| =     0.009,   Stable ->  r  p  q
+  69 Dp =     0.000 Dq =     0.000 Dr =  -227.074 |Dx| =     0.278,   Stable ->  r  p  q
+  70 Dp =     0.000 Dq =     0.000 Dr =  -108.288 |Dx| =     0.005,   Stable ->  r  p  q
+  71 Dp =     0.000 Dq =     0.000 Dr =   -14.177 |Dx| =     0.000,   Stable ->  r  p  q
+  72 Dp =     0.000 Dq =     0.000 Dr =  -136.878 |Dx| =     0.012,   Stable ->  r  p  q
+  73 Dp =     0.000 Dq =     0.000 Dr =  -233.626 |Dx| =     0.367,   Stable ->  r  p  q
+  74 Dp =     0.000 Dq =     0.000 Dr =   235.140 |Dx| =     0.021,   Stable ->  p  q  r
+  75 Dp =     0.000 Dq =     0.000 Dr =   -55.065 |Dx| =     0.001,   Stable ->  r  p  q
+  76 Dp =     0.000 Dq =     0.000 Dr =  -110.931 |Dx| =     0.005,   Stable ->  r  p  q
+  77 Dp =     0.000 Dq =     0.000 Dr =  -400.467 |Dx| =   237.551, Unstable >> ->  r  p  q
+  78 Dp =     0.000 Dq =     0.000 Dr =   131.118 |Dx| =     0.004,   Stable ->  p  q  r
+  79 Dp =     0.000 Dq =     0.000 Dr =  -214.846 |Dx| =     0.163,   Stable ->  r  p  q
+  80 Dp =     0.000 Dq =     0.000 Dr =   188.361 |Dx| =     0.012,   Stable ->  p  q  r
+  81 Dp =     0.000 Dq =     0.000 Dr =    82.829 |Dx| =     0.001,   Stable ->  p  q  r
+  82 Dp =     0.000 Dq =     0.000 Dr =    33.728 |Dx| =     0.000,   Stable ->  p  q  r
+  83 Dp =     0.000 Dq =     0.000 Dr =   -26.957 |Dx| =     0.000,   Stable ->  r  p  q
+  84 Dp =     0.000 Dq =     0.000 Dr =   138.158 |Dx| =     0.005,   Stable ->  p  q  r
+  85 Dp =     0.000 Dq =     0.000 Dr =   -76.716 |Dx| =     0.002,   Stable ->  r  p  q
+  86 Dp =     0.000 Dq =     0.000 Dr =    55.360 |Dx| =     0.000,   Stable ->  p  q  r
+  87 Dp =     0.000 Dq =     0.000 Dr =   -67.017 |Dx| =     0.001,   Stable ->  r  p  q
+  88 Dp =     0.000 Dq =     0.000 Dr =   -41.159 |Dx| =     0.000,   Stable ->  r  p  q
+  89 Dp =     0.000 Dq =     0.000 Dr =   224.458 |Dx| =     0.019,   Stable ->  p  q  r
+  90 Dp =     0.000 Dq =     0.000 Dr =   160.076 |Dx| =     0.007,   Stable ->  p  q  r
+  91 Dp =     0.000 Dq =     0.000 Dr =  -128.506 |Dx| =     0.009,   Stable ->  r  p  q
+  92 Dp =     0.000 Dq =     0.000 Dr =  -118.601 |Dx| =     0.007,   Stable ->  r  p  q
+  93 Dp =     0.000 Dq =     0.000 Dr =     8.609 |Dx| =     0.000,   Stable ->  q  p  r
+  94 Dp =     0.000 Dq =     0.000 Dr =   -15.656 |Dx| =     0.000,   Stable ->  r  p  q
+  95 Dp =     0.000 Dq =     0.000 Dr =    72.592 |Dx| =     0.001,   Stable ->  p  q  r
+  96 Dp =     0.000 Dq =     0.000 Dr =   -50.618 |Dx| =     0.000,   Stable ->  r  p  q
+  97 Dp =     0.000 Dq =     0.000 Dr =  -144.332 |Dx| =     0.016,   Stable ->  r  p  q
+  98 Dp =     0.000 Dq =     0.000 Dr =   119.275 |Dx| =     0.003,   Stable ->  p  q  r
+  99 Dp =     0.000 Dq =     0.000 Dr =   -28.606 |Dx| =     0.000,   Stable ->  r  p  q
+ 100 Dp =     0.000 Dq =     0.000 Dr =    99.607 |Dx| =     0.002,   Stable ->  p  q  r
+  97/ 100 conv, est  970/ 1000 for base_rc_p0_q0_r140_n1000_M0_1_H04_5_P30_stat_ne_nD_C2_PID_1
+ 101 Dp =     0.000 Dq =     0.000 Dr =  -124.304 |Dx| =     0.008,   Stable ->  r  p  q
+ 102 Dp =     0.000 Dq =     0.000 Dr =   216.029 |Dx| =     0.018,   Stable ->  p  q  r
+ 103 Dp =     0.000 Dq =     0.000 Dr =    41.849 |Dx| =     0.000,   Stable ->  p  q  r
+ 104 Dp =     0.000 Dq =     0.000 Dr =    39.586 |Dx| =     0.000,   Stable ->  p  q  r
+ 105 Dp =     0.000 Dq =     0.000 Dr =    56.466 |Dx| =     0.000,   Stable ->  p  q  r
+ 106 Dp =     0.000 Dq =     0.000 Dr =  -219.981 |Dx| =     0.204,   Stable ->  r  p  q
+ 107 Dp =     0.000 Dq =     0.000 Dr =   102.144 |Dx| =     0.002,   Stable ->  p  q  r
+ 108 Dp =     0.000 Dq =     0.000 Dr =   -70.780 |Dx| =     0.001,   Stable ->  r  p  q
+ 109 Dp =     0.000 Dq =     0.000 Dr =  -156.524 |Dx| =     0.023,   Stable ->  r  p  q
+ 110 Dp =     0.000 Dq =     0.000 Dr =    57.167 |Dx| =     0.000,   Stable ->  p  q  r
+ 111 Dp =     0.000 Dq =     0.000 Dr =   246.372 |Dx| =     0.021,   Stable ->  p  q  r
+ 112 Dp =     0.000 Dq =     0.000 Dr =   -96.798 |Dx| =     0.003,   Stable ->  r  p  q
+ 113 Dp =     0.000 Dq =     0.000 Dr =   221.633 |Dx| =     0.019,   Stable ->  p  q  r
+ 114 Dp =     0.000 Dq =     0.000 Dr =  -310.712 |Dx| =     6.490, Unstable >> ->  r  q  p
+ 115 Dp =     0.000 Dq =     0.000 Dr =    45.181 |Dx| =     0.000,   Stable ->  p  q  r
+ 116 Dp =     0.000 Dq =     0.000 Dr =   -82.133 |Dx| =     0.002,   Stable ->  r  p  q
+ 117 Dp =     0.000 Dq =     0.000 Dr =    37.991 |Dx| =     0.000,   Stable ->  p  q  r
+ 118 Dp =     0.000 Dq =     0.000 Dr =   305.656 |Dx| =     0.054,   Stable ->  r  p  q
+ 119 Dp =     0.000 Dq =     0.000 Dr =    98.046 |Dx| =     0.002,   Stable ->  p  q  r
+ 120 Dp =     0.000 Dq =     0.000 Dr =  -209.084 |Dx| =     0.126,   Stable ->  r  p  q
+ 121 Dp =     0.000 Dq =     0.000 Dr =   209.510 |Dx| =     0.016,   Stable ->  p  q  r
+ 122 Dp =     0.000 Dq =     0.000 Dr =  -147.869 |Dx| =     0.017,   Stable ->  r  p  q
+ 123 Dp =     0.000 Dq =     0.000 Dr =   -78.456 |Dx| =     0.002,   Stable ->  r  p  q
+ 124 Dp =     0.000 Dq =     0.000 Dr =  -126.229 |Dx| =     0.009,   Stable ->  r  p  q
+ 125 Dp =     0.000 Dq =     0.000 Dr =    20.792 |Dx| =     0.000,   Stable ->  q  p  r
+ 126 Dp =     0.000 Dq =     0.000 Dr =   -13.769 |Dx| =     0.000,   Stable ->  r  p  q
+ 127 Dp =     0.000 Dq =     0.000 Dr =   234.253 |Dx| =     0.020,   Stable ->  p  q  r
+ 128 Dp =     0.000 Dq =     0.000 Dr =    51.573 |Dx| =     0.000,   Stable ->  p  q  r
+ 129 Dp =     0.000 Dq =     0.000 Dr =   101.215 |Dx| =     0.002,   Stable ->  p  q  r
+ 130 Dp =     0.000 Dq =     0.000 Dr =   -19.061 |Dx| =     0.000,   Stable ->  r  p  q
+ 131 Dp =     0.000 Dq =     0.000 Dr =   162.570 |Dx| =     0.008,   Stable ->  p  q  r
+ 132 Dp =     0.000 Dq =     0.000 Dr =  -144.896 |Dx| =     0.016,   Stable ->  r  p  q
+ 133 Dp =     0.000 Dq =     0.000 Dr =  -201.953 |Dx| =     0.094,   Stable ->  r  p  q
+ 134 Dp =     0.000 Dq =     0.000 Dr =   129.803 |Dx| =     0.004,   Stable ->  p  q  r
+ 135 Dp =     0.000 Dq =     0.000 Dr =   110.443 |Dx| =     0.002,   Stable ->  p  q  r
+ 136 Dp =     0.000 Dq =     0.000 Dr =    11.112 |Dx| =     0.000,   Stable ->  q  p  r
+ 137 Dp =     0.000 Dq =     0.000 Dr =   323.711 |Dx| =     0.326,   Stable ->  r  p  q
+ 138 Dp =     0.000 Dq =     0.000 Dr =  -122.758 |Dx| =     0.008,   Stable ->  r  p  q
+ 139 Dp =     0.000 Dq =     0.000 Dr =   206.779 |Dx| =     0.016,   Stable ->  p  q  r
+ 140 Dp =     0.000 Dq =     0.000 Dr =   221.487 |Dx| =     0.019,   Stable ->  p  q  r
+ 141 Dp =     0.000 Dq =     0.000 Dr =  -171.129 |Dx| =     0.035,   Stable ->  r  p  q
+ 142 Dp =     0.000 Dq =     0.000 Dr =    83.846 |Dx| =     0.001,   Stable ->  p  q  r
+ 143 Dp =     0.000 Dq =     0.000 Dr =   116.688 |Dx| =     0.003,   Stable ->  p  q  r
+ 144 Dp =     0.000 Dq =     0.000 Dr =   -13.670 |Dx| =     0.000,   Stable ->  r  p  q
+ 145 Dp =     0.000 Dq =     0.000 Dr =   -12.286 |Dx| =     0.000,   Stable ->  r  p  q
+ 146 Dp =     0.000 Dq =     0.000 Dr =    -2.038 |Dx| =     0.000,   Stable ->  r  p  q
+ 147 Dp =     0.000 Dq =     0.000 Dr =  -117.009 |Dx| =     0.006,   Stable ->  r  p  q
+ 148 Dp =     0.000 Dq =     0.000 Dr =  -189.777 |Dx| =     0.061,   Stable ->  r  p  q
+ 149 Dp =     0.000 Dq =     0.000 Dr =   117.103 |Dx| =     0.003,   Stable ->  p  q  r
+ 150 Dp =     0.000 Dq =     0.000 Dr =    38.102 |Dx| =     0.000,   Stable ->  p  q  r
+ 146/ 150 conv, est  973/ 1000 for base_rc_p0_q0_r140_n1000_M0_1_H04_5_P30_stat_ne_nD_C2_PID_1
+ 151 Dp =     0.000 Dq =     0.000 Dr =    10.813 |Dx| =     0.000,   Stable ->  q  p  r
+ 152 Dp =     0.000 Dq =     0.000 Dr =    81.095 |Dx| =     0.001,   Stable ->  p  q  r
+ 153 Dp =     0.000 Dq =     0.000 Dr =  -108.600 |Dx| =     0.005,   Stable ->  r  p  q
+ 154 Dp =     0.000 Dq =     0.000 Dr =   -85.764 |Dx| =     0.002,   Stable ->  r  p  q
+ 155 Dp =     0.000 Dq =     0.000 Dr =   120.473 |Dx| =     0.003,   Stable ->  p  q  r
+ 156 Dp =     0.000 Dq =     0.000 Dr =     5.705 |Dx| =     0.000,   Stable ->  q  p  r
+ 157 Dp =     0.000 Dq =     0.000 Dr =    75.241 |Dx| =     0.001,   Stable ->  p  q  r
+ 158 Dp =     0.000 Dq =     0.000 Dr =   159.444 |Dx| =     0.007,   Stable ->  p  q  r
+ 159 Dp =     0.000 Dq =     0.000 Dr =   253.333 |Dx| =     0.022,   Stable ->  p  q  r
+ 160 Dp =     0.000 Dq =     0.000 Dr =  -123.107 |Dx| =     0.008,   Stable ->  r  p  q
+ 161 Dp =     0.000 Dq =     0.000 Dr =   -75.544 |Dx| =     0.001,   Stable ->  r  p  q
+ 162 Dp =     0.000 Dq =     0.000 Dr =  -197.515 |Dx| =     0.079,   Stable ->  r  p  q
+ 163 Dp =     0.000 Dq =     0.000 Dr =   -92.685 |Dx| =     0.003,   Stable ->  r  p  q
+ 164 Dp =     0.000 Dq =     0.000 Dr =    77.398 |Dx| =     0.001,   Stable ->  p  q  r
+ 165 Dp =     0.000 Dq =     0.000 Dr =   -70.837 |Dx| =     0.001,   Stable ->  r  p  q
+ 166 Dp =     0.000 Dq =     0.000 Dr =   314.219 |Dx| =     0.071,   Stable ->  r  p  q
+ 167 Dp =     0.000 Dq =     0.000 Dr =   -55.701 |Dx| =     0.001,   Stable ->  r  p  q
+ 168 Dp =     0.000 Dq =     0.000 Dr =  -247.921 |Dx| =     0.658,   Stable ->  r  p  q
+ 169 Dp =     0.000 Dq =     0.000 Dr =  -122.059 |Dx| =     0.008,   Stable ->  r  p  q
+ 170 Dp =     0.000 Dq =     0.000 Dr =   300.366 |Dx| =     0.045,   Stable ->  r  p  q
+ 171 Dp =     0.000 Dq =     0.000 Dr =  -121.654 |Dx| =     0.007,   Stable ->  r  p  q
+ 172 Dp =     0.000 Dq =     0.000 Dr =    -5.469 |Dx| =     0.000,   Stable ->  r  p  q
+ 173 Dp =     0.000 Dq =     0.000 Dr =  -111.376 |Dx| =     0.005,   Stable ->  r  p  q
+ 174 Dp =     0.000 Dq =     0.000 Dr =  -151.117 |Dx| =     0.019,   Stable ->  r  p  q
+ 175 Dp =     0.000 Dq =     0.000 Dr =   169.013 |Dx| =     0.009,   Stable ->  p  q  r
+ 176 Dp =     0.000 Dq =     0.000 Dr =  -164.214 |Dx| =     0.029,   Stable ->  r  p  q
+ 177 Dp =     0.000 Dq =     0.000 Dr =  -249.306 |Dx| =     0.695,   Stable ->  r  p  q
+ 178 Dp =     0.000 Dq =     0.000 Dr =  -101.057 |Dx| =     0.004,   Stable ->  r  p  q
+ 179 Dp =     0.000 Dq =     0.000 Dr =   -89.327 |Dx| =     0.002,   Stable ->  r  p  q
+ 180 Dp =     0.000 Dq =     0.000 Dr =    66.542 |Dx| =     0.001,   Stable ->  p  q  r
+ 181 Dp =     0.000 Dq =     0.000 Dr =    20.479 |Dx| =     0.000,   Stable ->  q  p  r
+ 182 Dp =     0.000 Dq =     0.000 Dr =   179.677 |Dx| =     0.010,   Stable ->  p  q  r
+ 183 Dp =     0.000 Dq =     0.000 Dr =   -24.973 |Dx| =     0.000,   Stable ->  r  p  q
+ 184 Dp =     0.000 Dq =     0.000 Dr =    66.082 |Dx| =     0.001,   Stable ->  p  q  r
+ 185 Dp =     0.000 Dq =     0.000 Dr =    75.121 |Dx| =     0.001,   Stable ->  p  q  r
+ 186 Dp =     0.000 Dq =     0.000 Dr =   149.324 |Dx| =     0.006,   Stable ->  p  q  r
+ 187 Dp =     0.000 Dq =     0.000 Dr =  -168.213 |Dx| =     0.032,   Stable ->  r  p  q
+ 188 Dp =     0.000 Dq =     0.000 Dr =   -42.570 |Dx| =     0.000,   Stable ->  r  p  q
+ 189 Dp =     0.000 Dq =     0.000 Dr =  -381.904 |Dx| =   202.432, Unstable >> ->  r  p  q
+ 190 Dp =     0.000 Dq =     0.000 Dr =  -108.224 |Dx| =     0.005,   Stable ->  r  p  q
+ 191 Dp =     0.000 Dq =     0.000 Dr =  -168.352 |Dx| =     0.032,   Stable ->  r  p  q
+ 192 Dp =     0.000 Dq =     0.000 Dr =  -119.553 |Dx| =     0.007,   Stable ->  r  p  q
+ 193 Dp =     0.000 Dq =     0.000 Dr =   223.198 |Dx| =     0.019,   Stable ->  p  q  r
+ 194 Dp =     0.000 Dq =     0.000 Dr =   148.720 |Dx| =     0.006,   Stable ->  p  q  r
+ 195 Dp =     0.000 Dq =     0.000 Dr =  -210.065 |Dx| =     0.132,   Stable ->  r  p  q
+ 196 Dp =     0.000 Dq =     0.000 Dr =   257.426 |Dx| =     0.022,   Stable ->  p  r  q
+ 197 Dp =     0.000 Dq =     0.000 Dr =   184.060 |Dx| =     0.011,   Stable ->  p  q  r
+ 198 Dp =     0.000 Dq =     0.000 Dr =    29.184 |Dx| =     0.000,   Stable ->  q  p  r
+ 199 Dp =     0.000 Dq =     0.000 Dr =   -11.266 |Dx| =     0.000,   Stable ->  r  p  q
+ 200 Dp =     0.000 Dq =     0.000 Dr =   -16.297 |Dx| =     0.000,   Stable ->  r  p  q
+ 195/ 200 conv, est  975/ 1000 for base_rc_p0_q0_r140_n1000_M0_1_H04_5_P30_stat_ne_nD_C2_PID_1
+ 201 Dp =     0.000 Dq =     0.000 Dr =    -2.282 |Dx| =     0.000,   Stable ->  r  p  q
+ 202 Dp =     0.000 Dq =     0.000 Dr =    94.819 |Dx| =     0.002,   Stable ->  p  q  r
+ 203 Dp =     0.000 Dq =     0.000 Dr =   -36.147 |Dx| =     0.000,   Stable ->  r  p  q
+ 204 Dp =     0.000 Dq =     0.000 Dr =   142.722 |Dx| =     0.005,   Stable ->  p  q  r
+ 205 Dp =     0.000 Dq =     0.000 Dr =   -44.589 |Dx| =     0.000,   Stable ->  r  p  q
+ 206 Dp =     0.000 Dq =     0.000 Dr =   -95.679 |Dx| =     0.003,   Stable ->  r  p  q
+ 207 Dp =     0.000 Dq =     0.000 Dr =   -18.449 |Dx| =     0.000,   Stable ->  r  p  q
+ 208 Dp =     0.000 Dq =     0.000 Dr =    47.739 |Dx| =     0.000,   Stable ->  p  q  r
+ 209 Dp =     0.000 Dq =     0.000 Dr =    60.436 |Dx| =     0.001,   Stable ->  p  q  r
+ 210 Dp =     0.000 Dq =     0.000 Dr =    -1.412 |Dx| =     0.000,   Stable ->  r  p  q
+ 211 Dp =     0.000 Dq =     0.000 Dr =  -213.282 |Dx| =     0.152,   Stable ->  r  p  q
+ 212 Dp =     0.000 Dq =     0.000 Dr =  -190.443 |Dx| =     0.062,   Stable ->  r  p  q
+ 213 Dp =     0.000 Dq =     0.000 Dr =  -241.758 |Dx| =     0.513,   Stable ->  r  p  q
+ 214 Dp =     0.000 Dq =     0.000 Dr =   -38.895 |Dx| =     0.000,   Stable ->  r  p  q
+ 215 Dp =     0.000 Dq =     0.000 Dr =    96.126 |Dx| =     0.002,   Stable ->  p  q  r
+ 216 Dp =     0.000 Dq =     0.000 Dr =     4.086 |Dx| =     0.000,   Stable ->  q  p  r
+ 217 Dp =     0.000 Dq =     0.000 Dr =    -6.622 |Dx| =     0.000,   Stable ->  r  p  q
+ 218 Dp =     0.000 Dq =     0.000 Dr =   -67.898 |Dx| =     0.001,   Stable ->  r  p  q
+ 219 Dp =     0.000 Dq =     0.000 Dr =   -48.121 |Dx| =     0.000,   Stable ->  r  p  q
+ 220 Dp =     0.000 Dq =     0.000 Dr =   -94.390 |Dx| =     0.003,   Stable ->  r  p  q
+ 221 Dp =     0.000 Dq =     0.000 Dr =   150.073 |Dx| =     0.006,   Stable ->  p  q  r
+ 222 Dp =     0.000 Dq =     0.000 Dr =  -174.417 |Dx| =     0.039,   Stable ->  r  p  q
+ 223 Dp =     0.000 Dq =     0.000 Dr =  -124.371 |Dx| =     0.008,   Stable ->  r  p  q
+ 224 Dp =     0.000 Dq =     0.000 Dr =    68.292 |Dx| =     0.001,   Stable ->  p  q  r
+ 225 Dp =     0.000 Dq =     0.000 Dr =   -51.100 |Dx| =     0.001,   Stable ->  r  p  q
+ 226 Dp =     0.000 Dq =     0.000 Dr =    93.365 |Dx| =     0.002,   Stable ->  p  q  r
+ 227 Dp =     0.000 Dq =     0.000 Dr =   -64.587 |Dx| =     0.001,   Stable ->  r  p  q
+ 228 Dp =     0.000 Dq =     0.000 Dr =    60.675 |Dx| =     0.001,   Stable ->  p  q  r
+ 229 Dp =     0.000 Dq =     0.000 Dr =    32.853 |Dx| =     0.000,   Stable ->  q  p  r
+ 230 Dp =     0.000 Dq =     0.000 Dr =  -180.104 |Dx| =     0.046,   Stable ->  r  p  q
+ 231 Dp =     0.000 Dq =     0.000 Dr =    79.405 |Dx| =     0.001,   Stable ->  p  q  r
+ 232 Dp =     0.000 Dq =     0.000 Dr =   178.745 |Dx| =     0.010,   Stable ->  p  q  r
+ 233 Dp =     0.000 Dq =     0.000 Dr =   -92.866 |Dx| =     0.003,   Stable ->  r  p  q
+ 234 Dp =     0.000 Dq =     0.000 Dr =   -17.413 |Dx| =     0.000,   Stable ->  r  p  q
+ 235 Dp =     0.000 Dq =     0.000 Dr =    91.085 |Dx| =     0.001,   Stable ->  p  q  r
+ 236 Dp =     0.000 Dq =     0.000 Dr =   217.949 |Dx| =     0.018,   Stable ->  p  q  r
+ 237 Dp =     0.000 Dq =     0.000 Dr =    52.417 |Dx| =     0.000,   Stable ->  p  q  r
+ 238 Dp =     0.000 Dq =     0.000 Dr =   329.576 |Dx| =     0.509,   Stable ->  r  p  q
+ 239 Dp =     0.000 Dq =     0.000 Dr =   -54.038 |Dx| =     0.001,   Stable ->  r  p  q
+ 240 Dp =     0.000 Dq =     0.000 Dr =   273.325 |Dx| =     0.023,   Stable ->  p  r  q
+ 241 Dp =     0.000 Dq =     0.000 Dr =  -101.623 |Dx| =     0.004,   Stable ->  r  p  q
+ 242 Dp =     0.000 Dq =     0.000 Dr =    -0.377 |Dx| =     0.000,   Stable ->  r  p  q
+ 243 Dp =     0.000 Dq =     0.000 Dr =  -124.833 |Dx| =     0.008,   Stable ->  r  p  q
+ 244 Dp =     0.000 Dq =     0.000 Dr =   142.042 |Dx| =     0.005,   Stable ->  p  q  r
+ 245 Dp =     0.000 Dq =     0.000 Dr =    92.340 |Dx| =     0.002,   Stable ->  p  q  r
+ 246 Dp =     0.000 Dq =     0.000 Dr =  -241.036 |Dx| =     0.499,   Stable ->  r  p  q
+ 247 Dp =     0.000 Dq =     0.000 Dr =  -365.095 |Dx| =   167.991, Unstable >> ->  r  p  q
+ 248 Dp =     0.000 Dq =     0.000 Dr =   305.781 |Dx| =     0.054,   Stable ->  r  p  q
+ 249 Dp =     0.000 Dq =     0.000 Dr =   -37.952 |Dx| =     0.000,   Stable ->  r  p  q
+ 250 Dp =     0.000 Dq =     0.000 Dr =  -231.167 |Dx| =     0.331,   Stable ->  r  p  q
+ 244/ 250 conv, est  976/ 1000 for base_rc_p0_q0_r140_n1000_M0_1_H04_5_P30_stat_ne_nD_C2_PID_1
+ 251 Dp =     0.000 Dq =     0.000 Dr =  -123.382 |Dx| =     0.008,   Stable ->  r  p  q
+ 252 Dp =     0.000 Dq =     0.000 Dr =   -62.206 |Dx| =     0.001,   Stable ->  r  p  q
+ 253 Dp =     0.000 Dq =     0.000 Dr =   224.649 |Dx| =     0.019,   Stable ->  p  q  r
+ 254 Dp =     0.000 Dq =     0.000 Dr =    65.026 |Dx| =     0.001,   Stable ->  p  q  r
+ 255 Dp =     0.000 Dq =     0.000 Dr =     9.242 |Dx| =     0.000,   Stable ->  q  p  r
+ 256 Dp =     0.000 Dq =     0.000 Dr =  -130.450 |Dx| =     0.010,   Stable ->  r  p  q
+ 257 Dp =     0.000 Dq =     0.000 Dr =    96.372 |Dx| =     0.002,   Stable ->  p  q  r
+ 258 Dp =     0.000 Dq =     0.000 Dr =  -243.823 |Dx| =     0.558,   Stable ->  r  p  q
+ 259 Dp =     0.000 Dq =     0.000 Dr =   160.200 |Dx| =     0.007,   Stable ->  p  q  r
+ 260 Dp =     0.000 Dq =     0.000 Dr =   139.025 |Dx| =     0.005,   Stable ->  p  q  r
+ 261 Dp =     0.000 Dq =     0.000 Dr =   -63.475 |Dx| =     0.001,   Stable ->  r  p  q
+ 262 Dp =     0.000 Dq =     0.000 Dr =  -208.445 |Dx| =     0.123,   Stable ->  r  p  q
+ 263 Dp =     0.000 Dq =     0.000 Dr =   -84.699 |Dx| =     0.002,   Stable ->  r  p  q
+ 264 Dp =     0.000 Dq =     0.000 Dr =   -14.907 |Dx| =     0.000,   Stable ->  r  p  q
+ 265 Dp =     0.000 Dq =     0.000 Dr =   283.898 |Dx| =     0.027,   Stable ->  p  r  q
+ 266 Dp =     0.000 Dq =     0.000 Dr =   241.011 |Dx| =     0.021,   Stable ->  p  q  r
+ 267 Dp =     0.000 Dq =     0.000 Dr =   -88.156 |Dx| =     0.002,   Stable ->  r  p  q
+ 268 Dp =     0.000 Dq =     0.000 Dr =  -104.811 |Dx| =     0.004,   Stable ->  r  p  q
+ 269 Dp =     0.000 Dq =     0.000 Dr =  -189.865 |Dx| =     0.061,   Stable ->  r  p  q
+ 270 Dp =     0.000 Dq =     0.000 Dr =    55.184 |Dx| =     0.000,   Stable ->  p  q  r
+ 271 Dp =     0.000 Dq =     0.000 Dr =   -74.434 |Dx| =     0.001,   Stable ->  r  p  q
+ 272 Dp =     0.000 Dq =     0.000 Dr =   100.683 |Dx| =     0.002,   Stable ->  p  q  r
+ 273 Dp =     0.000 Dq =     0.000 Dr =    11.567 |Dx| =     0.000,   Stable ->  q  p  r
+ 274 Dp =     0.000 Dq =     0.000 Dr =   -74.116 |Dx| =     0.001,   Stable ->  r  p  q
+ 275 Dp =     0.000 Dq =     0.000 Dr =  -138.710 |Dx| =     0.013,   Stable ->  r  p  q
+ 276 Dp =     0.000 Dq =     0.000 Dr =  -222.024 |Dx| =     0.223,   Stable ->  r  p  q
+ 277 Dp =     0.000 Dq =     0.000 Dr =    83.781 |Dx| =     0.001,   Stable ->  p  q  r
+ 278 Dp =     0.000 Dq =     0.000 Dr =  -183.457 |Dx| =     0.050,   Stable ->  r  p  q
+ 279 Dp =     0.000 Dq =     0.000 Dr =   100.825 |Dx| =     0.002,   Stable ->  p  q  r
+ 280 Dp =     0.000 Dq =     0.000 Dr =  -230.581 |Dx| =     0.323,   Stable ->  r  p  q
+ 281 Dp =     0.000 Dq =     0.000 Dr =  -355.019 |Dx| =   149.841, Unstable >> ->  r  p  q
+ 282 Dp =     0.000 Dq =     0.000 Dr =     3.354 |Dx| =     0.000,   Stable ->  q  p  r
+ 283 Dp =     0.000 Dq =     0.000 Dr =   -82.040 |Dx| =     0.002,   Stable ->  r  p  q
+ 284 Dp =     0.000 Dq =     0.000 Dr =   130.138 |Dx| =     0.004,   Stable ->  p  q  r
+ 285 Dp =     0.000 Dq =     0.000 Dr =     1.514 |Dx| =     0.000,   Stable ->  q  p  r
+ 286 Dp =     0.000 Dq =     0.000 Dr =    -8.889 |Dx| =     0.000,   Stable ->  r  p  q
+ 287 Dp =     0.000 Dq =     0.000 Dr =   122.926 |Dx| =     0.003,   Stable ->  p  q  r
+ 288 Dp =     0.000 Dq =     0.000 Dr =   -90.354 |Dx| =     0.003,   Stable ->  r  p  q
+ 289 Dp =     0.000 Dq =     0.000 Dr =    91.512 |Dx| =     0.001,   Stable ->  p  q  r
+ 290 Dp =     0.000 Dq =     0.000 Dr =   346.111 |Dx| =     0.190,   Stable ->  r  p  q
+ 291 Dp =     0.000 Dq =     0.000 Dr =    34.271 |Dx| =     0.000,   Stable ->  p  q  r
+ 292 Dp =     0.000 Dq =     0.000 Dr =  -126.488 |Dx| =     0.009,   Stable ->  r  p  q
+ 293 Dp =     0.000 Dq =     0.000 Dr =    -2.174 |Dx| =     0.000,   Stable ->  r  p  q
+ 294 Dp =     0.000 Dq =     0.000 Dr =  -109.458 |Dx| =     0.005,   Stable ->  r  p  q
+ 295 Dp =     0.000 Dq =     0.000 Dr =   -43.919 |Dx| =     0.000,   Stable ->  r  p  q
+ 296 Dp =     0.000 Dq =     0.000 Dr =   236.940 |Dx| =     0.021,   Stable ->  p  q  r
+ 297 Dp =     0.000 Dq =     0.000 Dr =  -134.538 |Dx| =     0.011,   Stable ->  r  p  q
+ 298 Dp =     0.000 Dq =     0.000 Dr =  -168.644 |Dx| =     0.033,   Stable ->  r  p  q
+ 299 Dp =     0.000 Dq =     0.000 Dr =    76.259 |Dx| =     0.001,   Stable ->  p  q  r
+ 300 Dp =     0.000 Dq =     0.000 Dr =   -52.913 |Dx| =     0.001,   Stable ->  r  p  q
+ 293/ 300 conv, est  976/ 1000 for base_rc_p0_q0_r140_n1000_M0_1_H04_5_P30_stat_ne_nD_C2_PID_1
+ 301 Dp =     0.000 Dq =     0.000 Dr =   -19.598 |Dx| =     0.000,   Stable ->  r  p  q
+ 302 Dp =     0.000 Dq =     0.000 Dr =   -83.220 |Dx| =     0.002,   Stable ->  r  p  q
+ 303 Dp =     0.000 Dq =     0.000 Dr =    38.264 |Dx| =     0.000,   Stable ->  p  q  r
+ 304 Dp =     0.000 Dq =     0.000 Dr =   210.323 |Dx| =     0.017,   Stable ->  p  q  r
+ 305 Dp =     0.000 Dq =     0.000 Dr =    93.883 |Dx| =     0.002,   Stable ->  p  q  r
+ 306 Dp =     0.000 Dq =     0.000 Dr =   -53.919 |Dx| =     0.001,   Stable ->  r  p  q
+ 307 Dp =     0.000 Dq =     0.000 Dr =   -44.740 |Dx| =     0.000,   Stable ->  r  p  q
+ 308 Dp =     0.000 Dq =     0.000 Dr =  -122.511 |Dx| =     0.008,   Stable ->  r  p  q
+ 309 Dp =     0.000 Dq =     0.000 Dr =  -118.624 |Dx| =     0.007,   Stable ->  r  p  q
+ 310 Dp =     0.000 Dq =     0.000 Dr =   136.445 |Dx| =     0.005,   Stable ->  p  q  r
+ 311 Dp =     0.000 Dq =     0.000 Dr =    80.500 |Dx| =     0.001,   Stable ->  p  q  r
+ 312 Dp =     0.000 Dq =     0.000 Dr =    70.338 |Dx| =     0.001,   Stable ->  p  q  r
+ 313 Dp =     0.000 Dq =     0.000 Dr =    75.489 |Dx| =     0.001,   Stable ->  p  q  r
+ 314 Dp =     0.000 Dq =     0.000 Dr =   -81.855 |Dx| =     0.002,   Stable ->  r  p  q
+ 315 Dp =     0.000 Dq =     0.000 Dr =     4.432 |Dx| =     0.000,   Stable ->  q  p  r
+ 316 Dp =     0.000 Dq =     0.000 Dr =    78.607 |Dx| =     0.001,   Stable ->  p  q  r
+ 317 Dp =     0.000 Dq =     0.000 Dr =   230.337 |Dx| =     0.020,   Stable ->  p  q  r
+ 318 Dp =     0.000 Dq =     0.000 Dr =    42.624 |Dx| =     0.000,   Stable ->  p  q  r
+ 319 Dp =     0.000 Dq =     0.000 Dr =    16.776 |Dx| =     0.000,   Stable ->  q  p  r
+ 320 Dp =     0.000 Dq =     0.000 Dr =  -103.334 |Dx| =     0.004,   Stable ->  r  p  q
+ 321 Dp =     0.000 Dq =     0.000 Dr =   150.845 |Dx| =     0.006,   Stable ->  p  q  r
+ 322 Dp =     0.000 Dq =     0.000 Dr =   -27.692 |Dx| =     0.000,   Stable ->  r  p  q
+ 323 Dp =     0.000 Dq =     0.000 Dr =    42.788 |Dx| =     0.000,   Stable ->  p  q  r
+ 324 Dp =     0.000 Dq =     0.000 Dr =    62.439 |Dx| =     0.001,   Stable ->  p  q  r
+ 325 Dp =     0.000 Dq =     0.000 Dr =  -100.891 |Dx| =     0.004,   Stable ->  r  p  q
+ 326 Dp =     0.000 Dq =     0.000 Dr =    48.505 |Dx| =     0.000,   Stable ->  p  q  r
+ 327 Dp =     0.000 Dq =     0.000 Dr =   165.336 |Dx| =     0.008,   Stable ->  p  q  r
+ 328 Dp =     0.000 Dq =     0.000 Dr =  -115.114 |Dx| =     0.006,   Stable ->  r  p  q
+ 329 Dp =     0.000 Dq =     0.000 Dr =   -64.163 |Dx| =     0.001,   Stable ->  r  p  q
+ 330 Dp =     0.000 Dq =     0.000 Dr =  -105.659 |Dx| =     0.004,   Stable ->  r  p  q
+ 331 Dp =     0.000 Dq =     0.000 Dr =    22.232 |Dx| =     0.000,   Stable ->  q  p  r
+ 332 Dp =     0.000 Dq =     0.000 Dr =   299.794 |Dx| =     0.044,   Stable ->  r  p  q
+ 333 Dp =     0.000 Dq =     0.000 Dr =    53.814 |Dx| =     0.000,   Stable ->  p  q  r
+ 334 Dp =     0.000 Dq =     0.000 Dr =   181.477 |Dx| =     0.011,   Stable ->  p  q  r
+ 335 Dp =     0.000 Dq =     0.000 Dr =    42.330 |Dx| =     0.000,   Stable ->  p  q  r
+ 336 Dp =     0.000 Dq =     0.000 Dr =   -50.052 |Dx| =     0.000,   Stable ->  r  p  q
+ 337 Dp =     0.000 Dq =     0.000 Dr =    10.554 |Dx| =     0.000,   Stable ->  q  p  r
+ 338 Dp =     0.000 Dq =     0.000 Dr =    41.378 |Dx| =     0.000,   Stable ->  p  q  r
+ 339 Dp =     0.000 Dq =     0.000 Dr =   -18.181 |Dx| =     0.000,   Stable ->  r  p  q
+ 340 Dp =     0.000 Dq =     0.000 Dr =    -0.470 |Dx| =     0.000,   Stable ->  r  p  q
+ 341 Dp =     0.000 Dq =     0.000 Dr =    20.973 |Dx| =     0.000,   Stable ->  q  p  r
+ 342 Dp =     0.000 Dq =     0.000 Dr =   -78.845 |Dx| =     0.002,   Stable ->  r  p  q
+ 343 Dp =     0.000 Dq =     0.000 Dr =   220.527 |Dx| =     0.019,   Stable ->  p  q  r
+ 344 Dp =     0.000 Dq =     0.000 Dr =    69.298 |Dx| =     0.001,   Stable ->  p  q  r
+ 345 Dp =     0.000 Dq =     0.000 Dr =    -8.234 |Dx| =     0.000,   Stable ->  r  p  q
+ 346 Dp =     0.000 Dq =     0.000 Dr =   -70.919 |Dx| =     0.001,   Stable ->  r  p  q
+ 347 Dp =     0.000 Dq =     0.000 Dr =    60.330 |Dx| =     0.001,   Stable ->  p  q  r
+ 348 Dp =     0.000 Dq =     0.000 Dr =   -98.929 |Dx| =     0.003,   Stable ->  r  p  q
+ 349 Dp =     0.000 Dq =     0.000 Dr =  -164.790 |Dx| =     0.029,   Stable ->  r  p  q
+ 350 Dp =     0.000 Dq =     0.000 Dr =   -43.262 |Dx| =     0.000,   Stable ->  r  p  q
+ 343/ 350 conv, est  980/ 1000 for base_rc_p0_q0_r140_n1000_M0_1_H04_5_P30_stat_ne_nD_C2_PID_1
+ 351 Dp =     0.000 Dq =     0.000 Dr =   181.505 |Dx| =     0.011,   Stable ->  p  q  r
+ 352 Dp =     0.000 Dq =     0.000 Dr =   -19.860 |Dx| =     0.000,   Stable ->  r  p  q
+ 353 Dp =     0.000 Dq =     0.000 Dr =    32.515 |Dx| =     0.000,   Stable ->  q  p  r
+ 354 Dp =     0.000 Dq =     0.000 Dr =  -125.388 |Dx| =     0.008,   Stable ->  r  p  q
+ 355 Dp =     0.000 Dq =     0.000 Dr =    79.259 |Dx| =     0.001,   Stable ->  p  q  r
+ 356 Dp =     0.000 Dq =     0.000 Dr =   -68.115 |Dx| =     0.001,   Stable ->  r  p  q
+ 357 Dp =     0.000 Dq =     0.000 Dr =   -71.551 |Dx| =     0.001,   Stable ->  r  p  q
+ 358 Dp =     0.000 Dq =     0.000 Dr =  -100.160 |Dx| =     0.004,   Stable ->  r  p  q
+ 359 Dp =     0.000 Dq =     0.000 Dr =   -11.181 |Dx| =     0.000,   Stable ->  r  p  q
+ 360 Dp =     0.000 Dq =     0.000 Dr =  -138.996 |Dx| =     0.013,   Stable ->  r  p  q
+ 361 Dp =     0.000 Dq =     0.000 Dr =   -49.545 |Dx| =     0.000,   Stable ->  r  p  q
+ 362 Dp =     0.000 Dq =     0.000 Dr =   -20.117 |Dx| =     0.000,   Stable ->  r  p  q
+ 363 Dp =     0.000 Dq =     0.000 Dr =  -126.522 |Dx| =     0.009,   Stable ->  r  p  q
+ 364 Dp =     0.000 Dq =     0.000 Dr =  -263.993 |Dx| =     1.221, Unstable >> ->  r  p  q
+ 365 Dp =     0.000 Dq =     0.000 Dr =    66.890 |Dx| =     0.001,   Stable ->  p  q  r
+ 366 Dp =     0.000 Dq =     0.000 Dr =  -166.785 |Dx| =     0.031,   Stable ->  r  p  q
+ 367 Dp =     0.000 Dq =     0.000 Dr =  -264.918 |Dx| =     1.263, Unstable >> ->  r  p  q
+ 368 Dp =     0.000 Dq =     0.000 Dr =     6.644 |Dx| =     0.000,   Stable ->  q  p  r
+ 369 Dp =     0.000 Dq =     0.000 Dr =    -0.925 |Dx| =     0.000,   Stable ->  r  p  q
+ 370 Dp =     0.000 Dq =     0.000 Dr =   159.555 |Dx| =     0.007,   Stable ->  p  q  r
+ 371 Dp =     0.000 Dq =     0.000 Dr =   183.466 |Dx| =     0.011,   Stable ->  p  q  r
+ 372 Dp =     0.000 Dq =     0.000 Dr =  -300.185 |Dx| =     3.976, Unstable >> ->  r  p  q
+ 373 Dp =     0.000 Dq =     0.000 Dr =   -73.986 |Dx| =     0.001,   Stable ->  r  p  q
+ 374 Dp =     0.000 Dq =     0.000 Dr =    42.936 |Dx| =     0.000,   Stable ->  p  q  r
+ 375 Dp =     0.000 Dq =     0.000 Dr =  -181.204 |Dx| =     0.047,   Stable ->  r  p  q
+ 376 Dp =     0.000 Dq =     0.000 Dr =   163.372 |Dx| =     0.008,   Stable ->  p  q  r
+ 377 Dp =     0.000 Dq =     0.000 Dr =    53.136 |Dx| =     0.000,   Stable ->  p  q  r
+ 378 Dp =     0.000 Dq =     0.000 Dr =   -88.116 |Dx| =     0.002,   Stable ->  r  p  q
+ 379 Dp =     0.000 Dq =     0.000 Dr =   -67.684 |Dx| =     0.001,   Stable ->  r  p  q
+ 380 Dp =     0.000 Dq =     0.000 Dr =    49.222 |Dx| =     0.000,   Stable ->  p  q  r
+ 381 Dp =     0.000 Dq =     0.000 Dr =   298.145 |Dx| =     0.041,   Stable ->  r  p  q
+ 382 Dp =     0.000 Dq =     0.000 Dr =   272.054 |Dx| =     0.023,   Stable ->  p  r  q
+ 383 Dp =     0.000 Dq =     0.000 Dr =  -193.369 |Dx| =     0.068,   Stable ->  r  p  q
+ 384 Dp =     0.000 Dq =     0.000 Dr =    89.366 |Dx| =     0.001,   Stable ->  p  q  r
+ 385 Dp =     0.000 Dq =     0.000 Dr =  -198.427 |Dx| =     0.082,   Stable ->  r  p  q
+ 386 Dp =     0.000 Dq =     0.000 Dr =   -12.906 |Dx| =     0.000,   Stable ->  r  p  q
+ 387 Dp =     0.000 Dq =     0.000 Dr =  -132.069 |Dx| =     0.011,   Stable ->  r  p  q
+ 388 Dp =     0.000 Dq =     0.000 Dr =   -34.790 |Dx| =     0.000,   Stable ->  r  p  q
+ 389 Dp =     0.000 Dq =     0.000 Dr =   -55.533 |Dx| =     0.001,   Stable ->  r  p  q
+ 390 Dp =     0.000 Dq =     0.000 Dr =    55.839 |Dx| =     0.000,   Stable ->  p  q  r
+ 391 Dp =     0.000 Dq =     0.000 Dr =   -98.858 |Dx| =     0.003,   Stable ->  r  p  q
+ 392 Dp =     0.000 Dq =     0.000 Dr =   101.932 |Dx| =     0.002,   Stable ->  p  q  r
+ 393 Dp =     0.000 Dq =     0.000 Dr =   -11.344 |Dx| =     0.000,   Stable ->  r  p  q
+ 394 Dp =     0.000 Dq =     0.000 Dr =  -121.886 |Dx| =     0.008,   Stable ->  r  p  q
+ 395 Dp =     0.000 Dq =     0.000 Dr =   206.995 |Dx| =     0.016,   Stable ->  p  q  r
+ 396 Dp =     0.000 Dq =     0.000 Dr =    51.138 |Dx| =     0.000,   Stable ->  p  q  r
+ 397 Dp =     0.000 Dq =     0.000 Dr =   -24.006 |Dx| =     0.000,   Stable ->  r  p  q
+ 398 Dp =     0.000 Dq =     0.000 Dr =    17.670 |Dx| =     0.000,   Stable ->  q  p  r
+ 399 Dp =     0.000 Dq =     0.000 Dr =   102.713 |Dx| =     0.002,   Stable ->  p  q  r
+ 400 Dp =     0.000 Dq =     0.000 Dr =   -13.470 |Dx| =     0.000,   Stable ->  r  p  q
+ 390/ 400 conv, est  975/ 1000 for base_rc_p0_q0_r140_n1000_M0_1_H04_5_P30_stat_ne_nD_C2_PID_1
+ 401 Dp =     0.000 Dq =     0.000 Dr =   -78.675 |Dx| =     0.002,   Stable ->  r  p  q
+ 402 Dp =     0.000 Dq =     0.000 Dr =   -16.089 |Dx| =     0.000,   Stable ->  r  p  q
+ 403 Dp =     0.000 Dq =     0.000 Dr =   -71.237 |Dx| =     0.001,   Stable ->  r  p  q
+ 404 Dp =     0.000 Dq =     0.000 Dr =   -69.526 |Dx| =     0.001,   Stable ->  r  p  q
+ 405 Dp =     0.000 Dq =     0.000 Dr =   228.619 |Dx| =     0.020,   Stable ->  p  q  r
+ 406 Dp =     0.000 Dq =     0.000 Dr =   113.305 |Dx| =     0.003,   Stable ->  p  q  r
+ 407 Dp =     0.000 Dq =     0.000 Dr =   189.550 |Dx| =     0.012,   Stable ->  p  q  r
+ 408 Dp =     0.000 Dq =     0.000 Dr =   -65.345 |Dx| =     0.001,   Stable ->  r  p  q
+ 409 Dp =     0.000 Dq =     0.000 Dr =  -238.903 |Dx| =     0.457,   Stable ->  r  p  q
+ 410 Dp =     0.000 Dq =     0.000 Dr =   -48.224 |Dx| =     0.000,   Stable ->  r  p  q
+ 411 Dp =     0.000 Dq =     0.000 Dr =    77.270 |Dx| =     0.001,   Stable ->  p  q  r
+ 412 Dp =     0.000 Dq =     0.000 Dr =   -63.783 |Dx| =     0.001,   Stable ->  r  p  q
+ 413 Dp =     0.000 Dq =     0.000 Dr =    30.378 |Dx| =     0.000,   Stable ->  q  p  r
+ 414 Dp =     0.000 Dq =     0.000 Dr =  -127.869 |Dx| =     0.009,   Stable ->  r  p  q
+ 415 Dp =     0.000 Dq =     0.000 Dr =    73.840 |Dx| =     0.001,   Stable ->  p  q  r
+ 416 Dp =     0.000 Dq =     0.000 Dr =   -55.248 |Dx| =     0.001,   Stable ->  r  p  q
+ 417 Dp =     0.000 Dq =     0.000 Dr =     5.316 |Dx| =     0.000,   Stable ->  q  p  r
+ 418 Dp =     0.000 Dq =     0.000 Dr =    97.566 |Dx| =     0.002,   Stable ->  p  q  r
+ 419 Dp =     0.000 Dq =     0.000 Dr =   -97.224 |Dx| =     0.003,   Stable ->  r  p  q
+ 420 Dp =     0.000 Dq =     0.000 Dr =  -143.150 |Dx| =     0.015,   Stable ->  r  p  q
+ 421 Dp =     0.000 Dq =     0.000 Dr =  -108.329 |Dx| =     0.005,   Stable ->  r  p  q
+ 422 Dp =     0.000 Dq =     0.000 Dr =    84.490 |Dx| =     0.001,   Stable ->  p  q  r
+ 423 Dp =     0.000 Dq =     0.000 Dr =   -41.938 |Dx| =     0.000,   Stable ->  r  p  q
+ 424 Dp =     0.000 Dq =     0.000 Dr =   151.147 |Dx| =     0.006,   Stable ->  p  q  r
+ 425 Dp =     0.000 Dq =     0.000 Dr =    77.681 |Dx| =     0.001,   Stable ->  p  q  r
+ 426 Dp =     0.000 Dq =     0.000 Dr =   157.564 |Dx| =     0.007,   Stable ->  p  q  r
+ 427 Dp =     0.000 Dq =     0.000 Dr =    29.224 |Dx| =     0.000,   Stable ->  q  p  r
+ 428 Dp =     0.000 Dq =     0.000 Dr =   170.458 |Dx| =     0.009,   Stable ->  p  q  r
+ 429 Dp =     0.000 Dq =     0.000 Dr =   106.026 |Dx| =     0.002,   Stable ->  p  q  r
+ 430 Dp =     0.000 Dq =     0.000 Dr =  -262.659 |Dx| =     1.162, Unstable >> ->  r  p  q
+ 431 Dp =     0.000 Dq =     0.000 Dr =   201.724 |Dx| =     0.015,   Stable ->  p  q  r
+ 432 Dp =     0.000 Dq =     0.000 Dr =   125.139 |Dx| =     0.004,   Stable ->  p  q  r
+ 433 Dp =     0.000 Dq =     0.000 Dr =   -51.248 |Dx| =     0.001,   Stable ->  r  p  q
+ 434 Dp =     0.000 Dq =     0.000 Dr =  -161.727 |Dx| =     0.027,   Stable ->  r  p  q
+ 435 Dp =     0.000 Dq =     0.000 Dr =  -251.783 |Dx| =     0.766,   Stable ->  r  p  q
+ 436 Dp =     0.000 Dq =     0.000 Dr =    25.697 |Dx| =     0.000,   Stable ->  q  p  r
+ 437 Dp =     0.000 Dq =     0.000 Dr =  -112.933 |Dx| =     0.006,   Stable ->  r  p  q
+ 438 Dp =     0.000 Dq =     0.000 Dr =  -155.278 |Dx| =     0.022,   Stable ->  r  p  q
+ 439 Dp =     0.000 Dq =     0.000 Dr =  -130.998 |Dx| =     0.010,   Stable ->  r  p  q
+ 440 Dp =     0.000 Dq =     0.000 Dr =  -220.698 |Dx| =     0.210,   Stable ->  r  p  q
+ 441 Dp =     0.000 Dq =     0.000 Dr =   136.672 |Dx| =     0.005,   Stable ->  p  q  r
+ 442 Dp =     0.000 Dq =     0.000 Dr =  -115.318 |Dx| =     0.006,   Stable ->  r  p  q
+ 443 Dp =     0.000 Dq =     0.000 Dr =     2.927 |Dx| =     0.000,   Stable ->  q  p  r
+ 444 Dp =     0.000 Dq =     0.000 Dr =    27.667 |Dx| =     0.000,   Stable ->  q  p  r
+ 445 Dp =     0.000 Dq =     0.000 Dr =    57.142 |Dx| =     0.000,   Stable ->  p  q  r
+ 446 Dp =     0.000 Dq =     0.000 Dr =   -16.328 |Dx| =     0.000,   Stable ->  r  p  q
+ 447 Dp =     0.000 Dq =     0.000 Dr =   120.275 |Dx| =     0.003,   Stable ->  p  q  r
+ 448 Dp =     0.000 Dq =     0.000 Dr =   -77.575 |Dx| =     0.002,   Stable ->  r  p  q
+ 449 Dp =     0.000 Dq =     0.000 Dr =   301.450 |Dx| =     0.046,   Stable ->  r  p  q
+ 450 Dp =     0.000 Dq =     0.000 Dr =  -214.564 |Dx| =     0.161,   Stable ->  r  p  q
+ 439/ 450 conv, est  975/ 1000 for base_rc_p0_q0_r140_n1000_M0_1_H04_5_P30_stat_ne_nD_C2_PID_1
+ 451 Dp =     0.000 Dq =     0.000 Dr =   102.394 |Dx| =     0.002,   Stable ->  p  q  r
+ 452 Dp =     0.000 Dq =     0.000 Dr =   310.126 |Dx| =     0.063,   Stable ->  r  p  q
+ 453 Dp =     0.000 Dq =     0.000 Dr =  -127.830 |Dx| =     0.009,   Stable ->  r  p  q
+ 454 Dp =     0.000 Dq =     0.000 Dr =   203.691 |Dx| =     0.015,   Stable ->  p  q  r
+ 455 Dp =     0.000 Dq =     0.000 Dr =   289.972 |Dx| =     0.031,   Stable ->  p  r  q
+ 456 Dp =     0.000 Dq =     0.000 Dr =   -57.180 |Dx| =     0.001,   Stable ->  r  p  q
+ 457 Dp =     0.000 Dq =     0.000 Dr =   219.396 |Dx| =     0.018,   Stable ->  p  q  r
+ 458 Dp =     0.000 Dq =     0.000 Dr =   -73.052 |Dx| =     0.001,   Stable ->  r  p  q
+ 459 Dp =     0.000 Dq =     0.000 Dr =    48.475 |Dx| =     0.000,   Stable ->  p  q  r
+ 460 Dp =     0.000 Dq =     0.000 Dr =   -24.606 |Dx| =     0.000,   Stable ->  r  p  q
+ 461 Dp =     0.000 Dq =     0.000 Dr =  -128.975 |Dx| =     0.010,   Stable ->  r  p  q
+ 462 Dp =     0.000 Dq =     0.000 Dr =  -146.138 |Dx| =     0.017,   Stable ->  r  p  q
+ 463 Dp =     0.000 Dq =     0.000 Dr =   -73.756 |Dx| =     0.001,   Stable ->  r  p  q
+ 464 Dp =     0.000 Dq =     0.000 Dr =  -202.391 |Dx| =     0.096,   Stable ->  r  p  q
+ 465 Dp =     0.000 Dq =     0.000 Dr =    31.235 |Dx| =     0.000,   Stable ->  q  p  r
+ 466 Dp =     0.000 Dq =     0.000 Dr =    24.470 |Dx| =     0.000,   Stable ->  q  p  r
+ 467 Dp =     0.000 Dq =     0.000 Dr =   159.820 |Dx| =     0.007,   Stable ->  p  q  r
+ 468 Dp =     0.000 Dq =     0.000 Dr =    63.900 |Dx| =     0.001,   Stable ->  p  q  r
+ 469 Dp =     0.000 Dq =     0.000 Dr =   -16.393 |Dx| =     0.000,   Stable ->  r  p  q
+ 470 Dp =     0.000 Dq =     0.000 Dr =   -38.241 |Dx| =     0.000,   Stable ->  r  p  q
+ 471 Dp =     0.000 Dq =     0.000 Dr =   349.885 |Dx| =     0.129,   Stable ->  r  p  q
+ 472 Dp =     0.000 Dq =     0.000 Dr =  -209.452 |Dx| =     0.128,   Stable ->  r  p  q
+ 473 Dp =     0.000 Dq =     0.000 Dr =  -178.842 |Dx| =     0.044,   Stable ->  r  p  q
+ 474 Dp =     0.000 Dq =     0.000 Dr =   319.582 |Dx| =     0.082,   Stable ->  r  p  q
+ 475 Dp =     0.000 Dq =     0.000 Dr =   156.647 |Dx| =     0.007,   Stable ->  p  q  r
+ 476 Dp =     0.000 Dq =     0.000 Dr =    33.033 |Dx| =     0.000,   Stable ->  q  p  r
+ 477 Dp =     0.000 Dq =     0.000 Dr =    82.527 |Dx| =     0.001,   Stable ->  p  q  r
+ 478 Dp =     0.000 Dq =     0.000 Dr =   146.796 |Dx| =     0.006,   Stable ->  p  q  r
+ 479 Dp =     0.000 Dq =     0.000 Dr =  -197.075 |Dx| =     0.078,   Stable ->  r  p  q
+ 480 Dp =     0.000 Dq =     0.000 Dr =   -35.679 |Dx| =     0.000,   Stable ->  r  p  q
+ 481 Dp =     0.000 Dq =     0.000 Dr =   108.169 |Dx| =     0.002,   Stable ->  p  q  r
+ 482 Dp =     0.000 Dq =     0.000 Dr =   101.149 |Dx| =     0.002,   Stable ->  p  q  r
+ 483 Dp =     0.000 Dq =     0.000 Dr =   163.680 |Dx| =     0.008,   Stable ->  p  q  r
+ 484 Dp =     0.000 Dq =     0.000 Dr =    43.096 |Dx| =     0.000,   Stable ->  p  q  r
+ 485 Dp =     0.000 Dq =     0.000 Dr =   -40.299 |Dx| =     0.000,   Stable ->  r  p  q
+ 486 Dp =     0.000 Dq =     0.000 Dr =   -74.466 |Dx| =     0.001,   Stable ->  r  p  q
+ 487 Dp =     0.000 Dq =     0.000 Dr =    96.708 |Dx| =     0.002,   Stable ->  p  q  r
+ 488 Dp =     0.000 Dq =     0.000 Dr =     7.880 |Dx| =     0.000,   Stable ->  q  p  r
+ 489 Dp =     0.000 Dq =     0.000 Dr =    77.150 |Dx| =     0.001,   Stable ->  p  q  r
+ 490 Dp =     0.000 Dq =     0.000 Dr =   206.964 |Dx| =     0.016,   Stable ->  p  q  r
+ 491 Dp =     0.000 Dq =     0.000 Dr =   184.038 |Dx| =     0.011,   Stable ->  p  q  r
+ 492 Dp =     0.000 Dq =     0.000 Dr =  -164.173 |Dx| =     0.029,   Stable ->  r  p  q
+ 493 Dp =     0.000 Dq =     0.000 Dr =   174.212 |Dx| =     0.010,   Stable ->  p  q  r
+ 494 Dp =     0.000 Dq =     0.000 Dr =  -122.737 |Dx| =     0.008,   Stable ->  r  p  q
+ 495 Dp =     0.000 Dq =     0.000 Dr =  -216.129 |Dx| =     0.172,   Stable ->  r  p  q
+ 496 Dp =     0.000 Dq =     0.000 Dr =   308.132 |Dx| =     0.059,   Stable ->  r  p  q
+ 497 Dp =     0.000 Dq =     0.000 Dr =    53.116 |Dx| =     0.000,   Stable ->  p  q  r
+ 498 Dp =     0.000 Dq =     0.000 Dr =   -69.601 |Dx| =     0.001,   Stable ->  r  p  q
+ 499 Dp =     0.000 Dq =     0.000 Dr =   -44.173 |Dx| =     0.000,   Stable ->  r  p  q
+ 500 Dp =     0.000 Dq =     0.000 Dr =   141.033 |Dx| =     0.005,   Stable ->  p  q  r
+ 489/ 500 conv, est  978/ 1000 for base_rc_p0_q0_r140_n1000_M0_1_H04_5_P30_stat_ne_nD_C2_PID_1
+ 501 Dp =     0.000 Dq =     0.000 Dr =   295.464 |Dx| =     0.037,   Stable ->  r  p  q
+ 502 Dp =     0.000 Dq =     0.000 Dr =   199.233 |Dx| =     0.014,   Stable ->  p  q  r
+ 503 Dp =     0.000 Dq =     0.000 Dr =   -15.558 |Dx| =     0.000,   Stable ->  r  p  q
+ 504 Dp =     0.000 Dq =     0.000 Dr =  -145.739 |Dx| =     0.016,   Stable ->  r  p  q
+ 505 Dp =     0.000 Dq =     0.000 Dr =    -0.168 |Dx| =     0.000,   Stable ->  r  p  q
+ 506 Dp =     0.000 Dq =     0.000 Dr =   158.159 |Dx| =     0.007,   Stable ->  p  q  r
+ 507 Dp =     0.000 Dq =     0.000 Dr =    86.837 |Dx| =     0.001,   Stable ->  p  q  r
+ 508 Dp =     0.000 Dq =     0.000 Dr =  -167.568 |Dx| =     0.032,   Stable ->  r  p  q
+ 509 Dp =     0.000 Dq =     0.000 Dr =    33.802 |Dx| =     0.000,   Stable ->  p  q  r
+ 510 Dp =     0.000 Dq =     0.000 Dr =   102.460 |Dx| =     0.002,   Stable ->  p  q  r
+ 511 Dp =     0.000 Dq =     0.000 Dr =  -112.715 |Dx| =     0.006,   Stable ->  r  p  q
+ 512 Dp =     0.000 Dq =     0.000 Dr =   140.275 |Dx| =     0.005,   Stable ->  p  q  r
+ 513 Dp =     0.000 Dq =     0.000 Dr =   221.580 |Dx| =     0.019,   Stable ->  p  q  r
+ 514 Dp =     0.000 Dq =     0.000 Dr =   144.945 |Dx| =     0.005,   Stable ->  p  q  r
+ 515 Dp =     0.000 Dq =     0.000 Dr =  -101.716 |Dx| =     0.004,   Stable ->  r  p  q
+ 516 Dp =     0.000 Dq =     0.000 Dr =   -21.511 |Dx| =     0.000,   Stable ->  r  p  q
+ 517 Dp =     0.000 Dq =     0.000 Dr =     7.255 |Dx| =     0.000,   Stable ->  q  p  r
+ 518 Dp =     0.000 Dq =     0.000 Dr =   -31.541 |Dx| =     0.000,   Stable ->  r  p  q
+ 519 Dp =     0.000 Dq =     0.000 Dr =   137.534 |Dx| =     0.005,   Stable ->  p  q  r
+ 520 Dp =     0.000 Dq =     0.000 Dr =    29.557 |Dx| =     0.000,   Stable ->  q  p  r
+ 521 Dp =     0.000 Dq =     0.000 Dr =    17.454 |Dx| =     0.000,   Stable ->  q  p  r
+ 522 Dp =     0.000 Dq =     0.000 Dr =    62.404 |Dx| =     0.001,   Stable ->  p  q  r
+ 523 Dp =     0.000 Dq =     0.000 Dr =   -44.678 |Dx| =     0.000,   Stable ->  r  p  q
+ 524 Dp =     0.000 Dq =     0.000 Dr =  -169.675 |Dx| =     0.034,   Stable ->  r  p  q
+ 525 Dp =     0.000 Dq =     0.000 Dr =    32.863 |Dx| =     0.000,   Stable ->  q  p  r
+ 526 Dp =     0.000 Dq =     0.000 Dr =   -30.009 |Dx| =     0.000,   Stable ->  r  p  q
+ 527 Dp =     0.000 Dq =     0.000 Dr =   109.388 |Dx| =     0.002,   Stable ->  p  q  r
+ 528 Dp =     0.000 Dq =     0.000 Dr =    48.411 |Dx| =     0.000,   Stable ->  p  q  r
+ 529 Dp =     0.000 Dq =     0.000 Dr =   -20.114 |Dx| =     0.000,   Stable ->  r  p  q
+ 530 Dp =     0.000 Dq =     0.000 Dr =   166.997 |Dx| =     0.008,   Stable ->  p  q  r
+ 531 Dp =     0.000 Dq =     0.000 Dr =    13.747 |Dx| =     0.000,   Stable ->  q  p  r
+ 532 Dp =     0.000 Dq =     0.000 Dr =  -162.059 |Dx| =     0.027,   Stable ->  r  p  q
+ 533 Dp =     0.000 Dq =     0.000 Dr =   231.835 |Dx| =     0.020,   Stable ->  p  q  r
+ 534 Dp =     0.000 Dq =     0.000 Dr =   176.889 |Dx| =     0.010,   Stable ->  p  q  r
+ 535 Dp =     0.000 Dq =     0.000 Dr =    12.266 |Dx| =     0.000,   Stable ->  q  p  r
+ 536 Dp =     0.000 Dq =     0.000 Dr =  -203.151 |Dx| =     0.098,   Stable ->  r  p  q
+ 537 Dp =     0.000 Dq =     0.000 Dr =  -124.048 |Dx| =     0.008,   Stable ->  r  p  q
+ 538 Dp =     0.000 Dq =     0.000 Dr =   150.032 |Dx| =     0.006,   Stable ->  p  q  r
+ 539 Dp =     0.000 Dq =     0.000 Dr =     3.939 |Dx| =     0.000,   Stable ->  q  p  r
+ 540 Dp =     0.000 Dq =     0.000 Dr =   -34.089 |Dx| =     0.000,   Stable ->  r  p  q
+ 541 Dp =     0.000 Dq =     0.000 Dr =    77.884 |Dx| =     0.001,   Stable ->  p  q  r
+ 542 Dp =     0.000 Dq =     0.000 Dr =   -65.955 |Dx| =     0.001,   Stable ->  r  p  q
+ 543 Dp =     0.000 Dq =     0.000 Dr =   -55.806 |Dx| =     0.001,   Stable ->  r  p  q
+ 544 Dp =     0.000 Dq =     0.000 Dr =   182.771 |Dx| =     0.011,   Stable ->  p  q  r
+ 545 Dp =     0.000 Dq =     0.000 Dr =    87.281 |Dx| =     0.001,   Stable ->  p  q  r
+ 546 Dp =     0.000 Dq =     0.000 Dr =   121.321 |Dx| =     0.003,   Stable ->  p  q  r
+ 547 Dp =     0.000 Dq =     0.000 Dr =    98.026 |Dx| =     0.002,   Stable ->  p  q  r
+ 548 Dp =     0.000 Dq =     0.000 Dr =   161.270 |Dx| =     0.008,   Stable ->  p  q  r
+ 549 Dp =     0.000 Dq =     0.000 Dr =   131.678 |Dx| =     0.004,   Stable ->  p  q  r
+ 550 Dp =     0.000 Dq =     0.000 Dr =   -94.298 |Dx| =     0.003,   Stable ->  r  p  q
+ 539/ 550 conv, est  980/ 1000 for base_rc_p0_q0_r140_n1000_M0_1_H04_5_P30_stat_ne_nD_C2_PID_1
+ 551 Dp =     0.000 Dq =     0.000 Dr =   -10.616 |Dx| =     0.000,   Stable ->  r  p  q
+ 552 Dp =     0.000 Dq =     0.000 Dr =   244.885 |Dx| =     0.021,   Stable ->  p  q  r
+ 553 Dp =     0.000 Dq =     0.000 Dr =    41.049 |Dx| =     0.000,   Stable ->  p  q  r
+ 554 Dp =     0.000 Dq =     0.000 Dr =   256.822 |Dx| =     0.022,   Stable ->  p  r  q
+ 555 Dp =     0.000 Dq =     0.000 Dr =   -25.449 |Dx| =     0.000,   Stable ->  r  p  q
+ 556 Dp =     0.000 Dq =     0.000 Dr =  -175.177 |Dx| =     0.040,   Stable ->  r  p  q
+ 557 Dp =     0.000 Dq =     0.000 Dr =    29.502 |Dx| =     0.000,   Stable ->  q  p  r
+ 558 Dp =     0.000 Dq =     0.000 Dr =   -52.564 |Dx| =     0.001,   Stable ->  r  p  q
+ 559 Dp =     0.000 Dq =     0.000 Dr =   -78.431 |Dx| =     0.002,   Stable ->  r  p  q
+ 560 Dp =     0.000 Dq =     0.000 Dr =   -86.343 |Dx| =     0.002,   Stable ->  r  p  q
+ 561 Dp =     0.000 Dq =     0.000 Dr =  -263.809 |Dx| =     1.212, Unstable >> ->  r  p  q
+ 562 Dp =     0.000 Dq =     0.000 Dr =    91.425 |Dx| =     0.001,   Stable ->  p  q  r
+ 563 Dp =     0.000 Dq =     0.000 Dr =    -4.391 |Dx| =     0.000,   Stable ->  r  p  q
+ 564 Dp =     0.000 Dq =     0.000 Dr =  -111.548 |Dx| =     0.005,   Stable ->  r  p  q
+ 565 Dp =     0.000 Dq =     0.000 Dr =  -208.403 |Dx| =     0.122,   Stable ->  r  p  q
+ 566 Dp =     0.000 Dq =     0.000 Dr =   106.881 |Dx| =     0.002,   Stable ->  p  q  r
+ 567 Dp =     0.000 Dq =     0.000 Dr =    18.810 |Dx| =     0.000,   Stable ->  q  p  r
+ 568 Dp =     0.000 Dq =     0.000 Dr =   108.943 |Dx| =     0.002,   Stable ->  p  q  r
+ 569 Dp =     0.000 Dq =     0.000 Dr =    67.502 |Dx| =     0.001,   Stable ->  p  q  r
+ 570 Dp =     0.000 Dq =     0.000 Dr =   119.271 |Dx| =     0.003,   Stable ->  p  q  r
+ 571 Dp =     0.000 Dq =     0.000 Dr =    10.367 |Dx| =     0.000,   Stable ->  q  p  r
+ 572 Dp =     0.000 Dq =     0.000 Dr =  -186.996 |Dx| =     0.056,   Stable ->  r  p  q
+ 573 Dp =     0.000 Dq =     0.000 Dr =    37.356 |Dx| =     0.000,   Stable ->  p  q  r
+ 574 Dp =     0.000 Dq =     0.000 Dr =   137.971 |Dx| =     0.005,   Stable ->  p  q  r
+ 575 Dp =     0.000 Dq =     0.000 Dr =  -181.442 |Dx| =     0.047,   Stable ->  r  p  q
+ 576 Dp =     0.000 Dq =     0.000 Dr =   -47.784 |Dx| =     0.000,   Stable ->  r  p  q
+ 577 Dp =     0.000 Dq =     0.000 Dr =   213.103 |Dx| =     0.017,   Stable ->  p  q  r
+ 578 Dp =     0.000 Dq =     0.000 Dr =  -157.246 |Dx| =     0.023,   Stable ->  r  p  q
+ 579 Dp =     0.000 Dq =     0.000 Dr =   198.793 |Dx| =     0.014,   Stable ->  p  q  r
+ 580 Dp =     0.000 Dq =     0.000 Dr =  -116.361 |Dx| =     0.006,   Stable ->  r  p  q
+ 581 Dp =     0.000 Dq =     0.000 Dr =  -214.309 |Dx| =     0.159,   Stable ->  r  p  q
+ 582 Dp =     0.000 Dq =     0.000 Dr =   -61.016 |Dx| =     0.001,   Stable ->  r  p  q
+ 583 Dp =     0.000 Dq =     0.000 Dr =   -75.472 |Dx| =     0.001,   Stable ->  r  p  q
+ 584 Dp =     0.000 Dq =     0.000 Dr =   137.726 |Dx| =     0.005,   Stable ->  p  q  r
+ 585 Dp =     0.000 Dq =     0.000 Dr =  -282.217 |Dx| =     2.274, Unstable >> ->  r  p  q
+ 586 Dp =     0.000 Dq =     0.000 Dr =  -125.073 |Dx| =     0.008,   Stable ->  r  p  q
+ 587 Dp =     0.000 Dq =     0.000 Dr =  -124.998 |Dx| =     0.008,   Stable ->  r  p  q
+ 588 Dp =     0.000 Dq =     0.000 Dr =  -145.626 |Dx| =     0.016,   Stable ->  r  p  q
+ 589 Dp =     0.000 Dq =     0.000 Dr =    13.758 |Dx| =     0.000,   Stable ->  q  p  r
+ 590 Dp =     0.000 Dq =     0.000 Dr =   -77.138 |Dx| =     0.002,   Stable ->  r  p  q
+ 591 Dp =     0.000 Dq =     0.000 Dr =    -3.388 |Dx| =     0.000,   Stable ->  r  p  q
+ 592 Dp =     0.000 Dq =     0.000 Dr =   -38.936 |Dx| =     0.000,   Stable ->  r  p  q
+ 593 Dp =     0.000 Dq =     0.000 Dr =   144.948 |Dx| =     0.005,   Stable ->  p  q  r
+ 594 Dp =     0.000 Dq =     0.000 Dr =   -93.950 |Dx| =     0.003,   Stable ->  r  p  q
+ 595 Dp =     0.000 Dq =     0.000 Dr =    -0.785 |Dx| =     0.000,   Stable ->  r  p  q
+ 596 Dp =     0.000 Dq =     0.000 Dr =   112.423 |Dx| =     0.003,   Stable ->  p  q  r
+ 597 Dp =     0.000 Dq =     0.000 Dr =    66.588 |Dx| =     0.001,   Stable ->  p  q  r
+ 598 Dp =     0.000 Dq =     0.000 Dr =    -2.013 |Dx| =     0.000,   Stable ->  r  p  q
+ 599 Dp =     0.000 Dq =     0.000 Dr =   110.364 |Dx| =     0.002,   Stable ->  p  q  r
+ 600 Dp =     0.000 Dq =     0.000 Dr =    56.796 |Dx| =     0.000,   Stable ->  p  q  r
+ 587/ 600 conv, est  978/ 1000 for base_rc_p0_q0_r140_n1000_M0_1_H04_5_P30_stat_ne_nD_C2_PID_1
+ 601 Dp =     0.000 Dq =     0.000 Dr =    61.031 |Dx| =     0.001,   Stable ->  p  q  r
+ 602 Dp =     0.000 Dq =     0.000 Dr =    11.215 |Dx| =     0.000,   Stable ->  q  p  r
+ 603 Dp =     0.000 Dq =     0.000 Dr =   137.462 |Dx| =     0.005,   Stable ->  p  q  r
+ 604 Dp =     0.000 Dq =     0.000 Dr =   150.538 |Dx| =     0.006,   Stable ->  p  q  r
+ 605 Dp =     0.000 Dq =     0.000 Dr =   -76.411 |Dx| =     0.002,   Stable ->  r  p  q
+ 606 Dp =     0.000 Dq =     0.000 Dr =    82.830 |Dx| =     0.001,   Stable ->  p  q  r
+ 607 Dp =     0.000 Dq =     0.000 Dr =    66.639 |Dx| =     0.001,   Stable ->  p  q  r
+ 608 Dp =     0.000 Dq =     0.000 Dr =   102.218 |Dx| =     0.002,   Stable ->  p  q  r
+ 609 Dp =     0.000 Dq =     0.000 Dr =   -89.755 |Dx| =     0.002,   Stable ->  r  p  q
+ 610 Dp =     0.000 Dq =     0.000 Dr =  -154.355 |Dx| =     0.021,   Stable ->  r  p  q
+ 611 Dp =     0.000 Dq =     0.000 Dr =   -17.429 |Dx| =     0.000,   Stable ->  r  p  q
+ 612 Dp =     0.000 Dq =     0.000 Dr =   161.537 |Dx| =     0.008,   Stable ->  p  q  r
+ 613 Dp =     0.000 Dq =     0.000 Dr =  -127.226 |Dx| =     0.009,   Stable ->  r  p  q
+ 614 Dp =     0.000 Dq =     0.000 Dr =   147.362 |Dx| =     0.006,   Stable ->  p  q  r
+ 615 Dp =     0.000 Dq =     0.000 Dr =    16.445 |Dx| =     0.000,   Stable ->  q  p  r
+ 616 Dp =     0.000 Dq =     0.000 Dr =    37.891 |Dx| =     0.000,   Stable ->  p  q  r
+ 617 Dp =     0.000 Dq =     0.000 Dr =    39.878 |Dx| =     0.000,   Stable ->  p  q  r
+ 618 Dp =     0.000 Dq =     0.000 Dr =   -33.798 |Dx| =     0.000,   Stable ->  r  p  q
+ 619 Dp =     0.000 Dq =     0.000 Dr =   -18.581 |Dx| =     0.000,   Stable ->  r  p  q
+ 620 Dp =     0.000 Dq =     0.000 Dr =   100.771 |Dx| =     0.002,   Stable ->  p  q  r
+ 621 Dp =     0.000 Dq =     0.000 Dr =   224.784 |Dx| =     0.019,   Stable ->  p  q  r
+ 622 Dp =     0.000 Dq =     0.000 Dr =    39.757 |Dx| =     0.000,   Stable ->  p  q  r
+ 623 Dp =     0.000 Dq =     0.000 Dr =    74.251 |Dx| =     0.001,   Stable ->  p  q  r
+ 624 Dp =     0.000 Dq =     0.000 Dr =  -100.531 |Dx| =     0.004,   Stable ->  r  p  q
+ 625 Dp =     0.000 Dq =     0.000 Dr =    -2.960 |Dx| =     0.000,   Stable ->  r  p  q
+ 626 Dp =     0.000 Dq =     0.000 Dr =   160.514 |Dx| =     0.007,   Stable ->  p  q  r
+ 627 Dp =     0.000 Dq =     0.000 Dr =   166.705 |Dx| =     0.008,   Stable ->  p  q  r
+ 628 Dp =     0.000 Dq =     0.000 Dr =   -23.189 |Dx| =     0.000,   Stable ->  r  p  q
+ 629 Dp =     0.000 Dq =     0.000 Dr =     7.349 |Dx| =     0.000,   Stable ->  q  p  r
+ 630 Dp =     0.000 Dq =     0.000 Dr =   -45.034 |Dx| =     0.000,   Stable ->  r  p  q
+ 631 Dp =     0.000 Dq =     0.000 Dr =  -103.437 |Dx| =     0.004,   Stable ->  r  p  q
+ 632 Dp =     0.000 Dq =     0.000 Dr =    83.459 |Dx| =     0.001,   Stable ->  p  q  r
+ 633 Dp =     0.000 Dq =     0.000 Dr =   -44.526 |Dx| =     0.000,   Stable ->  r  p  q
+ 634 Dp =     0.000 Dq =     0.000 Dr =   220.408 |Dx| =     0.018,   Stable ->  p  q  r
+ 635 Dp =     0.000 Dq =     0.000 Dr =  -287.798 |Dx| =     2.699, Unstable >> ->  r  p  q
+ 636 Dp =     0.000 Dq =     0.000 Dr =  -237.323 |Dx| =     0.428,   Stable ->  r  p  q
+ 637 Dp =     0.000 Dq =     0.000 Dr =  -168.400 |Dx| =     0.032,   Stable ->  r  p  q
+ 638 Dp =     0.000 Dq =     0.000 Dr =    10.727 |Dx| =     0.000,   Stable ->  q  p  r
+ 639 Dp =     0.000 Dq =     0.000 Dr =   -20.529 |Dx| =     0.000,   Stable ->  r  p  q
+ 640 Dp =     0.000 Dq =     0.000 Dr =  -106.692 |Dx| =     0.005,   Stable ->  r  p  q
+ 641 Dp =     0.000 Dq =     0.000 Dr =  -437.114 |Dx| =   296.977, Unstable >> ->  r  p  q
+ 642 Dp =     0.000 Dq =     0.000 Dr =    25.776 |Dx| =     0.000,   Stable ->  q  p  r
+ 643 Dp =     0.000 Dq =     0.000 Dr =  -223.610 |Dx| =     0.239,   Stable ->  r  p  q
+ 644 Dp =     0.000 Dq =     0.000 Dr =   193.343 |Dx| =     0.013,   Stable ->  p  q  r
+ 645 Dp =     0.000 Dq =     0.000 Dr =    19.481 |Dx| =     0.000,   Stable ->  q  p  r
+ 646 Dp =     0.000 Dq =     0.000 Dr =  -101.444 |Dx| =     0.004,   Stable ->  r  p  q
+ 647 Dp =     0.000 Dq =     0.000 Dr =   -36.123 |Dx| =     0.000,   Stable ->  r  p  q
+ 648 Dp =     0.000 Dq =     0.000 Dr =   221.662 |Dx| =     0.019,   Stable ->  p  q  r
+ 649 Dp =     0.000 Dq =     0.000 Dr =   -47.899 |Dx| =     0.000,   Stable ->  r  p  q
+ 650 Dp =     0.000 Dq =     0.000 Dr =  -157.670 |Dx| =     0.024,   Stable ->  r  p  q
+ 635/ 650 conv, est  976/ 1000 for base_rc_p0_q0_r140_n1000_M0_1_H04_5_P30_stat_ne_nD_C2_PID_1
+ 651 Dp =     0.000 Dq =     0.000 Dr =  -355.759 |Dx| =   151.107, Unstable >> ->  r  p  q
+ 652 Dp =     0.000 Dq =     0.000 Dr =   -24.456 |Dx| =     0.000,   Stable ->  r  p  q
+ 653 Dp =     0.000 Dq =     0.000 Dr =  -107.098 |Dx| =     0.005,   Stable ->  r  p  q
+ 654 Dp =     0.000 Dq =     0.000 Dr =   157.196 |Dx| =     0.007,   Stable ->  p  q  r
+ 655 Dp =     0.000 Dq =     0.000 Dr =    19.571 |Dx| =     0.000,   Stable ->  q  p  r
+ 656 Dp =     0.000 Dq =     0.000 Dr =   148.029 |Dx| =     0.006,   Stable ->  p  q  r
+ 657 Dp =     0.000 Dq =     0.000 Dr =   -60.061 |Dx| =     0.001,   Stable ->  r  p  q
+ 658 Dp =     0.000 Dq =     0.000 Dr =  -118.259 |Dx| =     0.007,   Stable ->  r  p  q
+ 659 Dp =     0.000 Dq =     0.000 Dr =   130.744 |Dx| =     0.004,   Stable ->  p  q  r
+ 660 Dp =     0.000 Dq =     0.000 Dr =   -23.209 |Dx| =     0.000,   Stable ->  r  p  q
+ 661 Dp =     0.000 Dq =     0.000 Dr =  -101.897 |Dx| =     0.004,   Stable ->  r  p  q
+ 662 Dp =     0.000 Dq =     0.000 Dr =   -14.120 |Dx| =     0.000,   Stable ->  r  p  q
+ 663 Dp =     0.000 Dq =     0.000 Dr =   139.433 |Dx| =     0.005,   Stable ->  p  q  r
+ 664 Dp =     0.000 Dq =     0.000 Dr =   -88.679 |Dx| =     0.002,   Stable ->  r  p  q
+ 665 Dp =     0.000 Dq =     0.000 Dr =   270.016 |Dx| =     0.023,   Stable ->  p  r  q
+ 666 Dp =     0.000 Dq =     0.000 Dr =    70.550 |Dx| =     0.001,   Stable ->  p  q  r
+ 667 Dp =     0.000 Dq =     0.000 Dr =  -165.674 |Dx| =     0.030,   Stable ->  r  p  q
+ 668 Dp =     0.000 Dq =     0.000 Dr =  -150.999 |Dx| =     0.019,   Stable ->  r  p  q
+ 669 Dp =     0.000 Dq =     0.000 Dr =    -8.192 |Dx| =     0.000,   Stable ->  r  p  q
+ 670 Dp =     0.000 Dq =     0.000 Dr =   -47.433 |Dx| =     0.000,   Stable ->  r  p  q
+ 671 Dp =     0.000 Dq =     0.000 Dr =   -52.036 |Dx| =     0.001,   Stable ->  r  p  q
+ 672 Dp =     0.000 Dq =     0.000 Dr =   -19.256 |Dx| =     0.000,   Stable ->  r  p  q
+ 673 Dp =     0.000 Dq =     0.000 Dr =    36.679 |Dx| =     0.000,   Stable ->  p  q  r
+ 674 Dp =     0.000 Dq =     0.000 Dr =   -34.555 |Dx| =     0.000,   Stable ->  r  p  q
+ 675 Dp =     0.000 Dq =     0.000 Dr =   -73.861 |Dx| =     0.001,   Stable ->  r  p  q
+ 676 Dp =     0.000 Dq =     0.000 Dr =  -261.668 |Dx| =     1.120, Unstable >> ->  r  p  q
+ 677 Dp =     0.000 Dq =     0.000 Dr =   227.251 |Dx| =     0.020,   Stable ->  p  q  r
+ 678 Dp =     0.000 Dq =     0.000 Dr =    17.435 |Dx| =     0.000,   Stable ->  q  p  r
+ 679 Dp =     0.000 Dq =     0.000 Dr =    78.331 |Dx| =     0.001,   Stable ->  p  q  r
+ 680 Dp =     0.000 Dq =     0.000 Dr =    25.345 |Dx| =     0.000,   Stable ->  q  p  r
+ 681 Dp =     0.000 Dq =     0.000 Dr =   177.084 |Dx| =     0.010,   Stable ->  p  q  r
+ 682 Dp =     0.000 Dq =     0.000 Dr =     4.430 |Dx| =     0.000,   Stable ->  q  p  r
+ 683 Dp =     0.000 Dq =     0.000 Dr =   172.959 |Dx| =     0.009,   Stable ->  p  q  r
+ 684 Dp =     0.000 Dq =     0.000 Dr =   -77.499 |Dx| =     0.002,   Stable ->  r  p  q
+ 685 Dp =     0.000 Dq =     0.000 Dr =   -31.805 |Dx| =     0.000,   Stable ->  r  p  q
+ 686 Dp =     0.000 Dq =     0.000 Dr =    74.926 |Dx| =     0.001,   Stable ->  p  q  r
+ 687 Dp =     0.000 Dq =     0.000 Dr =    82.413 |Dx| =     0.001,   Stable ->  p  q  r
+ 688 Dp =     0.000 Dq =     0.000 Dr =   166.179 |Dx| =     0.008,   Stable ->  p  q  r
+ 689 Dp =     0.000 Dq =     0.000 Dr =   -78.861 |Dx| =     0.002,   Stable ->  r  p  q
+ 690 Dp =     0.000 Dq =     0.000 Dr =    65.261 |Dx| =     0.001,   Stable ->  p  q  r
+ 691 Dp =     0.000 Dq =     0.000 Dr =   -71.763 |Dx| =     0.001,   Stable ->  r  p  q
+ 692 Dp =     0.000 Dq =     0.000 Dr =  -196.063 |Dx| =     0.075,   Stable ->  r  p  q
+ 693 Dp =     0.000 Dq =     0.000 Dr =   136.732 |Dx| =     0.005,   Stable ->  p  q  r
+ 694 Dp =     0.000 Dq =     0.000 Dr =    -9.331 |Dx| =     0.000,   Stable ->  r  p  q
+ 695 Dp =     0.000 Dq =     0.000 Dr =  -135.846 |Dx| =     0.012,   Stable ->  r  p  q
+ 696 Dp =     0.000 Dq =     0.000 Dr =  -104.481 |Dx| =     0.004,   Stable ->  r  p  q
+ 697 Dp =     0.000 Dq =     0.000 Dr =    72.545 |Dx| =     0.001,   Stable ->  p  q  r
+ 698 Dp =     0.000 Dq =     0.000 Dr =    -0.202 |Dx| =     0.000,   Stable ->  r  p  q
+ 699 Dp =     0.000 Dq =     0.000 Dr =   -15.919 |Dx| =     0.000,   Stable ->  r  p  q
+ 700 Dp =     0.000 Dq =     0.000 Dr =    90.881 |Dx| =     0.001,   Stable ->  p  q  r
+ 683/ 700 conv, est  975/ 1000 for base_rc_p0_q0_r140_n1000_M0_1_H04_5_P30_stat_ne_nD_C2_PID_1
+ 701 Dp =     0.000 Dq =     0.000 Dr =    -5.264 |Dx| =     0.000,   Stable ->  r  p  q
+ 702 Dp =     0.000 Dq =     0.000 Dr =  -249.525 |Dx| =     0.701,   Stable ->  r  p  q
+ 703 Dp =     0.000 Dq =     0.000 Dr =   114.277 |Dx| =     0.003,   Stable ->  p  q  r
+ 704 Dp =     0.000 Dq =     0.000 Dr =   -67.819 |Dx| =     0.001,   Stable ->  r  p  q
+ 705 Dp =     0.000 Dq =     0.000 Dr =   -52.326 |Dx| =     0.001,   Stable ->  r  p  q
+ 706 Dp =     0.000 Dq =     0.000 Dr =  -333.941 |Dx| =    45.522, Unstable >> ->  r  p  q
+ 707 Dp =     0.000 Dq =     0.000 Dr =  -451.824 |Dx| =   325.188, Unstable >> ->  r  p  q
+ 708 Dp =     0.000 Dq =     0.000 Dr =     3.853 |Dx| =     0.000,   Stable ->  q  p  r
+ 709 Dp =     0.000 Dq =     0.000 Dr =   -66.923 |Dx| =     0.001,   Stable ->  r  p  q
+ 710 Dp =     0.000 Dq =     0.000 Dr =    -2.856 |Dx| =     0.000,   Stable ->  r  p  q
+ 711 Dp =     0.000 Dq =     0.000 Dr =    36.249 |Dx| =     0.000,   Stable ->  p  q  r
+ 712 Dp =     0.000 Dq =     0.000 Dr =   121.187 |Dx| =     0.003,   Stable ->  p  q  r
+ 713 Dp =     0.000 Dq =     0.000 Dr =   181.728 |Dx| =     0.011,   Stable ->  p  q  r
+ 714 Dp =     0.000 Dq =     0.000 Dr =   166.471 |Dx| =     0.008,   Stable ->  p  q  r
+ 715 Dp =     0.000 Dq =     0.000 Dr =  -138.554 |Dx| =     0.013,   Stable ->  r  p  q
+ 716 Dp =     0.000 Dq =     0.000 Dr =  -110.000 |Dx| =     0.005,   Stable ->  r  p  q
+ 717 Dp =     0.000 Dq =     0.000 Dr =    15.211 |Dx| =     0.000,   Stable ->  q  p  r
+ 718 Dp =     0.000 Dq =     0.000 Dr =   194.660 |Dx| =     0.013,   Stable ->  p  q  r
+ 719 Dp =     0.000 Dq =     0.000 Dr =   155.042 |Dx| =     0.007,   Stable ->  p  q  r
+ 720 Dp =     0.000 Dq =     0.000 Dr =   -71.818 |Dx| =     0.001,   Stable ->  r  p  q
+ 721 Dp =     0.000 Dq =     0.000 Dr =  -164.967 |Dx| =     0.029,   Stable ->  r  p  q
+ 722 Dp =     0.000 Dq =     0.000 Dr =    40.042 |Dx| =     0.000,   Stable ->  p  q  r
+ 723 Dp =     0.000 Dq =     0.000 Dr =   -25.689 |Dx| =     0.000,   Stable ->  r  p  q
+ 724 Dp =     0.000 Dq =     0.000 Dr =    94.018 |Dx| =     0.002,   Stable ->  p  q  r
+ 725 Dp =     0.000 Dq =     0.000 Dr =   111.030 |Dx| =     0.002,   Stable ->  p  q  r
+ 726 Dp =     0.000 Dq =     0.000 Dr =    46.173 |Dx| =     0.000,   Stable ->  p  q  r
+ 727 Dp =     0.000 Dq =     0.000 Dr =  -120.975 |Dx| =     0.007,   Stable ->  r  p  q
+ 728 Dp =     0.000 Dq =     0.000 Dr =  -166.258 |Dx| =     0.030,   Stable ->  r  p  q
+ 729 Dp =     0.000 Dq =     0.000 Dr =   -36.752 |Dx| =     0.000,   Stable ->  r  p  q
+ 730 Dp =     0.000 Dq =     0.000 Dr =    67.939 |Dx| =     0.001,   Stable ->  p  q  r
+ 731 Dp =     0.000 Dq =     0.000 Dr =    -7.190 |Dx| =     0.000,   Stable ->  r  p  q
+ 732 Dp =     0.000 Dq =     0.000 Dr =    99.196 |Dx| =     0.002,   Stable ->  p  q  r
+ 733 Dp =     0.000 Dq =     0.000 Dr =   -53.964 |Dx| =     0.001,   Stable ->  r  p  q
+ 734 Dp =     0.000 Dq =     0.000 Dr =   153.407 |Dx| =     0.006,   Stable ->  p  q  r
+ 735 Dp =     0.000 Dq =     0.000 Dr =    50.366 |Dx| =     0.000,   Stable ->  p  q  r
+ 736 Dp =     0.000 Dq =     0.000 Dr =   -41.187 |Dx| =     0.000,   Stable ->  r  p  q
+ 737 Dp =     0.000 Dq =     0.000 Dr =   -97.550 |Dx| =     0.003,   Stable ->  r  p  q
+ 738 Dp =     0.000 Dq =     0.000 Dr =   -16.021 |Dx| =     0.000,   Stable ->  r  p  q
+ 739 Dp =     0.000 Dq =     0.000 Dr =    14.801 |Dx| =     0.000,   Stable ->  q  p  r
+ 740 Dp =     0.000 Dq =     0.000 Dr =   221.166 |Dx| =     0.019,   Stable ->  p  q  r
+ 741 Dp =     0.000 Dq =     0.000 Dr =    16.540 |Dx| =     0.000,   Stable ->  q  p  r
+ 742 Dp =     0.000 Dq =     0.000 Dr =    95.939 |Dx| =     0.002,   Stable ->  p  q  r
+ 743 Dp =     0.000 Dq =     0.000 Dr =  -280.115 |Dx| =     2.127, Unstable >> ->  r  p  q
+ 744 Dp =     0.000 Dq =     0.000 Dr =   139.955 |Dx| =     0.005,   Stable ->  p  q  r
+ 745 Dp =     0.000 Dq =     0.000 Dr =    -6.425 |Dx| =     0.000,   Stable ->  r  p  q
+ 746 Dp =     0.000 Dq =     0.000 Dr =  -122.781 |Dx| =     0.008,   Stable ->  r  p  q
+ 747 Dp =     0.000 Dq =     0.000 Dr =  -309.139 |Dx| =     5.958, Unstable >> ->  r  q  p
+ 748 Dp =     0.000 Dq =     0.000 Dr =  -113.103 |Dx| =     0.006,   Stable ->  r  p  q
+ 749 Dp =     0.000 Dq =     0.000 Dr =   228.062 |Dx| =     0.020,   Stable ->  p  q  r
+ 750 Dp =     0.000 Dq =     0.000 Dr =   118.418 |Dx| =     0.003,   Stable ->  p  q  r
+ 729/ 750 conv, est  972/ 1000 for base_rc_p0_q0_r140_n1000_M0_1_H04_5_P30_stat_ne_nD_C2_PID_1
+ 751 Dp =     0.000 Dq =     0.000 Dr =   113.797 |Dx| =     0.003,   Stable ->  p  q  r
+ 752 Dp =     0.000 Dq =     0.000 Dr =   -62.440 |Dx| =     0.001,   Stable ->  r  p  q
+ 753 Dp =     0.000 Dq =     0.000 Dr =    88.661 |Dx| =     0.001,   Stable ->  p  q  r
+ 754 Dp =     0.000 Dq =     0.000 Dr =    88.646 |Dx| =     0.001,   Stable ->  p  q  r
+ 755 Dp =     0.000 Dq =     0.000 Dr =    49.902 |Dx| =     0.000,   Stable ->  p  q  r
+ 756 Dp =     0.000 Dq =     0.000 Dr =  -124.928 |Dx| =     0.008,   Stable ->  r  p  q
+ 757 Dp =     0.000 Dq =     0.000 Dr =   -80.680 |Dx| =     0.002,   Stable ->  r  p  q
+ 758 Dp =     0.000 Dq =     0.000 Dr =   -39.605 |Dx| =     0.000,   Stable ->  r  p  q
+ 759 Dp =     0.000 Dq =     0.000 Dr =   421.555 |Dx| =     1.206, Unstable >>  r ->  p  q  r
+ 760 Dp =     0.000 Dq =     0.000 Dr =  -270.495 |Dx| =     1.540, Unstable >> ->  r  p  q
+ 761 Dp =     0.000 Dq =     0.000 Dr =   230.446 |Dx| =     0.020,   Stable ->  p  q  r
+ 762 Dp =     0.000 Dq =     0.000 Dr =   195.549 |Dx| =     0.013,   Stable ->  p  q  r
+ 763 Dp =     0.000 Dq =     0.000 Dr =    33.109 |Dx| =     0.000,   Stable ->  q  p  r
+ 764 Dp =     0.000 Dq =     0.000 Dr =   115.547 |Dx| =     0.003,   Stable ->  p  q  r
+ 765 Dp =     0.000 Dq =     0.000 Dr =    53.128 |Dx| =     0.000,   Stable ->  p  q  r
+ 766 Dp =     0.000 Dq =     0.000 Dr =    79.663 |Dx| =     0.001,   Stable ->  p  q  r
+ 767 Dp =     0.000 Dq =     0.000 Dr =   -78.954 |Dx| =     0.002,   Stable ->  r  p  q
+ 768 Dp =     0.000 Dq =     0.000 Dr =  -270.557 |Dx| =     1.543, Unstable >> ->  r  p  q
+ 769 Dp =     0.000 Dq =     0.000 Dr =   375.362 |Dx| =     0.194,   Stable ->  p  r  q
+ 770 Dp =     0.000 Dq =     0.000 Dr =   245.055 |Dx| =     0.021,   Stable ->  p  q  r
+ 771 Dp =     0.000 Dq =     0.000 Dr =  -191.732 |Dx| =     0.065,   Stable ->  r  p  q
+ 772 Dp =     0.000 Dq =     0.000 Dr =   159.674 |Dx| =     0.007,   Stable ->  p  q  r
+ 773 Dp =     0.000 Dq =     0.000 Dr =   -54.005 |Dx| =     0.001,   Stable ->  r  p  q
+ 774 Dp =     0.000 Dq =     0.000 Dr =    66.378 |Dx| =     0.001,   Stable ->  p  q  r
+ 775 Dp =     0.000 Dq =     0.000 Dr =  -141.600 |Dx| =     0.014,   Stable ->  r  p  q
+ 776 Dp =     0.000 Dq =     0.000 Dr =  -146.110 |Dx| =     0.017,   Stable ->  r  p  q
+ 777 Dp =     0.000 Dq =     0.000 Dr =   261.083 |Dx| =     0.022,   Stable ->  p  r  q
+ 778 Dp =     0.000 Dq =     0.000 Dr =   -62.270 |Dx| =     0.001,   Stable ->  r  p  q
+ 779 Dp =     0.000 Dq =     0.000 Dr =   -10.584 |Dx| =     0.000,   Stable ->  r  p  q
+ 780 Dp =     0.000 Dq =     0.000 Dr =    99.131 |Dx| =     0.002,   Stable ->  p  q  r
+ 781 Dp =     0.000 Dq =     0.000 Dr =   207.252 |Dx| =     0.016,   Stable ->  p  q  r
+ 782 Dp =     0.000 Dq =     0.000 Dr =   -65.573 |Dx| =     0.001,   Stable ->  r  p  q
+ 783 Dp =     0.000 Dq =     0.000 Dr =    87.471 |Dx| =     0.001,   Stable ->  p  q  r
+ 784 Dp =     0.000 Dq =     0.000 Dr =   107.849 |Dx| =     0.002,   Stable ->  p  q  r
+ 785 Dp =     0.000 Dq =     0.000 Dr =   -80.828 |Dx| =     0.002,   Stable ->  r  p  q
+ 786 Dp =     0.000 Dq =     0.000 Dr =   -78.644 |Dx| =     0.002,   Stable ->  r  p  q
+ 787 Dp =     0.000 Dq =     0.000 Dr =    87.049 |Dx| =     0.001,   Stable ->  p  q  r
+ 788 Dp =     0.000 Dq =     0.000 Dr =   -14.696 |Dx| =     0.000,   Stable ->  r  p  q
+ 789 Dp =     0.000 Dq =     0.000 Dr =   220.633 |Dx| =     0.019,   Stable ->  p  q  r
+ 790 Dp =     0.000 Dq =     0.000 Dr =  -247.967 |Dx| =     0.659,   Stable ->  r  p  q
+ 791 Dp =     0.000 Dq =     0.000 Dr =    74.254 |Dx| =     0.001,   Stable ->  p  q  r
+ 792 Dp =     0.000 Dq =     0.000 Dr =   -19.336 |Dx| =     0.000,   Stable ->  r  p  q
+ 793 Dp =     0.000 Dq =     0.000 Dr =  -191.735 |Dx| =     0.065,   Stable ->  r  p  q
+ 794 Dp =     0.000 Dq =     0.000 Dr =   -13.640 |Dx| =     0.000,   Stable ->  r  p  q
+ 795 Dp =     0.000 Dq =     0.000 Dr =  -196.449 |Dx| =     0.076,   Stable ->  r  p  q
+ 796 Dp =     0.000 Dq =     0.000 Dr =   -44.959 |Dx| =     0.000,   Stable ->  r  p  q
+ 797 Dp =     0.000 Dq =     0.000 Dr =   153.174 |Dx| =     0.006,   Stable ->  p  q  r
+ 798 Dp =     0.000 Dq =     0.000 Dr =   -96.312 |Dx| =     0.003,   Stable ->  r  p  q
+ 799 Dp =     0.000 Dq =     0.000 Dr =    86.216 |Dx| =     0.001,   Stable ->  p  q  r
+ 800 Dp =     0.000 Dq =     0.000 Dr =    43.323 |Dx| =     0.000,   Stable ->  p  q  r
+ 776/ 800 conv, est  970/ 1000 for base_rc_p0_q0_r140_n1000_M0_1_H04_5_P30_stat_ne_nD_C2_PID_1
+ 801 Dp =     0.000 Dq =     0.000 Dr =   -66.906 |Dx| =     0.001,   Stable ->  r  p  q
+ 802 Dp =     0.000 Dq =     0.000 Dr =   -36.937 |Dx| =     0.000,   Stable ->  r  p  q
+ 803 Dp =     0.000 Dq =     0.000 Dr =    31.374 |Dx| =     0.000,   Stable ->  q  p  r
+ 804 Dp =     0.000 Dq =     0.000 Dr =    46.636 |Dx| =     0.000,   Stable ->  p  q  r
+ 805 Dp =     0.000 Dq =     0.000 Dr =   -68.041 |Dx| =     0.001,   Stable ->  r  p  q
+ 806 Dp =     0.000 Dq =     0.000 Dr =   -19.868 |Dx| =     0.000,   Stable ->  r  p  q
+ 807 Dp =     0.000 Dq =     0.000 Dr =   109.387 |Dx| =     0.002,   Stable ->  p  q  r
+ 808 Dp =     0.000 Dq =     0.000 Dr =  -136.534 |Dx| =     0.012,   Stable ->  r  p  q
+ 809 Dp =     0.000 Dq =     0.000 Dr =  -161.742 |Dx| =     0.027,   Stable ->  r  p  q
+ 810 Dp =     0.000 Dq =     0.000 Dr =    45.694 |Dx| =     0.000,   Stable ->  p  q  r
+ 811 Dp =     0.000 Dq =     0.000 Dr =    66.761 |Dx| =     0.001,   Stable ->  p  q  r
+ 812 Dp =     0.000 Dq =     0.000 Dr =  -318.200 |Dx| =     8.848, Unstable >> ->  r  q  p
+ 813 Dp =     0.000 Dq =     0.000 Dr =    16.825 |Dx| =     0.000,   Stable ->  q  p  r
+ 814 Dp =     0.000 Dq =     0.000 Dr =   194.641 |Dx| =     0.013,   Stable ->  p  q  r
+ 815 Dp =     0.000 Dq =     0.000 Dr =   117.495 |Dx| =     0.003,   Stable ->  p  q  r
+ 816 Dp =     0.000 Dq =     0.000 Dr =   -47.548 |Dx| =     0.000,   Stable ->  r  p  q
+ 817 Dp =     0.000 Dq =     0.000 Dr =    54.870 |Dx| =     0.000,   Stable ->  p  q  r
+ 818 Dp =     0.000 Dq =     0.000 Dr =  -224.878 |Dx| =     0.253,   Stable ->  r  p  q
+ 819 Dp =     0.000 Dq =     0.000 Dr =    90.361 |Dx| =     0.001,   Stable ->  p  q  r
+ 820 Dp =     0.000 Dq =     0.000 Dr =    43.635 |Dx| =     0.000,   Stable ->  p  q  r
+ 821 Dp =     0.000 Dq =     0.000 Dr =   122.857 |Dx| =     0.003,   Stable ->  p  q  r
+ 822 Dp =     0.000 Dq =     0.000 Dr =   -18.572 |Dx| =     0.000,   Stable ->  r  p  q
+ 823 Dp =     0.000 Dq =     0.000 Dr =    95.287 |Dx| =     0.002,   Stable ->  p  q  r
+ 824 Dp =     0.000 Dq =     0.000 Dr =   -57.631 |Dx| =     0.001,   Stable ->  r  p  q
+ 825 Dp =     0.000 Dq =     0.000 Dr =   152.969 |Dx| =     0.006,   Stable ->  p  q  r
+ 826 Dp =     0.000 Dq =     0.000 Dr =    66.295 |Dx| =     0.001,   Stable ->  p  q  r
+ 827 Dp =     0.000 Dq =     0.000 Dr =  -245.064 |Dx| =     0.587,   Stable ->  r  p  q
+ 828 Dp =     0.000 Dq =     0.000 Dr =  -226.431 |Dx| =     0.270,   Stable ->  r  p  q
+ 829 Dp =     0.000 Dq =     0.000 Dr =    77.559 |Dx| =     0.001,   Stable ->  p  q  r
+ 830 Dp =     0.000 Dq =     0.000 Dr =   139.353 |Dx| =     0.005,   Stable ->  p  q  r
+ 831 Dp =     0.000 Dq =     0.000 Dr =   180.137 |Dx| =     0.011,   Stable ->  p  q  r
+ 832 Dp =     0.000 Dq =     0.000 Dr =   -67.050 |Dx| =     0.001,   Stable ->  r  p  q
+ 833 Dp =     0.000 Dq =     0.000 Dr =    33.280 |Dx| =     0.000,   Stable ->  p  q  r
+ 834 Dp =     0.000 Dq =     0.000 Dr =   -38.874 |Dx| =     0.000,   Stable ->  r  p  q
+ 835 Dp =     0.000 Dq =     0.000 Dr =   -87.172 |Dx| =     0.002,   Stable ->  r  p  q
+ 836 Dp =     0.000 Dq =     0.000 Dr =   -28.922 |Dx| =     0.000,   Stable ->  r  p  q
+ 837 Dp =     0.000 Dq =     0.000 Dr =   176.373 |Dx| =     0.010,   Stable ->  p  q  r
+ 838 Dp =     0.000 Dq =     0.000 Dr =   -57.598 |Dx| =     0.001,   Stable ->  r  p  q
+ 839 Dp =     0.000 Dq =     0.000 Dr =   253.672 |Dx| =     0.022,   Stable ->  p  q  r
+ 840 Dp =     0.000 Dq =     0.000 Dr =  -175.927 |Dx| =     0.040,   Stable ->  r  p  q
+ 841 Dp =     0.000 Dq =     0.000 Dr =   -40.310 |Dx| =     0.000,   Stable ->  r  p  q
+ 842 Dp =     0.000 Dq =     0.000 Dr =    79.283 |Dx| =     0.001,   Stable ->  p  q  r
+ 843 Dp =     0.000 Dq =     0.000 Dr =    77.978 |Dx| =     0.001,   Stable ->  p  q  r
+ 844 Dp =     0.000 Dq =     0.000 Dr =    24.284 |Dx| =     0.000,   Stable ->  q  p  r
+ 845 Dp =     0.000 Dq =     0.000 Dr =  -225.557 |Dx| =     0.260,   Stable ->  r  p  q
+ 846 Dp =     0.000 Dq =     0.000 Dr =   -31.145 |Dx| =     0.000,   Stable ->  r  p  q
+ 847 Dp =     0.000 Dq =     0.000 Dr =   203.044 |Dx| =     0.015,   Stable ->  p  q  r
+ 848 Dp =     0.000 Dq =     0.000 Dr =    98.003 |Dx| =     0.002,   Stable ->  p  q  r
+ 849 Dp =     0.000 Dq =     0.000 Dr =    79.716 |Dx| =     0.001,   Stable ->  p  q  r
+ 850 Dp =     0.000 Dq =     0.000 Dr =    66.729 |Dx| =     0.001,   Stable ->  p  q  r
+ 825/ 850 conv, est  970/ 1000 for base_rc_p0_q0_r140_n1000_M0_1_H04_5_P30_stat_ne_nD_C2_PID_1
+ 851 Dp =     0.000 Dq =     0.000 Dr =    -5.936 |Dx| =     0.000,   Stable ->  r  p  q
+ 852 Dp =     0.000 Dq =     0.000 Dr =     1.776 |Dx| =     0.000,   Stable ->  q  p  r
+ 853 Dp =     0.000 Dq =     0.000 Dr =   -73.853 |Dx| =     0.001,   Stable ->  r  p  q
+ 854 Dp =     0.000 Dq =     0.000 Dr =   196.797 |Dx| =     0.014,   Stable ->  p  q  r
+ 855 Dp =     0.000 Dq =     0.000 Dr =    68.128 |Dx| =     0.001,   Stable ->  p  q  r
+ 856 Dp =     0.000 Dq =     0.000 Dr =    60.567 |Dx| =     0.001,   Stable ->  p  q  r
+ 857 Dp =     0.000 Dq =     0.000 Dr =    28.978 |Dx| =     0.000,   Stable ->  q  p  r
+ 858 Dp =     0.000 Dq =     0.000 Dr =   -27.388 |Dx| =     0.000,   Stable ->  r  p  q
+ 859 Dp =     0.000 Dq =     0.000 Dr =  -194.800 |Dx| =     0.072,   Stable ->  r  p  q
+ 860 Dp =     0.000 Dq =     0.000 Dr =     3.133 |Dx| =     0.000,   Stable ->  q  p  r
+ 861 Dp =     0.000 Dq =     0.000 Dr =   -88.715 |Dx| =     0.002,   Stable ->  r  p  q
+ 862 Dp =     0.000 Dq =     0.000 Dr =   -72.028 |Dx| =     0.001,   Stable ->  r  p  q
+ 863 Dp =     0.000 Dq =     0.000 Dr =    33.179 |Dx| =     0.000,   Stable ->  q  p  r
+ 864 Dp =     0.000 Dq =     0.000 Dr =   188.584 |Dx| =     0.012,   Stable ->  p  q  r
+ 865 Dp =     0.000 Dq =     0.000 Dr =  -137.024 |Dx| =     0.012,   Stable ->  r  p  q
+ 866 Dp =     0.000 Dq =     0.000 Dr =     6.900 |Dx| =     0.000,   Stable ->  q  p  r
+ 867 Dp =     0.000 Dq =     0.000 Dr =   228.392 |Dx| =     0.020,   Stable ->  p  q  r
+ 868 Dp =     0.000 Dq =     0.000 Dr =  -167.077 |Dx| =     0.031,   Stable ->  r  p  q
+ 869 Dp =     0.000 Dq =     0.000 Dr =    79.489 |Dx| =     0.001,   Stable ->  p  q  r
+ 870 Dp =     0.000 Dq =     0.000 Dr =   -56.108 |Dx| =     0.001,   Stable ->  r  p  q
+ 871 Dp =     0.000 Dq =     0.000 Dr =   109.196 |Dx| =     0.002,   Stable ->  p  q  r
+ 872 Dp =     0.000 Dq =     0.000 Dr =   226.303 |Dx| =     0.019,   Stable ->  p  q  r
+ 873 Dp =     0.000 Dq =     0.000 Dr =    -3.427 |Dx| =     0.000,   Stable ->  r  p  q
+ 874 Dp =     0.000 Dq =     0.000 Dr =   143.334 |Dx| =     0.005,   Stable ->  p  q  r
+ 875 Dp =     0.000 Dq =     0.000 Dr =    50.707 |Dx| =     0.000,   Stable ->  p  q  r
+ 876 Dp =     0.000 Dq =     0.000 Dr =   272.835 |Dx| =     0.023,   Stable ->  p  r  q
+ 877 Dp =     0.000 Dq =     0.000 Dr =  -467.596 |Dx| =   440.393, Unstable >>  p ->  r  q  p
+ 878 Dp =     0.000 Dq =     0.000 Dr =  -118.382 |Dx| =     0.007,   Stable ->  r  p  q
+ 879 Dp =     0.000 Dq =     0.000 Dr =    -7.893 |Dx| =     0.000,   Stable ->  r  p  q
+ 880 Dp =     0.000 Dq =     0.000 Dr =    22.258 |Dx| =     0.000,   Stable ->  q  p  r
+ 881 Dp =     0.000 Dq =     0.000 Dr =   240.867 |Dx| =     0.021,   Stable ->  p  q  r
+ 882 Dp =     0.000 Dq =     0.000 Dr =   165.943 |Dx| =     0.008,   Stable ->  p  q  r
+ 883 Dp =     0.000 Dq =     0.000 Dr =   -43.575 |Dx| =     0.000,   Stable ->  r  p  q
+ 884 Dp =     0.000 Dq =     0.000 Dr =  -191.813 |Dx| =     0.065,   Stable ->  r  p  q
+ 885 Dp =     0.000 Dq =     0.000 Dr =   170.638 |Dx| =     0.009,   Stable ->  p  q  r
+ 886 Dp =     0.000 Dq =     0.000 Dr =    46.243 |Dx| =     0.000,   Stable ->  p  q  r
+ 887 Dp =     0.000 Dq =     0.000 Dr =   -28.536 |Dx| =     0.000,   Stable ->  r  p  q
+ 888 Dp =     0.000 Dq =     0.000 Dr =   128.841 |Dx| =     0.004,   Stable ->  p  q  r
+ 889 Dp =     0.000 Dq =     0.000 Dr =   258.742 |Dx| =     0.022,   Stable ->  p  r  q
+ 890 Dp =     0.000 Dq =     0.000 Dr =    58.370 |Dx| =     0.001,   Stable ->  p  q  r
+ 891 Dp =     0.000 Dq =     0.000 Dr =   208.197 |Dx| =     0.016,   Stable ->  p  q  r
+ 892 Dp =     0.000 Dq =     0.000 Dr =  -240.833 |Dx| =     0.494,   Stable ->  r  p  q
+ 893 Dp =     0.000 Dq =     0.000 Dr =   130.486 |Dx| =     0.004,   Stable ->  p  q  r
+ 894 Dp =     0.000 Dq =     0.000 Dr =   338.077 |Dx| =     0.081,   Stable ->  r  p  q
+ 895 Dp =     0.000 Dq =     0.000 Dr =   181.365 |Dx| =     0.011,   Stable ->  p  q  r
+ 896 Dp =     0.000 Dq =     0.000 Dr =   -71.310 |Dx| =     0.001,   Stable ->  r  p  q
+ 897 Dp =     0.000 Dq =     0.000 Dr =  -145.689 |Dx| =     0.016,   Stable ->  r  p  q
+ 898 Dp =     0.000 Dq =     0.000 Dr =    64.009 |Dx| =     0.001,   Stable ->  p  q  r
+ 899 Dp =     0.000 Dq =     0.000 Dr =  -107.399 |Dx| =     0.005,   Stable ->  r  p  q
+ 900 Dp =     0.000 Dq =     0.000 Dr =   -61.898 |Dx| =     0.001,   Stable ->  r  p  q
+ 874/ 900 conv, est  971/ 1000 for base_rc_p0_q0_r140_n1000_M0_1_H04_5_P30_stat_ne_nD_C2_PID_1
+ 901 Dp =     0.000 Dq =     0.000 Dr =  -233.311 |Dx| =     0.362,   Stable ->  r  p  q
+ 902 Dp =     0.000 Dq =     0.000 Dr =  -129.019 |Dx| =     0.010,   Stable ->  r  p  q
+ 903 Dp =     0.000 Dq =     0.000 Dr =    87.565 |Dx| =     0.001,   Stable ->  p  q  r
+ 904 Dp =     0.000 Dq =     0.000 Dr =   -98.731 |Dx| =     0.003,   Stable ->  r  p  q
+ 905 Dp =     0.000 Dq =     0.000 Dr =  -108.816 |Dx| =     0.005,   Stable ->  r  p  q
+ 906 Dp =     0.000 Dq =     0.000 Dr =  -178.772 |Dx| =     0.044,   Stable ->  r  p  q
+ 907 Dp =     0.000 Dq =     0.000 Dr =   -14.689 |Dx| =     0.000,   Stable ->  r  p  q
+ 908 Dp =     0.000 Dq =     0.000 Dr =    54.224 |Dx| =     0.000,   Stable ->  p  q  r
+ 909 Dp =     0.000 Dq =     0.000 Dr =    19.213 |Dx| =     0.000,   Stable ->  q  p  r
+ 910 Dp =     0.000 Dq =     0.000 Dr =  -391.592 |Dx| =   221.583, Unstable >> ->  r  p  q
+ 911 Dp =     0.000 Dq =     0.000 Dr =     3.859 |Dx| =     0.000,   Stable ->  q  p  r
+ 912 Dp =     0.000 Dq =     0.000 Dr =  -128.903 |Dx| =     0.010,   Stable ->  r  p  q
+ 913 Dp =     0.000 Dq =     0.000 Dr =   -11.994 |Dx| =     0.000,   Stable ->  r  p  q
+ 914 Dp =     0.000 Dq =     0.000 Dr =  -151.129 |Dx| =     0.019,   Stable ->  r  p  q
+ 915 Dp =     0.000 Dq =     0.000 Dr =   160.347 |Dx| =     0.007,   Stable ->  p  q  r
+ 916 Dp =     0.000 Dq =     0.000 Dr =   268.508 |Dx| =     0.023,   Stable ->  p  r  q
+ 917 Dp =     0.000 Dq =     0.000 Dr =   130.577 |Dx| =     0.004,   Stable ->  p  q  r
+ 918 Dp =     0.000 Dq =     0.000 Dr =   246.669 |Dx| =     0.022,   Stable ->  p  q  r
+ 919 Dp =     0.000 Dq =     0.000 Dr =    36.579 |Dx| =     0.000,   Stable ->  p  q  r
+ 920 Dp =     0.000 Dq =     0.000 Dr =   -34.810 |Dx| =     0.000,   Stable ->  r  p  q
+ 921 Dp =     0.000 Dq =     0.000 Dr =  -281.425 |Dx| =     2.218, Unstable >> ->  r  p  q
+ 922 Dp =     0.000 Dq =     0.000 Dr =   -86.899 |Dx| =     0.002,   Stable ->  r  p  q
+ 923 Dp =     0.000 Dq =     0.000 Dr =   -58.915 |Dx| =     0.001,   Stable ->  r  p  q
+ 924 Dp =     0.000 Dq =     0.000 Dr =   221.680 |Dx| =     0.019,   Stable ->  p  q  r
+ 925 Dp =     0.000 Dq =     0.000 Dr =  -130.043 |Dx| =     0.010,   Stable ->  r  p  q
+ 926 Dp =     0.000 Dq =     0.000 Dr =    13.826 |Dx| =     0.000,   Stable ->  q  p  r
+ 927 Dp =     0.000 Dq =     0.000 Dr =    93.220 |Dx| =     0.002,   Stable ->  p  q  r
+ 928 Dp =     0.000 Dq =     0.000 Dr =    12.038 |Dx| =     0.000,   Stable ->  q  p  r
+ 929 Dp =     0.000 Dq =     0.000 Dr =     1.616 |Dx| =     0.000,   Stable ->  q  p  r
+ 930 Dp =     0.000 Dq =     0.000 Dr =   151.333 |Dx| =     0.006,   Stable ->  p  q  r
+ 931 Dp =     0.000 Dq =     0.000 Dr =  -117.017 |Dx| =     0.006,   Stable ->  r  p  q
+ 932 Dp =     0.000 Dq =     0.000 Dr =     7.924 |Dx| =     0.000,   Stable ->  q  p  r
+ 933 Dp =     0.000 Dq =     0.000 Dr =    36.278 |Dx| =     0.000,   Stable ->  p  q  r
+ 934 Dp =     0.000 Dq =     0.000 Dr =   228.290 |Dx| =     0.020,   Stable ->  p  q  r
+ 935 Dp =     0.000 Dq =     0.000 Dr =   196.350 |Dx| =     0.014,   Stable ->  p  q  r
+ 936 Dp =     0.000 Dq =     0.000 Dr =    84.123 |Dx| =     0.001,   Stable ->  p  q  r
+ 937 Dp =     0.000 Dq =     0.000 Dr =   124.303 |Dx| =     0.003,   Stable ->  p  q  r
+ 938 Dp =     0.000 Dq =     0.000 Dr =  -289.080 |Dx| =     2.803, Unstable >> ->  r  p  q
+ 939 Dp =     0.000 Dq =     0.000 Dr =    46.263 |Dx| =     0.000,   Stable ->  p  q  r
+ 940 Dp =     0.000 Dq =     0.000 Dr =   -70.006 |Dx| =     0.001,   Stable ->  r  p  q
+ 941 Dp =     0.000 Dq =     0.000 Dr =  -210.011 |Dx| =     0.131,   Stable ->  r  p  q
+ 942 Dp =     0.000 Dq =     0.000 Dr =    95.634 |Dx| =     0.002,   Stable ->  p  q  r
+ 943 Dp =     0.000 Dq =     0.000 Dr =   -54.421 |Dx| =     0.001,   Stable ->  r  p  q
+ 944 Dp =     0.000 Dq =     0.000 Dr =   -93.914 |Dx| =     0.003,   Stable ->  r  p  q
+ 945 Dp =     0.000 Dq =     0.000 Dr =  -241.155 |Dx| =     0.501,   Stable ->  r  p  q
+ 946 Dp =     0.000 Dq =     0.000 Dr =    24.002 |Dx| =     0.000,   Stable ->  q  p  r
+ 947 Dp =     0.000 Dq =     0.000 Dr =   172.449 |Dx| =     0.009,   Stable ->  p  q  r
+ 948 Dp =     0.000 Dq =     0.000 Dr =    23.023 |Dx| =     0.000,   Stable ->  q  p  r
+ 949 Dp =     0.000 Dq =     0.000 Dr =   102.862 |Dx| =     0.002,   Stable ->  p  q  r
+ 950 Dp =     0.000 Dq =     0.000 Dr =   138.867 |Dx| =     0.005,   Stable ->  p  q  r
+ 921/ 950 conv, est  969/ 1000 for base_rc_p0_q0_r140_n1000_M0_1_H04_5_P30_stat_ne_nD_C2_PID_1
+ 951 Dp =     0.000 Dq =     0.000 Dr =    -2.414 |Dx| =     0.000,   Stable ->  r  p  q
+ 952 Dp =     0.000 Dq =     0.000 Dr =   -53.114 |Dx| =     0.001,   Stable ->  r  p  q
+ 953 Dp =     0.000 Dq =     0.000 Dr =   -86.602 |Dx| =     0.002,   Stable ->  r  p  q
+ 954 Dp =     0.000 Dq =     0.000 Dr =   -42.363 |Dx| =     0.000,   Stable ->  r  p  q
+ 955 Dp =     0.000 Dq =     0.000 Dr =   -77.598 |Dx| =     0.002,   Stable ->  r  p  q
+ 956 Dp =     0.000 Dq =     0.000 Dr =     8.385 |Dx| =     0.000,   Stable ->  q  p  r
+ 957 Dp =     0.000 Dq =     0.000 Dr =   -69.055 |Dx| =     0.001,   Stable ->  r  p  q
+ 958 Dp =     0.000 Dq =     0.000 Dr =   152.461 |Dx| =     0.006,   Stable ->  p  q  r
+ 959 Dp =     0.000 Dq =     0.000 Dr =  -124.049 |Dx| =     0.008,   Stable ->  r  p  q
+ 960 Dp =     0.000 Dq =     0.000 Dr =   222.762 |Dx| =     0.019,   Stable ->  p  q  r
+ 961 Dp =     0.000 Dq =     0.000 Dr =   -65.877 |Dx| =     0.001,   Stable ->  r  p  q
+ 962 Dp =     0.000 Dq =     0.000 Dr =   -66.459 |Dx| =     0.001,   Stable ->  r  p  q
+ 963 Dp =     0.000 Dq =     0.000 Dr =    92.262 |Dx| =     0.002,   Stable ->  p  q  r
+ 964 Dp =     0.000 Dq =     0.000 Dr =  -103.149 |Dx| =     0.004,   Stable ->  r  p  q
+ 965 Dp =     0.000 Dq =     0.000 Dr =  -263.785 |Dx| =     1.211, Unstable >> ->  r  p  q
+ 966 Dp =     0.000 Dq =     0.000 Dr =   114.935 |Dx| =     0.003,   Stable ->  p  q  r
+ 967 Dp =     0.000 Dq =     0.000 Dr =   198.250 |Dx| =     0.014,   Stable ->  p  q  r
+ 968 Dp =     0.000 Dq =     0.000 Dr =  -271.373 |Dx| =     1.588, Unstable >> ->  r  p  q
+ 969 Dp =     0.000 Dq =     0.000 Dr =    71.305 |Dx| =     0.001,   Stable ->  p  q  r
+ 970 Dp =     0.000 Dq =     0.000 Dr =   -79.735 |Dx| =     0.002,   Stable ->  r  p  q
+ 971 Dp =     0.000 Dq =     0.000 Dr =   -32.522 |Dx| =     0.000,   Stable ->  r  p  q
+ 972 Dp =     0.000 Dq =     0.000 Dr =   217.623 |Dx| =     0.018,   Stable ->  p  q  r
+ 973 Dp =     0.000 Dq =     0.000 Dr =  -191.669 |Dx| =     0.065,   Stable ->  r  p  q
+ 974 Dp =     0.000 Dq =     0.000 Dr =   -74.447 |Dx| =     0.001,   Stable ->  r  p  q
+ 975 Dp =     0.000 Dq =     0.000 Dr =   172.957 |Dx| =     0.009,   Stable ->  p  q  r
+ 976 Dp =     0.000 Dq =     0.000 Dr =    31.478 |Dx| =     0.000,   Stable ->  q  p  r
+ 977 Dp =     0.000 Dq =     0.000 Dr =    61.789 |Dx| =     0.001,   Stable ->  p  q  r
+ 978 Dp =     0.000 Dq =     0.000 Dr =   -94.388 |Dx| =     0.003,   Stable ->  r  p  q
+ 979 Dp =     0.000 Dq =     0.000 Dr =  -113.580 |Dx| =     0.006,   Stable ->  r  p  q
+ 980 Dp =     0.000 Dq =     0.000 Dr =  -110.016 |Dx| =     0.005,   Stable ->  r  p  q
+ 981 Dp =     0.000 Dq =     0.000 Dr =    28.778 |Dx| =     0.000,   Stable ->  q  p  r
+ 982 Dp =     0.000 Dq =     0.000 Dr =   -63.529 |Dx| =     0.001,   Stable ->  r  p  q
+ 983 Dp =     0.000 Dq =     0.000 Dr =    57.270 |Dx| =     0.000,   Stable ->  p  q  r
+ 984 Dp =     0.000 Dq =     0.000 Dr =   363.973 |Dx| =     0.206,   Stable ->  p  r  q
+ 985 Dp =     0.000 Dq =     0.000 Dr =  -250.446 |Dx| =     0.727,   Stable ->  r  p  q
+ 986 Dp =     0.000 Dq =     0.000 Dr =    33.918 |Dx| =     0.000,   Stable ->  p  q  r
+ 987 Dp =     0.000 Dq =     0.000 Dr =   -16.533 |Dx| =     0.000,   Stable ->  r  p  q
+ 988 Dp =     0.000 Dq =     0.000 Dr =  -151.771 |Dx| =     0.020,   Stable ->  r  p  q
+ 989 Dp =     0.000 Dq =     0.000 Dr =    22.299 |Dx| =     0.000,   Stable ->  q  p  r
+ 990 Dp =     0.000 Dq =     0.000 Dr =  -128.186 |Dx| =     0.009,   Stable ->  r  p  q
+ 991 Dp =     0.000 Dq =     0.000 Dr =  -193.467 |Dx| =     0.069,   Stable ->  r  p  q
+ 992 Dp =     0.000 Dq =     0.000 Dr =    -3.998 |Dx| =     0.000,   Stable ->  r  p  q
+ 993 Dp =     0.000 Dq =     0.000 Dr =   215.311 |Dx| =     0.018,   Stable ->  p  q  r
+ 994 Dp =     0.000 Dq =     0.000 Dr =   -34.416 |Dx| =     0.000,   Stable ->  r  p  q
+ 995 Dp =     0.000 Dq =     0.000 Dr =    53.925 |Dx| =     0.000,   Stable ->  p  q  r
+ 996 Dp =     0.000 Dq =     0.000 Dr =   -97.901 |Dx| =     0.003,   Stable ->  r  p  q
+ 997 Dp =     0.000 Dq =     0.000 Dr =  -109.441 |Dx| =     0.005,   Stable ->  r  p  q
+ 998 Dp =     0.000 Dq =     0.000 Dr =  -209.616 |Dx| =     0.129,   Stable ->  r  p  q
+ 999 Dp =     0.000 Dq =     0.000 Dr =    -8.317 |Dx| =     0.000,   Stable ->  r  p  q
+1000 Dp =     0.000 Dq =     0.000 Dr =    59.509 |Dx| =     0.001,   Stable ->  p  q  r
+ 969/ 1000 conv, est  969/ 1000 for base_rc_p0_q0_r140_n1000_M0_1_H04_5_P30_stat_ne_nD_C2_PID_1

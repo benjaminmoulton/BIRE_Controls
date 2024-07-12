@@ -87,6 +87,10 @@ class Aircraft:
         self.additional_states = 0
 
 
+    def _reinitialize(self):
+        return
+
+
     def _stdatm_hunsaker(self,H):
         g = gravity_english(H)
         Z,T,p,rho,a = stdatm_hunsaker(H)
@@ -367,6 +371,7 @@ class Aircraft:
         self.NR_dx  = solver.get("finite_difference_step_size",0.01)
         self.NR_G   = solver.get("relaxation_factor",0.5)
         self.NR_tol = solver.get("tolerance",1.0e-10)
+        self.trim_iter_max = solver.get("max_iterations",1000)
         self.verbose_trim = trim.get("verbose_trim",True)
         # trim guess variables
         trim_guess = initial.get("trim_guess",{})
@@ -622,7 +627,8 @@ class Aircraft:
         return b,phi,theta,x
 
 
-    def _report_trim_solution(self,x="o",u="o",iter="o"):
+    def _report_trim_solution(self,x="o",u="o",iter="o",
+        load_factors_axis="stab",report_coord_frame_rates=False):
 
         # if nothing given, use save trim state
         if isinstance(x,str):
@@ -648,6 +654,16 @@ class Aircraft:
         
         # climb angle
         clm = asin((x[0]*sin(th) - (x[1]*sin(ph) + x[2]*cos(ph))*cos(th))/V)
+
+        # load factors
+        if load_factors_axis != "none":
+            nxyz = self._load_factors(x,u,axis=load_factors_axis)
+
+        # stability rates
+        w = x[3:6]
+        ca = cos(a); sa = sin(a); cb = cos(b); sb = sin(b)
+        ps,qs,rs = np.matmul([[ca,0.,sa],[ 0.,1.,0.],[-sa,0.,ca]],w)
+        pw,qw,rw = np.matmul([[cb,sb,0.],[-sb,cb,0.],[ 0.,0.,1.]],[ps,qs,rs])
 
         thrust_string = "    {:<23s} : {:>23.16f}   {:>23.16}".format(\
             "thrust[lbf]",T,"")
@@ -689,8 +705,26 @@ class Aircraft:
                 "\"rudder[deg,rad]\"",u[2]*self.rtod,u[2]))
         print("    {:<23s} : {:> 23.16f}".format("\"throttle\"",u[3]))
         print(thrust_string)
-        print("    {:<23s} : {:> 23.16f}".format("\"stbly load factor\"",\
-            self._load_factors(x,u,axis="stab")[2]))
+        if load_factors_axis != "none":
+            print("    {:<23s} : {:> 23.16f}".format(\
+                "\""+load_factors_axis+" fwrd load factor\"",nxyz[0]))
+            print("    {:<23s} : {:> 23.16f}".format(\
+                "\""+load_factors_axis+" side load factor\"",nxyz[1]))
+            print("    {:<23s} : {:> 23.16f}".format(\
+                "\""+load_factors_axis+" norm load factor\"",nxyz[2]))
+        if report_coord_frame_rates:
+            print("    {:<23s} : {:> 23.16f} : {:> 23.16f}".format(\
+                "\"ps[deg/s,rad/s]\"",ps*self.rtod,ps))
+            print("    {:<23s} : {:> 23.16f} : {:> 23.16f}".format(\
+                "\"qs[deg/s,rad/s]\"",qs*self.rtod,qs))
+            print("    {:<23s} : {:> 23.16f} : {:> 23.16f}".format(\
+                "\"rs[deg/s,rad/s]\"",rs*self.rtod,rs))
+            print("    {:<23s} : {:> 23.16f} : {:> 23.16f}".format(\
+                "\"pw[deg/s,rad/s]\"",pw*self.rtod,pw))
+            print("    {:<23s} : {:> 23.16f} : {:> 23.16f}".format(\
+                "\"qw[deg/s,rad/s]\"",qw*self.rtod,qw))
+            print("    {:<23s} : {:> 23.16f} : {:> 23.16f}".format(\
+                "\"rw[deg/s,rad/s]\"",rw*self.rtod,rw))
         print("    {:<23s} : {:> 8}{}".format("\"iterations\"",iter," "*13))
         print("=" * len(thrust_string))
 
@@ -723,10 +757,13 @@ class Aircraft:
 
 
     def run_trim(self,a_guess=None,b_guess=None,phi_guess=None,u_guess=None,
-        verbose=True,no_report=False,imax=1000):
+        verbose=True,no_report=False,imax="o"):
         # report
         if not no_report:
             print("running trim algorithm...")
+        
+        if imax == "o":
+            imax = self.trim_iter_max
 
         # initialize state and controls
         self.trim_failed = False
@@ -1907,6 +1944,8 @@ class Aircraft:
             # repstr += report_latex(Lin_Model.K.T,"K",transpose=True,
             #     print_report=report)#,sci=True)
             # report_latex(Lin_Model.K.T,"K",transpose=True,sci=True)
+            if Lin_Model.controller_type == "LQR":
+                repstr += report_latex(Lin_Model.P,"P",print_report=report)
             repstr += report_latex(Lin_Model.A_BK_eigs,"\lambda_{cl}",
                 print_report=report)#,decimals=16)
             repstr += report_latex(Lin_Model.A_BK_evecs,"\chi_{cl}",
@@ -2542,6 +2581,8 @@ class Aircraft:
         # controller timing variables
         self.t_u_next_update = 0.0
         self.can_update = True
+
+        self._reinitialize()
                 
         # begin simulation
         counter = 1
@@ -5456,7 +5497,7 @@ def monte_carlo_perturbations(filename,rtdst_1sg=[5.,5.,5.],
             for filename in listdir(fail_folder):
                 remove(fail_folder + "/" + filename)
             # delete folder
-            rmdir(fail_folder)
+            # rmdir(fail_folder)
         # sens folder
         if path_exists(sens_folder):
             for filename in listdir(sens_folder):
@@ -5474,7 +5515,7 @@ def monte_carlo_perturbations(filename,rtdst_1sg=[5.,5.,5.],
             for filename in listdir(errs_folder):
                 remove(errs_folder + "/" + filename)
             # delete folder
-            rmdir(errs_folder)
+            # rmdir(errs_folder)
         
         # delete / create folders
         if path_exists(delta_tf_folder):
@@ -5512,7 +5553,7 @@ def monte_carlo_perturbations(filename,rtdst_1sg=[5.,5.,5.],
         # other
         for filename in listdir(file_folder):
             if filename not in \
-                ["full","sensitivity","delta","delta_zoom","full_zoom"]:
+                ["errs_plots","fail_plots","full","sensitivity","delta","delta_zoom","full_zoom"]:
                 remove(file_folder + "/" + filename)
         # # delete folder
         # rmdir(file_folder)
@@ -7295,7 +7336,7 @@ if __name__ == "__main__":
     base_dict["controller"]["LQR"] = {**bire_dict["controller"]["LQR"]}
     # run_bire["FM_errors"][0] = 0.03
     # run_bire["FM_errors"][2] = 0.1
-    run_base["name_end"] = run_bire["name_end"] = "_" + f1 + "_BK_3" # _hs" # "_BK_agt" # _aaab" # 
+    run_base["name_end"] = run_bire["name_end"] = "_" + f1 + "_BK_3w" #  + "_BK_3" # _hs" # "_BK_agt" # _aaab" # 
     run_base["has_turbulence"] = run_bire["has_turbulence"] = False # True # 
     run_base["has_model_error"] = run_bire["has_model_error"] = False # True # 
 
@@ -7914,8 +7955,8 @@ if __name__ == "__main__":
     # # bire_dict["initial"]["airspeed[ft/s]"] = 222.0
     # bire_dict["initial"]["mach"] = 0.2
     # bire_dict["initial"]["altitude[ft]"] = 1000.0
-    # bire_dict["initial"]["trim_guess"]["BIRE[deg]"] = 0.0
-    # bire_dict["initial"]["trim_guess"]["elevator[deg]"] = 0.0
+    # bire_dict["initial"]["trim_guess"]["BIRE[deg]"] = -10.0
+    # bire_dict["initial"]["trim_guess"]["elevator[deg]"] = 10.0
     # # bire_dict["aircraft"]["CG_shift[ft]"] = [1.0,0.0,0.0]
     # bire = Aircraft(bire_dict)
     # bire._report_trim_solution(bire.x_trim,bire.u_trim,bire.trim_iter)
@@ -7923,11 +7964,12 @@ if __name__ == "__main__":
     # ##############
     di = [90.,10.,2.5]
     # di = [0.,0.,0.0]
-    plot_vars["plot_full"] = False # True # 
-    plot_vars["plot_delta"] = True # False # 
-    plot_vars["zoom_deltas"] = True # False # 
+    plot_vars["plot_full"] = True # False # 
+    plot_vars["plot_delta"] = False # True # 
+    plot_vars["zoom_deltas"] = False # True # 
     plot_vars["zoom_full"] = False # True # 
-    plot_vars["format"] = "pdf" # "png" # 
+    plot_vars["format"] = "png"
+    # plot_vars["format"] = "pdf"
     plot_vars["zoom_fraction"] = 1./15.
     # plot_vars["output_states"] = True # False # 
     run_base["trim_bank"] = run_bire["trim_bank"] = 0.0
@@ -7936,7 +7978,11 @@ if __name__ == "__main__":
     # # #
     run_bire["num"] = run_base["num"] = 1
     ###########################################################################
-    run_bire["final_time"] = 15.0 # 1.0 # 5.0 # 
+    run_base["mrrr"] = run_bire["mrrr"] = [0,2,6,7,8,9,10,11]
+    run_base["mrrc"] = run_bire["mrrc"] = [2,3]
+    ###########################################################################
+    run_base["final_time"] = run_bire["final_time"] = 15.0 # 1.0 # 5.0 # 
+    # di = [1.0,1.0,1.0]
     ###########################################################################
     run_single_simulation(bire_dict,rtdst_1sg=di,**run_bire,**plot_vars)
     # run_single_simulation(base_dict,rtdst_1sg=di,**run_base,**plot_vars)

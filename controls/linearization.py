@@ -1542,8 +1542,9 @@ class linearization:
 
         # create 's'
         snum = 100
-        s = np.logspace(-4.0,5.0,num=snum)
-        iep2 = int(0.67*snum)
+        s = np.logspace(-5.0,5.0,num=snum)
+        # iep2 = int(0.67*snum)
+        iep2 = int(1.00*snum)
         # identity
         I = np.eye(self.A.shape[0])
 

@@ -704,6 +704,7 @@ class BIREAero:
             return self.Cl_a_A*self.Cl_a_w*cos(self.Cl_a_w*d_B + self.Cl_a_p)
 
     def _Cl_beta(self, d_B):
+        # return 0.0
         if not self.deriv:
             return self.Cl_b_A*sin(self.Cl_b_w*d_B + self.Cl_b_p) + \
                 self.Cl_b_z + self.Cl_b_d
@@ -853,6 +854,7 @@ class BIREAero:
         return self.Cn_a_A*self.Cn_a_w*cos(self.Cn_a_w*d_B + self.Cn_a_p)
 
     def _Cn_beta(self, d_B):
+        # return 0.0
         if not self.deriv:
             return self.Cn_b_A*sin(self.Cn_b_w*d_B + self.Cn_b_p) + \
                 self.Cn_b_z + self.Cn_b_d
