@@ -1124,6 +1124,66 @@ class BIREAero:
             # return
             return [CL, CS, CD, Cl, Cm, Cn]
 
+    def _uncorrect_Anderson(self, coeff, Lambda, RA, M):
+        num = coeff*(1./cos(Lambda)**2. - M**2.)**0.5
+        denom = (1. - 2.*coeff/pi/RA)**0.5
+        return num/denom
+
+    def _uncorrect_Prandtl_Glauert_subsonic(self, coeff, M):
+        return coeff * (1. - M**2.)**0.5
+
+    def _uncorrect_Prandtl_Glauert_supersonic(self, coeff, M):
+        return coeff * (M**2. - 1.)**0.5
+
+    def _uncorrect_stall(self,a,CL,CD,Cm):
+        # determine flat plate forces and moment
+        CLplate = 2. * sign(a) * sin(a)**2. * cos(a)
+        CDplate = 2. * sin(abs(a))**1.5
+        Cmplate = -0.8 * sin(a)
+
+        # determine stall sigmoid
+        expMmin = exp(-self.S_M*(a-self.S_ab))
+        expMplu = exp(self.S_M*(a+self.S_ab))
+        sig = (1. + expMmin + expMplu) / (1. + expMmin) / (1. + expMplu)
+
+        # add stall effects
+        CL = (CL - sig * CLplate)/(1. - sig)
+        CD = (CD - sig * CDplate)/(1. - sig)
+        Cm = (Cm - sig * Cmplate)/(1. - sig)
+
+        return CL,CD,Cm
+    
+    def uncorrect_M(self,CMs,alpha,
+    compressible=True, M=113.0, use_Anderson=True, enforce_stall=True):
+        # pull out CMs
+        [Cl, Cm, Cn] = CMs
+
+        # uncorrect for compressibility
+        if compressible:
+            # if not given mach number, throw error
+            if M == 113.0:
+                raise ValueError("Mach number not specified")
+            elif M < 1.:
+                if use_Anderson:
+                    Cl = self._uncorrect_Anderson(Cl,self.Lam_w,self.RA_w,M)
+                    Cm = self._uncorrect_Anderson(Cm,self.Lam_w,self.RA_w,M)
+                    Cn = self._uncorrect_Anderson(Cn,self.Lam_h,self.RA_h,M)
+                else:
+                    Cl = self._uncorrect_Prandtl_Glauert_subsonic(Cl,M)
+                    Cm = self._uncorrect_Prandtl_Glauert_subsonic(Cm,M)
+                    Cn = self._uncorrect_Prandtl_Glauert_subsonic(Cn,M)
+            else:
+                Cl = self._uncorrect_Prandtl_Glauert_supersonic(Cl,M)
+                Cm = self._uncorrect_Prandtl_Glauert_supersonic(Cm,M)
+                Cn = self._uncorrect_Prandtl_Glauert_supersonic(Cn,M)
+        
+        # uncorrect for stall
+        if enforce_stall:
+            # implement stall effects
+            [_,_,Cm] = self._uncorrect_stall(alpha,0.0,0.0,Cm)
+        
+        return [Cl, Cm, Cn]
+
     def get_thrust(self,tau,H,V):
         return self.Prop.get_thrust(tau,H,V)
 

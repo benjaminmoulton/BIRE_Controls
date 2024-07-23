@@ -1776,11 +1776,15 @@ if __name__ == "__main__":
     p_tr_deg = -1.0380901589473488
     q_tr_deg =  5.2594941135694429
     r_tr_deg =  9.1097110268117127
-    a_tr_rad =  np.deg2rad(5.5459539651510905)
+    # full scale 30 deg bank
+    p_tr_deg = -0.0809277828779751
+    q_tr_deg =  0.8353210803022153
+    r_tr_deg =  1.4468185517167595 
+    # a_tr_rad =  np.deg2rad(5.5459539651510905)
     p_bdfx = 15.0 # 22.0 # 23.0 # 17.0 # 20.0 # 
     p_comm = p_bdfx # p_bdfx*np.cos(a_tr_rad) # 
     r_comm = 0.0    # p_bdfx*np.sin(a_tr_rad) # 
-    base_rc_dict["reference"] = {
+    base_rc_dict["reference"] = base_fs_dict["reference"] = {
         "deg2rad_states" : [3,4,5],
         "3" : [
             [ 0.0,p_comm],
@@ -1819,7 +1823,7 @@ if __name__ == "__main__":
     plot_vars["plot_delta"] = False # True # 
     plot_vars["zoom_deltas"] = False
     plot_vars["format"] = "png" # "pdf" # 
-    plot_vars["format"] = "pdf" # "png" # 
+    # plot_vars["format"] = "pdf" # "png" # 
     plot_vars["plot_norm"] = False # True # 
     #
     di = [0.,0.,0.]
@@ -1840,6 +1844,13 @@ if __name__ == "__main__":
     # zt_p,zt_q,zt_r =  0.7 , 0.7 , 0.7 # Me
     # wn_p,wn_q,wn_r =  8.0 , 8.0 , 8.0 # Me
     #
+    run_base_rc["aircraft_class"] = run_base_fs["aircraft_class"] = DynamicInversionAircraft
+    # DI_1 & DI_2
+    zt_p,zt_q,zt_r =  0.6 , 0.6 , 0.6 # Dr Harris
+    wn_p,wn_q,wn_r =  8.0 , 8.0 , 8.0 # Dr Harris
+    run_base_rc["name_end"] = "_" + f1 + "_DI_1"
+    run_base_fs["name_end"] = "_" + f1 + "_DI_1"
+    #
     # run_base_rc["aircraft_class"] = DynamicInversionWashoutAircraft
     # # DI_1 & DI_2
     # zt_p,zt_q,zt_r =  0.6 , 0.6 , 0.6 # Dr Harris
@@ -1847,19 +1858,23 @@ if __name__ == "__main__":
     # run_base_rc["name_end"] = "_" + f1 + "_DIW_1"
     # run_base_rc["state_threshold"] += [1.]
     
-    # base_rc_dict["controller"]["gains"][ "K"] = \
-    #     bire_rc_dict["controller"]["gains"][ "K"] = np.diag([
-    #     2.*zt_p*wn_p,2.*zt_q*wn_q,2.*zt_r*wn_r
-    # ]).tolist()
-    # base_rc_dict["controller"]["gains"]["KI"] = \
-    #     bire_rc_dict["controller"]["gains"]["KI"] = np.diag([
-    #     wn_p**2.,wn_q**2.,wn_r**2.
-    # ]).tolist()
+    base_fs_dict["controller"]["gains"] = {}
+    base_fs_dict["controller"]["type"] = "gains"
+    base_fs_dict["controller"]["name"] = "gains"
+    base_fs_dict["controller"]["integral_states"] = [3,4,5]
+    base_rc_dict["controller"]["gains"][ "K"] = \
+        base_fs_dict["controller"]["gains"][ "K"] = np.diag([
+        2.*zt_p*wn_p,2.*zt_q*wn_q,2.*zt_r*wn_r
+    ]).tolist()
+    base_rc_dict["controller"]["gains"]["KI"] = \
+        base_fs_dict["controller"]["gains"]["KI"] = np.diag([
+        wn_p**2.,wn_q**2.,wn_r**2.
+    ]).tolist()
     # #
-    run_base_rc["aircraft_class"] = PIDAircraft
-    # PID_1
-    run_base_rc["name_end"] = "_" + f1 + "_PID_1"
-    base_rc_dict["simulation"]["integrator"] = "rk4" 
+    # run_base_rc["aircraft_class"] = PIDAircraft
+    # # PID_1
+    # run_base_rc["name_end"] = "_" + f1 + "_PID_1"
+    # base_rc_dict["simulation"]["integrator"] = "rk4" 
     # #
     # run_base_rc["aircraft_class"] = LinearAdaptiveAircraft
     # # LAC_1
@@ -1868,7 +1883,7 @@ if __name__ == "__main__":
     # # MRAC_1
     # run_base_rc["state_threshold"] += [1.]*21
     # base_rc_dict["simulation"]["integrator"] = "rk4" 
-    run_base_rc["track_check_time"] = \
+    run_base_rc["track_check_time"] = run_base_fs["track_check_time"] = \
         run_base_fs["final_time"] = run_base_rc["final_time"] = 10.0 # 10.0 # 
     # base_rc_dict["simulation"]["include_stall"] = \
     #     bire_rc_dict["simulation"]["include_stall"] = False
@@ -1890,11 +1905,11 @@ if __name__ == "__main__":
     #     "5" : [[ 0.0, r_tr_deg],[ 2.0, r_tr_deg]],
     #     "sct_on_5" : False
     # }
-    # run_base_rc["trim_bank"] = 30.0
+    # run_base_rc["trim_bank"] = run_base_fs["trim_bank"] = 30.0
     # run_single_simulation(bire_fs_dict,rtdst_1sg=di,**run_bire_fs,**plot_vars)
-    # run_single_simulation(base_fs_dict,rtdst_1sg=di,**run_base_fs,**plot_vars)
+    run_single_simulation(base_fs_dict,rtdst_1sg=di,**run_base_fs,**plot_vars)
     # run_single_simulation(bire_rc_dict,rtdst_1sg=di,**run_bire_rc,**plot_vars)
-    run_single_simulation(base_rc_dict,rtdst_1sg=di,**run_base_rc,**plot_vars)
+    # run_single_simulation(base_rc_dict,rtdst_1sg=di,**run_base_rc,**plot_vars)
     quit()
 
     # # # # run monte carlo perturbation analysis
