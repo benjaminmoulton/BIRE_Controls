@@ -1588,6 +1588,109 @@ class PIDAircraft(Aircraft):
 
         return x1
     
+class LyapunovFunctionAircraft(Aircraft):
+    """A default class for calculating and containing the mass properties of a
+    Cuboid.
+
+    Parameters
+    ----------
+    input_vars : dict , optional
+        Must be a python dictionary
+    """
+    def __init__(self,input_dict={}):
+
+        # invoke init of parent
+        Aircraft.__init__(self,input_dict,folder_prefix = "track")
+        self.tracking = True
+        
+    def _get_control(self,t,x,is_controlled=True,given_control=False,u="o",
+        force_control_to_inputs=False):
+        # build control or pass through
+        if not given_control:
+            if is_controlled and (not(self.enforce_update_frequency) or 
+                (self.enforce_update_frequency and self.can_update) ):
+                if self.use_quaternions:
+                    x_euler = self.quat2euler_state(x)
+                else:
+                    x_euler = x*1.
+                    # reset angles
+                    x_euler[9:12] = quat_2_euler(euler_2_quat(x_euler[9:12]))
+                #
+                ref = self._get_reference(t)[self.Lin_Model.Cslice]
+                # per dave, full stick should be 270 deg/s in aileron
+                # 120 deg/s in elevator
+                # 60 deg/s in rudder
+                #
+
+                # feedback linearization
+
+                #-------------------#
+                # STATE DEFINITIONS #
+                #-------------------#
+                Vxb     = x_euler[0]
+                Vyb     = x_euler[1]
+                Vzb     = x_euler[2]
+                p       = x_euler[3]
+                q       = x_euler[4]
+                r       = x_euler[5]
+                epI     = x_euler[self.xIi_eul[0]]
+                eqI     = x_euler[self.xIi_eul[1]]
+                erI     = x_euler[self.xIi_eul[2]]
+                V = (Vxb**2. + Vyb**2. + Vzb**2.)**0.5
+                a = atan2(Vzb,Vxb)
+                b = asin(Vyb/V)
+                w  = np.array([  p,  q,  r])
+                eI = np.array([epI,eqI,erI])
+                u = self.u_trim*1.0
+                u[0] = +1.0e+0*w[0]
+                u[1]+= +1.0e+0*w[1]
+                u[2] = +1.0e+0*w[2] - 5.0e+0*b
+                # u[3] = self.u_trim[3]
+
+                # # integral states
+                # if len(self.xIi_eul):
+                #     u[uslc] = u[uslc] - np.matmul(K_I,intg)
+                #     # u[uslc] = u[uslc] - [kI*intg[0],kI*intg[1],kI*intg[2]]
+                if self.order > 0:
+                    q = 1*self.use_quaternions
+                    inputs = x[12+q:16+q]*1.
+                else:
+                    inputs = u*1.
+                # #
+                self.u_til_next_update = u*1.
+                self.can_update = False
+            elif is_controlled and self.enforce_update_frequency and \
+                not(self.can_update):
+                u = self.u_til_next_update*1.
+                if self.order > 0:
+                    q = 1*self.use_quaternions
+                    ## INTSTATE
+                    inputs = x[12+q:16+q]*1.
+                else:
+                    inputs = u*1.
+            else:
+                inputs = u = self.Lin_Model.uhat_eq*1.
+        elif given_control:
+            if u[0] == "o":
+                raise TypeError("Control input required.")
+            else:
+                if self.order > 0 and not force_control_to_inputs:
+                    q = 1*self.use_quaternions
+                    inputs = x[12+q:16+q]*1.
+                else:
+                    inputs = u*1.
+        
+        # limit actuators
+        # u = self._limit_input(u)
+        inputs = self._limit_input(inputs)
+        if self.order > 0:
+            q = 1*self.use_quaternions
+            x[12+q:16+q] = np.array(inputs)*1.
+        # quantize actuators
+        inputs = self._quantize_input(inputs)
+
+        return u,inputs
+
 
 if __name__ == "__main__":
 
@@ -1803,14 +1906,14 @@ if __name__ == "__main__":
         ],
         "sct_on_5" : False
     }
-    # # ZERO COMMANDED RATES
-    # base_rc_dict["reference"] = {
-    #     "deg2rad_states" : [3,4,5],
-    #     "3" : [ [ 0.0, 0.0], [ 2.0, 0.0] ],
-    #     "4" : [ [ 0.0, 0.0], [ 2.0, 0.0] ],
-    #     "5" : [ [ 0.0, 0.0], [ 2.0, 0.0] ],
-    #     "sct_on_5" : False
-    # }
+    # ZERO COMMANDED RATES
+    base_rc_dict["reference"] = {
+        "deg2rad_states" : [3,4,5],
+        "3" : [ [ 0.0, 0.0], [ 2.0, 0.0] ],
+        "4" : [ [ 0.0, 0.0], [ 2.0, 0.0] ],
+        "5" : [ [ 0.0, 0.0], [ 2.0, 0.0] ],
+        "sct_on_5" : False
+    }
 
     # run single case
     # di = [-1000.,0.,0.] # 
@@ -1833,6 +1936,7 @@ if __name__ == "__main__":
     run_base_fs["num"] = run_bire_fs["num"] = \
         run_base_rc["num"] = run_bire_rc["num"] = 1  
     ##
+    ##
     # # TK_6
     # zt_p,zt_q,zt_r =  0.7 , 0.7 , 0.7 # Me
     # wn_p,wn_q,wn_r =  8.0 , 8.0 , 8.0 # Me
@@ -1844,12 +1948,12 @@ if __name__ == "__main__":
     # zt_p,zt_q,zt_r =  0.7 , 0.7 , 0.7 # Me
     # wn_p,wn_q,wn_r =  8.0 , 8.0 , 8.0 # Me
     #
-    run_base_rc["aircraft_class"] = run_base_fs["aircraft_class"] = DynamicInversionAircraft
-    # DI_1 & DI_2
-    zt_p,zt_q,zt_r =  0.6 , 0.6 , 0.6 # Dr Harris
-    wn_p,wn_q,wn_r =  8.0 , 8.0 , 8.0 # Dr Harris
-    run_base_rc["name_end"] = "_" + f1 + "_DI_1"
-    run_base_fs["name_end"] = "_" + f1 + "_DI_1"
+    # run_base_rc["aircraft_class"] = run_base_fs["aircraft_class"] = DynamicInversionAircraft
+    # # DI_1 & DI_2
+    # zt_p,zt_q,zt_r =  0.6 , 0.6 , 0.6 # Dr Harris
+    # wn_p,wn_q,wn_r =  8.0 , 8.0 , 8.0 # Dr Harris
+    # run_base_rc["name_end"] = "_" + f1 + "_DI_1"
+    # run_base_fs["name_end"] = "_" + f1 + "_DI_1"
     #
     # run_base_rc["aircraft_class"] = DynamicInversionWashoutAircraft
     # # DI_1 & DI_2
@@ -1857,19 +1961,19 @@ if __name__ == "__main__":
     # wn_p,wn_q,wn_r =  8.0 , 8.0 , 8.0 # Dr Harris
     # run_base_rc["name_end"] = "_" + f1 + "_DIW_1"
     # run_base_rc["state_threshold"] += [1.]
-    
-    base_fs_dict["controller"]["gains"] = {}
-    base_fs_dict["controller"]["type"] = "gains"
-    base_fs_dict["controller"]["name"] = "gains"
-    base_fs_dict["controller"]["integral_states"] = [3,4,5]
-    base_rc_dict["controller"]["gains"][ "K"] = \
-        base_fs_dict["controller"]["gains"][ "K"] = np.diag([
-        2.*zt_p*wn_p,2.*zt_q*wn_q,2.*zt_r*wn_r
-    ]).tolist()
-    base_rc_dict["controller"]["gains"]["KI"] = \
-        base_fs_dict["controller"]["gains"]["KI"] = np.diag([
-        wn_p**2.,wn_q**2.,wn_r**2.
-    ]).tolist()
+
+    # base_fs_dict["controller"]["gains"] = {}
+    # base_fs_dict["controller"]["type"] = "gains"
+    # base_fs_dict["controller"]["name"] = "gains"
+    # base_fs_dict["controller"]["integral_states"] = [3,4,5]
+    # base_rc_dict["controller"]["gains"][ "K"] = \
+    #     base_fs_dict["controller"]["gains"][ "K"] = np.diag([
+    #     2.*zt_p*wn_p,2.*zt_q*wn_q,2.*zt_r*wn_r
+    # ]).tolist()
+    # base_rc_dict["controller"]["gains"]["KI"] = \
+    #     base_fs_dict["controller"]["gains"]["KI"] = np.diag([
+    #     wn_p**2.,wn_q**2.,wn_r**2.
+    # ]).tolist()
     # #
     # run_base_rc["aircraft_class"] = PIDAircraft
     # # PID_1
@@ -1882,7 +1986,23 @@ if __name__ == "__main__":
     # run_base_rc["aircraft_class"] = ModelReferenceAdaptiveAircraft
     # # MRAC_1
     # run_base_rc["state_threshold"] += [1.]*21
-    # base_rc_dict["simulation"]["integrator"] = "rk4" 
+    # base_rc_dict["simulation"]["integrator"] = "rk4"
+    # #
+    run_base_rc["aircraft_class"] = run_base_fs["aircraft_class"] = LyapunovFunctionAircraft
+    base_fs_dict["controller"]["gains"] = {}
+    base_fs_dict["controller"]["type"] = "gains"
+    base_fs_dict["controller"]["name"] = "gains"
+    base_fs_dict["controller"]["integral_states"] = [3,4,5]
+    base_rc_dict["controller"]["gains"][ "K"] = \
+        base_fs_dict["controller"]["gains"][ "K"] = np.diag([1.0]*3).tolist()
+    base_rc_dict["controller"]["gains"]["KI"] = \
+        base_fs_dict["controller"]["gains"]["KI"] = np.diag([1.0]*3).tolist()
+    # LF_1
+    run_base_rc["name_end"] = "_" + f1 + "_LF_1"
+    run_base_fs["name_end"] = "_" + f1 + "_LF_1"
+    # #
+    # #
+    # # 
     run_base_rc["track_check_time"] = run_base_fs["track_check_time"] = \
         run_base_fs["final_time"] = run_base_rc["final_time"] = 10.0 # 10.0 # 
     # base_rc_dict["simulation"]["include_stall"] = \
@@ -1906,6 +2026,7 @@ if __name__ == "__main__":
     #     "sct_on_5" : False
     # }
     # run_base_rc["trim_bank"] = run_base_fs["trim_bank"] = 30.0
+    di = [0.0,0.0,0.5]
     # run_single_simulation(bire_fs_dict,rtdst_1sg=di,**run_bire_fs,**plot_vars)
     run_single_simulation(base_fs_dict,rtdst_1sg=di,**run_base_fs,**plot_vars)
     # run_single_simulation(bire_rc_dict,rtdst_1sg=di,**run_bire_rc,**plot_vars)

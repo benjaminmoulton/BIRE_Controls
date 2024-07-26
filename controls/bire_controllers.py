@@ -3751,24 +3751,21 @@ class LyapunovRegulationAircraft(Aircraft):
                 a = atan2(Vzb,Vxb)
                 b = asin(Vyb/V)
                 # calculate gains
+                kp = 2.0e+0
                 kq = 1.0e+0
-                kp = 1.0e+0
                 kr = 1.0e+0
-                kb = 1.0e+0
+                kb = 2.0e+1
                 # terms
                 Rlat = self.bw/2./V
                 Rlon = self.cw/2./V
-                CL1Az = BAM.CL0 + \
-                    a*(BAM.CLa)
-                ac = self.bw     *(BAM.Clb)
-                bc = self.bw     *(BAM.Cnb)
-                cc = self.bw*Rlat*(\
-                    (BAM.ClLr + BAM.CnLp)*CL1Az + \
-                    BAM.Clr + BAM.Cnp)
-                dc = self.bw*(BAM.Clp)
-                ec = self.bw*(BAM.Cnr)
-                fc = self.bw*(BAM.Clda)
-                gc = self.bw*((BAM.CnLda)*CL1Az + BAM.Cnda)
+                CL1Az = BAM.CL0 + a*BAM.CLa
+                ac = self.bw*BAM.Clb
+                bc = self.bw*BAM.Cnb
+                cc = self.bw*Rlat*( (BAM.ClLr + BAM.CnLp)*CL1Az + BAM.Clr + BAM.Cnp)
+                dc = self.bw*BAM.Clp
+                ec = self.bw*BAM.Cnr
+                fc = self.bw*BAM.Clda
+                gc = self.bw*(BAM.CnLda*CL1Az + BAM.Cnda)
                 # limits
                 kb = max(kb,-bc+0.1)
                 kp = max(kp, dc+0.1)
@@ -3780,11 +3777,8 @@ class LyapunovRegulationAircraft(Aircraft):
                 
                 # v = - np.matmul(self.KP_DI,e) - np.matmul(self.KI_DI,eI)
                 da = - 1./fc*kp*p - 1./gc*kr*r + 1./gc*kb*b
-                de = -1./self.cw/(BAM.Cmde)*\
-                    (self.cw*(BAM.Cm0 + \
-                    (BAM.Cma)*a + \
-                    (BAM.Cmq)*Rlon*q + \
-                    BAM.Cmda*da) + kq*q)
+                de = -1./self.cw/(BAM.Cmde)*(\
+                    self.cw*(BAM.Cm0+BAM.Cma*a+BAM.Cmq*Rlon*q+BAM.Cmda*da)+kq*q)
                 # print("de         =",de)
                 # print("q          =",q)
                 # print("da         =",da)
@@ -4432,12 +4426,12 @@ if __name__ == "__main__":
     run_base_fs["num"] = run_bire_fs["num"] = \
         run_base_rc["num"] = run_bire_rc["num"] = 1  
     ##
-    # # # # NDI_1
-    run_bire_fs["aircraft_class"] = NonlinearDynamicInversionAircraft
-    run_bire_fs["name_end"] = "_" + f1 + "_NDI_1"
-    run_bire_rc["name_end"] = "_LGN"   + "_NDI_1"
-    zt_p,zt_q,zt_r =  0.6 , 0.6 , 0.6
-    wn_p,wn_q,wn_r =  8.0 , 8.0 , 8.0 
+    # # # # # NDI_1
+    # run_bire_fs["aircraft_class"] = NonlinearDynamicInversionAircraft
+    # run_bire_fs["name_end"] = "_" + f1 + "_NDI_1"
+    # run_bire_rc["name_end"] = "_LGN"   + "_NDI_1"
+    # zt_p,zt_q,zt_r =  0.6 , 0.6 , 0.6
+    # wn_p,wn_q,wn_r =  8.0 , 8.0 , 8.0 
     # #
     # # # # TNDI_1
     # run_bire_fs["aircraft_class"] = TransformedNonlinearDynamicInversionAircraft
@@ -4456,18 +4450,18 @@ if __name__ == "__main__":
     # zt_p,zt_q,zt_r =  0.6 , 0.6 , 0.6
     # wn_p,wn_q,wn_r =  8.0 , 8.0 , 8.0 
     # # # #
-    bire_rc_dict["controller"]["gains"][ "K"] = \
-        bire_fs_dict["controller"]["gains"][ "K"] = np.array([
-        [2.*zt_p*wn_p,         0.0,         0.0], #  -zt_r*wn_r], # 
-        [         0.0,2.*zt_q*wn_q,         0.0], #  -zt_r*wn_r], # 
-        [         0.0,         0.0,2.*zt_r*wn_r]
-    ]).tolist()
-    bire_rc_dict["controller"]["gains"]["KI"] = \
-        bire_fs_dict["controller"]["gains"]["KI"] = np.array([
-        [wn_p**2.,     0.0,     0.0], # wn_r**2.], # 
-        [     0.0,wn_q**2.,     0.0],
-        [     0.0,     0.0,wn_r**2.]
-    ]).tolist()
+    # bire_rc_dict["controller"]["gains"][ "K"] = \
+    #     bire_fs_dict["controller"]["gains"][ "K"] = np.array([
+    #     [2.*zt_p*wn_p,         0.0,         0.0], #  -zt_r*wn_r], # 
+    #     [         0.0,2.*zt_q*wn_q,         0.0], #  -zt_r*wn_r], # 
+    #     [         0.0,         0.0,2.*zt_r*wn_r]
+    # ]).tolist()
+    # bire_rc_dict["controller"]["gains"]["KI"] = \
+    #     bire_fs_dict["controller"]["gains"]["KI"] = np.array([
+    #     [wn_p**2.,     0.0,     0.0], # wn_r**2.], # 
+    #     [     0.0,wn_q**2.,     0.0],
+    #     [     0.0,     0.0,wn_r**2.]
+    # ]).tolist()
     # #
     # run_bire_rc["aircraft_class"] = \
     #     run_bire_fs["aircraft_class"] = DynamicInversionBacksteppingAircraft
@@ -4552,13 +4546,13 @@ if __name__ == "__main__":
     # # MRAC_1
     # run_bire_fs["state_threshold"] += [1.]*21
     # #
-    # run_bire_fs["aircraft_class"] = LyapunovRegulationAircraft
-    # # LyR_1
-    # run_bire_fs["name_end"] = "_" + f1 + "_LyR_1"
-    # run_bire_rc["name_end"] = "_LGN"   + "_LyR_1"
-    # bire_fs_dict["simulation"]["include_stall"] = \
-    #     bire_rc_dict["simulation"]["include_stall"] = False
-    # bire_fs_dict["simulation"]["include_compressibility"] = False
+    run_bire_fs["aircraft_class"] = LyapunovRegulationAircraft
+    # LyR_1
+    run_bire_fs["name_end"] = "_" + f1 + "_LyR_1"
+    run_bire_rc["name_end"] = "_LGN"   + "_LyR_1"
+    bire_fs_dict["simulation"]["include_stall"] = \
+        bire_rc_dict["simulation"]["include_stall"] = False
+    bire_fs_dict["simulation"]["include_compressibility"] = False
     # # # 
     # # #
     # # #
@@ -4684,7 +4678,7 @@ if __name__ == "__main__":
     # p_time2 = p_time  + recover_time
     # p_time3 = p_time2 + transition_time
     t_end = 0.0 # 25.0 # 
-    tf = 10.0 # 3.0 # 10.0 # t_end + p_time + 8.0 #+ 10.0 # # + 20.0 # 
+    tf = 30.0 # 3.0 # 10.0 # t_end + p_time + 8.0 #+ 10.0 # # + 20.0 # 
     bire_fs_dict["reference"] = bire_rc_dict["reference"] = {
         "deg2rad_states" : [3,4,5],
         "3" : [ [0.0, 0.0], [t_zero, 0.0], [t_zero, p_comm], [p_time, p_comm], [p_time, p_tr_deg], ], # [p_time2, p_tr_deg ], [p_time2, p_comm], [p_time3, p_comm], [p_time3, p_tr_deg2] ], # [p_time + recover_time, p_tr_deg], [p_time + recover_time, -p_comm], [p_time + recover_time + transition_time, -p_comm], [p_time + recover_time + transition_time, 0.0], ], # 
@@ -4736,47 +4730,49 @@ if __name__ == "__main__":
     #     "sct_on_5" : False
     # }
     # run_bire_fs["trim_bank"] = 10.0 # 10.0 # 30.0 # 
-    # di = [1.0,0.0,0.0]
-    # run_single_simulation(bire_fs_dict,rtdst_1sg=di,**run_bire_fs,**plot_vars)
-    # # run_single_simulation(base_fs_dict,rtdst_1sg=di,**run_base_fs,**plot_vars)
-    # # run_single_simulation(bire_rc_dict,rtdst_1sg=di,**run_bire_rc,**plot_vars)
-    # # run_single_simulation(base_rc_dict,rtdst_1sg=di,**run_base_rc,**plot_vars)
-    # quit()
-
-    # # # run monte carlo perturbation analysis
-    # num = 1000
-    # run_base_fs["num"] = run_bire_fs["num"] = \
-    #     run_base_rc["num"] = run_bire_rc["num"] = num
-    # # di = [0.,0.,0.]
-    # di = [8.,8.,0.2] # FS BIRE
-    plot_vars["format"] = "pdf" # "png" # 
-    run_bire_fs["plot_ul_bounds"] = True
-    # run_bire_fs["final_time"] = run_base_fs["final_time"] = \
-    #     run_bire_rc["final_time"] = run_base_rc["final_time"] = 10.0
-    run_base_fs["num"] = run_bire_fs["num"] = \
-        run_base_rc["num"] = run_bire_rc["num"] = 1000
-    # run_bire_fs["has_model_error"] = run_base_fs["has_model_error"] = \
-    #     run_bire_rc["has_model_error"] = run_base_rc["has_model_error"] = True # False # 
-    #########################################################################
-    bire_fs_dict["reference"] = {
-        "deg2rad_states" : [3,4,5],
-        "3" : [[ 0.0, p_tr_deg],[ 2.0, p_tr_deg]],
-        "4" : [[ 0.0, q_tr_deg],[ 2.0, q_tr_deg]],
-        "5" : [[ 0.0, r_tr_deg],[ 2.0, r_tr_deg]],
-        "sct_on_5" : False
-    }
-    run_bire_fs["trim_bank"] = 10.0 # 30.0 # 
-    # # 
-    di = [16.0, 2.0, 0.4] # DI_2
-    di = [ 3.0, 1.0, 0.1] # LQT_1
-    di = [ 5.0, 6.0, 0.1] # MFBL_1
-    di = [12.0, 0.2, 0.3] # NDI_1
-    # # 
-    monte_carlo_perturbations(bire_fs_dict,rtdst_1sg=di,**run_bire_fs,**plot_vars)
-    # monte_carlo_perturbations(base_fs_dict,rtdst_1sg=di,**run_base_fs,**plot_vars)
-    # monte_carlo_perturbations(bire_rc_dict,rtdst_1sg=di,**run_bire_rc,**plot_vars)
-    # monte_carlo_perturbations(base_rc_dict,rtdst_1sg=di,**run_base_rc,**plot_vars)
+    di = [0.0,0.0,0.0] # [10.0,10.0,10.0] # 
+    run_bire_fs[ "has_turbulence"] = run_bire_rc[ "has_turbulence"] = True # False # 
+    run_bire_fs["has_model_error"] = run_bire_rc["has_model_error"] = False # True # 
+    run_single_simulation(bire_fs_dict,rtdst_1sg=di,**run_bire_fs,**plot_vars)
+    # run_single_simulation(base_fs_dict,rtdst_1sg=di,**run_base_fs,**plot_vars)
+    # run_single_simulation(bire_rc_dict,rtdst_1sg=di,**run_bire_rc,**plot_vars)
+    # run_single_simulation(base_rc_dict,rtdst_1sg=di,**run_base_rc,**plot_vars)
     quit()
+
+    # # # # run monte carlo perturbation analysis
+    # # num = 1000
+    # # run_base_fs["num"] = run_bire_fs["num"] = \
+    # #     run_base_rc["num"] = run_bire_rc["num"] = num
+    # # # di = [0.,0.,0.]
+    # # di = [8.,8.,0.2] # FS BIRE
+    # plot_vars["format"] = "pdf" # "png" # 
+    # run_bire_fs["plot_ul_bounds"] = True
+    # # run_bire_fs["final_time"] = run_base_fs["final_time"] = \
+    # #     run_bire_rc["final_time"] = run_base_rc["final_time"] = 10.0
+    # run_base_fs["num"] = run_bire_fs["num"] = \
+    #     run_base_rc["num"] = run_bire_rc["num"] = 1000
+    # # run_bire_fs["has_model_error"] = run_base_fs["has_model_error"] = \
+    # #     run_bire_rc["has_model_error"] = run_base_rc["has_model_error"] = True # False # 
+    # #########################################################################
+    # bire_fs_dict["reference"] = {
+    #     "deg2rad_states" : [3,4,5],
+    #     "3" : [[ 0.0, p_tr_deg],[ 2.0, p_tr_deg]],
+    #     "4" : [[ 0.0, q_tr_deg],[ 2.0, q_tr_deg]],
+    #     "5" : [[ 0.0, r_tr_deg],[ 2.0, r_tr_deg]],
+    #     "sct_on_5" : False
+    # }
+    # run_bire_fs["trim_bank"] = 10.0 # 30.0 # 
+    # # # 
+    # di = [16.0, 2.0, 0.4] # DI_2
+    # di = [ 3.0, 1.0, 0.1] # LQT_1
+    # di = [ 5.0, 6.0, 0.1] # MFBL_1
+    # di = [12.0, 0.2, 0.3] # NDI_1
+    # # # 
+    # monte_carlo_perturbations(bire_fs_dict,rtdst_1sg=di,**run_bire_fs,**plot_vars)
+    # # monte_carlo_perturbations(base_fs_dict,rtdst_1sg=di,**run_base_fs,**plot_vars)
+    # # monte_carlo_perturbations(bire_rc_dict,rtdst_1sg=di,**run_bire_rc,**plot_vars)
+    # # monte_carlo_perturbations(base_rc_dict,rtdst_1sg=di,**run_base_rc,**plot_vars)
+    # quit()
     # #
     # single axis pqr dispersions
     ###########################################################################
