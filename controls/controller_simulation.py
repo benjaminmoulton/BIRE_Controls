@@ -4409,106 +4409,6 @@ class GainSchedulingAircraft(Aircraft):
         return u,inputs
 
 
-
-class BIRELyapSIGNAircraft(Aircraft):
-    """A default class for calculating and containing the mass properties of a
-    Cuboid.
-
-    Parameters
-    ----------
-    input_vars : dict , optional
-        Must be a python dictionary
-    """
-    def __init__(self,input_dict={}):
-
-        # invoke init of parent
-        Aircraft.__init__(self,input_dict,folder_prefix = "stblz")
-        # self.inertia_model.Ixy_A = self.inertia_model.Ixy_z = 0.0
-        # self.inertia_model.Ixz_A = self.inertia_model.Ixz_z = 0.0
-        # self.inertia_model.Iyz_A = self.inertia_model.Iyz_z = 0.0
-        # print(self.inertia_model.inertia_tensor(0.0))
-    
-    def _get_control(self,t,x,is_controlled=True,given_control=False,u="o",
-        force_control_to_inputs=False):
-        # build control or pass through
-        if not given_control:
-            if is_controlled and (not(self.enforce_update_frequency) or 
-                (self.enforce_update_frequency and self.can_update) ):
-                if self.use_quaternions:
-                    x_euler = self.quat2euler_state(x)
-                else:
-                    x_euler = x*1.
-                    # reset angles
-                    x_euler[9:12] = quat_2_euler(euler_2_quat(x_euler[9:12]))
-                #
-                # pull out states
-                p = x_euler[3]
-                q = x_euler[4]
-                r = x_euler[5]
-                # calculate control
-                Ap = 1.35
-                Aq = 0.0
-                Ar = 0.2
-                Ep = 0.0
-                Eq = 0.5
-                Er = 0.0
-                Ip = 7.531531531531531
-                Lq = 3.0713374577413233
-                Ir = 0.0
-                Lr = 2.482018840956021
-                # de = Ap*p + Ar*r + Ip*np.sign(p) + Ir*np.sign(r)
-                # da = Eq*q + Er*r + Lq*np.sign(q) + Lr*np.sign(r)
-                plim = 1. # 10. # 
-                qlim = 1. # 10. # 
-                rlim = 1. # 10. # 
-                da = Ap*p + Ar*r + Ip*np.clip(p/plim,-1.,1.) + Ir*np.clip(r/rlim,-1.,1.)
-                de = Eq*q + Er*r + Lq*np.clip(q/qlim,-1.,1.) + Lr*np.clip(r/rlim,-1.,1.)
-                print("da = {:> 8.4f}, de = {:> 8.4f}".format(np.rad2deg(da),np.rad2deg(de)))
-                u = self.u_trim
-                u[0:2] += [da,de]
-                
-                if self.order > 0:
-                    q = 1*self.use_quaternions
-                    inputs = x[12+q:16+q]*1.
-                else:
-                    inputs = u*1.
-                # #
-                self.u_til_next_update = u*1.
-                self.can_update = False
-            elif is_controlled and self.enforce_update_frequency and \
-                not(self.can_update):
-                u = self.u_til_next_update*1.
-                if self.order > 0:
-                    q = 1*self.use_quaternions
-                    ## INTSTATE
-                    inputs = x[12+q:16+q]*1.
-                else:
-                    inputs = u*1.
-            else:
-                inputs = u = self.Lin_Model.uhat_eq*1.
-        elif given_control:
-            if u[0] == "o":
-                raise TypeError("Control input required.")
-            else:
-                if self.order > 0 and not force_control_to_inputs:
-                    q = 1*self.use_quaternions
-                    inputs = x[12+q:16+q]*1.
-                else:
-                    inputs = u*1.
-        
-        # limit actuators
-        # u = self._limit_input(u)
-        inputs = self._limit_input(inputs)
-        if self.order > 0:
-            q = 1*self.use_quaternions
-            x[12+q:16+q] = np.array(inputs)*1.
-        # quantize actuators
-        inputs = self._quantize_input(inputs)
-
-        return u,inputs
-
-
-
 def damped_sinusoid(x,A,s,w,p):
     return A*np.exp(-s*x)*np.sin(w*x + p)
 
@@ -5972,7 +5872,7 @@ def monte_carlo_perturbations(filename,rtdst_1sg=[5.,5.,5.],
         FM_err_percs[:,i] = aircraft.FM_errors*1.
         
         # report every 50
-        if (i+1) % 50 == 0:
+        if (i+1) % 25 == 0:
             cases = "{:> 4d}/{:> 4d} conv, est {:> 4d}/{:> 4d}".format(\
                 counter,i+1,int(counter*num/(i+1)),num) +" for "+run_name+"\n"
             run_str += cases
@@ -5998,7 +5898,7 @@ def monte_carlo_perturbations(filename,rtdst_1sg=[5.,5.,5.],
     run_str += stable_num + "\n"
     plt.rcdefaults()
     plt.close()
-    if num % 50 == 0:
+    if num % 25 == 0:
         pass
     else:
         print(stable_num)
@@ -6131,6 +6031,8 @@ def monte_carlo_perturbations(filename,rtdst_1sg=[5.,5.,5.],
         plt.rcParams["font.size"] = 8.0
         plt.rcParams["axes.labelsize"] = 8.0
         plt.rcParams['lines.linewidth'] = 1.0
+        plt.rcParams["xtick.minor.visible"] = False
+        plt.rcParams["ytick.minor.visible"] = False
         plt.rcParams["xtick.direction"] = plt.rcParams["ytick.direction"] = "in"
         plt.rcParams["xtick.bottom"] = plt.rcParams["xtick.top"] = True
         plt.rcParams["ytick.left"] = plt.rcParams["ytick.right"] = True
