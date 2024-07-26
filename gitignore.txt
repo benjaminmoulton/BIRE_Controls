@@ -163,5 +163,5 @@ cython_debug/
 # ignore files that are videos
 *.mp4
 # ignore fail plots
-controls/track_plots/monte_carlo/**/fail_plots/*.png
-controls/stblz_plots/monte_carlo/**/fail_plots/*.png
+controls/track_plots/monte_carlo/**/fail_plots/
+controls/stblz_plots/monte_carlo/**/fail_plots/
