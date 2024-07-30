@@ -5696,6 +5696,7 @@ def monte_carlo_perturbations(filename,rtdst_1sg=[5.,5.,5.],
                 Dx_norm = max(Dx_norm_track,Dx_norm)
         except:
             xr,ur = xupp*0.0,uupp*0.0
+            xr[0] = xr[0] + 1.0
             x_zero = xr[:,-1]*1.
             # Lin = aircraft.Lin_Model
             if aircraft.tracking:
@@ -5997,7 +5998,7 @@ def monte_carlo_perturbations(filename,rtdst_1sg=[5.,5.,5.],
         lgnd_elms_lbls.append("$t_c>${:> 2.0f} s".format(aircraft.tf))
         #
         # FM
-        names = ["CL", "CS", "CD", "Cl", "Cm", "Cn"]
+        names = ["CL", "CS", "CD", "Cell", "Cm", "Cn"]
         plots = [[i,j] for i in range(6) for j in range(i,6) if i != j]
         # run through plots
         # aero
@@ -6013,8 +6014,8 @@ def monte_carlo_perturbations(filename,rtdst_1sg=[5.,5.,5.],
                 [ax.plot(x[k],y[k],c=clrs[k],marker="o",mec=mec[k],mew=0.5,ms=ms[k],\
                     zorder=zord[k]) for k in range(num)]
                 ax.grid(which="major",lw=0.6,ls="-",c="0.75")
-                xlabel = r"$\epsilon_{C_" + names[i0][1] + "}$"
-                ylabel = r"$\epsilon_{C_" + names[i1][1] + "}$"
+                xlabel = r"$\epsilon_{C_" + names[i0][1:] + "}$"
+                ylabel = r"$\epsilon_{C_" + names[i1][1:] + "}$"
                 ax.set_xlabel(xlabel)
                 ax.set_ylabel(ylabel)
                 leg = ax.legend(handles=lgnd_elms_sp,labels=lgnd_elms_lbls)#,
@@ -6060,7 +6061,7 @@ def monte_carlo_perturbations(filename,rtdst_1sg=[5.,5.,5.],
                     c=clrs[k],mec=mec[k],mew=0.5,ms=ms[k]) for k in err_sort]
                 leg = ax.legend(handles=lgnd_elms_sp,labels=lgnd_elms_lbls,\
                     loc=(1.0,0.05),borderpad=0.1,handletextpad=0.0)
-                ax.set_xlabel(r"$\epsilon_{C_" + coeff[1] + "}$")
+                ax.set_xlabel(r"$\epsilon_{C_" + coeff[1:] + "}$")
                 ax.set_ylabel(r"time to converge, $t_c$ [s]")
                 ax.grid(which="major",lw=0.6,ls="-",c="0.75")
                 fig.savefig(file_folder+"/"+run_name+"_"+coeff+\

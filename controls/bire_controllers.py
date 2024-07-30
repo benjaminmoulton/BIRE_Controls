@@ -4462,7 +4462,7 @@ if __name__ == "__main__":
     #     [     0.0,wn_q**2.,     0.0],
     #     [     0.0,     0.0,wn_r**2.]
     # ]).tolist()
-    # #
+    # # #
     # run_bire_rc["aircraft_class"] = \
     #     run_bire_fs["aircraft_class"] = DynamicInversionBacksteppingAircraft
     # run_bire_fs["name_end"] = "_" + f1 + "_DIB_1"
@@ -4472,20 +4472,20 @@ if __name__ == "__main__":
     #     run_bire_fs["aircraft_class"] = DynamicInversionGainScheduledAircraft
     # run_bire_fs["name_end"] = "_" + f1 + "_DIGS_1"
     # run_bire_rc["name_end"] = "_LGN"   + "_DIGS_1"
-    # # # # 
+    # # # 
     # run_bire_rc["aircraft_class"] = \
     #     run_bire_fs["aircraft_class"] = MomentFeedbackLinearizationAircraft
     # run_bire_fs["name_end"] = "_" + f1 + "_MFBL_1"
     # run_bire_rc["name_end"] = "_LGN"   + "_MFBL_1"
     # zt_p,zt_q,zt_r =  0.6 , 0.6 , 0.6
     # wn_p,wn_q,wn_r =  8.0 , 8.0 , 8.0 
-    # # # # 
-    # run_bire_rc["aircraft_class"] = \
-    #     run_bire_fs["aircraft_class"] = MomentFeedbackLinearizationActuatorsAircraft
-    # run_bire_fs["name_end"] = "_" + f1 + "_MFBLA_1"
-    # run_bire_rc["name_end"] = "_LGN"   + "_MFBLA_1"
-    # zt_p,zt_q,zt_r =  0.6 , 0.6 , 0.6
-    # wn_p,wn_q,wn_r =  8.0 , 8.0 , 8.0 
+    # # # # # 
+    # # run_bire_rc["aircraft_class"] = \
+    # #     run_bire_fs["aircraft_class"] = MomentFeedbackLinearizationActuatorsAircraft
+    # # run_bire_fs["name_end"] = "_" + f1 + "_MFBLA_1"
+    # # run_bire_rc["name_end"] = "_LGN"   + "_MFBLA_1"
+    # # zt_p,zt_q,zt_r =  0.6 , 0.6 , 0.6
+    # # wn_p,wn_q,wn_r =  8.0 , 8.0 , 8.0 
     # # #
     # bire_rc_dict["controller"]["gains"][ "K"] = \
     #     bire_fs_dict["controller"]["gains"][ "K"] = np.array([
@@ -4678,7 +4678,7 @@ if __name__ == "__main__":
     # p_time2 = p_time  + recover_time
     # p_time3 = p_time2 + transition_time
     t_end = 0.0 # 25.0 # 
-    tf = 30.0 # 3.0 # 10.0 # t_end + p_time + 8.0 #+ 10.0 # # + 20.0 # 
+    tf = 50.0 # 3.0 # 10.0 # t_end + p_time + 8.0 #+ 10.0 # # + 20.0 # 
     bire_fs_dict["reference"] = bire_rc_dict["reference"] = {
         "deg2rad_states" : [3,4,5],
         "3" : [ [0.0, 0.0], [t_zero, 0.0], [t_zero, p_comm], [p_time, p_comm], [p_time, p_tr_deg], ], # [p_time2, p_tr_deg ], [p_time2, p_comm], [p_time3, p_comm], [p_time3, p_tr_deg2] ], # [p_time + recover_time, p_tr_deg], [p_time + recover_time, -p_comm], [p_time + recover_time + transition_time, -p_comm], [p_time + recover_time + transition_time, 0.0], ], # 
@@ -4722,6 +4722,11 @@ if __name__ == "__main__":
     # run_bire_fs["has_turbulence"] = True # False # 
     # run_bire_fs["has_model_error"] = False # True # 
     # # #########################################################################
+    # zeros
+    bire_fs_dict["reference"] = {
+        "deg2rad_states" : [3,4,5],
+        "3" : [[0.0]*2]*2, "4" : [[0.0]*2]*2, "5" : [[0.0]*2]*2, "sct_on_5" : False
+    }
     # bire_fs_dict["reference"] = {
     #     "deg2rad_states" : [3,4,5],
     #     "3" : [[ 0.0, p_tr_deg],[ 2.0, p_tr_deg]],
@@ -4730,9 +4735,9 @@ if __name__ == "__main__":
     #     "sct_on_5" : False
     # }
     # run_bire_fs["trim_bank"] = 10.0 # 10.0 # 30.0 # 
-    di = [0.0,0.0,0.0] # [10.0,10.0,10.0] # 
-    run_bire_fs[ "has_turbulence"] = run_bire_rc[ "has_turbulence"] = True # False # 
-    run_bire_fs["has_model_error"] = run_bire_rc["has_model_error"] = False # True # 
+    # di = [1.0,1.0,1.0] # [10.0,10.0,10.0] # 
+    # # run_bire_fs[ "has_turbulence"] = run_bire_rc[ "has_turbulence"] = True # False # 
+    # # run_bire_fs["has_model_error"] = run_bire_rc["has_model_error"] = False # True # 
     run_single_simulation(bire_fs_dict,rtdst_1sg=di,**run_bire_fs,**plot_vars)
     # run_single_simulation(base_fs_dict,rtdst_1sg=di,**run_base_fs,**plot_vars)
     # run_single_simulation(bire_rc_dict,rtdst_1sg=di,**run_bire_rc,**plot_vars)
@@ -4768,14 +4773,55 @@ if __name__ == "__main__":
     # di = [ 5.0, 6.0, 0.1] # MFBL_1
     # di = [12.0, 0.2, 0.3] # NDI_1
     # # # 
+    # run_base_fs["has_model_error"] = True # False # 
+    # run_bire_fs["FM_errors"] = [0.06,0.25,0.25,0.25,0.25,0.25] # DI_2
+    # # run_bire_fs["FM_errors"] = [0.25,0.25,0.25,0.25,0.25,0.25] # LQT_1
+    # # run_bire_fs["FM_errors"] = [0.25,0.25,0.25,0.25,0.25,0.25] # LQT_1
+    # # run_bire_fs["FM_errors"] = [0.25,0.25,0.25,0.25,0.25,0.25] # LQT_1
+    # # # 
     # monte_carlo_perturbations(bire_fs_dict,rtdst_1sg=di,**run_bire_fs,**plot_vars)
     # # monte_carlo_perturbations(base_fs_dict,rtdst_1sg=di,**run_base_fs,**plot_vars)
     # # monte_carlo_perturbations(bire_rc_dict,rtdst_1sg=di,**run_bire_rc,**plot_vars)
     # # monte_carlo_perturbations(base_rc_dict,rtdst_1sg=di,**run_base_rc,**plot_vars)
     # quit()
     # #
-    # single axis pqr dispersions
-    ###########################################################################
+    # # single axis pqr dispersions
+    # ###########################################################################
+    # bire_fs_dict["reference"] = {
+    #     "deg2rad_states" : [3,4,5],
+    #     "3" : [[ 0.0, p_tr_deg],[ 2.0, p_tr_deg]],
+    #     "4" : [[ 0.0, q_tr_deg],[ 2.0, q_tr_deg]],
+    #     "5" : [[ 0.0, r_tr_deg],[ 2.0, r_tr_deg]],
+    #     "sct_on_5" : False
+    # }
+    # run_bire_fs["trim_bank"] = 10.0
+    # run_bire_fs["num"] = 1000 # 3 # 10 # 
+    # plot_vars["format"] = "pdf" # "png" # 
+    # run_bire_fs["plot_ul_bounds"] = True
+    # ###########################################################################
+    # disa = [[ 15.,0.,0.],[0., 20.,0.],[0.,0.,  1.1]] # NDI_1
+    # # disa = [[ 25.,0.,0.],[0., 10.,0.],[0.,0.,  1.1]] # DI_2
+    # # disa = [[ 25.,0.,0.],[0.,  3.,0.],[0.,0.,  1.1]] # LQT_1
+    # # disa = [[  5.,0.,0.],[0., 20.,0.],[0.,0.,  0.2]] # MFBL_1
+    # for i in [2]: # [1]: # range(3): # 
+    #     ds = disa[i]
+    #     monte_carlo_perturbations(bire_fs_dict,rtdst_1sg=ds,**run_bire_fs,**plot_vars)
+    #     # monte_carlo_perturbations(base_fs_dict,rtdst_1sg=ds,**run_base_fs,**plot_vars)
+    #     # monte_carlo_perturbations(bire_rc_dict,rtdst_1sg=ds,**run_bire_rc,**plot_vars)
+    #     # monte_carlo_perturbations(base_rc_dict,rtdst_1sg=ds,**run_base_rc,**plot_vars)
+    # quit()
+    # #
+    # single FM error dispersions
+    names = ["CL","CS","CD","Cell","Cm","Cn"]
+    run_bire_fs["track_check_time"] = run_bire_rc["track_check_time"] = \
+        run_bire_fs["final_time"] = run_bire_rc["final_time"] = 10.0
+    run_base_fs["has_model_error"] = run_bire_fs["has_model_error"] = \
+        run_base_rc["has_model_error"] = run_bire_rc["has_model_error"] = True
+    f1 = "C2"
+    di = [16.0, 2.0, 0.4] # DI_2
+    di = [ 3.0, 1.0, 0.1] # LQT_1
+    di = [ 5.0, 6.0, 0.1] # MFBL_1
+    # di = [12.0, 0.2, 0.3] # NDI_1
     bire_fs_dict["reference"] = {
         "deg2rad_states" : [3,4,5],
         "3" : [[ 0.0, p_tr_deg],[ 2.0, p_tr_deg]],
@@ -4787,42 +4833,21 @@ if __name__ == "__main__":
     run_bire_fs["num"] = 1000 # 3 # 10 # 
     plot_vars["format"] = "pdf" # "png" # 
     run_bire_fs["plot_ul_bounds"] = True
-    ###########################################################################
-    disa = [[ 15.,0.,0.],[0., 20.,0.],[0.,0.,  1.1]] # NDI_1
-    # disa = [[ 25.,0.,0.],[0., 10.,0.],[0.,0.,  1.1]] # DI_2
-    # disa = [[ 25.,0.,0.],[0.,  3.,0.],[0.,0.,  1.1]] # LQT_1
-    # disa = [[  5.,0.,0.],[0., 20.,0.],[0.,0.,  0.2]] # MFBL_1
-    for i in [2]: # [1]: # range(3): # 
-        ds = disa[i]
-        monte_carlo_perturbations(bire_fs_dict,rtdst_1sg=ds,**run_bire_fs,**plot_vars)
-        # monte_carlo_perturbations(base_fs_dict,rtdst_1sg=ds,**run_base_fs,**plot_vars)
-        # monte_carlo_perturbations(bire_rc_dict,rtdst_1sg=ds,**run_bire_rc,**plot_vars)
-        # monte_carlo_perturbations(base_rc_dict,rtdst_1sg=ds,**run_base_rc,**plot_vars)
+    current_name = run_bire_fs["name_end"]
+    for i in [4,5]: # [1,2]: # [3,4,5]: # [0,1,2]: # [1]: # [0]: # range(len(names)): # 
+        name = names[i]
+        # create FM errors
+        FM_error_list = np.zeros((6,))
+        FM_error_list[i] = 0.25
+        run_base_fs["FM_errors"] = run_bire_fs["FM_errors"] = \
+            run_base_rc["FM_errors"] = run_bire_rc["FM_errors"] = \
+            FM_error_list*1.
+        run_bire_fs["name_end"] = current_name + "_" + name
+        monte_carlo_perturbations(bire_fs_dict,rtdst_1sg=di,**run_bire_fs,**plot_vars)
+        # monte_carlo_perturbations(base_fs_dict,rtdst_1sg=di,**run_base_fs,**plot_vars)
+        # monte_carlo_perturbations(bire_rc_dict,rtdst_1sg=di,**run_bire_rc,**plot_vars)
+        # monte_carlo_perturbations(base_rc_dict,rtdst_1sg=di,**run_base_rc,**plot_vars)
     quit()
-    # #
-    # # single FM error dispersions
-    # names = ["CL","CS","CD","Cl","Cm","Cn"]
-    # run_base_fs["has_model_error"] = run_bire_fs["has_model_error"] = \
-    #     run_base_rc["has_model_error"] = run_bire_rc["has_model_error"] = True
-    # f1 = "LGN"
-    # plot_vars["format"] = "pdf" # "png" # 
-    # run_bire_fs["plot_ul_bounds"] = True
-    # for i in [5]: # [1]: # [0]: # range(len(names)): # 
-    #     name = names[i]
-    #     # create FM errors
-    #     FM_error_list = np.zeros((6,))
-    #     FM_error_list[i] = 0.25
-    #     run_base_fs["FM_errors"] = run_bire_fs["FM_errors"] = \
-    #         run_base_rc["FM_errors"] = run_bire_rc["FM_errors"] = \
-    #         FM_error_list*1.
-    #     run_base_fs["name_end"] = run_bire_fs["name_end"] = \
-    #         run_base_rc["name_end"] = run_bire_rc["name_end"] = \
-    #         (f1 != "C2")*("_" + f1) + "_FB_1" + "_" + name
-    #     monte_carlo_perturbations(bire_fs_dict,rtdst_1sg=di,**run_bire_fs,**plot_vars)
-    #     # monte_carlo_perturbations(base_fs_dict,rtdst_1sg=di,**run_base_fs,**plot_vars)
-    #     # monte_carlo_perturbations(bire_rc_dict,rtdst_1sg=di,**run_bire_rc,**plot_vars)
-    #     # monte_carlo_perturbations(base_rc_dict,rtdst_1sg=di,**run_base_rc,**plot_vars)
-    # quit()
     # #
     # #
     # # run for roa plots / diff controllers
