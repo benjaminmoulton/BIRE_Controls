@@ -432,6 +432,9 @@ class Aircraft:
             ref = lambda j,t_i : np.interp(t_i,xp[j],fp[j])
             self.r_ints.append(ref)
         
+        self.ref_data_xp = xp
+        self.ref_data_fp = fp
+        
         # gust parameters
         gust = input_dict.get("gust",{})
 
@@ -481,7 +484,7 @@ class Aircraft:
         # # Inertia parameter
         # Tx_max = 45800.0
         # Ixx = 15682.0
-        # self.dBmax = Tx_max / Ixx * self.g
+        # self.dBmax = Tx_max / Ixx
 
         # FM model error
         self.FM_errors = np.zeros((6,))
@@ -5155,6 +5158,62 @@ def run_single_simulation(filename,rtdst_1sg=[20.,10.,5.],
                 max_val = np.max(np.abs(vals))
                 print("max{:^10s}= {:> 9.3f} {:<5s}".format("\u0394"+name,\
                     max_val,unit))
+        if aircraft.tracking:
+            print("-"*n + " error response " + "-"*n)
+            # calc signal
+            ref = np.array([aircraft._get_reference(ti) for ti in aircraft.tarr]).T
+            ref[aircraft.xicnv] = np.rad2deg(ref[aircraft.xicnv])
+            xerr = xr[aircraft.xPi_eul,:] - ref[aircraft.xPi_eul,:]
+            info_txt = ("   {:<7s}  & {:^7s} & {:^7s}" + \
+                    " & {:^10s} \\\\\n").format(" ","Trs [s]","Tst [s]","%OS")
+            for i in range(len(aircraft.xPi_eul)):
+                # determine when signal stops changing
+                xp = aircraft.ref_data_xp[aircraft.xPi_eul[i]]
+                fp = aircraft.ref_data_fp[aircraft.xPi_eul[i]]
+                iT = len(fp) - 1
+                while fp[iT] == fp[-1] and iT > 0:
+                    iT -= 1
+                if iT != 0: iT += 1
+                iT = np.argwhere(aircraft.tarr >= xp[iT])[0,0]
+                # determine error at this timestep
+                xe0 = xerr[i,iT]
+                # determine rise time 10% -> 90%
+                xe0_10 = xe0*0.9; xe0_90 = xe0*0.1
+                i_10 = iT; i_90 = len(aircraft.tarr)
+                for it in range(iT+1,len(aircraft.tarr)):
+                    if (abs(xerr[i,it]) <= abs(xe0_10) or \
+                        np.sign(xerr[i,it]) == -np.sign(xe0)):
+                        i_10 = it
+                        break
+                for it in range(iT+1,len(aircraft.tarr)):
+                    if (abs(xerr[i,it]) <= abs(xe0_90) or \
+                        np.sign(xerr[i,it]) == -np.sign(xe0)):
+                        i_90 = it
+                        break
+                if i_90 == i_10: i_90 += 1
+                # calculate
+                try:
+                    tris = aircraft.tarr[i_90] - aircraft.tarr[i_10]
+                except:
+                    tris = np.inf
+                # settling time
+                try:
+                    tstl = aircraft.tarr[iT + \
+                        np.argwhere(np.abs(xerr[i,iT:]) >=0.05*abs(xe0))[-1,0] + 1]
+                    tstl -= aircraft.tarr[iT]
+                except:
+                    tstl = np.inf
+                # overshoot
+                posh = (np.max(np.abs(xerr[i,iT:] - xe0)))/abs(xe0) - 1.0
+                info_txt+=("$e_{{{:<5s}}}$ & {:> 7.2f} & {:> 7.2f}" + \
+                    " & {:> 7.1f} \% \\\\\n").format(
+                    state_names[aircraft.xPi_eul[i]],tris,tstl,posh*100.0
+                    )
+            print(info_txt,end="")
+            # save to file
+            with open(file_folder+"/signal_info.txt","w") as f:
+                f.write(info_txt)
+                f.close()
         print("-"*(n*2+nadd))
         print("-"*(n*2+nadd))
         # plot

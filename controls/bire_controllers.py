@@ -3693,6 +3693,168 @@ class TransformedLinearQuadraticRegulatorAircraft(Aircraft):
         return u,inputs
 
 
+class LinearQuadraticRegulatorAircraft(Aircraft):
+    """A default class for calculating and containing the mass properties of a
+    Cuboid.
+
+    Parameters
+    ----------
+    input_vars : dict , optional
+        Must be a python dictionary
+    """
+    def __init__(self,input_dict={}):
+
+        # invoke init of parent
+        Aircraft.__init__(self,input_dict,folder_prefix = "track")
+        self.tracking = True
+        self.first_LQDI_step = True # False # 
+
+    def _get_control(self,t,x,is_controlled=True,given_control=False,u="o",
+        force_control_to_inputs=False):
+        # build control or pass through
+        if not given_control:
+            if is_controlled and (not(self.enforce_update_frequency) or 
+                (self.enforce_update_frequency and self.can_update) ):
+                if self.use_quaternions:
+                    x_euler = self.quat2euler_state(x)
+                else:
+                    x_euler = x*1.
+                    # reset angles
+                    x_euler[9:12] = quat_2_euler(euler_2_quat(x_euler[9:12]))
+                #
+                ref = self._get_reference(t)[self.Lin_Model.Cslice]
+                # per dave, full stick should be 270 deg/s in aileron
+                # 120 deg/s in elevator
+                # 60 deg/s in rudder
+                #
+
+                # dynamic inversion!!!
+                if self.first_LQDI_step:
+                    # state
+                    Vxb = self.x_trim[0]; Vyb = self.x_trim[1]; Vzb = self.x_trim[2]
+                    V = (Vxb**2. + Vyb**2. + Vzb**2.)**0.5
+                    u2w2 = Vxb**2. + Vzb**2.
+                    den = V**2.*(V**2. - Vyb**2.)**0.5
+                    T = np.zeros((3,3))
+                    T[0,0] = 2.*Vxb/V
+                    T[0,1] = 2.*Vyb/V
+                    T[0,2] = 2.*Vzb/V
+                    T[1,0] = -Vzb/u2w2
+                    T[1,2] =  Vxb/u2w2
+                    T[2,0] = -2.*Vxb*Vyb/den
+                    T[2,1] = (V**2. - 2.*Vyb**2.)/den
+                    T[2,2] = -2.*Vyb*Vzb/den
+                    Z = np.zeros((3,3))
+                    I = np.eye(3)
+                    T = np.block([[T,Z],[Z,I]])
+                    Tinv = np.linalg.solve(T,np.eye(6))
+                    # build system
+                    rows = [0,1,2,3,4,5]; cols = [0,1,2]
+                    A_tr = (self.Lin_Model.A[rows])[:,rows]
+                    B_tr = (self.Lin_Model.B[rows])[:,cols]
+                    rows = [2,3,4,5]
+                    A_tr = (np.matmul(T,np.matmul(A_tr,Tinv))[rows])[:,rows]
+                    B_tr = np.matmul(T,B_tr)[rows]
+                    self.A_tr = A_tr
+                    # apply
+                    self.Binv_LQR = np.linalg.pinv(B_tr)
+                    # solve LQR problem
+                    Z = np.zeros((4,4))
+                    I = np.eye(4)
+                    A = np.block([[Z,I],[Z,A_tr]])
+                    B = np.block([[np.zeros((4,3))],[B_tr]])
+                    # Q = np.diag([1.0e-2,1.0e-2,1.0e-2]+[1.0e+0,2.0e+0,1.0e+1])
+                    Q = np.diag([1.0e-1]*4+[1.0e-1,1.0e+1,1.0e+1,1.0e+1])
+                    R = np.diag([1.0e+0,1.0e+0,1.0e+1])
+                    K,_,K_eigs = co.lqr(A,B,Q,R)
+                    self.KI_LQR,self.KP_LQR = K[:,0:3],K[:,3:6]
+                    print(self.KI_LQR)
+                    # K,_,K_eigs = co.lqr(A_tr,B_tr,Q[3:6,3:6],R)
+                    # self.KP_LQR = K
+                    # print(self.KP_LQR)
+                    print(K_eigs)
+                    self.first_LQDI_step = False
+
+                #-------------------#
+                # STATE DEFINITIONS #
+                #-------------------#
+                Vxb     = x_euler[0]
+                Vyb     = x_euler[1]
+                Vzb     = x_euler[2]
+                p       = x_euler[3]
+                q       = x_euler[4]
+                r       = x_euler[5]
+                epI     = x_euler[self.xIi_eul[0]]
+                eqI     = x_euler[self.xIi_eul[1]]
+                erI     = x_euler[self.xIi_eul[2]]
+                V = (Vxb**2. + Vyb**2. + Vzb**2.)**0.5
+                a = atan2(Vzb,Vxb)
+                b = asin(Vyb/V)
+                w  = np.array([  p,  q,  r])
+                eI = np.array([epI,eqI,erI])
+                x_trim = self.x_trim
+                dref = ref - x_trim[3:6]
+                dref = np.concatenate(([0.0],dref))
+                refdot = dref*0.0
+                e = w - ref
+                eI = np.concatenate(([0.0],eI))
+                e = np.concatenate(([b],e))
+                print(e.shape,eI.shape,self.KP_LQR.shape,self.KI_LQR.shape)
+
+                nu = - np.matmul(self.KP_LQR,e) - np.matmul(self.KI_LQR,eI)
+                ff = np.matmul(self.Binv_LQR,-(np.matmul(self.A_tr,dref) + refdot))
+                nu += ff
+
+                print(t,np.rad2deg(ff))
+                
+                u = np.concatenate((nu + self.u_trim[0:3],[self.u_trim[3]]))# # 
+
+
+                # # integral states
+                # if len(self.xIi_eul):
+                #     u[uslc] = u[uslc] - np.matmul(K_I,intg)
+                #     # u[uslc] = u[uslc] - [kI*intg[0],kI*intg[1],kI*intg[2]]
+                if self.order > 0:
+                    q = 1*self.use_quaternions
+                    inputs = x[12+q:16+q]*1.
+                else:
+                    inputs = u*1.
+                # #
+                self.u_til_next_update = u*1.
+                self.can_update = False
+            elif is_controlled and self.enforce_update_frequency and \
+                not(self.can_update):
+                u = self.u_til_next_update*1.
+                if self.order > 0:
+                    q = 1*self.use_quaternions
+                    ## INTSTATE
+                    inputs = x[12+q:16+q]*1.
+                else:
+                    inputs = u*1.
+            else:
+                inputs = u = self.Lin_Model.uhat_eq*1.
+        elif given_control:
+            if u[0] == "o":
+                raise TypeError("Control input required.")
+            else:
+                if self.order > 0 and not force_control_to_inputs:
+                    q = 1*self.use_quaternions
+                    inputs = x[12+q:16+q]*1.
+                else:
+                    inputs = u*1.
+        
+        # limit actuators
+        # u = self._limit_input(u)
+        inputs = self._limit_input(inputs)
+        if self.order > 0:
+            q = 1*self.use_quaternions
+            x[12+q:16+q] = np.array(inputs)*1.
+        # quantize actuators
+        inputs = self._quantize_input(inputs)
+
+        return u,inputs
+
+
 class LyapunovRegulationAircraft(Aircraft):
     """A default class for calculating and containing the mass properties of a
     Cuboid.
@@ -4449,7 +4611,7 @@ if __name__ == "__main__":
     # # wn_p,wn_q,wn_r = 10.0 ,10.0 ,10.0 
     # zt_p,zt_q,zt_r =  0.6 , 0.6 , 0.6
     # wn_p,wn_q,wn_r =  8.0 , 8.0 , 8.0 
-    # # # #
+    # # #
     # bire_rc_dict["controller"]["gains"][ "K"] = \
     #     bire_fs_dict["controller"]["gains"][ "K"] = np.array([
     #     [2.*zt_p*wn_p,         0.0,         0.0], #  -zt_r*wn_r], # 
@@ -4535,6 +4697,11 @@ if __name__ == "__main__":
     # # TLQR_1
     # run_bire_fs["name_end"] = "_" + f1 + "_TLQR_1"
     # run_bire_rc["name_end"] = "_LGN"   + "_TLQR_1"
+    # # 
+    run_bire_fs["aircraft_class"] = LinearQuadraticRegulatorAircraft
+    # TLQR_1
+    run_bire_fs["name_end"] = "_" + f1 + "_LQR_1"
+    run_bire_rc["name_end"] = "_LGN"   + "_LQR_1"
     # #
     # run_bire_fs["aircraft_class"] = LinearAdaptiveAircraft
     # # LAC_1
@@ -4546,13 +4713,13 @@ if __name__ == "__main__":
     # # MRAC_1
     # run_bire_fs["state_threshold"] += [1.]*21
     # #
-    run_bire_fs["aircraft_class"] = LyapunovRegulationAircraft
-    # LyR_1
-    run_bire_fs["name_end"] = "_" + f1 + "_LyR_1"
-    run_bire_rc["name_end"] = "_LGN"   + "_LyR_1"
-    bire_fs_dict["simulation"]["include_stall"] = \
-        bire_rc_dict["simulation"]["include_stall"] = False
-    bire_fs_dict["simulation"]["include_compressibility"] = False
+    # run_bire_fs["aircraft_class"] = LyapunovRegulationAircraft
+    # # LyR_1
+    # run_bire_fs["name_end"] = "_" + f1 + "_LyR_1"
+    # run_bire_rc["name_end"] = "_LGN"   + "_LyR_1"
+    # bire_fs_dict["simulation"]["include_stall"] = \
+    #     bire_rc_dict["simulation"]["include_stall"] = False
+    # bire_fs_dict["simulation"]["include_compressibility"] = False
     # # # 
     # # #
     # # #
@@ -4678,7 +4845,7 @@ if __name__ == "__main__":
     # p_time2 = p_time  + recover_time
     # p_time3 = p_time2 + transition_time
     t_end = 0.0 # 25.0 # 
-    tf = 50.0 # 3.0 # 10.0 # t_end + p_time + 8.0 #+ 10.0 # # + 20.0 # 
+    tf = 3.0 # 3.0 # 10.0 # t_end + p_time + 8.0 #+ 10.0 # # + 20.0 # 
     bire_fs_dict["reference"] = bire_rc_dict["reference"] = {
         "deg2rad_states" : [3,4,5],
         "3" : [ [0.0, 0.0], [t_zero, 0.0], [t_zero, p_comm], [p_time, p_comm], [p_time, p_tr_deg], ], # [p_time2, p_tr_deg ], [p_time2, p_comm], [p_time3, p_comm], [p_time3, p_tr_deg2] ], # [p_time + recover_time, p_tr_deg], [p_time + recover_time, -p_comm], [p_time + recover_time + transition_time, -p_comm], [p_time + recover_time + transition_time, 0.0], ], # 
@@ -4722,11 +4889,11 @@ if __name__ == "__main__":
     # run_bire_fs["has_turbulence"] = True # False # 
     # run_bire_fs["has_model_error"] = False # True # 
     # # #########################################################################
-    # zeros
-    bire_fs_dict["reference"] = {
-        "deg2rad_states" : [3,4,5],
-        "3" : [[0.0]*2]*2, "4" : [[0.0]*2]*2, "5" : [[0.0]*2]*2, "sct_on_5" : False
-    }
+    # # zeros
+    # bire_fs_dict["reference"] = {
+    #     "deg2rad_states" : [3,4,5],
+    #     "3" : [[0.0]*2]*2, "4" : [[0.0]*2]*2, "5" : [[0.0]*2]*2, "sct_on_5" : False
+    # }
     # bire_fs_dict["reference"] = {
     #     "deg2rad_states" : [3,4,5],
     #     "3" : [[ 0.0, p_tr_deg],[ 2.0, p_tr_deg]],
@@ -4735,9 +4902,10 @@ if __name__ == "__main__":
     #     "sct_on_5" : False
     # }
     # run_bire_fs["trim_bank"] = 10.0 # 10.0 # 30.0 # 
-    # di = [1.0,1.0,1.0] # [10.0,10.0,10.0] # 
+    # di = [1.0,1.0,1.0] # [0.1,0.1,0.1] # [10.0,10.0,10.0] # 
     # # run_bire_fs[ "has_turbulence"] = run_bire_rc[ "has_turbulence"] = True # False # 
     # # run_bire_fs["has_model_error"] = run_bire_rc["has_model_error"] = False # True # 
+    # run_bire_fs["name_end"] += "_rt"
     run_single_simulation(bire_fs_dict,rtdst_1sg=di,**run_bire_fs,**plot_vars)
     # run_single_simulation(base_fs_dict,rtdst_1sg=di,**run_base_fs,**plot_vars)
     # run_single_simulation(bire_rc_dict,rtdst_1sg=di,**run_bire_rc,**plot_vars)
@@ -4775,7 +4943,7 @@ if __name__ == "__main__":
     # # # 
     # run_base_fs["has_model_error"] = True # False # 
     # run_bire_fs["FM_errors"] = [0.06,0.25,0.25,0.25,0.25,0.25] # DI_2
-    # # run_bire_fs["FM_errors"] = [0.25,0.25,0.25,0.25,0.25,0.25] # LQT_1
+    # # run_bire_fs["FM_errors"] = [0.08,0.25,0.25,0.25,0.25,0.25] # LQT_1
     # # run_bire_fs["FM_errors"] = [0.25,0.25,0.25,0.25,0.25,0.25] # LQT_1
     # # run_bire_fs["FM_errors"] = [0.25,0.25,0.25,0.25,0.25,0.25] # LQT_1
     # # # 
@@ -4821,7 +4989,7 @@ if __name__ == "__main__":
     di = [16.0, 2.0, 0.4] # DI_2
     di = [ 3.0, 1.0, 0.1] # LQT_1
     di = [ 5.0, 6.0, 0.1] # MFBL_1
-    # di = [12.0, 0.2, 0.3] # NDI_1
+    di = [12.0, 0.2, 0.3] # NDI_1
     bire_fs_dict["reference"] = {
         "deg2rad_states" : [3,4,5],
         "3" : [[ 0.0, p_tr_deg],[ 2.0, p_tr_deg]],
@@ -4834,7 +5002,7 @@ if __name__ == "__main__":
     plot_vars["format"] = "pdf" # "png" # 
     run_bire_fs["plot_ul_bounds"] = True
     current_name = run_bire_fs["name_end"]
-    for i in [4,5]: # [1,2]: # [3,4,5]: # [0,1,2]: # [1]: # [0]: # range(len(names)): # 
+    for i in [3,4,5]: # [0,1,2]: # [4,5]: # [1,2]: # [1]: # [0]: # range(len(names)): # 
         name = names[i]
         # create FM errors
         FM_error_list = np.zeros((6,))
