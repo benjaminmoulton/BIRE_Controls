@@ -3797,6 +3797,10 @@ class LinearQuadraticRegulatorDynamicInversionAircraft(Aircraft):
                 e = w - ref
                 eI = np.concatenate(([0.0],eI))
                 e = np.concatenate(([b - np.deg2rad(+0.0020460560691862)],e))
+                # if 0.0 <= t <= 0.0 + self.dt:
+                #     refdot = e/self.dt
+                # elif 2.0 <= t <= 2.0 + self.dt:
+                #     refdot = e/self.dt
 
                 nu = - np.matmul(self.KP_LQRDI,e) - np.matmul(self.KI_LQRDI,eI)
                 ff = np.matmul(self.Binv_LQRDI,-(np.matmul(self.A_tr,dref) + refdot))
@@ -4574,7 +4578,7 @@ if __name__ == "__main__":
     plot_vars["plot_delta"] = False # True # 
     plot_vars["zoom_deltas"] = False
     plot_vars["format"] = "png" # "pdf" # 
-    plot_vars["format"] = "pdf" # "png" # 
+    # plot_vars["format"] = "pdf" # "png" # 
     plot_vars["output_states"] = True # False # 
     plot_vars["plot_norm"] = False # True # 
     #
@@ -4695,8 +4699,8 @@ if __name__ == "__main__":
     # # 
     run_bire_fs["aircraft_class"] = LinearQuadraticRegulatorDynamicInversionAircraft
     # LQR_1
-    run_bire_fs["name_end"] = "_" + f1 + "_LQRDI_1"
-    run_bire_rc["name_end"] = "_LGN"   + "_LQRDI_1"
+    run_bire_fs["name_end"] = "_" + f1 + "_LQRDI_2"
+    run_bire_rc["name_end"] = "_LGN"   + "_LQRDI_2"
     # #
     # run_bire_fs["aircraft_class"] = LinearAdaptiveAircraft
     # # LAC_1
@@ -4901,46 +4905,46 @@ if __name__ == "__main__":
     # run_bire_fs[ "has_turbulence"] = run_bire_rc[ "has_turbulence"] = True # False # 
     # # run_bire_fs["has_model_error"] = run_bire_rc["has_model_error"] = False # True # 
     # run_bire_fs["name_end"] += "_rt"
-    # run_single_simulation(bire_fs_dict,rtdst_1sg=di,**run_bire_fs,**plot_vars)
-    # # run_single_simulation(base_fs_dict,rtdst_1sg=di,**run_base_fs,**plot_vars)
-    # # run_single_simulation(bire_rc_dict,rtdst_1sg=di,**run_bire_rc,**plot_vars)
-    # # run_single_simulation(base_rc_dict,rtdst_1sg=di,**run_base_rc,**plot_vars)
-    # quit()
-
-    # # # run monte carlo perturbation analysis
-    plot_vars["format"] = "pdf" # "png" # 
-    run_bire_fs["plot_ul_bounds"] = True
-    run_bire_fs["final_time"] = 10.0
-    run_base_fs["num"] = run_bire_fs["num"] = \
-        run_base_rc["num"] = run_bire_rc["num"] = 1000
-    #########################################################################
-    bire_fs_dict["reference"] = {
-        "deg2rad_states" : [3,4,5],
-        "3" : [[ 0.0, p_tr_deg],[ 2.0, p_tr_deg]],
-        "4" : [[ 0.0, q_tr_deg],[ 2.0, q_tr_deg]],
-        "5" : [[ 0.0, r_tr_deg],[ 2.0, r_tr_deg]],
-        "sct_on_5" : False
-    }
-    run_bire_fs["trim_bank"] = 10.0 # 30.0 # 
-    # # 
-    di = [16.0, 2.0, 0.4] # DI_2
-    di = [ 3.0, 1.0, 0.1] # LQT_1
-    di = [30.0,15.0, 1.0] # LQRDI_1
-    # di = [ 5.0, 6.0, 0.1] # MFBL_1
-    # di = [12.0, 0.2, 0.3] # NDI_1
-    # # 
-    run_bire_fs["has_model_error"] = True # False # 
-    run_bire_fs["FM_errors"] = [0.06,0.25,0.25,0.25,0.25,0.25] # DI_2
-    run_bire_fs["FM_errors"] = [0.08,0.25,0.25,0.25,0.25,0.25] # LQT_1
-    run_bire_fs["FM_errors"] = [0.16,0.25,0.25,0.25,0.25,0.25] # LQRDI_1
-    # run_bire_fs["FM_errors"] = [0.02,0.25,0.25,0.25,0.25,0.25] # MFBL_1
-    # run_bire_fs["FM_errors"] = [0.01,0.25,0.25,0.25,0.25,0.25] # NDI_1
-    # # 
-    monte_carlo_perturbations(bire_fs_dict,rtdst_1sg=di,**run_bire_fs,**plot_vars)
-    # monte_carlo_perturbations(base_fs_dict,rtdst_1sg=di,**run_base_fs,**plot_vars)
-    # monte_carlo_perturbations(bire_rc_dict,rtdst_1sg=di,**run_bire_rc,**plot_vars)
-    # monte_carlo_perturbations(base_rc_dict,rtdst_1sg=di,**run_base_rc,**plot_vars)
+    run_single_simulation(bire_fs_dict,rtdst_1sg=di,**run_bire_fs,**plot_vars)
+    # run_single_simulation(base_fs_dict,rtdst_1sg=di,**run_base_fs,**plot_vars)
+    # run_single_simulation(bire_rc_dict,rtdst_1sg=di,**run_bire_rc,**plot_vars)
+    # run_single_simulation(base_rc_dict,rtdst_1sg=di,**run_base_rc,**plot_vars)
     quit()
+
+    # # # # run monte carlo perturbation analysis
+    # plot_vars["format"] = "pdf" # "png" # 
+    # run_bire_fs["plot_ul_bounds"] = True
+    # run_bire_fs["final_time"] = 10.0
+    # run_base_fs["num"] = run_bire_fs["num"] = \
+    #     run_base_rc["num"] = run_bire_rc["num"] = 1000
+    # #########################################################################
+    # bire_fs_dict["reference"] = {
+    #     "deg2rad_states" : [3,4,5],
+    #     "3" : [[ 0.0, p_tr_deg],[ 2.0, p_tr_deg]],
+    #     "4" : [[ 0.0, q_tr_deg],[ 2.0, q_tr_deg]],
+    #     "5" : [[ 0.0, r_tr_deg],[ 2.0, r_tr_deg]],
+    #     "sct_on_5" : False
+    # }
+    # run_bire_fs["trim_bank"] = 10.0 # 30.0 # 
+    # # # 
+    # di = [16.0, 2.0, 0.4] # DI_2
+    # di = [ 3.0, 1.0, 0.1] # LQT_1
+    # di = [30.0,15.0, 1.0] # LQRDI_1
+    # # di = [ 5.0, 6.0, 0.1] # MFBL_1
+    # # di = [12.0, 0.2, 0.3] # NDI_1
+    # # # 
+    # run_bire_fs["has_model_error"] = True # False # 
+    # run_bire_fs["FM_errors"] = [0.06,0.25,0.25,0.25,0.25,0.25] # DI_2
+    # run_bire_fs["FM_errors"] = [0.08,0.25,0.25,0.25,0.25,0.25] # LQT_1
+    # run_bire_fs["FM_errors"] = [0.16,0.25,0.25,0.25,0.25,0.25] # LQRDI_1
+    # # run_bire_fs["FM_errors"] = [0.02,0.25,0.25,0.25,0.25,0.25] # MFBL_1
+    # # run_bire_fs["FM_errors"] = [0.01,0.25,0.25,0.25,0.25,0.25] # NDI_1
+    # # # 
+    # monte_carlo_perturbations(bire_fs_dict,rtdst_1sg=di,**run_bire_fs,**plot_vars)
+    # # monte_carlo_perturbations(base_fs_dict,rtdst_1sg=di,**run_base_fs,**plot_vars)
+    # # monte_carlo_perturbations(bire_rc_dict,rtdst_1sg=di,**run_bire_rc,**plot_vars)
+    # # monte_carlo_perturbations(base_rc_dict,rtdst_1sg=di,**run_base_rc,**plot_vars)
+    # quit()
     # #
     # # single axis pqr dispersions
     # ###########################################################################
