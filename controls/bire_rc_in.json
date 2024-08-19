@@ -3,7 +3,7 @@
         "constant_density" : false,
         "time_step[sec]" : 0.001,
         "total_time[sec]" : 60.0,
-        "integrator" : "odeint",
+        "integrator" : "rk4",
         "nonlinear_dynamics" : true,
         "use_quaternions" : true,
         "limit_input" : true,

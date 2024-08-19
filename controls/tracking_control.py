@@ -138,7 +138,10 @@ class TrackingAircraft(Aircraft):
                     inputs = u*1.
         
         # limit actuators
-        # u = self._limit_input(u)
+        # #vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
+        if self.integrator == "odeint":
+            u = self._limit_input(u)
+        # #^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
         inputs = self._limit_input(inputs)
         if self.order > 0:
             q = 1*self.use_quaternions
@@ -357,7 +360,10 @@ class FeedbackLinearizationAircraft(Aircraft):
                     inputs = u*1.
         
         # limit actuators
-        # u = self._limit_input(u)
+        # #vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
+        if self.integrator == "odeint":
+            u = self._limit_input(u)
+        # #^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
         inputs = self._limit_input(inputs)
         if self.order > 0:
             q = 1*self.use_quaternions
@@ -1196,7 +1202,10 @@ class BIREFeedbackLinearizationAircraft(Aircraft):
                     inputs = u*1.
         
         # limit actuators
-        # u = self._limit_input(u)
+        # #vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
+        if self.integrator == "odeint":
+            u = self._limit_input(u)
+        # #^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
         inputs = self._limit_input(inputs)
         if self.order > 0:
             q = 1*self.use_quaternions
@@ -1287,7 +1296,10 @@ class BIRELyapunovAircraft(Aircraft):
                     inputs = u*1.
         
         # limit actuators
-        # u = self._limit_input(u)
+        # #vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
+        if self.integrator == "odeint":
+            u = self._limit_input(u)
+        # #^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
         inputs = self._limit_input(inputs)
         if self.order > 0:
             q = 1*self.use_quaternions

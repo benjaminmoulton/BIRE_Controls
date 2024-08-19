@@ -322,7 +322,10 @@ class FeedbackLinearizationAircraft(Aircraft):
                     inputs = u*1.
         
         # limit actuators
-        # u = self._limit_input(u)
+        # #vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
+        if self.integrator == "odeint":
+            u = self._limit_input(u)
+        # #^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
         inputs = self._limit_input(inputs)
         if self.order > 0:
             q = 1*self.use_quaternions
@@ -431,7 +434,10 @@ class DynamicInversionAircraft(Aircraft):
                     inputs = u*1.
         
         # limit actuators
-        # u = self._limit_input(u)
+        # #vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
+        if self.integrator == "odeint":
+            u = self._limit_input(u)
+        # #^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
         inputs = self._limit_input(inputs)
         if self.order > 0:
             q = 1*self.use_quaternions
@@ -744,7 +750,10 @@ class DynamicInversionWashoutAircraft(Aircraft):
                     inputs = u*1.
         
         # limit actuators
-        # u = self._limit_input(u)
+        # #vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
+        if self.integrator == "odeint":
+            u = self._limit_input(u)
+        # #^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
         inputs = self._limit_input(inputs)
         if self.order > 0:
             q = 1*self.use_quaternions
@@ -1004,7 +1013,10 @@ class LinearAdaptiveAircraft(Aircraft):
                     inputs = u*1.
         
         # limit actuators
-        # u = self._limit_input(u)
+        # #vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
+        if self.integrator == "odeint":
+            u = self._limit_input(u)
+        # #^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
         inputs = self._limit_input(inputs)
         if self.order > 0:
             q = 1*self.use_quaternions
@@ -1281,7 +1293,10 @@ class ModelReferenceAdaptiveAircraft(Aircraft):
                     inputs = u*1.
         
         # limit actuators
-        # u = self._limit_input(u)
+        # #vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
+        if self.integrator == "odeint":
+            u = self._limit_input(u)
+        # #^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
         inputs = self._limit_input(inputs)
         if self.order > 0:
             q = 1*self.use_quaternions
@@ -1559,7 +1574,10 @@ class PIDAircraft(Aircraft):
                     inputs = u*1.
         
         # limit actuators
-        # u = self._limit_input(u)
+        # #vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
+        if self.integrator == "odeint":
+            u = self._limit_input(u)
+        # #^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
         inputs = self._limit_input(inputs)
         if self.order > 0:
             q = 1*self.use_quaternions
@@ -1681,7 +1699,10 @@ class LyapunovFunctionAircraft(Aircraft):
                     inputs = u*1.
         
         # limit actuators
-        # u = self._limit_input(u)
+        # #vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
+        if self.integrator == "odeint":
+            u = self._limit_input(u)
+        # #^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
         inputs = self._limit_input(inputs)
         if self.order > 0:
             q = 1*self.use_quaternions

@@ -55,6 +55,7 @@ def SAL_stdatm_english(ALT):
 
     # calculate speed of sound
     A = (1.4*1716.3*T)**0.5
+    quit()
     return Z,G,T,P,R,A
 
 if __name__ == "__main__":

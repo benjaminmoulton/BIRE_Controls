@@ -132,7 +132,8 @@ class Aircraft:
         self.use_quaternions = simulation.get("use_quaternions",True)
         self.is_stevens_and_lewis = simulation.get("stevens_and_lewis",False)
         self._set_dynamics_function(self.use_nonlinear,self.use_quaternions)
-        if simulation.get("limit_input",True):
+        self.bool_limit_inputs = simulation.get("limit_input",True)
+        if self.bool_limit_inputs:
             self._limit_input = self._hit_limit_input
         else:
             self._limit_input = self._skip_limit_input
@@ -1244,6 +1245,8 @@ class Aircraft:
 
 
     def _skip_limit_input(self,u):
+        print("these things ought not so to be!!")
+        quit()
         return u
 
 
@@ -1329,13 +1332,21 @@ class Aircraft:
                     inputs = u*1.
         
         # limit actuators
-        # u = self._limit_input(u)
-        inputs = self._limit_input(inputs)
-        if self.order > 0:
-            q = 1*self.use_quaternions
-            x[12+q:16+q] = np.array(inputs)*1.
+        # #vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
+        # This ensures that the actuator state is limited in odeint runs
+        # While this is not totally accurate (the controller commands should 
+        # not be limited), it is conservative. This is because when the 
+        # actuator rate limit is not constraining in that it will command the 
+        # actuators to move slower than otherwise near the saturation limit.
+        if self.integrator == "odeint":
+            u = self._limit_input(u)
+        # #^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
         # quantize actuators
-        inputs = self._quantize_input(inputs)
+        inputs = self._quantize_input(self._limit_input(inputs))
+        if inputs[0] > self.max_da:
+            print(t,np.rad2deg(inputs[0]))
+        if inputs[0] < self.min_da:
+            print(t,np.rad2deg(inputs[0]))
 
         return u,inputs
 
@@ -1350,7 +1361,7 @@ class Aircraft:
 
         # linear dynamics
         Dx = x - self.x_trim
-        Du = u - self.u_trim
+        Du = inputs - self.u_trim
         dx = np.matmul(self.Lin_Model.A,Dx) + np.matmul(self.Lin_Model.B,Du)
 
         # x posn
@@ -1388,7 +1399,7 @@ class Aircraft:
 
         # linear dynamics
         xhat = x - self.x_trim
-        uhat = u - self.u_trim
+        uhat = inputs - self.u_trim
         dx = np.matmul(self.Lin_Model.A,xhat) + np.matmul(self.Lin_Model.B,uhat)
 
         # limit rates
@@ -1482,6 +1493,16 @@ class Aircraft:
         # actuator dynamics
         if self.order == 1:
             dx[13:17] = self._actuation_dynamics(x,u)
+            # # relimit
+            # if self.integrator == "odeint" and self.bool_limit_inputs:
+            #     if   x[13] >= self.max_da  and dx[13] > 0.0: dx[13] = 0.0
+            #     elif x[13] <= self.min_da  and dx[13] < 0.0: dx[13] = 0.0
+            #     if   x[14] >= self.max_de  and dx[14] > 0.0: dx[14] = 0.0
+            #     elif x[14] <= self.min_de  and dx[14] < 0.0: dx[14] = 0.0
+            #     if   x[15] >= self.max_dr  and dx[15] > 0.0: dx[15] = 0.0
+            #     elif x[15] <= self.min_dr  and dx[15] < 0.0: dx[15] = 0.0
+            #     if   x[16] >= self.max_tau and dx[16] > 0.0: dx[16] = 0.0
+            #     elif x[16] <= self.min_tau and dx[16] < 0.0: dx[16] = 0.0
         elif self.order == 2:
             dx[13:21] = self._actuation_dynamics(x,u)
         
@@ -1988,7 +2009,7 @@ class Aircraft:
         return x,t
 
 
-    def sim_step(self,dt,x,is_controlled=True,given_control=False,u="o"):
+    def sim_step(self,dt,x):
         """ Method which steps once through the simulation integration
         sequence.
 
@@ -2598,13 +2619,13 @@ class Aircraft:
             self.tarr = ts*1.
             try:
                 xs = odeint(self._dynamics,x0,ts,tfirst=True,
-                    # atol=1e-10,rtol=1e-10
+                    atol=1e-10,rtol=1e-10
                     )[1:].T
             except:
                 n_sub = min(self.t_gimbal/self.dt,10.)
                 t_index = np.argwhere(ts<=self.t_gimbal-self.dt*n_sub)[:,0][-1]
                 xs = odeint(self._dynamics,x0,ts[:t_index],tfirst=True,
-                    # atol=1e-10,rtol=1e-10
+                    atol=1e-10,rtol=1e-10
                     )[1:].T
                 end = np.kron(xs[:,-1],np.ones((ts.shape[0]-t_index,1)))
                 xs = np.block([xs,end.T])
@@ -2640,10 +2661,8 @@ class Aircraft:
                 # run a step
                 self.x_old = self.x*1.
                 dt = ts[i+1] - ts[i]
-                self.x = self.sim_step(dt,self.x,
-                    is_controlled=not(self.run_unctrl))
-                u,_ = self._get_control(self.tarr[i],self.x_old,
-                    is_controlled=not(self.run_unctrl))
+                self.x = self.sim_step(dt,self.x)
+                u,_ = self._get_control(self.tarr[i],self.x_old)
                 # Dx = self.x[self.Lin_Model.Cslice]-self.Lin_Model.xhat_eq
                 # Dxn = np.linalg.norm(Dx)
                 # if self.t > 2.0 and Dxn <= 1.99:
@@ -3231,6 +3250,8 @@ class Aircraft:
         M_eq = np.array([V_eq[ti]/self.stdatm(-xhat_eq[8,ti])[5] \
             for ti in range(len(self.tarr))])
         aerohat_eq = np.array([V_eq,M_eq,a_eq,b_eq])
+        fill = dict(fc="k",alpha=0.1,ec="none")#color="k",alpha=0.2,ec=None)
+        fil2 = dict(fc="none",ec="0.5",lw=0.75)#color="k",alpha=0.2,ec=None)
         if deltas:
             # state
             # xhat_t1 = self.x_trim_euler_deg
@@ -3260,12 +3281,12 @@ class Aircraft:
 
             # upper and lower plotting
             if plot_ul_bounds:
-                xupp = self.xarr_upp - xhat_eq[:,:i_zoom+1]
-                aupp = self.aerox_upp - aerohat_eq[:,:i_zoom+1]
-                uupp = self.uarr_upp - uhat_eq[:,:i_zoom+1]
-                xlow = self.xarr_low - xhat_eq[:,:i_zoom+1]
-                alow = self.aerox_low - aerohat_eq[:,:i_zoom+1]
-                ulow = self.uarr_low - uhat_eq[:,:i_zoom+1]
+                xupp = self.xarr_upp[:,:i_zoom+1] - xhat_eq[:,:i_zoom+1]
+                aupp = self.aerox_upp[:,:i_zoom+1] - aerohat_eq[:,:i_zoom+1]
+                uupp = self.uarr_upp[:,:i_zoom+1] - uhat_eq[:,:i_zoom+1]
+                xlow = self.xarr_low[:,:i_zoom+1] - xhat_eq[:,:i_zoom+1]
+                alow = self.aerox_low[:,:i_zoom+1] - aerohat_eq[:,:i_zoom+1]
+                ulow = self.uarr_low[:,:i_zoom+1] - uhat_eq[:,:i_zoom+1]
         else:
             tarr = self.tarr[:i_zoom+1]
             xarr = self.xarr[:,:i_zoom+1]
@@ -3279,13 +3300,12 @@ class Aircraft:
             predir = predir + "zm_"*is_zoomed
             # upper and lower plotting
             if plot_ul_bounds:
-                xupp = self.xarr_upp
-                aupp = self.aerox_upp
-                uupp = self.uarr_upp
-                xlow = self.xarr_low
-                alow = self.aerox_low
-                ulow = self.uarr_low
-                fill = dict(color="k",alpha=0.1,ec=None)
+                xupp = self.xarr_upp[:,:i_zoom+1]
+                aupp = self.aerox_upp[:,:i_zoom+1]
+                uupp = self.uarr_upp[:,:i_zoom+1]
+                xlow = self.xarr_low[:,:i_zoom+1]
+                alow = self.aerox_low[:,:i_zoom+1]
+                ulow = self.uarr_low[:,:i_zoom+1]
         
         # error and integral states
         if self.tracking:
@@ -3451,8 +3471,8 @@ class Aircraft:
                 # vels_axs[0].grid(which="minor",lw=0.5,ls="dotted",c="0.5")
                 vels_axs[ivw].grid(which="major",lw=0.6,ls="-",c="0.75")
                 # vels_axs[ivw].grid(which="minor",lw=0.5,ls="dotted",c="0.5")
-                vels_fig.supxlabel(r"Time, $t$ [s]")
-                vels_fig.supylabel(r"Velocity [ft/s]")
+                vels_fig.supxlabel(r"Time, s")
+                vels_fig.supylabel(r"Velocity, ft/s")
                 # xticks
                 vels_axs[ivw].set_xticks(ticks=xticks)
                 if not deltas:
@@ -3475,6 +3495,9 @@ class Aircraft:
                     vels_axs[  0].fill_between(tarr, xupp[0], xlow[0],**fill)
                     vels_axs[ivw].fill_between(tarr, xupp[1], xlow[1],**fill)
                     vels_axs[ivw].fill_between(tarr, xupp[2], xlow[2],**fill)
+                    vels_axs[  0].fill_between(tarr, xupp[0], xlow[0],ls="-",**fil2)
+                    vels_axs[ivw].fill_between(tarr, xupp[1], xlow[1],ls="--",**fil2)
+                    vels_axs[ivw].fill_between(tarr, xupp[2], xlow[2],ls="-.",**fil2)
             if not deltas and plot_norm:
                 vels_axs[  0].plot(tarr,xhat_eq[0],c="k",ls="-" ,lw=0.5)
                 vels_axs[ivw].plot(tarr,xhat_eq[1],c="k",ls="--",lw=0.5)
@@ -3514,9 +3537,9 @@ class Aircraft:
                 if not(self.is_rc):
                     aero_axs[2].grid(which="major",lw=0.6,ls="-",c="0.75")
                     # aero_axs[2].grid(which="minor",lw=0.5,ls="dotted",c="0.5")
-                aero_fig.supxlabel(r"Time, $t$ [s]")
-                aero_fig.supylabel(r"Velocity [ft/s]" + r" / Mach"*self.is_rc \
-                    + r" / Angle [$^\circ$]")
+                aero_fig.supxlabel(r"Time, s")
+                aero_fig.supylabel(r"Velocity, ft/s" + r" / Mach"*(not self.is_rc) \
+                    + r" / Angle, deg")
                 # xticks
                 aero_axs[2 - 1*self.is_rc].set_xticks(ticks=xticks)
                 # d = .015  # how big to make the diagonal lines in axes coordinates
@@ -3539,13 +3562,19 @@ class Aircraft:
                 #     Del+r"$\beta$",**lbl_params)
                 if plot_ul_bounds:
                     aero_axs[  0].fill_between(tarr, aupp[0], alow[0],**fill)
+                    aero_axs[  0].fill_between(tarr, aupp[0], alow[0],ls="-",**fil2)
                     if self.is_rc:
                         aero_axs[1].fill_between(tarr, aupp[2], alow[2],**fill)
+                        aero_axs[1].fill_between(tarr, aupp[2], alow[2],ls="-",**fil2)
                         aero_axs[1].fill_between(tarr, aupp[3], alow[3],**fill)
+                        aero_axs[1].fill_between(tarr, aupp[3], alow[3],ls="--",**fil2)
                     else:
                         aero_axs[1].fill_between(tarr, aupp[1], alow[1],**fill)
+                        aero_axs[1].fill_between(tarr, aupp[1], alow[1],ls="-",**fil2)
                         aero_axs[2].fill_between(tarr, aupp[2], alow[2],**fill)
+                        aero_axs[2].fill_between(tarr, aupp[2], alow[2],ls="-",**fil2)
                         aero_axs[2].fill_between(tarr, aupp[3], alow[3],**fill)
+                        aero_axs[2].fill_between(tarr, aupp[3], alow[3],ls="--",**fil2)
             if not deltas and plot_norm:
                 aero_axs[0].plot(tarr, aerohat_eq[0],c="k",ls="-",lw=0.5)
                 if self.is_rc:
@@ -3592,8 +3621,8 @@ class Aircraft:
                 # rate_axs[iq].grid(which="minor",lw=0.5,ls="dotted",c="0.5")
                 rate_axs[ir].grid(which="major",lw=0.6,ls="-",c="0.75")
                 # rate_axs[ir].grid(which="minor",lw=0.5,ls="dotted",c="0.5")
-                rate_fig.supxlabel(r"Time, $t$ [s]")
-                rate_fig.supylabel(r"Rotation Rates [$^\circ$/s]")
+                rate_fig.supxlabel(r"Time, s")
+                rate_fig.supylabel(r"Rotation Rates, deg/s")
                 # xticks
                 rate_axs[ir].set_xticks(ticks=xticks)
                 # line var labels
@@ -3606,11 +3635,16 @@ class Aircraft:
                         Del+r"$r$",bbox=bbox_dict,**lbl_params)
                 if plot_ul_bounds:
                     rate_axs[ 0].fill_between(tarr, xupp[3], xlow[3],**fill)
+                    rate_axs[ 0].fill_between(tarr, xupp[3], xlow[3],ls="-",**fil2)
                     rate_axs[iq].fill_between(tarr, xupp[4], xlow[4],**fill)
+                    rate_axs[iq].fill_between(tarr, xupp[4], xlow[4],
+                        ls="-"+("" if iq else "-"),**fil2)
                     rate_axs[ir].fill_between(tarr, xupp[5], xlow[5],**fill)
+                    rate_axs[ir].fill_between(tarr, xupp[5], xlow[5],
+                        ls="-"+("" if ir else "."),**fil2)
             if not deltas and plot_norm:
-                rate_axs[ 0].plot(tarr, xhat_eq[3],c="k",ls="-",
-                    lw=0.5)
+                rate_axs[ 0].plot(tarr, xhat_eq[3],c="k",
+                    ls="-",lw=0.5)
                 rate_axs[iq].plot(tarr, xhat_eq[4],c="k",
                     ls="-"+("" if iq else "-"),lw=0.5)
                 rate_axs[ir].plot(tarr, xhat_eq[5],c="k",
@@ -3638,7 +3672,7 @@ class Aircraft:
             sfl = dict(color="k",alpha=0.1)
             if self.tracking:
                 # axis labels, legends
-                errs_fig.supxlabel(r"Time, $t$ [s]")
+                errs_fig.supxlabel(r"Time, s")
                 errs_fig.supylabel(r"Error")
                 # xticks
                 errs_axs.set_xticks(ticks=xticks)
@@ -3654,13 +3688,14 @@ class Aircraft:
                     errs_axs.plot(tarr, err[j],c=c,ls=lsj,
                         label=Del+r"$e_{"+names[self.xPi_eul[j]][1:-1]+r"}$")
                     if plot_ul_bounds:
-                        errs_axs.fill_between(tarr,eupp[j],elow[j],ls=lsj,**sfl)
+                        errs_axs.fill_between(tarr,eupp[j],elow[j],**fill)
+                        errs_axs.fill_between(tarr,eupp[j],elow[j],ls=lsj,**fil2)
                 errs_axs.legend()
             
             # # integrator plots
             if self.tracking:
                 # axis labels, legends
-                igrs_fig.supxlabel(r"Time, $t$ [s]")
+                igrs_fig.supxlabel(r"Time, s")
                 igrs_fig.supylabel(r"Integrator State")
                 # xticks
                 igrs_axs.set_xticks(ticks=xticks)
@@ -3678,7 +3713,8 @@ class Aircraft:
                         label=Del+r"$\int e_{"+names[self.xPi_eul[j]][1:-1]\
                             +r"}\, dt$")
                     if plot_ul_bounds:
-                        igrs_axs.fill_between(tarr,gupp[j],glow[j],ls=lsj,**sfl)
+                        igrs_axs.fill_between(tarr,gupp[j],glow[j],**fill)
+                        igrs_axs.fill_between(tarr,gupp[j],glow[j],ls=lsj,**fil2)
                 igrs_axs.legend()
 
             # # xyz plots
@@ -3694,8 +3730,8 @@ class Aircraft:
                 # posn_axs[1].grid(which="minor",lw=0.5,ls="dotted",c="0.5")
                 posn_axs[2].grid(which="major",lw=0.6,ls="-",c="0.75")
                 # posn_axs[2].grid(which="minor",lw=0.5,ls="dotted",c="0.5")
-                posn_fig.supxlabel(r"Time, $t$ [s]")
-                posn_fig.supylabel(r"Position [ft]")
+                posn_fig.supxlabel(r"Time, s")
+                posn_fig.supylabel(r"Position, ft")
                 # xticks
                 posn_axs[2].set_xticks(ticks=xticks)
                 # line var labels
@@ -3709,8 +3745,11 @@ class Aircraft:
                     tarr[ilbl],state[8,ilbl]))
                 if plot_ul_bounds:
                     posn_axs[0].fill_between(tarr, xupp[6], xlow[6],**fill)
+                    posn_axs[0].fill_between(tarr, xupp[6], xlow[6],ls="-",**fil2)
                     posn_axs[1].fill_between(tarr, xupp[7], xlow[7],**fill)
+                    posn_axs[1].fill_between(tarr, xupp[7], xlow[7],ls="-",**fil2)
                     posn_axs[2].fill_between(tarr, xupp[8], xlow[8],**fill)
+                    posn_axs[2].fill_between(tarr, xupp[8], xlow[8],ls="-",**fil2)
             if not deltas and plot_norm:
                 # posn_axs[0].plot(tarr, xhat_eq[6],c="k",ls="-",lw=0.5)
                 posn_axs[1].plot(tarr, xhat_eq[7],c="k",ls="-",lw=0.5)
@@ -3749,8 +3788,8 @@ class Aircraft:
                 # ornt_axs[it].grid(which="minor",lw=0.5,ls="dotted",c="0.5")
                 ornt_axs[ip].grid(which="major",lw=0.6,ls="-",c="0.75")
                 # ornt_axs[ip].grid(which="minor",lw=0.5,ls="dotted",c="0.5")
-                ornt_fig.supxlabel(r"Time, $t$ [s]")
-                ornt_fig.supylabel(r"Orientation [$^\circ$]")
+                ornt_fig.supxlabel(r"Time, s")
+                ornt_fig.supylabel(r"Orientation, deg")
                 # xticks
                 ornt_axs[ip].set_xticks(ticks=xticks)
                 # line var labels
@@ -3763,8 +3802,14 @@ class Aircraft:
                         Del+r"$\psi$",bbox=bbox_dict,**lbl_params)
                 if plot_ul_bounds:
                     ornt_axs[ 0].fill_between(tarr, xupp[ 9], xlow[ 9],**fill)
+                    ornt_axs[ 0].fill_between(tarr, xupp[ 9], xlow[ 9],
+                        ls="-",**fil2)
                     ornt_axs[it].fill_between(tarr, xupp[10], xlow[10],**fill)
+                    ornt_axs[it].fill_between(tarr, xupp[10], xlow[10],
+                        ls="-"+("" if it else "-"),**fil2)
                     ornt_axs[ip].fill_between(tarr, xupp[11], xlow[11],**fill)
+                    ornt_axs[ip].fill_between(tarr, xupp[11], xlow[11],
+                        ls="-"+("" if ip else "."),**fil2)
             if not deltas and plot_norm:
                 ornt_axs[ 0].plot(tarr, xhat_eq[ 9],c="k",
                     ls="-",lw=0.5)
@@ -3831,10 +3876,10 @@ class Aircraft:
                 # ctrl_axs[2].grid(which="minor",lw=0.5,ls="dotted",c="0.5")
                 ctrl_axs[3].grid(which="major",lw=0.6,ls="-",c="0.75")
                 # ctrl_axs[3].grid(which="minor",lw=0.5,ls="dotted",c="0.5")
-                ctrl_fig.supxlabel(r"Time, $t$ [s]")
-                ctrl_fig.supylabel(r"Input [$^\circ$ or per unit]")
-                surf_fig.supxlabel(r"Time, $t$ [s]")
-                surf_fig.supylabel(r"Input [$^\circ$]")
+                ctrl_fig.supxlabel(r"Time, s")
+                ctrl_fig.supylabel(r"Input, deg or per-unit")
+                surf_fig.supxlabel(r"Time, s")
+                surf_fig.supylabel(r"Input, deg")
                 # xticks
                 ctrl_axs[3].set_xticks(ticks=xticks)
                 surf_axs   .set_xticks(ticks=xticks)
@@ -3850,14 +3895,21 @@ class Aircraft:
                     Del+r"$\tau$",bbox=bbox_dict,**lbl_params)
                 if plot_ul_bounds:
                     ctrl_axs[0].fill_between(tarr, cupp[0], clow[0],**fill)
+                    ctrl_axs[0].fill_between(tarr, cupp[0], clow[0],ls="-",**fil2)
                     ctrl_axs[1].fill_between(tarr, cupp[1], clow[1],**fill)
+                    ctrl_axs[1].fill_between(tarr, cupp[1], clow[1],ls="-",**fil2)
                     ctrl_axs[2].fill_between(tarr, cupp[2], clow[2],**fill)
+                    ctrl_axs[2].fill_between(tarr, cupp[2], clow[2],ls="-",**fil2)
                     ctrl_axs[3].fill_between(tarr, cupp[3], clow[3],**fill)
+                    ctrl_axs[3].fill_between(tarr, cupp[3], clow[3],ls="-",**fil2)
                     #
                     sfl = dict(color="k",alpha=0.1)
-                    surf_axs.fill_between(tarr, cupp[0], clow[0],ls= "-",**sfl)
-                    surf_axs.fill_between(tarr, cupp[1], clow[1],ls="--",**sfl)
-                    surf_axs.fill_between(tarr, cupp[2], clow[2],ls="-.",**sfl)
+                    surf_axs.fill_between(tarr, cupp[0], clow[0],**fill)
+                    surf_axs.fill_between(tarr, cupp[0], clow[0],ls="-",**fil2)
+                    surf_axs.fill_between(tarr, cupp[1], clow[1],**fill)
+                    surf_axs.fill_between(tarr, cupp[1], clow[1],ls="--",**fil2)
+                    surf_axs.fill_between(tarr, cupp[2], clow[2],**fill)
+                    surf_axs.fill_between(tarr, cupp[2], clow[2],ls="-.",**fil2)
             if not deltas and plot_norm:
                 ctrl_axs[0].plot(tarr, uhat_eq[0],c="k",ls="-",lw=0.5)
                 ctrl_axs[1].plot(tarr, uhat_eq[1],c="k",ls="-",lw=0.5)
@@ -4057,15 +4109,19 @@ class Aircraft:
             Del+r"$\dot{\delta}_"+dr+r"$",bbox=bbox_dict,**lbl_params)
         udot_axs[3].text(tarr[ilbl],udot[3,ilbl],
             Del+r"$\dot{\tau}$",bbox=bbox_dict,**lbl_params)
-        udot_fig.supxlabel(r"Time, $t$ [s]")
-        udot_fig.supylabel(r"control rate [$^\circ$/s or per-unit/s]")
+        udot_fig.supxlabel(r"Time, s")
+        udot_fig.supylabel(r"Control Rate, deg/s or per-unit/s")
         # xticks
         udot_axs[3].set_xticks(ticks=xticks)
         if plot_ul_bounds:
             udot_axs[0].fill_between(tarr, udpp[0], udow[0],**fill)
+            udot_axs[0].fill_between(tarr, udpp[0], udow[0],ls="-",**fil2)
             udot_axs[1].fill_between(tarr, udpp[1], udow[1],**fill)
+            udot_axs[1].fill_between(tarr, udpp[1], udow[1],ls="-",**fil2)
             udot_axs[2].fill_between(tarr, udpp[2], udow[2],**fill)
+            udot_axs[2].fill_between(tarr, udpp[2], udow[2],ls="-",**fil2)
             udot_axs[3].fill_between(tarr, udpp[3], udow[3],**fill)
+            udot_axs[3].fill_between(tarr, udpp[3], udow[3],ls="-",**fil2)
         udot_axs[0].plot(tarr, udot[0],c=c,ls="-",label=udot_lbl)
         udot_axs[1].plot(tarr, udot[1],c=c,ls="-")
         udot_axs[2].plot(tarr, udot[2],c=c,ls="-")
@@ -4163,15 +4219,19 @@ class Aircraft:
             Del+r"$\ddot{\delta}_"+dr+r"$",bbox=bbox_dict,**lbl_params)
         uddt_axs[3].text(tarr[ilbl],uddt[3,ilbl],
             Del+r"$\ddot{\tau}$",bbox=bbox_dict,**lbl_params)
-        uddt_fig.supxlabel(r"Time, $t$ [s]")
-        uddt_fig.supylabel(r"control accel [$^\circ$/s$^2$ or per-unit/s$^2$]")
+        uddt_fig.supxlabel(r"Time, s")
+        uddt_fig.supylabel(r"Control Acceleration, deg/s$^2$ or per-unit/s$^2$")
         # xticks
         uddt_axs[3].set_xticks(ticks=xticks)
         if plot_ul_bounds:
             uddt_axs[0].fill_between(tarr, uddp[0], uddw[0],**fill)
+            uddt_axs[0].fill_between(tarr, uddp[0], uddw[0],ls="-",**fil2)
             uddt_axs[1].fill_between(tarr, uddp[1], uddw[1],**fill)
+            uddt_axs[1].fill_between(tarr, uddp[1], uddw[1],ls="-",**fil2)
             uddt_axs[2].fill_between(tarr, uddp[2], uddw[2],**fill)
+            uddt_axs[2].fill_between(tarr, uddp[2], uddw[2],ls="-",**fil2)
             uddt_axs[3].fill_between(tarr, uddp[3], uddw[3],**fill)
+            uddt_axs[3].fill_between(tarr, uddp[3], uddw[3],ls="-",**fil2)
         uddt_axs[0].plot(tarr, uddt[0],c=c,ls="-",label=uddt_lbl)
         uddt_axs[1].plot(tarr, uddt[1],c=c,ls="-")
         uddt_axs[2].plot(tarr, uddt[2],c=c,ls="-")
@@ -4401,7 +4461,10 @@ class GainSchedulingAircraft(Aircraft):
                 inputs = u*1.
         
         # limit actuators
-        # u = self._limit_input(u)
+        # #vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
+        if self.integrator == "odeint":
+            u = self._limit_input(u)
+        # #^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
         inputs = self._limit_input(inputs)
         if self.order > 0:
             q = 1*self.use_quaternions
@@ -4410,6 +4473,7 @@ class GainSchedulingAircraft(Aircraft):
         inputs = self._quantize_input(inputs)
 
         return u,inputs
+
 
 
 def damped_sinusoid(x,A,s,w,p):
@@ -6002,8 +6066,8 @@ def monte_carlo_perturbations(filename,rtdst_1sg=[5.,5.,5.],
             ms.append(mss)
             zord.append( k )
         else:
-            clrs.append( "w" ) # (1.0,1.0,1.0) ) # white
-            mec.append( "k" ) # (0.0,0.0,0.0) )
+            clrs.append( "0.6" ) # "w" ) # (1.0,1.0,1.0) ) # white
+            mec.append( "0.6" ) # "k" ) # (0.0,0.0,0.0) )
             ms.append(msu)
             zord.append( k+num )
     
@@ -6051,9 +6115,12 @@ def monte_carlo_perturbations(filename,rtdst_1sg=[5.,5.,5.],
         #     )
         lgnd_elms_sp.append(Line2D([0], [0], 
             c="k",ls="none",mec="k",mew=0.5,ms=mss,marker="o"))
-        lgnd_elms_lbls.append("$t_c \leq${:> 2.0f} s".format(aircraft.tf))
         lgnd_elms_sp.append(Line2D([0], [0],
-            c="w",ls="none",mec="k",mew=0.5,ms=msu,marker="o"))
+            c="0.6",ls="none",mec="0.6",mew=0.5,ms=msu,marker="o"))
+        #     c="w",ls="none",mec="k",mew=0.5,ms=msu,marker="o"))
+        # lgnd_elms_lbls.append("converged")
+        # lgnd_elms_lbls.append("unconverged")
+        lgnd_elms_lbls.append("$t_c \leq${:> 2.0f} s".format(aircraft.tf))
         lgnd_elms_lbls.append("$t_c>${:> 2.0f} s".format(aircraft.tf))
         #
         # FM
@@ -6113,6 +6180,8 @@ def monte_carlo_perturbations(filename,rtdst_1sg=[5.,5.,5.],
         q_argsort = np.argsort(disturbs[1,:])
         r_argsort = np.argsort(disturbs[2,:])
         fig, ax = plt.subplots(figsize=(3.25,2.4375),layout="constrained")
+        FMname = ["Lift Force","Side-Force","Drag Force",
+            "Rolling Moment","Pitching Moment","Yawing Moment"]
         for i,coeff in enumerate(names):
             if FM_error[i]:
                 err_sort = np.argsort(FM_err_percs[i,:])
@@ -6120,8 +6189,9 @@ def monte_carlo_perturbations(filename,rtdst_1sg=[5.,5.,5.],
                     c=clrs[k],mec=mec[k],mew=0.5,ms=ms[k]) for k in err_sort]
                 leg = ax.legend(handles=lgnd_elms_sp,labels=lgnd_elms_lbls,\
                     loc=(1.0,0.05),borderpad=0.1,handletextpad=0.0)
-                ax.set_xlabel(r"$\epsilon_{C_" + coeff[1:] + "}$")
-                ax.set_ylabel(r"time to converge, $t_c$ [s]")
+                ax.set_xlabel(FMname[i] + " Error " + \
+                    r"$\epsilon_{C_" + (i == 3)*"\\" + coeff[1:] + "}$")
+                ax.set_ylabel(r"Time to Converge, s")
                 ax.grid(which="major",lw=0.6,ls="-",c="0.75")
                 fig.savefig(file_folder+"/"+run_name+"_"+coeff+\
                     "_tc.pdf",**savedict)
@@ -6133,8 +6203,8 @@ def monte_carlo_perturbations(filename,rtdst_1sg=[5.,5.,5.],
             c=clrs[k],mec=mec[k],mew=0.5,ms=ms[k]) for k in p_argsort]
         ax.legend(handles=lgnd_elms_sp,labels=lgnd_elms_lbls,loc=(1.0,0.05),
             borderpad=0.1,handletextpad=0.0)
-        ax.set_xlabel(r"$p$ [$^\circ$/s]")
-        ax.set_ylabel(r"time to converge, $t_c$ [s]")
+        ax.set_xlabel( r"Initial Roll Rate $\Delta p_0$, deg/s")
+        ax.set_ylabel(r"Time to Converge, s")
         ax.grid(which="major",lw=0.6,ls="-",c="0.75")
         fig.savefig(file_folder+"/"+run_name+"_p_tc.pdf",**savedict)
         ax.cla()
@@ -6142,8 +6212,8 @@ def monte_carlo_perturbations(filename,rtdst_1sg=[5.,5.,5.],
             c=clrs[k],mec=mec[k],mew=0.5,ms=ms[k]) for k in q_argsort]
         ax.legend(handles=lgnd_elms_sp,labels=lgnd_elms_lbls,loc=(1.0,0.05),
             borderpad=0.1,handletextpad=0.0)
-        ax.set_xlabel(r"$q$ [$^\circ$/s]")
-        ax.set_ylabel(r"time to converge, $t_c$ [s]")
+        ax.set_xlabel(r"Initial Pitch Rate $\Delta q_0$, deg/s")
+        ax.set_ylabel(r"Time to Converge, s")
         ax.grid(which="major",lw=0.6,ls="-",c="0.75")
         fig.savefig(file_folder+"/"+run_name+"_q_tc.pdf",**savedict)
         ax.cla()
@@ -6151,23 +6221,38 @@ def monte_carlo_perturbations(filename,rtdst_1sg=[5.,5.,5.],
             c=clrs[k],mec=mec[k],mew=0.5,ms=ms[k]) for k in r_argsort]
         ax.legend(handles=lgnd_elms_sp,labels=lgnd_elms_lbls,loc=(1.0,0.05),
             borderpad=0.1,handletextpad=0.0)
-        ax.set_xlabel(r"$r$ [$^\circ$/s]")
-        ax.set_ylabel(r"time to converge, $t_c$ [s]")
+        ax.set_xlabel(  r"Initial Yaw Rate $\Delta r_0$, deg/s")
+        ax.set_ylabel(r"Time to Converge, s")
         ax.grid(which="major",lw=0.6,ls="-",c="0.75")
         fig.savefig(file_folder+"/"+run_name+"_r_tc.pdf",**savedict)
+        ax.cla()
+
+        # # magnitude plot
+        print("        weighted magnitude plot...")
+        pqr_E = state_threshold[3:6]
+        mag = ( (disturbs[0]/pqr_E[0])**2. + (disturbs[1]/pqr_E[1])**2. \
+            + (disturbs[2]/pqr_E[2])**2. )**0.5
+        [ax.plot(how_stable[k]*aircraft.tf,mag[k],"o",\
+            c=clrs[k],mec=mec[k],mew=0.5,ms=ms[k]) for k in r_argsort]
+        ax.legend(handles=lgnd_elms_sp,labels=lgnd_elms_lbls,loc=(1.0,0.05),
+            borderpad=0.1,handletextpad=0.0)
+        ax.set_ylabel(r"Weighted Initial Disturbance")
+        ax.set_xlabel(r"Time to Converge, s")
+        ax.grid(which="major",lw=0.6,ls="-",c="0.75")
+        fig.savefig(file_folder+"/"+run_name+"_mag_tc.pdf",**savedict)
         plt.close(fig)
 
         # 3D plot
         print("    pqr 3D plot...")
         # fig = plt.figure(figsize=(3.25,2.4375))#layout="constrained")
         # ax = fig.add_subplot(111,projection='3d')#,layout="constrained")
-        fig, ax = plt.subplots(figsize=(3.25,2.4375),constrained_layout=True,
+        fig, ax = plt.subplots(figsize=(3.25,2.4375),#constrained_layout=True,
             subplot_kw={"projection":"3d"})
         # plt.subplots_adjust(wspace=0.0,hspace=0.0)
         max_rate = np.max(np.abs(disturbs))
-        ax.set_xlabel(r'$p$ [$^\circ$/s]',labelpad=0.0)
-        ax.set_ylabel(r'$q$ [$^\circ$/s]',labelpad=0.0)
-        ax.set_zlabel(r'$r$ [$^\circ$/s]',labelpad=0.0)
+        ax.set_xlabel( r'$\qquad\qquad$Roll Rate, deg/s',labelpad=0.0) # $\Delta p_0$
+        ax.set_ylabel(r'Pitch Rate, deg/s$\qquad\qquad$',labelpad=0.0) # $\Delta q_0$
+        ax.set_zlabel(  r'Yaw Rate, deg/s',labelpad=0.0) # $\Delta r_0$
         # plt.tight_layout()
         ax.invert_zaxis()
         ax.view_init(0,0)
@@ -7298,7 +7383,7 @@ if __name__ == "__main__":
     base_dict["controller"]["LQR"] = {**bire_dict["controller"]["LQR"]}
     # run_bire["FM_errors"][0] = 0.03
     # run_bire["FM_errors"][2] = 0.1
-    run_base["name_end"] = run_bire["name_end"] = "_" + f1 + "_BK_3w" #  + "_BK_3" # _hs" # "_BK_agt" # _aaab" # 
+    run_base["name_end"] = run_bire["name_end"] = "_" + f1 + "_BK_3" # _hs" # 
     run_base["has_turbulence"] = run_bire["has_turbulence"] = False # True # 
     run_base["has_model_error"] = run_bire["has_model_error"] = False # True # 
 
@@ -7926,9 +8011,9 @@ if __name__ == "__main__":
     # ##############
     di = [90.,10.,2.5]
     # di = [0.,0.,0.0]
-    plot_vars["plot_full"] = True # False # 
-    plot_vars["plot_delta"] = False # True # 
-    plot_vars["zoom_deltas"] = False # True # 
+    plot_vars["plot_full"] = False # True # 
+    plot_vars["plot_delta"] = True # False # 
+    plot_vars["zoom_deltas"] = True # False # 
     plot_vars["zoom_full"] = False # True # 
     plot_vars["format"] = "png"
     # plot_vars["format"] = "pdf"
@@ -7939,13 +8024,17 @@ if __name__ == "__main__":
     run_base["skip_simulation"] = run_bire["skip_simulation"] = False
     # # #
     run_bire["num"] = run_base["num"] = 1
-    ###########################################################################
-    run_base["mrrr"] = run_bire["mrrr"] = [0,2,6,7,8,9,10,11]
-    run_base["mrrc"] = run_bire["mrrc"] = [2,3]
-    ###########################################################################
+    # ###########################################################################
+    # run_base["mrrr"] = run_bire["mrrr"] = [0,2,6,7,8,9,10,11]
+    # run_base["mrrc"] = run_bire["mrrc"] = [2,3]
+    # ###########################################################################
     run_base["final_time"] = run_bire["final_time"] = 15.0 # 1.0 # 5.0 # 
     # di = [1.0,1.0,1.0]
-    ###########################################################################
+    # ###########################################################################
+    # run_bire["has_turbulence"] = run_base["has_turbulence"] = True # False # 
+    # run_bire["has_model_error"] = run_base["has_model_error"] = True # False # 
+    # run_bire["fixed_FM_errors"] = run_base["fixed_FM_errors"] = \
+    #     [0.1,0.1,0.1,0.1,0.1,0.1]
     run_single_simulation(bire_dict,rtdst_1sg=di,**run_bire,**plot_vars)
     # run_single_simulation(base_dict,rtdst_1sg=di,**run_base,**plot_vars)
     quit()
@@ -7957,32 +8046,36 @@ if __name__ == "__main__":
     # quit()
 
     # # run monte carlo perturbation analysis
-    bire_dict["initial"]["trim_guess"] = {}
-    bire_dict["initial"]["trim_guess"]["BIRE[deg]"] = 1.0
+    # bire_dict["initial"]["trim_guess"] = {}
+    # bire_dict["initial"]["trim_guess"]["BIRE[deg]"] = 1.0
     # bire_dict["initial"]["trim_guess"]["BIRE[deg]"] = 60.0
     # bire_dict["initial"]["trim_guess"]["elevator[deg]"] = 25.0
-    run_base["trim_bank"] = run_bire["trim_bank"] = 30.0
+    run_base["trim_bank"] = run_bire["trim_bank"] = 0.0
     run_base["gain_steps"] = run_bire["gain_steps"] = 2
-    di = [100.,12.,3.]
-    # di = [100.,5.,3.]
+    di = [100.,12.,3.] # SLF
+    # di = [100.,5.,3.] # SCT
     # # # di = [120.,0.,0.]
     # di = [0.,80.,0.]
     # # # di = [0.,0.,5.] # [0.,0.,10.] #
     # di = [120.,25.,5.]
     # plot_vars["format"] = "png"
-    run_bire["num"] = run_base["num"] = 1000
-    # run_base["has_model_error"] = run_bire["has_model_error"] = False # True # 
+    plot_vars["format"] = "pdf"
+    run_base["plot_ul_bounds"] = run_bire["plot_ul_bounds"] = True # False # 
+    run_bire["num"] = run_base["num"] = 10 # 1000 # 
+    # run_base["has_model_error"] = run_bire["has_model_error"] = True # False # 
+    # run_bire["FM_errors"] = [ 0.03, 0.25, 0.10, 0.25, 0.25, 0.25 ]
     monte_carlo_perturbations(bire_dict,rtdst_1sg=di,**run_bire,**plot_vars)
     # monte_carlo_perturbations(base_dict,rtdst_1sg=di,**run_base,**plot_vars)
     quit()
     #
     # # single axis pqr dispersions
-    # disa = [[120.,0.,0.],[0.,40.,0.],[0.,0.,5.]]
+    # disa = [[120.,0.,0.],[0.,40.,0.],[0.,0.,5.]] # SLF
+    # # disa = [[120.,0.,0.],[0.,10.,0.],[0.,0.,5.]] # SCT
     # # bire_dict["initial"]["trim_guess"] = {}
     # # bire_dict["initial"]["trim_guess"]["BIRE[deg]"] = 1.0
     # # run_base["name_end"] = run_bire["name_end"] = "_" + f1 + "_BK_hs_two"
-    # disa = [[120.,0.,0.],[0.,10.,0.],[0.,0.,5.]]
-    # for i in range(3): # [1]: # 
+    # run_base["plot_ul_bounds"] = run_bire["plot_ul_bounds"] = True # False # 
+    # for i in range(3): # [0]: # [1]: # 
     #     ds = disa[i]
     #     monte_carlo_perturbations(bire_dict,rtdst_1sg=ds,**run_bire,**plot_vars)
     #     # monte_carlo_perturbations(base_dict,rtdst_1sg=ds,**run_base,**plot_vars)
@@ -7991,6 +8084,7 @@ if __name__ == "__main__":
     # # single FM error dispersions
     # names = ["CL","CS","CD","Cl","Cm","Cn"]
     # run_base["has_model_error"] = run_bire["has_model_error"] = True
+    # run_base["plot_ul_bounds"] = run_bire["plot_ul_bounds"] = True # False # 
     # first_name = True
     # for i in range(len(names)):
     #     name = names[i]
@@ -8013,6 +8107,7 @@ if __name__ == "__main__":
     # # run for roa plots / diff controllers
     # run_bire["has_turbulence"] = run_base["has_turbulence"] = False # True # 
     # run_bire["has_model_error"] = run_base["has_model_error"] = True # False # 
+    # run_base["plot_ul_bounds"] = run_bire["plot_ul_bounds"] = True # False # 
     # monte_carlo_perturbations(bire_dict,rtdst_1sg=di,**run_bire,**plot_vars)
     # # monte_carlo_perturbations(base_dict,rtdst_1sg=di,**run_base,**plot_vars)
     # run_bire["mrrc"] = [2]

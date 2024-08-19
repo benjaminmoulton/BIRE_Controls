@@ -165,3 +165,6 @@ cython_debug/
 # ignore fail plots
 controls/track_plots/monte_carlo/**/fail_plots/
 controls/stblz_plots/monte_carlo/**/fail_plots/
+# ignore png in monte_carlo runs
+controls/track_plots/monte_carlo/**/**/*.png
+controls/stblz_plots/monte_carlo/**/**/*.png
