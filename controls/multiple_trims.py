@@ -20,28 +20,31 @@ if __name__ == "__main__":
     bire_dict = json.loads( open(bire_file).read() )
     
     # flight conditions
+    u1M = 0.331014489952403
     flight_conditions = {
         "A1" : { "m" : 0.2 , "h" :     0., "V" : 222., "Re" :        0. },
         "T1" : { "m" : 0.2 , "h" :  1000., "V" : 222., "Re" : 15641000. },
         "T2" : { "m" : 0.19, "h" : 15000., "V" : 201., "Re" :  9919000. },
         "C1" : { "m" : 0.8 , "h" :  1000., "V" : 890., "Re" : 62563000. },
         "C2" : { "m" : 0.6 , "h" : 15000., "V" : 634., "Re" : 31324000. },
-        "C3" : { "m" : 0.8 , "h" : 30000., "V" : 796., "Re" : 25828000. }
+        "C3" : { "m" : 0.8 , "h" : 30000., "V" : 796., "Re" : 25828000. },
+        "U1" : { "m" : u1M , "h" : 15000., "V" : 350., "Re" : "unkn"    } # no compr no stall
     }
 
     # settings 
     ## Continue from bire_fs_shss_T1_M02_H010_CGp10p00p00_B14
-    run_bire = True # False # 
+    run_bire = False # True # 
     run_sct  = True # False # 
     run_fs = True
     skip_run = True # False # 
-    if run_sct: trim_bank_degs = [0.0] # np.linspace(0.0,75.0,num=16).tolist() # [10.0] # [60.0] # np.linspace(0.0,75.0,num=16).tolist() # 
+    skip_DOC = True # False # 
+    if run_sct: trim_bank_degs = np.linspace(0.0,60.0,num=13).tolist() # [0.0] # np.linspace(0.0,75.0,num=16).tolist() # [10.0] # [60.0] # np.linspace(0.0,75.0,num=16).tolist() # 
     else: trim_beta_degs = [6.0] # np.linspace(0.0,16.0,num=9).tolist() # np.linspace(0.0,16.0,num=9).tolist() # [14.0,16.0] # [0.0] # 
-    fc = "C2" # "T1" # "A1" # 
-    cgshift = [1.0,0.0,0.0] # [0.5,0.0,0.0] # [1.0,0.0,0.0] # [0.5,0.0,0.0] # 
-    include_compressibility =  True # False # 
+    fc = "U1" # "C2" # "T1" # "A1" # 
+    cgshift = [1.0,0.0,0.0] # [0.0,0.0,0.0] # [0.5,0.0,0.0] # [0.5,0.0,0.0] # 
+    include_compressibility =  False # True # 
     use_Anderson_corrections =  True # False # 
-    include_stall =  True # False # 
+    include_stall =  False # True # 
     plotting_xcgs = [0.0,0.5,1.0]
     plot_inverted_trims = False # True # 
     plot_alternate_trims = True # False # 
@@ -51,7 +54,7 @@ if __name__ == "__main__":
     plot_dark = True # False # 
     #
     # other settings
-    run_num = 1000 # 20 # 
+    run_num = 1000 # 30 # 
     trim_iter = 1000 # 1000
     mfc = flight_conditions[fc]["m"] # 0.2 # 
     hfc = flight_conditions[fc]["h"] # 1000.0 # 
@@ -340,111 +343,112 @@ if __name__ == "__main__":
                     # print(craft,trims[craft]["ind_var"][j],tails,noninvs,any(noninvs),indsort,minind)
             
             # Determine eigendecomposed matrix
-            for j,trim_set in enumerate(trims[craft]["dicts"]):
-                for trim_sol in trim_set:
-                    # if craft[:4] == "bire":
-                    #     continue
-                    # if craft[4:] != "_CGp10p00p00":
-                    #     continue
-                    solution = trim_set[trim_sol]
-                    A = solution["Linearized_system_trim"]["A"]
-                    B = solution["Linearized_system_trim"]["B"]
-                    # rows = [0,2,4,8]
-                    # cols = [0,1,2]
-                    # A = (np.array(A)[rows])[:,rows].tolist()
-                    # B = (np.array(B)[rows])[:,cols].tolist()
-                    # f = 2.0
-                    # A = np.array([ [-1.,-f-1.,0.], [0.,0.,1.], [1.,2.,0.] ])
-                    # B = np.array([ [1.,0.], [0.,0.], [-1.,-1.] ])
-                    eigs,Q = np.linalg.eig(A)
-                    i_eigs = np.argsort(eigs)
-                    i_s = list(range(len(eigs[eigs < 0.0])))
-                    i_a = np.delete(range(len(eigs)),i_s).tolist()
-                    eigs = eigs[i_eigs]; Q = Q[:,i_eigs]
-                    Qinv = np.linalg.solve(Q,np.eye(Q.shape[0]))
-                    # A
-                    AT = mm(Qinv,mm(A,Q))
-                    As = (AT[i_s])[:,i_s]
-                    Aa = (AT[i_a])[:,i_a]
-                    # C
-                    Cs = np.eye(len(A))[i_s]
-                    Ca = np.eye(len(A))[i_a]
-                    Wss = []
-                    Was = []
-                    for col in range(len(B[0])):
-                        # B
-                        BT = mm(Qinv,B)[:,col:col+1] # [:,0:1] #  # 
-                        # slice off stable and unstable
-                        Bs = BT[i_s]
-                        Ba = BT[i_a]
-                        # solve for grammians co lyap is A X + X A^T + Q = 0
-                        Wsinv = np.linalg.solve(co.lyap( \
-                            As,mm(Bs,Bs.conj().T)),np.eye(len(i_s)))
-                        if len(i_a):
-                            Wainv = np.linalg.solve(co.lyap( \
-                                -Aa,mm(Ba,Ba.conj().T)),np.eye(len(i_a)))
-                        else:
-                            Wainv = []
+            if not(skip_DOC):
+                for j,trim_set in enumerate(trims[craft]["dicts"]):
+                    for trim_sol in trim_set:
+                        # if craft[:4] == "bire":
+                        #     continue
+                        # if craft[4:] != "_CGp10p00p00":
+                        #     continue
+                        solution = trim_set[trim_sol]
+                        A = solution["Linearized_system_trim"]["A"]
+                        B = solution["Linearized_system_trim"]["B"]
+                        # rows = [0,2,4,8]
+                        # cols = [0,1,2]
+                        # A = (np.array(A)[rows])[:,rows].tolist()
+                        # B = (np.array(B)[rows])[:,cols].tolist()
+                        # f = 2.0
+                        # A = np.array([ [-1.,-f-1.,0.], [0.,0.,1.], [1.,2.,0.] ])
+                        # B = np.array([ [1.,0.], [0.,0.], [-1.,-1.] ])
+                        eigs,Q = np.linalg.eig(A)
+                        i_eigs = np.argsort(eigs)
+                        i_s = list(range(len(eigs[eigs < 0.0])))
+                        i_a = np.delete(range(len(eigs)),i_s).tolist()
+                        eigs = eigs[i_eigs]; Q = Q[:,i_eigs]
+                        Qinv = np.linalg.solve(Q,np.eye(Q.shape[0]))
+                        # A
+                        AT = mm(Qinv,mm(A,Q))
+                        As = (AT[i_s])[:,i_s]
+                        Aa = (AT[i_a])[:,i_a]
+                        # C
+                        Cs = np.eye(len(A))[i_s]
+                        Ca = np.eye(len(A))[i_a]
+                        Wss = []
+                        Was = []
+                        for col in range(len(B[0])):
+                            # B
+                            BT = mm(Qinv,B)[:,col:col+1] # [:,0:1] #  # 
+                            # slice off stable and unstable
+                            Bs = BT[i_s]
+                            Ba = BT[i_a]
+                            # solve for grammians co lyap is A X + X A^T + Q = 0
+                            Wsinv = np.linalg.solve(co.lyap( \
+                                As,mm(Bs,Bs.conj().T)),np.eye(len(i_s)))
+                            if len(i_a):
+                                Wainv = np.linalg.solve(co.lyap( \
+                                    -Aa,mm(Ba,Ba.conj().T)),np.eye(len(i_a)))
+                            else:
+                                Wainv = []
 
-                        Wsinvf = mm(mm(mm(mm(\
-                            Qinv.conj().T,Cs.T),Wsinv),Cs),Qinv)
-                        if len(i_a):
-                            Wainvf = mm(mm(mm(mm(\
-                                Qinv.conj().T,Ca.T),Wainv),Ca),Qinv)
-                        else:
-                            Wainvf = np.zeros((len(A),len(A)))
-                        # print(Cs)
-                        # print(Wsinvf)
-                        # print(Wsinvf.shape)
-                        # print(Ca)
-                        # print(Wainvf)
-                        # print(Wainvf.shape)
-                        Wss.append(Wsinvf)
-                        Was.append(Wainvf)
-                    trims[craft]["dicts"][j][trim_sol]["Linearized_system_trim"]["Wss"] = Wss
-                    trims[craft]["dicts"][j][trim_sol]["Linearized_system_trim"]["Was"] = Was
-                    # x0 = np.array([0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,1.0])
-                    # xf = np.array([0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0])
-                    # #
-                    # rhobars = [np.abs(mm(xf,mm(Wss[k],xf))) for k in range(len(Wss))]
-                    # rhobara = [np.abs(mm(x0,mm(Was[k],x0))) for k in range(len(Was))]
-                    # rhobarT = [rhobars[k] + rhobara[k] for k in range(len(rhobars))]
-                    # print(rhobarT)
-                    # # newWss = np.block([Wss[0],Wss[1],Wss[2],Wss[3]])
-                    # # newWss = mm(newWss,np.block([[np.eye(9)],[np.eye(9)],[np.eye(9)],[np.eye(9)]]))
-                    # # rhobarT = 
-                    # quit()
-                    # #
-                    # #
-                    # xT0 = mm(Qinv,x0)
-                    # xTf = mm(Qinv,xf)
-                    # xa0 = xT0[i_a]
-                    # xsf = xTf[i_s]
-                    # xc = np.concatenate((xsf,xa0))
-                    # rhobar = mm(xc[:,np.newaxis].conj().T,mm(Winv,xc))[0]
-                    # print("i_s\n",i_s)
-                    # print("i_a\n",i_a)
-                    # print("eigs\n",eigs)
-                    # print()
-                    # print("Q\n",Q)
-                    # print()
-                    # print("Qinv\n",Qinv)
-                    # print()
-                    # print("AT\n",AT)
-                    # print()
-                    # print("BT\n",BT)
-                    # print()
-                    # print("Wsinv\n",Wsinv)
-                    # print()
-                    # print("Wainv\n",Wainv)
-                    # print()
-                    # print("xT0\n",xT0)
-                    # print()
-                    # print("xTf\n",xTf)
-                    # print()
-                    # print("rhobar\n",rhobar)
-                    # print()
-                    # quit()
+                            Wsinvf = mm(mm(mm(mm(\
+                                Qinv.conj().T,Cs.T),Wsinv),Cs),Qinv)
+                            if len(i_a):
+                                Wainvf = mm(mm(mm(mm(\
+                                    Qinv.conj().T,Ca.T),Wainv),Ca),Qinv)
+                            else:
+                                Wainvf = np.zeros((len(A),len(A)))
+                            # print(Cs)
+                            # print(Wsinvf)
+                            # print(Wsinvf.shape)
+                            # print(Ca)
+                            # print(Wainvf)
+                            # print(Wainvf.shape)
+                            Wss.append(Wsinvf)
+                            Was.append(Wainvf)
+                        trims[craft]["dicts"][j][trim_sol]["Linearized_system_trim"]["Wss"] = Wss
+                        trims[craft]["dicts"][j][trim_sol]["Linearized_system_trim"]["Was"] = Was
+                        # x0 = np.array([0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,1.0])
+                        # xf = np.array([0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0])
+                        # #
+                        # rhobars = [np.abs(mm(xf,mm(Wss[k],xf))) for k in range(len(Wss))]
+                        # rhobara = [np.abs(mm(x0,mm(Was[k],x0))) for k in range(len(Was))]
+                        # rhobarT = [rhobars[k] + rhobara[k] for k in range(len(rhobars))]
+                        # print(rhobarT)
+                        # # newWss = np.block([Wss[0],Wss[1],Wss[2],Wss[3]])
+                        # # newWss = mm(newWss,np.block([[np.eye(9)],[np.eye(9)],[np.eye(9)],[np.eye(9)]]))
+                        # # rhobarT = 
+                        # quit()
+                        # #
+                        # #
+                        # xT0 = mm(Qinv,x0)
+                        # xTf = mm(Qinv,xf)
+                        # xa0 = xT0[i_a]
+                        # xsf = xTf[i_s]
+                        # xc = np.concatenate((xsf,xa0))
+                        # rhobar = mm(xc[:,np.newaxis].conj().T,mm(Winv,xc))[0]
+                        # print("i_s\n",i_s)
+                        # print("i_a\n",i_a)
+                        # print("eigs\n",eigs)
+                        # print()
+                        # print("Q\n",Q)
+                        # print()
+                        # print("Qinv\n",Qinv)
+                        # print()
+                        # print("AT\n",AT)
+                        # print()
+                        # print("BT\n",BT)
+                        # print()
+                        # print("Wsinv\n",Wsinv)
+                        # print()
+                        # print("Wainv\n",Wainv)
+                        # print()
+                        # print("xT0\n",xT0)
+                        # print()
+                        # print("xTf\n",xTf)
+                        # print()
+                        # print("rhobar\n",rhobar)
+                        # print()
+                        # quit()
         # quit()
         
         # width in inches
@@ -516,14 +520,14 @@ if __name__ == "__main__":
                         if cname == "bire":
                             # print(i,j,trims[craft]["min_ind"][i],ivr)
                             if j == trims[craft]["min_ind"][i]:
-                                kdict |= dict(marker = odBm)
+                                kdict = {**kdict, **dict(marker = odBm)}
                             elif sol["u_trim"][2] > 0.0:
-                                kdict |= dict(marker = pdBm)
+                                kdict = {**kdict, **dict(marker = pdBm)}
                             else: # if sol["u_trim"][2] < 0.0:
-                                kdict |= dict(marker = ndBm) # 
-                        else:   kdict |= dict(marker = odrm)
+                                kdict = {**kdict, **dict(marker = ndBm)}
+                        else:   kdict = {**kdict, **dict(marker = odrm)}
                         # cg loc
-                        kdict |= dict(color = str(xcg_shade_inverter(xcg)))
+                        kdict = {**kdict, **dict(color = str(xcg_shade_inverter(xcg)))}
                         # neg xcgs
                         if xcg == -1.0:
                             kdict["color"] = "b"
@@ -536,7 +540,7 @@ if __name__ == "__main__":
                         if np.rad2deg(abs(sol["angles"][k])) > 90.0:
                             kdict["color"] = "m"
                         # others
-                        kdict |= rest_dict
+                        kdict = {**kdict, **rest_dict}
                         # PLOTS!
                         if cname == "bire" and j != trims[craft]["min_ind"][i] \
                             and not(plot_alternate_trims):
@@ -569,20 +573,21 @@ if __name__ == "__main__":
                         axs_eg.plot(np.max(np.real(evals)),ivr,**kdict)
                         #
                         # DOC
-                        for g in range(len(axs_DC)):
-                            # to zero
-                            x0 = np.zeros((9,)); x0[g] = 1.0; xf = x0*0.0
-                            Wss = LinSys["Wss"]; Was = LinSys["Was"]
-                            rhoss = [np.abs(mm(xf,mm(Wss[m],xf))) for m in range(len(Wss))]
-                            rhoas = [np.abs(mm(x0,mm(Was[m],x0))) for m in range(len(Was))]
-                            rhos = [rhoss[m] + rhoas[m] for m in range(len(rhoss))]
-                            axs_DC[g][0].plot(ivr,np.min(rhos),**kdict)
-                            # from zero
-                            xf = x0*1.0; x0 *= 0.0
-                            rhoss = [np.abs(mm(xf,mm(Wss[m],xf))) for m in range(len(Wss))]
-                            rhoas = [np.abs(mm(x0,mm(Was[m],x0))) for m in range(len(Was))]
-                            rhos = [rhoss[m] + rhoas[m] for m in range(len(rhoss))]
-                            axs_DC[g][1].plot(ivr,np.min(rhos),**kdict)
+                        if not(skip_DOC):
+                            for g in range(len(axs_DC)):
+                                # to zero
+                                x0 = np.zeros((9,)); x0[g] = 1.0; xf = x0*0.0
+                                Wss = LinSys["Wss"]; Was = LinSys["Was"]
+                                rhoss = [np.abs(mm(xf,mm(Wss[m],xf))) for m in range(len(Wss))]
+                                rhoas = [np.abs(mm(x0,mm(Was[m],x0))) for m in range(len(Was))]
+                                rhos = [rhoss[m] + rhoas[m] for m in range(len(rhoss))]
+                                axs_DC[g][0].plot(ivr,np.min(rhos),**kdict)
+                                # from zero
+                                xf = x0*1.0; x0 *= 0.0
+                                rhoss = [np.abs(mm(xf,mm(Wss[m],xf))) for m in range(len(Wss))]
+                                rhoas = [np.abs(mm(x0,mm(Was[m],x0))) for m in range(len(Was))]
+                                rhos = [rhoss[m] + rhoas[m] for m in range(len(rhoss))]
+                                axs_DC[g][1].plot(ivr,np.min(rhos),**kdict)
             
             # other plot params
             if trim_type == "sct": 
@@ -634,8 +639,8 @@ if __name__ == "__main__":
                 "base",
                 "$\Delta x_{cg} = 0.5$",
                 "$\Delta x_{cg} = 1.0$",
-                "$\delta_B$ > $\min(\delta_B)$",
-                "$\delta_B$ < $\min(\delta_B)$"
+                "$\delta_B$ > $\min(|\delta_B|)$",
+                "$\delta_B$ < $\min(|\delta_B|)$"
             ]
             legdict = dict(handles=sp,labels=lbls,loc=(1.0,0.0),
                 borderpad=0.1,handletextpad=0.0)
@@ -666,15 +671,16 @@ if __name__ == "__main__":
             fig_af   .savefig(sv_fldr+"05_alpha." +plot_format,**save_dict)
             fig_CD   .savefig(sv_fldr+"06_CD."    +plot_format,**save_dict)
             fig_eg   .savefig(sv_fldr+"07_maxeig."+plot_format,**save_dict)
-            fig_DC[0].savefig(sv_fldr+"08_Vx_DOC."   +plot_format,**save_dict)
-            fig_DC[1].savefig(sv_fldr+"09_Vy_DOC."   +plot_format,**save_dict)
-            fig_DC[2].savefig(sv_fldr+"10_Vz_DOC."   +plot_format,**save_dict)
-            fig_DC[3].savefig(sv_fldr+"11_p_DOC."    +plot_format,**save_dict)
-            fig_DC[4].savefig(sv_fldr+"12_q_DOC."    +plot_format,**save_dict)
-            fig_DC[5].savefig(sv_fldr+"13_r_DOC."    +plot_format,**save_dict)
-            # fig_DC[6].savefig(sv_fldr+"14_zf_DOC."   +plot_format,**save_dict)
-            fig_DC[7].savefig(sv_fldr+"15_phi_DOC."  +plot_format,**save_dict)
-            fig_DC[8].savefig(sv_fldr+"16_theta_DOC."+plot_format,**save_dict)
+            if not(skip_DOC):
+                fig_DC[0].savefig(sv_fldr+"08_Vx_DOC."   +plot_format,**save_dict)
+                fig_DC[1].savefig(sv_fldr+"09_Vy_DOC."   +plot_format,**save_dict)
+                fig_DC[2].savefig(sv_fldr+"10_Vz_DOC."   +plot_format,**save_dict)
+                fig_DC[3].savefig(sv_fldr+"11_p_DOC."    +plot_format,**save_dict)
+                fig_DC[4].savefig(sv_fldr+"12_q_DOC."    +plot_format,**save_dict)
+                fig_DC[5].savefig(sv_fldr+"13_r_DOC."    +plot_format,**save_dict)
+                # fig_DC[6].savefig(sv_fldr+"14_zf_DOC."   +plot_format,**save_dict)
+                fig_DC[7].savefig(sv_fldr+"15_phi_DOC."  +plot_format,**save_dict)
+                fig_DC[8].savefig(sv_fldr+"16_theta_DOC."+plot_format,**save_dict)
             
             if show_plots:
                 plt.show()

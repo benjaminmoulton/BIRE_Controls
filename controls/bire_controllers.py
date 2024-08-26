@@ -3954,7 +3954,7 @@ class LyapunovRegulationAircraft(Aircraft):
                 kp = 2.0e+0
                 kq = 1.0e+0
                 kr = 1.0e+0
-                kb = 2.0e+1
+                kb = 2.0e+1 # 2.0e+0 # 
                 # terms
                 Rlat = self.bw/2./V
                 Rlon = self.cw/2./V
@@ -3988,8 +3988,11 @@ class LyapunovRegulationAircraft(Aircraft):
                 # quit()
                 dB = 0.0
                 v = [da,de,dB]
+                V_trim = (self.x_trim[0]**2. + self.x_trim[1]**2. + self.x_trim[3]**2.)**0.5
+                tau = (V_trim/V)**2.*self.u_trim[3]
+                # tau = self.u_trim[3]
 
-                u = np.concatenate((v,[self.u_trim[3]]))
+                u = np.concatenate((v,[tau]))
 
 
                 # # integral states
@@ -4739,10 +4742,10 @@ if __name__ == "__main__":
     # run_bire_fs["name_end"] = "_" + f1 + "_TLQR_1"
     # run_bire_rc["name_end"] = "_LGN"   + "_TLQR_1"
     # # 
-    run_bire_fs["aircraft_class"] = LinearQuadraticRegulatorDynamicInversionAircraft
-    # LQR_1
-    run_bire_fs["name_end"] = "_" + f1 + "_LQRDI_2"
-    run_bire_rc["name_end"] = "_LGN"   + "_LQRDI_2"
+    # run_bire_fs["aircraft_class"] = LinearQuadraticRegulatorDynamicInversionAircraft
+    # # LQR_1
+    # run_bire_fs["name_end"] = "_" + f1 + "_LQRDI_2"
+    # run_bire_rc["name_end"] = "_LGN"   + "_LQRDI_2"
     # #
     # run_bire_fs["aircraft_class"] = LinearAdaptiveAircraft
     # # LAC_1
@@ -4754,13 +4757,13 @@ if __name__ == "__main__":
     # # MRAC_1
     # run_bire_fs["state_threshold"] += [1.]*21
     # #
-    # run_bire_fs["aircraft_class"] = LyapunovRegulationAircraft
-    # # LyR_1
-    # run_bire_fs["name_end"] = "_" + f1 + "_LyR_1"
-    # run_bire_rc["name_end"] = "_LGN"   + "_LyR_1"
-    # bire_fs_dict["simulation"]["include_stall"] = \
-    #     bire_rc_dict["simulation"]["include_stall"] = False
-    # bire_fs_dict["simulation"]["include_compressibility"] = False
+    run_bire_fs["aircraft_class"] = LyapunovRegulationAircraft
+    # LyR_1
+    run_bire_fs["name_end"] = "_" + f1 + "_LyR_1"
+    run_bire_rc["name_end"] = "_LGN"   + "_LyR_1"
+    bire_fs_dict["simulation"]["include_stall"] = \
+        bire_rc_dict["simulation"]["include_stall"] = False
+    bire_fs_dict["simulation"]["include_compressibility"] = False
     # # # 
     # # #
     # # #
@@ -4886,7 +4889,7 @@ if __name__ == "__main__":
     # p_time2 = p_time  + recover_time
     # p_time3 = p_time2 + transition_time
     t_end = 0.0 # 25.0 # 
-    tf = 10.0 # 3.0 # 10.0 # t_end + p_time + 8.0 #+ 10.0 # # + 20.0 # 
+    tf = 50.0 # 3.0 # 10.0 # t_end + p_time + 8.0 #+ 10.0 # # + 20.0 # 
     bire_fs_dict["reference"] = bire_rc_dict["reference"] = {
         "deg2rad_states" : [3,4,5],
         "3" : [ [0.0, 0.0], [t_zero, 0.0], [t_zero, p_comm], [p_time, p_comm], [p_time, p_tr_deg], ], # [p_time2, p_tr_deg ], [p_time2, p_comm], [p_time3, p_comm], [p_time3, p_tr_deg2] ], # [p_time + recover_time, p_tr_deg], [p_time + recover_time, -p_comm], [p_time + recover_time + transition_time, -p_comm], [p_time + recover_time + transition_time, 0.0], ], # 
@@ -4930,11 +4933,11 @@ if __name__ == "__main__":
     # run_bire_fs["has_turbulence"] = True # False # 
     # run_bire_fs["has_model_error"] = False # True # 
     # # #########################################################################
-    # # zeros
-    # bire_fs_dict["reference"] = {
-    #     "deg2rad_states" : [3,4,5],
-    #     "3" : [[0.0]*2]*2, "4" : [[0.0]*2]*2, "5" : [[0.0]*2]*2, "sct_on_5" : False
-    # }
+    # zeros
+    bire_fs_dict["reference"] = {
+        "deg2rad_states" : [3,4,5],
+        "3" : [[0.0]*2]*2, "4" : [[0.0]*2]*2, "5" : [[0.0]*2]*2, "sct_on_5" : False
+    }
     # bire_fs_dict["reference"] = {
     #     "deg2rad_states" : [3,4,5],
     #     "3" : [[ 0.0, p_tr_deg],[ 2.0, p_tr_deg]],
@@ -4943,7 +4946,7 @@ if __name__ == "__main__":
     #     "sct_on_5" : False
     # }
     # run_bire_fs["trim_bank"] = 10.0 # 10.0 # 30.0 # 
-    # di = [1.0,1.0,1.0] # [0.1,0.1,0.1] # [10.0,10.0,10.0] # 
+    di = [1.0,1.0,1.0] # [0.1,0.1,0.1] # [10.0,10.0,10.0] # 
     # run_bire_fs[ "has_turbulence"] = run_bire_rc[ "has_turbulence"] = True # False # 
     # # run_bire_fs["has_model_error"] = run_bire_rc["has_model_error"] = False # True # 
     # run_bire_fs["name_end"] += "_rt"

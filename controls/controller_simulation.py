@@ -6236,7 +6236,7 @@ def monte_carlo_perturbations(filename,rtdst_1sg=[5.,5.,5.],
             c=clrs[k],mec=mec[k],mew=0.5,ms=ms[k]) for k in r_argsort]
         ax.legend(handles=lgnd_elms_sp,labels=lgnd_elms_lbls,loc=(1.0,0.05),
             borderpad=0.1,handletextpad=0.0)
-        ax.set_ylabel(r"Weighted Initial Disturbance")
+        ax.set_ylabel(r"Weighted Initial Distance")
         ax.set_xlabel(r"Time to Converge, s")
         ax.grid(which="major",lw=0.6,ls="-",c="0.75")
         fig.savefig(file_folder+"/"+run_name+"_mag_tc.pdf",**savedict)
