@@ -28,20 +28,21 @@ if __name__ == "__main__":
         "C1" : { "m" : 0.8 , "h" :  1000., "V" : 890., "Re" : 62563000. },
         "C2" : { "m" : 0.6 , "h" : 15000., "V" : 634., "Re" : 31324000. },
         "C3" : { "m" : 0.8 , "h" : 30000., "V" : 796., "Re" : 25828000. },
-        "U1" : { "m" : u1M , "h" : 15000., "V" : 350., "Re" : "unkn"    } # no compr no stall
+        "U1" : { "m" : u1M , "h" : 15000., "V" : 350., "Re" : "unkn"    }, # no compr no stall
+        "F1" : { "m" : 0.6 , "h" : 15000., "V" : 634., "Re" : 31324000. }, # no compr no stall
     }
 
     # settings 
     ## Continue from bire_fs_shss_T1_M02_H010_CGp10p00p00_B14
-    run_bire = False # True # 
+    run_bire = True # False # 
     run_sct  = True # False # 
     run_fs = True
-    skip_run = True # False # 
+    skip_run = False # True # 
     skip_DOC = True # False # 
     if run_sct: trim_bank_degs = np.linspace(0.0,60.0,num=13).tolist() # [0.0] # np.linspace(0.0,75.0,num=16).tolist() # [10.0] # [60.0] # np.linspace(0.0,75.0,num=16).tolist() # 
     else: trim_beta_degs = [6.0] # np.linspace(0.0,16.0,num=9).tolist() # np.linspace(0.0,16.0,num=9).tolist() # [14.0,16.0] # [0.0] # 
-    fc = "U1" # "C2" # "T1" # "A1" # 
-    cgshift = [1.0,0.0,0.0] # [0.0,0.0,0.0] # [0.5,0.0,0.0] # [0.5,0.0,0.0] # 
+    fc = "F1" # "U1" # "C2" # "T1" # "A1" # 
+    cgshift = [0.0,0.0,0.0] # [1.0,0.0,0.0] # [0.5,0.0,0.0] # [0.5,0.0,0.0] # 
     include_compressibility =  False # True # 
     use_Anderson_corrections =  True # False # 
     include_stall =  False # True # 
@@ -54,7 +55,7 @@ if __name__ == "__main__":
     plot_dark = True # False # 
     #
     # other settings
-    run_num = 1000 # 30 # 
+    run_num = 30 # 1000 # 
     trim_iter = 1000 # 1000
     mfc = flight_conditions[fc]["m"] # 0.2 # 
     hfc = flight_conditions[fc]["h"] # 1000.0 # 
