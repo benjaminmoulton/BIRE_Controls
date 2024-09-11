@@ -1,18 +1,19 @@
 import machupX as mux
 import numpy as np
-
+from controller_simulation import Aircraft
+from math import atan2,asin,sin,cos
 from os import mkdir, rmdir, walk, remove, listdir
 from scipy.optimize import minimize as minmiz
 import json
 
 if __name__ == "__main__":
-    # # filenames 
-    # base_file = "base_fs_in.json"
-    # bire_file = "bire_fs_in.json"
+    # filenames 
+    base_file = "base_fs_in.json"
+    bire_file = "bire_fs_in.json"
 
-    # # read in json to ensure no file changes while running
-    # base_dict = json.loads( open(base_file).read() )
-    # bire_dict = json.loads( open(bire_file).read() )
+    # read in json to ensure no file changes while running
+    base_dict = json.loads( open(base_file).read() )
+    bire_dict = json.loads( open(bire_file).read() )
     
     # flight conditions
     u1M = 0.331014489952403
@@ -74,6 +75,19 @@ if __name__ == "__main__":
     craft_file = "../aerodynamics_model/BIRE Inputs/BIRE_airplane.json"
     craft_dict = json.loads( open(craft_file).read() )
 
+    # make BIRE sim
+    bire_dict["actuators"]["order"] = 0
+    bire_dict["simulation"]["use_quaternions"] = False
+    bire_dict["simulation"]["include_compressibility"] = False
+    bire_dict["simulation"]["include_stall"] = False
+    bire = Aircraft(bire_dict)
+    bire.aero_model._CL = lambda alpha, beta, pbar, qbar, rbar, da, de, dB : bire.aero_model.CFM[0]
+    bire.aero_model._CS = lambda alpha, beta, pbar, qbar, rbar, da, de, dB : bire.aero_model.CFM[1]
+    bire.aero_model._CD = lambda alpha, beta, pbar, qbar, rbar, da, de, dB : bire.aero_model.CFM[2]
+    bire.aero_model._Cl = lambda alpha, beta, pbar, qbar, rbar, da, de, dB : bire.aero_model.CFM[3]
+    bire.aero_model._Cm = lambda alpha, beta, pbar, qbar, rbar, da, de, dB : bire.aero_model.CFM[4]
+    bire.aero_model._Cn = lambda alpha, beta, pbar, qbar, rbar, da, de, dB : bire.aero_model.CFM[5]
+
     # optimizer runs
     for filename in listdir(folder):
         file_split = filename.replace(".json","").split("_")
@@ -81,18 +95,74 @@ if __name__ == "__main__":
             # open file
             cases_dict = json.loads( open(folder + filename).read() )
             for case in cases_dict:
-                print(folder,filename,"yeah!")
-                print(cases_dict[case])
-                x_trim = cases_dict[case]["x_trim_euler"]
-                u_trim = cases_dict[case]["u_trim"]
+                # pull out state
+                x_trim = np.array(cases_dict[case]["x_trim_euler"])
+                u_trim = np.array(cases_dict[case]["u_trim"])
+                # determine fixed states
+                V_trim = (x_trim[0]**2. + x_trim[1]**2. + x_trim[2]**2.)**0.5
+                a = atan2(x_trim[2],x_trim[0])
+                b = asin(x_trim[1]/V_trim)
+                p = x_trim[3]
+                q = x_trim[4]
+                r = x_trim[5]
+                zf_trim = x_trim[8]
+                phi_trim = x_trim[9]
+                theta = x_trim[10]
 
-                # update aircraft state in mux aircraft dict
+                x0 = np.concatenate(([a,b,p,q,r,theta],u_trim))
 
-                # initialize mux
+                def fun(x1):
+                    # split apart x1
+                    a,b,p,q,r,theta,da,de,dB,tau = x1
+                    #
+                    Vxb = V_trim*cos(a)*cos(b)
+                    Vyb = V_trim*sin(b)
+                    Vzb = V_trim*sin(a)*cos(b)
+                    x_trim = np.array([Vxb,Vyb,Vzb,p,q,r,0.0,0.0,zf_trim,phi_trim,theta,0.0])
+                    u_trim = np.array([da,de,dB,tau])
 
-                # define optimizer cost function
+                    # setup mux file
+                    craft_dict["wings"]["BIRE_left" ]["dihedral"] = np.rad2deg( dB)
+                    craft_dict["wings"]["BIRE_right"]["dihedral"] = np.rad2deg(-dB)
+                    craft_dict["airfoils"]["NACA_64A204"]["geometry"]["outline_points"] = \
+                        "../aerodynamics_model/BIRE Inputs/64A204.txt"
+                    input_dict["scene"]["aircraft"]["BIRE"]["file"] = craft_dict
+                    bire_mux = mux.Scene(input_dict)
+
+                    # update state and solve for forces
+                    bire_mux.set_aircraft_state(state={
+                        "velocity":V_trim,
+                        "alpha":np.rad2deg(a),
+                        "beta":np.rad2deg(b),
+                        "orientation":[np.rad2deg(phi_trim),np.rad2deg(theta),0.0],
+                        "angular_rates":[p,q,r]
+                    })
+                    bire_mux.set_aircraft_control_state(control_state={
+                        "aileron":np.rad2deg(da),
+                        "elevator":np.rad2deg(de)
+                    })
+                    CFM_dict = bire_mux.solve_forces(non_dimensional=True,
+                        dimensional=False,report_by_segment=False,body_frame=True,
+                        stab_frame=False,wind_frame=True)["BIRE"]["total"]
+                    CFM = np.array([CFM_dict["CL"],CFM_dict["CS"],CFM_dict["CD"],
+                                    CFM_dict["Cl"],CFM_dict["Cm"],CFM_dict["Cn"]])
+
+                    # determine aerodynamics
+                    bire.aero_model.CFM = np.array([
+                        CFM_dict["CL"],CFM_dict["CS"],CFM_dict["CD"],
+                        CFM_dict["Cl"],CFM_dict["Cm"],CFM_dict["Cn"]])
+                    xdot = bire._nonlinear_euler_dynamics(0.0,x_trim,True,True,u_trim,True)
+                    xdot = xdot.tolist()
+                    xdot = np.array(xdot[0:6] + xdot[8:11])
+                    J = np.linalg.norm(xdot)
+                    print(J)
+
+                    return J
 
                 # run optimizer
+                print("starting optimizer...")
+                sol = minmiz(fun,x0)
+                print(sol)
 
                 # print success or no...
 
