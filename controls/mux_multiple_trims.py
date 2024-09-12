@@ -111,23 +111,34 @@ if __name__ == "__main__":
 
                 x0 = np.concatenate(([a,b,p,q,r,theta],u_trim))
 
-                def fun(x1):
-                    # split apart x1
-                    a,b,p,q,r,theta,da,de,dB,tau = x1
-                    #
-                    Vxb = V_trim*cos(a)*cos(b)
-                    Vyb = V_trim*sin(b)
-                    Vzb = V_trim*sin(a)*cos(b)
-                    x_trim = np.array([Vxb,Vyb,Vzb,p,q,r,0.0,0.0,zf_trim,phi_trim,theta,0.0])
-                    u_trim = np.array([da,de,dB,tau])
+                def CFM_from_mux(a,b,pbar,qbar,rbar,da,de,dB):
+                    # pull out rates
+                    p = pbar/bire.bw*2.*V_trim
+                    q = qbar/bire.cw*2.*V_trim
+                    r = rbar/bire.bw*2.*V_trim
 
                     # setup mux file
-                    craft_dict["wings"]["BIRE_left" ]["dihedral"] = np.rad2deg( dB)
-                    craft_dict["wings"]["BIRE_right"]["dihedral"] = np.rad2deg(-dB)
+                    # craft_dict["wings"]["BIRE_left" ]["dihedral"] = np.rad2deg( dB)
+                    # craft_dict["wings"]["BIRE_right"]["dihedral"] = np.rad2deg(-dB)
                     craft_dict["airfoils"]["NACA_64A204"]["geometry"]["outline_points"] = \
                         "../aerodynamics_model/BIRE Inputs/64A204.txt"
                     input_dict["scene"]["aircraft"]["BIRE"]["file"] = craft_dict
                     bire_mux = mux.Scene(input_dict)
+                    bire_mux._airplanes["BIRE"]\
+                        .wing_segments["BIRE_right_right"].get_dihedral = \
+                        lambda span : -dB*(span*0.0 + 1.) if isinstance(span,np.ndarray) else -dB
+                    bire_mux._airplanes["BIRE"]\
+                        .wing_segments["BIRE_left_left"].get_dihedral = \
+                        lambda span :  dB*(span*0.0 + 1.) if isinstance(span,np.ndarray) else  dB
+                    bire_mux._airplanes["BIRE"]\
+                        .wing_segments["BIRE_right_right"]._setup_cp_data()
+                    bire_mux._airplanes["BIRE"]\
+                        .wing_segments["BIRE_right_right"]._setup_node_data()
+                    bire_mux._airplanes["BIRE"]\
+                        .wing_segments["BIRE_left_left"]._setup_cp_data()
+                    bire_mux._airplanes["BIRE"]\
+                        .wing_segments["BIRE_left_left"]._setup_node_data()
+                    bire_mux._airplanes["BIRE"]._calculate_geometry()
 
                     # update state and solve for forces
                     bire_mux.set_aircraft_state(state={
@@ -146,11 +157,28 @@ if __name__ == "__main__":
                         stab_frame=False,wind_frame=True)["BIRE"]["total"]
                     CFM = np.array([CFM_dict["CL"],CFM_dict["CS"],CFM_dict["CD"],
                                     CFM_dict["Cl"],CFM_dict["Cm"],CFM_dict["Cn"]])
+                    
+                    return CFM
+
+                def fun(x1):
+                    # split apart x1
+                    a,b,p,q,r,theta,da,de,dB,tau = x1
+                    #
+                    Vxb = V_trim*cos(a)*cos(b)
+                    Vyb = V_trim*sin(b)
+                    Vzb = V_trim*sin(a)*cos(b)
+                    x_trim = np.array([Vxb,Vyb,Vzb,p,q,r,0.0,0.0,zf_trim,phi_trim,theta,0.0])
+                    u_trim = np.array([da,de,dB,tau])
+                    # get dimensionless rates
+                    pbar = p*bire.bw/2./V_trim
+                    qbar = q*bire.cw/2./V_trim
+                    rbar = r*bire.bw/2./V_trim
+
+                    # get CFM from mux
+                    CFM = CFM_from_mux(a,b,pbar,qbar,rbar,da,de,dB)
 
                     # determine aerodynamics
-                    bire.aero_model.CFM = np.array([
-                        CFM_dict["CL"],CFM_dict["CS"],CFM_dict["CD"],
-                        CFM_dict["Cl"],CFM_dict["Cm"],CFM_dict["Cn"]])
+                    bire.aero_model.CFM = CFM
                     xdot = bire._nonlinear_euler_dynamics(0.0,x_trim,True,True,u_trim,True)
                     xdot = xdot.tolist()
                     xdot = np.array(xdot[0:6] + xdot[8:11])
@@ -159,10 +187,20 @@ if __name__ == "__main__":
 
                     return J
 
-                # run optimizer
-                print("starting optimizer...")
-                sol = minmiz(fun,x0)
-                print(sol)
+                # # run optimizer
+                # print("starting optimizer...")
+                # sol = minmiz(fun,x0)
+                # print(sol)
+
+                # CFM from mux for this condition
+                # get dimensionless rates
+                pbar = p*bire.bw/2./V_trim
+                qbar = q*bire.cw/2./V_trim
+                rbar = r*bire.bw/2./V_trim
+                da,de,dB,tau = u_trim
+                CFM = CFM_from_mux(a,b,pbar,qbar,rbar,da,de,dB)
+                print(CFM)
 
                 # print success or no...
+                quit()
 
