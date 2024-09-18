@@ -112,33 +112,36 @@ if __name__ == "__main__":
                 x0 = np.concatenate(([a,b,p,q,r,theta],u_trim))
 
                 def CFM_from_mux(a,b,pbar,qbar,rbar,da,de,dB):
+                    # print("running case...")
                     # pull out rates
                     p = pbar/bire.bw*2.*V_trim
                     q = qbar/bire.cw*2.*V_trim
                     r = rbar/bire.bw*2.*V_trim
 
                     # setup mux file
-                    # craft_dict["wings"]["BIRE_left" ]["dihedral"] = np.rad2deg( dB)
-                    # craft_dict["wings"]["BIRE_right"]["dihedral"] = np.rad2deg(-dB)
+                    craft_dict["wings"]["BIRE_left" ]["dihedral"] = np.rad2deg( dB)
+                    craft_dict["wings"]["BIRE_right"]["dihedral"] = np.rad2deg(-dB)
                     craft_dict["airfoils"]["NACA_64A204"]["geometry"]["outline_points"] = \
                         "../aerodynamics_model/BIRE Inputs/64A204.txt"
                     input_dict["scene"]["aircraft"]["BIRE"]["file"] = craft_dict
                     bire_mux = mux.Scene(input_dict)
-                    bire_mux._airplanes["BIRE"]\
-                        .wing_segments["BIRE_right_right"].get_dihedral = \
-                        lambda span : -dB*(span*0.0 + 1.) if isinstance(span,np.ndarray) else -dB
-                    bire_mux._airplanes["BIRE"]\
-                        .wing_segments["BIRE_left_left"].get_dihedral = \
-                        lambda span :  dB*(span*0.0 + 1.) if isinstance(span,np.ndarray) else  dB
-                    bire_mux._airplanes["BIRE"]\
-                        .wing_segments["BIRE_right_right"]._setup_cp_data()
-                    bire_mux._airplanes["BIRE"]\
-                        .wing_segments["BIRE_right_right"]._setup_node_data()
-                    bire_mux._airplanes["BIRE"]\
-                        .wing_segments["BIRE_left_left"]._setup_cp_data()
-                    bire_mux._airplanes["BIRE"]\
-                        .wing_segments["BIRE_left_left"]._setup_node_data()
-                    bire_mux._airplanes["BIRE"]._calculate_geometry()
+                    # bire_mux._airplanes["BIRE"]\
+                    #     .wing_segments["BIRE_right_right"].get_dihedral = \
+                    #     lambda span : -dB*(span*0.0 + 1.) \
+                    #     if isinstance(span,np.ndarray) else -dB
+                    # bire_mux._airplanes["BIRE"]\
+                    #     .wing_segments["BIRE_left_left"].get_dihedral = \
+                    #     lambda span :  dB*(span*0.0 + 1.) \
+                    #     if isinstance(span,np.ndarray) else  dB
+                    # hstab_right = bire_mux._airplanes["BIRE"]\
+                    #     .wing_segments["BIRE_right_right"]
+                    # hstab_right._setup_cp_data()
+                    # hstab_right._setup_node_data()
+                    # hstab__left = bire_mux._airplanes["BIRE"]\
+                    #     .wing_segments["BIRE_left_left"]
+                    # hstab__left._setup_cp_data()
+                    # hstab__left._setup_node_data()
+                    # bire_mux._airplanes["BIRE"]._calculate_geometry()
 
                     # update state and solve for forces
                     bire_mux.set_aircraft_state(state={
@@ -198,8 +201,17 @@ if __name__ == "__main__":
                 qbar = q*bire.cw/2./V_trim
                 rbar = r*bire.bw/2./V_trim
                 da,de,dB,tau = u_trim
-                CFM = CFM_from_mux(a,b,pbar,qbar,rbar,da,de,dB)
-                print(CFM)
+                # CFM = CFM_from_mux(a,b,pbar,qbar,rbar,da,de,dB)
+                # print(CFM)
+                print("x_trim =",x_trim)
+                print("u_trim =",u_trim)
+                print()
+
+                # run trim solver with MUX aero
+                bire.aero_model._inc_aero_results = CFM_from_mux
+                bire.phi_trim = phi_trim
+                bire.verbose_trim = True
+                bire._initialize_state(a,b,phi_trim,u_trim)
 
                 # print success or no...
                 quit()
