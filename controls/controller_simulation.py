@@ -834,7 +834,7 @@ class Aircraft:
             # report names
             names = ["Iter","Throttle","Alpha[deg]","Beta[deg]",
                 "Aileron[deg]","Elevator[deg]","Rudder[deg]","p[deg/s]",
-                "q[deg/s]","r[deg/s]"]
+                "q[deg/s]","r[deg/s]","||R||"]
             
             headings = "{:<10s}".format(names[0])
             for i in range(1,len(names)):
@@ -850,6 +850,7 @@ class Aircraft:
             ## INTSTATE
             output += "{:>19.12f}{:>19.12f}".format(G[2]*self.rtod,x[3]*self.rtod)
             output += "{:>19.12f}{:>19.12f}".format(x[4]*self.rtod,x[5]*self.rtod)
+            output += "{:>19.8e}".format(Rmag)
             print(output)
 
         var_names = ["da","de","dr","tr","a ","b "]
@@ -925,6 +926,7 @@ class Aircraft:
                     x[3]*self.rtod)
                 output += "{:>19.12f}{:>19.12f}".format(x[4]*self.rtod,\
                     x[5]*self.rtod)
+                output += "{:>19.8e}".format(Rmag)
                 print(output)
         
         # fail if the trim solution is not converged
@@ -1901,7 +1903,7 @@ class Aircraft:
             repstr += report_latex(x_trim_euler[:n,np.newaxis].T,
                 "x_{tr}",endln=True,transpose=True,print_report=report)
             repstr += report_latex(x_trim_euler[n:,np.newaxis].T,
-                "\delta_{tr}",comquad=True,transpose=True,print_report=report)
+                r"\delta_{tr}",comquad=True,transpose=True,print_report=report)
             repstr += report_latex(u_trim[:,np.newaxis].T,"u_{tr}",
                 transpose=True,print_report=report)
             # # dynamical matrices
@@ -1936,10 +1938,10 @@ class Aircraft:
             repstr += report_latex((Lin_Model.B_min[rows,:])[:,cols],"B",
                 align=True,print_report=report)
             # open-loop eigenvalues
-            # report_latex(Lin_Model.A_eigs,"\lambda_{ol}")#,decimals=16)
-            repstr += report_latex(Lin_Model.A_min_eigs,"\lambda_{ol}",
+            # report_latex(Lin_Model.A_eigs,r"\lambda_{ol}")#,decimals=16)
+            repstr += report_latex(Lin_Model.A_min_eigs,r"\lambda_{ol}",
                 print_report=report)#,decimals=16)
-            repstr += report_latex(Lin_Model.A_min_evecs,"\chi_{ol}",
+            repstr += report_latex(Lin_Model.A_min_evecs,r"\chi_{ol}",
                 predecimals=3,decimals=4,print_report=report,eigvecs=True)
             if not self.is_stevens_and_lewis:
                 repstr += report_eigprops(Lin_Model.A_min_eigs,n_a=n_a,
@@ -1970,9 +1972,9 @@ class Aircraft:
             # report_latex(Lin_Model.K.T,"K",transpose=True,sci=True)
             if Lin_Model.controller_type == "LQR":
                 repstr += report_latex(Lin_Model.P,"P",print_report=report)
-            repstr += report_latex(Lin_Model.A_BK_eigs,"\lambda_{cl}",
+            repstr += report_latex(Lin_Model.A_BK_eigs,r"\lambda_{cl}",
                 print_report=report)#,decimals=16)
-            repstr += report_latex(Lin_Model.A_BK_evecs,"\chi_{cl}",
+            repstr += report_latex(Lin_Model.A_BK_evecs,r"\chi_{cl}",
                 predecimals=3,decimals=4,print_report=report,eigvecs=True)
             if not self.is_stevens_and_lewis:
                 repstr += report_eigprops(Lin_Model.A_BK_eigs,n_a=n_a,
@@ -5270,7 +5272,7 @@ def run_single_simulation(filename,rtdst_1sg=[20.,10.,5.],
                 # overshoot
                 posh = (np.max(np.abs(xerr[i,iT:] - xe0)))/abs(xe0) - 1.0
                 info_txt+=("$e_{{{:<5s}}}$ & {:> 7.2f} & {:> 7.2f}" + \
-                    " & {:> 7.1f} \% \\\\\n").format(
+                    r" & {:> 7.1f} \% \\\\\n").format(
                     state_names[aircraft.xPi_eul[i]],tris,tstl,posh*100.0
                     )
             print(info_txt,end="")
@@ -6120,7 +6122,7 @@ def monte_carlo_perturbations(filename,rtdst_1sg=[5.,5.,5.],
         #     c="w",ls="none",mec="k",mew=0.5,ms=msu,marker="o"))
         # lgnd_elms_lbls.append("converged")
         # lgnd_elms_lbls.append("unconverged")
-        lgnd_elms_lbls.append("$t_c \leq${:> 2.0f} s".format(aircraft.tf))
+        lgnd_elms_lbls.append(r"$t_c \leq${:> 2.0f} s".format(aircraft.tf))
         lgnd_elms_lbls.append("$t_c>${:> 2.0f} s".format(aircraft.tf))
         #
         # FM
@@ -6259,8 +6261,8 @@ def monte_carlo_perturbations(filename,rtdst_1sg=[5.,5.,5.],
         start = r"$\sigma_{1 \, "
         end = r"$^\circ$/s, "
         title  = start + \
-            r"p,q,r}$ = $\left[ "+"{:> 5.1f} \,\,\, ".format(degs[0])
-        title += "{:> 5.1f} \,\,\, ".format(degs[1])
+            r"p,q,r}$ = $\left[ "+r"{:> 5.1f} \,\,\, ".format(degs[0])
+        title += r"{:> 5.1f} \,\,\, ".format(degs[1])
         title += "{:> 5.1f} ".format(degs[2]) + \
             r" \right]^T$ " + end
         title += " {:> 5.1f}".format(float(counter)/float(num)*100.) + \
@@ -8268,12 +8270,12 @@ if __name__ == "__main__":
     states = ["V_{x_b}","V_{y_b}","V_{z_b}",
     "p","q","r",
     "x_f","y_f","z_f",
-    "\phi",r"\theta","\psi"]
+    r"\phi",r"\theta",r"\psi"]
     state_units = ["ft/s","ft/s","ft/s",
     "deg/s","deg/s","deg/s",
     "ft","ft","ft",
     "deg","deg","deg"]
-    controls = ["\delta_a","\delta_e^B","\delta_B",r"\tau"]
+    controls = [r"\delta_a",r"\delta_e^B",r"\delta_B",r"\tau"]
     control_units = ["deg","deg","deg","percent"]
     r2dconv = lambda x : np.rad2deg(x)
     d2rconv = lambda x : np.deg2rad(x)
@@ -8330,10 +8332,10 @@ if __name__ == "__main__":
     run_bire_trim = False
     if run_bire_trim:
         craft = Aircraft(bire_dict)
-        wrd = "\delta_B = "
+        wrd = r"\delta_B = "
     else:
         craft = Aircraft(base_dict)
-        wrd = "\delta_r = "
+        wrd = r"\delta_r = "
     rows = [0,2,4,6,8,1,3,5,7]
     cols = [1,3,0,2]
     mrrc = None # [2,3] # 
@@ -8348,7 +8350,7 @@ if __name__ == "__main__":
         # print(craft.Lin_Model.A_min.shape,craft.Lin_Model.B_min.shape)
         A,B = craft.Lin_Model.A_min,craft.Lin_Model.B_min
         print(r"\begin{matrix}")
-        print("\phi = {:> 3.0f}, \quad".format(np.rad2deg(phi)))
+        print(r"\phi = {:> 3.0f}, \quad".format(np.rad2deg(phi)))
         print(wrd + "{:> 6.2f}, \\\\".format(np.rad2deg(craft.u_trim[2])))
         # report_latex((A[rows,:])[:,rows],"A",add_tab=False,endln=True) # comquad=True,
         report_latex((B[rows,:])[:,cols],"B",add_tab=False,endln=True)

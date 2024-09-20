@@ -80,6 +80,7 @@ if __name__ == "__main__":
     bire_dict["simulation"]["use_quaternions"] = False
     bire_dict["simulation"]["include_compressibility"] = False
     bire_dict["simulation"]["include_stall"] = False
+    # bire_dict["initial"]["trim"]["verbose_trim"] = True
     bire = Aircraft(bire_dict)
     bire.aero_model._CL = lambda alpha, beta, pbar, qbar, rbar, da, de, dB : bire.aero_model.CFM[0]
     bire.aero_model._CS = lambda alpha, beta, pbar, qbar, rbar, da, de, dB : bire.aero_model.CFM[1]
@@ -87,6 +88,49 @@ if __name__ == "__main__":
     bire.aero_model._Cl = lambda alpha, beta, pbar, qbar, rbar, da, de, dB : bire.aero_model.CFM[3]
     bire.aero_model._Cm = lambda alpha, beta, pbar, qbar, rbar, da, de, dB : bire.aero_model.CFM[4]
     bire.aero_model._Cn = lambda alpha, beta, pbar, qbar, rbar, da, de, dB : bire.aero_model.CFM[5]
+
+    # delta terms
+    CL_de_delta = -0.1822
+    #
+    CS_beta_delta = -0.1785
+    CS_da_delta = -0.0448
+    #
+    CD_0_delta = 0.0154
+    CD_L_delta = -0.0304
+    CD_L2_delta = 0.0714
+    CD_S2_delta = 0.1118
+    #
+    Cl_beta_delta = -0.0101
+    #
+    Cm_0_delta = -0.0196
+    Cm_alpha_delta = 0.2865
+    Cm_de_delta = 0.2914
+    #
+    Cn_beta_delta = -0.0326
+    Cn_Lpbar_delta = 0.0602
+    Cn_da_delta = 0.0122
+    Cn_Lda_delta = 0.0254
+    # additional terms functions
+    CL_delta = lambda alpha, beta, pbar, qbar, rbar, da, de, dB : \
+        CL_de_delta*de
+    CS_delta = lambda alpha, beta, pbar, qbar, rbar, da, de, dB : \
+        CS_beta_delta*beta + CS_da_delta*da
+    CD_delta = lambda alpha, beta, pbar, qbar, rbar, da, de, dB : \
+        CD_0_delta \
+        + CD_L_delta *(bire.aero_model._CL0(dB) + bire.aero_model._CL_alpha(dB)*alpha) \
+        + CD_L2_delta*(bire.aero_model._CL0(dB) + bire.aero_model._CL_alpha(dB)*alpha)**2. \
+        + CD_S2_delta*(bire.aero_model._CS0(dB) + bire.aero_model._CS_beta (dB)* beta)**2.
+    Cl_delta = lambda alpha, beta, pbar, qbar, rbar, da, de, dB : \
+        Cl_beta_delta*beta
+    Cm_delta = lambda alpha, beta, pbar, qbar, rbar, da, de, dB : \
+        Cm_0_delta + Cm_alpha_delta*alpha + Cm_de_delta*de
+    Cn_delta = lambda alpha, beta, pbar, qbar, rbar, da, de, dB : \
+        Cn_beta_delta*beta \
+        + Cn_Lpbar_delta*(bire.aero_model._CL0(dB) + bire.aero_model._CL_alpha(dB)*alpha)*pbar \
+        + Cn_da_delta*da \
+        + Cn_Lda_delta*(bire.aero_model._CL0(dB) + bire.aero_model._CL_alpha(dB)*alpha)*da
+    bire.dB_run = +1.0e30
+    bire.bire_mux = 0
 
     # optimizer runs
     for filename in listdir(folder):
@@ -118,48 +162,58 @@ if __name__ == "__main__":
                     q = qbar/bire.cw*2.*V_trim
                     r = rbar/bire.bw*2.*V_trim
 
-                    # setup mux file
-                    craft_dict["wings"]["BIRE_left" ]["dihedral"] = np.rad2deg( dB)
-                    craft_dict["wings"]["BIRE_right"]["dihedral"] = np.rad2deg(-dB)
-                    craft_dict["airfoils"]["NACA_64A204"]["geometry"]["outline_points"] = \
-                        "../aerodynamics_model/BIRE Inputs/64A204.txt"
-                    input_dict["scene"]["aircraft"]["BIRE"]["file"] = craft_dict
-                    bire_mux = mux.Scene(input_dict)
-                    # bire_mux._airplanes["BIRE"]\
-                    #     .wing_segments["BIRE_right_right"].get_dihedral = \
-                    #     lambda span : -dB*(span*0.0 + 1.) \
-                    #     if isinstance(span,np.ndarray) else -dB
-                    # bire_mux._airplanes["BIRE"]\
-                    #     .wing_segments["BIRE_left_left"].get_dihedral = \
-                    #     lambda span :  dB*(span*0.0 + 1.) \
-                    #     if isinstance(span,np.ndarray) else  dB
-                    # hstab_right = bire_mux._airplanes["BIRE"]\
-                    #     .wing_segments["BIRE_right_right"]
-                    # hstab_right._setup_cp_data()
-                    # hstab_right._setup_node_data()
-                    # hstab__left = bire_mux._airplanes["BIRE"]\
-                    #     .wing_segments["BIRE_left_left"]
-                    # hstab__left._setup_cp_data()
-                    # hstab__left._setup_node_data()
-                    # bire_mux._airplanes["BIRE"]._calculate_geometry()
+                    # setup mux file if new dB
+                    if dB != bire.dB_run:
+                        # print(dB,bire.dB_run)
+                        bire.dB_run = dB*1.0
+                        craft_dict["wings"]["BIRE_left" ]["dihedral"] = np.rad2deg( dB)
+                        craft_dict["wings"]["BIRE_right"]["dihedral"] = np.rad2deg(-dB)
+                        craft_dict["airfoils"]["NACA_64A204"]["geometry"]["outline_points"] = \
+                            "../aerodynamics_model/BIRE Inputs/64A204.txt"
+                        input_dict["scene"]["aircraft"]["BIRE"]["file"] = craft_dict
+                        bire.bire_mux = mux.Scene(input_dict)
+                        # bire.bire_mux._airplanes["BIRE"]\
+                        #     .wing_segments["BIRE_right_right"].get_dihedral = \
+                        #     lambda span : -dB*(span*0.0 + 1.) \
+                        #     if isinstance(span,np.ndarray) else -dB
+                        # bire.bire_mux._airplanes["BIRE"]\
+                        #     .wing_segments["BIRE_left_left"].get_dihedral = \
+                        #     lambda span :  dB*(span*0.0 + 1.) \
+                        #     if isinstance(span,np.ndarray) else  dB
+                        # hstab_right = bire.bire_mux._airplanes["BIRE"]\
+                        #     .wing_segments["BIRE_right_right"]
+                        # hstab_right._setup_cp_data()
+                        # hstab_right._setup_node_data()
+                        # hstab__left = bire.bire_mux._airplanes["BIRE"]\
+                        #     .wing_segments["BIRE_left_left"]
+                        # hstab__left._setup_cp_data()
+                        # hstab__left._setup_node_data()
+                        # bire.bire_mux._airplanes["BIRE"]._calculate_geometry()
 
                     # update state and solve for forces
-                    bire_mux.set_aircraft_state(state={
+                    bire.bire_mux.set_aircraft_state(state={
                         "velocity":V_trim,
                         "alpha":np.rad2deg(a),
                         "beta":np.rad2deg(b),
                         "orientation":[np.rad2deg(phi_trim),np.rad2deg(theta),0.0],
                         "angular_rates":[p,q,r]
                     })
-                    bire_mux.set_aircraft_control_state(control_state={
+                    bire.bire_mux.set_aircraft_control_state(control_state={
                         "aileron":np.rad2deg(da),
                         "elevator":np.rad2deg(de)
                     })
-                    CFM_dict = bire_mux.solve_forces(non_dimensional=True,
+                    CFM_dict = bire.bire_mux.solve_forces(non_dimensional=True,
                         dimensional=False,report_by_segment=False,body_frame=True,
                         stab_frame=False,wind_frame=True)["BIRE"]["total"]
-                    CFM = np.array([CFM_dict["CL"],CFM_dict["CS"],CFM_dict["CD"],
-                                    CFM_dict["Cl"],CFM_dict["Cm"],CFM_dict["Cn"]])
+                    params = a, b, pbar, qbar, rbar, da, de, dB
+                    CFM = np.array([
+                        CFM_dict["CL"] + CL_delta(*params),
+                        CFM_dict["CS"] + CS_delta(*params),
+                        CFM_dict["CD"] + CD_delta(*params),
+                        CFM_dict["Cl"] + Cl_delta(*params),
+                        CFM_dict["Cm"] + Cm_delta(*params),
+                        CFM_dict["Cn"] + Cn_delta(*params)
+                    ])
                     
                     return CFM
 
@@ -215,4 +269,3 @@ if __name__ == "__main__":
 
                 # print success or no...
                 quit()
-
