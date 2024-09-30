@@ -37,15 +37,15 @@ if __name__ == "__main__":
     run_bire = True # False # 
     run_sct  = True # False # 
     run_fs = True
-    skip_run = False # True # 
-    skip_DOC = True # False # 
+    skip_run = True # False # 
+    skip_DOC = False # True # 
     if run_sct: trim_bank_degs = np.linspace(0.0,60.0,num=13).tolist() # [0.0] # np.linspace(0.0,75.0,num=16).tolist() # [10.0] # [60.0] # np.linspace(0.0,75.0,num=16).tolist() # 
     else: trim_beta_degs = [6.0] # np.linspace(0.0,16.0,num=9).tolist() # np.linspace(0.0,16.0,num=9).tolist() # [14.0,16.0] # [0.0] # 
-    fc = "F1" # "U1" # "C2" # "T1" # "A1" # 
+    fc = "C2" # "T1" # "F1" # "U1" # "A1" # 
     cgshift = [0.0,0.0,0.0] # [1.0,0.0,0.0] # [0.5,0.0,0.0] # [0.5,0.0,0.0] # 
-    include_compressibility =  False # True # 
+    include_compressibility =  True # False # 
     use_Anderson_corrections =  True # False # 
-    include_stall =  False # True # 
+    include_stall =  True # False # 
     plotting_xcgs = [0.0,0.5,1.0]
     plot_inverted_trims = False # True # 
     plot_alternate_trims = True # False # 
@@ -384,10 +384,10 @@ if __name__ == "__main__":
                             Ba = BT[i_a]
                             # solve for grammians co lyap is A X + X A^T + Q = 0
                             Wsinv = np.linalg.solve(co.lyap( \
-                                As,mm(Bs,Bs.conj().T)),np.eye(len(i_s)))
+                                As,mm(Bs,Bs.conj().T),method="scipy"),np.eye(len(i_s)))
                             if len(i_a):
                                 Wainv = np.linalg.solve(co.lyap( \
-                                    -Aa,mm(Ba,Ba.conj().T)),np.eye(len(i_a)))
+                                    -Aa,mm(Ba,Ba.conj().T),method="scipy"),np.eye(len(i_a)))
                             else:
                                 Wainv = []
 
@@ -592,18 +592,18 @@ if __name__ == "__main__":
             
             # other plot params
             if trim_type == "sct": 
-                xlabel = r"Bank angle, $\phi$ [$^\circ$]"
-                vrylbl = r"Sideslip angle, $\beta$ [$^\circ$]"
+                xlabel = r"Bank angle, $\phi$ [deg]"
+                vrylbl = r"Sideslip angle, $\beta$ [deg]"
             else: 
-                xlabel = r"Sideslip angle, $\beta$ [$^\circ$]"
-                vrylbl = r"Bank angle, $\phi$ [$^\circ$]"
+                xlabel = r"Sideslip angle, $\beta$ [deg]"
+                vrylbl = r"Bank angle, $\phi$ [deg]"
             [ax.set_xlabel(xlabel) for ax in axs]
-            axs[0].set_ylabel(r"Aileron, $\delta_a$ [$^\circ$]")
-            axs[1].set_ylabel(r"Stabilator, $\delta_e^B$ [$^\circ$]")
-            axs[2].set_ylabel(r"$\delta_B$/$\delta_r$ [$^\circ$]")
+            axs[0].set_ylabel(r"Aileron, $\delta_a$ [deg]")
+            axs[1].set_ylabel(r"Stabilator, $\delta_e^B$ [deg]")
+            axs[2].set_ylabel(r"$\delta_B$/$\delta_r$ [deg]")
             axs[3].set_ylabel(r"Throttle, $\tau$ [per-unit]")
             axs[4].set_ylabel(vrylbl)
-            axs[5].set_ylabel(r"Angle of attack, $\alpha$ [$^\circ$]")
+            axs[5].set_ylabel(r"Angle of attack, $\alpha$ [deg]")
             axs_CD.set_xlabel(xlabel)
             axs_CD.set_ylabel(r"Drag coefficient, $C_D$")
             axs_eg.set_ylabel(xlabel)
@@ -638,10 +638,10 @@ if __name__ == "__main__":
             lbls = [
                 "BIRE",
                 "base",
-                "$\Delta x_{cg} = 0.5$",
-                "$\Delta x_{cg} = 1.0$",
-                "$\delta_B$ > $\min(|\delta_B|)$",
-                "$\delta_B$ < $\min(|\delta_B|)$"
+                r"$\Delta x_{cg} = 0.5$",
+                r"$\Delta x_{cg} = 1.0$",
+                r"$\delta_B$ > $\min(|\delta_B|)$",
+                r"$\delta_B$ < $\min(|\delta_B|)$"
             ]
             legdict = dict(handles=sp,labels=lbls,loc=(1.0,0.0),
                 borderpad=0.1,handletextpad=0.0)
