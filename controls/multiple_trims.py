@@ -713,7 +713,12 @@ if __name__ == "__main__":
                     axs_DC[g][h].set_ylabel(
                         "DOC of "+state_vars[g]+" using "+ctrl_vars[h])# + state_names[g])
                     axs_DC[g][h].set_yscale("log")
-                    axs_DC[g][h].set_ylim((1.0e-4,1.0e+2))
+                    if g == 6:
+                        axs_DC[g][h].set_ylim((1.0e-26,1.0e-17))
+                    elif g in [7,8]:
+                        axs_DC[g][h].set_ylim((1.0e-6,1.0e+2))
+                    else:
+                        axs_DC[g][h].set_ylim((1.0e-4,1.0e+2))
             # legend
             sp = [
                 Line2D([0], [0],color=str(xcg_shade_inverter(0.0)),marker=odBm,**rest_dict),
@@ -784,7 +789,7 @@ if __name__ == "__main__":
                 plt.close(fig_eg)
                 for g in range(rows_DC):
                     for h in range(cols_DC):
-                        if g != 4:
+                        if g != 6:
                             plt.close(fig_DC[g][h])
                 plt.show()
             else:
