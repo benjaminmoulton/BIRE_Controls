@@ -8,6 +8,7 @@ from os import mkdir, rmdir, walk, remove, listdir
 from linearization import linearization
 import control as co
 from scipy.linalg import block_diag
+from math import asin,atan2,sin,tan
 
 if __name__ == "__main__":
 
@@ -35,20 +36,23 @@ if __name__ == "__main__":
     # settings 
     ## Continue from bire_fs_shss_T1_M02_H010_CGp10p00p00_B14
     run_bire = True # False # 
-    run_sct  = True # False # 
+    run_sct  = False # True # 
     run_fs = True
     skip_run = True # False # 
     skip_DOC = False # True # 
     if run_sct: trim_bank_degs = np.linspace(0.0,60.0,num=13).tolist() # [0.0] # np.linspace(0.0,75.0,num=16).tolist() # [10.0] # [60.0] # np.linspace(0.0,75.0,num=16).tolist() # 
     else: trim_beta_degs = [6.0] # np.linspace(0.0,16.0,num=9).tolist() # np.linspace(0.0,16.0,num=9).tolist() # [14.0,16.0] # [0.0] # 
-    fc = "C2" # "T1" # "F1" # "U1" # "A1" # 
+    trim_climb_deg = 0.0 # 10.0 # 
+    fc = "T1" # "C2" # "F1" # "U1" # "A1" # 
     cgshift = [0.0,0.0,0.0] # [1.0,0.0,0.0] # [0.5,0.0,0.0] # [0.5,0.0,0.0] # 
     include_compressibility =  True # False # 
     use_Anderson_corrections =  True # False # 
     include_stall =  True # False # 
     plotting_xcgs = [0.0,0.5,1.0]
+    plotting_gammas = [0.0]
     plot_inverted_trims = False # True # 
     plot_alternate_trims = True # False # 
+    plot_base_DOC = True # False # 
     show_plots = False # True # 
     plot_format = "pdf" # "png" # 
     plot_transparent = True if plot_format == "pdf" else False # False # True # 
@@ -81,6 +85,35 @@ if __name__ == "__main__":
     xcg_shade = lambda xcg : xcg*0.5 + (abs(xcg)>0.0)*0.25
     # xcg_shade = lambda xcg : "k" if xcg == 0.0 else ("r" if xcg == 0.5 else ("b" if xcg == 1.0 else "y"))
 
+    # # rename files to include climb angle in file name
+    # trim_files_folder = "./trim_files"
+    # for folder in listdir(trim_files_folder):
+    #     if folder != "trim_output.txt":
+    #         files_folder = trim_files_folder+"/"+folder
+    #         for old_filename in listdir(files_folder):
+    #             if old_filename.split(".")[-1] == "json":
+    #                 # pull in file
+    #                 with open(files_folder+"/"+old_filename,"r") as f:
+    #                     file_str = f.read()
+    #                     file_dict =json.loads(file_str)
+
+    #                 # remove file
+    #                 remove(files_folder+"/"+old_filename)
+
+    #                 # # new filename
+    #                 # file_split = old_filename.replace(".json","").split("_")
+    #                 # file_split = file_split + ["Gp00"] #+ file_split[6:]
+    #                 # print(old_filename)
+    #                 # new_filename = "_".join(file_split) + ".json"
+    #                 # print(new_filename)
+    #                 # print()
+
+    #                 # save file
+    #                 with open(files_folder+"/"+old_filename,"w") as f:
+    #                     json.dump(file_dict, f, indent=4)
+    #         print()
+    # quit()
+
     
     # initialize aircraft
     # set to initial params
@@ -98,7 +131,7 @@ if __name__ == "__main__":
     craftdict["initial"]["trim"] = craftdict["initial"].get("trim",{})
     craftdict["initial"]["trim"]["type"] = trim_type
     craftdict["initial"]["trim"].pop("elevation_angle[deg]",None)
-    craftdict["initial"]["trim"]["climb_angle[deg]"] = 0.0
+    craftdict["initial"]["trim"]["climb_angle[deg]"] = trim_climb_deg
     craftdict["initial"]["trim"]["solver"] = \
         craftdict["initial"]["trim"].get("solver",{})
     craftdict["initial"]["trim"]["solver"]["max_iterations"] = trim_iter
@@ -130,6 +163,7 @@ if __name__ == "__main__":
             run_name += "{:+03d}".format(int(cgshift[2]*10.)).replace("+","p").replace("-","m")
             run_name += "_P{:02d}".format(int(trim_bank_deg)) if run_sct else \
                 "_B{:02d}".format(int(trim_beta_deg))
+            run_name += "_G{:+03d}".format(int(trim_climb_deg)).replace("+","p").replace("-","m")
             run_file = run_name + ".json"
             print("\n\nrunning", run_name,"...")
             
@@ -457,7 +491,7 @@ if __name__ == "__main__":
         scale_font_size = 3.25/width
 
         if plot_dark:
-            plots_to_run = ["dark_background","default"]
+            plots_to_run = ["default","dark_background"]
         else:
             plots_to_run = ["default"]
         
@@ -485,6 +519,7 @@ if __name__ == "__main__":
             plt.rcParams["xtick.minor.size"] = plt.rcParams["ytick.minor.size"] = 2.5
             plt.rcParams["mathtext.fontset"] = "dejavuserif"
             plt.rcParams['figure.dpi'] = 300.0
+            plt.rcParams['figure.max_open_warning'] = 50
 
             # initialize plots
             plot_dict = dict(figsize=(width,3.0),dpi=300.0, # sharex=True,
@@ -497,14 +532,33 @@ if __name__ == "__main__":
             fig_af,axs_af = plt.subplots(1,1,**plot_dict)
             fig_CD,axs_CD = plt.subplots(1,1,**plot_dict)
             fig_eg,axs_eg = plt.subplots(1,1,**plot_dict)
-            fig_DC = []; axs_DC = []
-            for i in range(9):
-                fig_DC_i,axs_DC_i = plt.subplots(1,2,sharey=True,**plot_dict)
-                fig_DC.append(fig_DC_i)
-                axs_DC.append(axs_DC_i)
+            rows_DC = 9; cols_DC = 4
+            fig_DC = [[None for _ in range(cols_DC)] for _ in range(rows_DC)]
+            axs_DC = [[None for _ in range(cols_DC)] for _ in range(rows_DC)]
+            for i in range(rows_DC):
+                for j in range(cols_DC):
+                    if j == 0: shares ={}
+                    else: shares ={"sharex":axs_DC[i][0],"sharey":axs_DC[i][0]}
+                    fig_DC[i][j],axs_DC[i][j] = plt.subplots(1,1,**shares,**plot_dict)
             axs = [axs_da,axs_de,axs_dB,axs_ta,axs_vr,axs_af]
             if run_sct: k = 1
             else:       k = 2
+            # add grids
+            if plot_type == "dark_background": grid_color = "0.15"
+            else                             : grid_color = "0.85"
+            grid_lw = 0.6
+            axs_da.grid(which="major",lw=grid_lw,ls="-",c=grid_color)
+            axs_de.grid(which="major",lw=grid_lw,ls="-",c=grid_color)
+            axs_dB.grid(which="major",lw=grid_lw,ls="-",c=grid_color)
+            axs_ta.grid(which="major",lw=grid_lw,ls="-",c=grid_color)
+            axs_vr.grid(which="major",lw=grid_lw,ls="-",c=grid_color)
+            axs_af.grid(which="major",lw=grid_lw,ls="-",c=grid_color)
+            axs_CD.grid(which="major",lw=grid_lw,ls="-",c=grid_color)
+            axs_eg.grid(which="major",lw=grid_lw,ls="-",c=grid_color)
+            for i in range(rows_DC):
+                for j in range(cols_DC):
+                    axs_DC[i][j].grid(which="major",lw=grid_lw,ls="-",
+                        c=grid_color)
 
             # plot points
             rest_dict = dict(ms=3.5,mew=0.75,fillstyle="none",ls="none")
@@ -574,58 +628,92 @@ if __name__ == "__main__":
                         axs_eg.plot(np.max(np.real(evals)),ivr,**kdict)
                         #
                         # DOC
+                        # # # if skip for base, then skip
+                        if cname == "base" and not(plot_base_DOC): continue
+                        DOCval = 10.0
                         if not(skip_DOC):
-                            for g in range(len(axs_DC)):
+                            for g in range(rows_DC):
                                 # to zero
-                                x0 = np.zeros((9,)); x0[g] = 1.0; xf = x0*0.0
+                                x0 = np.zeros((9,)); x0[g] = DOCval; xf = x0*0.0
+                                # info
+                                Vxb,Vyb,Vzb = sol["x_trim_euler"][0:3]
+                                V = (Vxb**2. + Vyb**2. + Vzb**2.)**0.5
+                                a = atan2(Vzb,Vxb)
+                                b = asin(Vyb/V)
+                                if g == 0: # do V
+                                    V_new = V + DOCval
+                                    Vyb_new = sin(b)*V_new
+                                    Vxb_new = ((V_new**2. - Vyb_new**2.)/
+                                        (1. + tan(a)**2.))**0.5
+                                    Vzb_new = Vxb_new*tan(a)
+                                    x0[0] = Vxb_new - Vxb
+                                    x0[1] = Vyb_new - Vyb
+                                    x0[2] = Vzb_new - Vzb
+                                elif g == 1: # do alpha
+                                    a_new = a + np.deg2rad(DOCval)
+                                    Vyb_new = Vyb
+                                    Vxb_new = ((Vxb**2. + Vzb**2.)/
+                                        (1. + tan(a_new)**2.))**0.5
+                                    Vzb_new = Vxb_new*tan(a_new)
+                                    x0[0] = Vxb_new - Vxb
+                                    x0[1] = Vyb_new - Vyb
+                                    x0[2] = Vzb_new - Vzb
+                                elif g == 2: # do beta
+                                    b_new = b + np.deg2rad(DOCval)
+                                    Vyb_new = sin(b_new)*V
+                                    Vxb_new = Vxb
+                                    Vzb_new = Vzb
+                                    x0[0] = Vxb_new - Vxb
+                                    x0[1] = Vyb_new - Vyb
+                                    x0[2] = Vzb_new - Vzb
+                                elif g in [3,4,5,7,8]: # put in radians
+                                    x0[g] = np.deg2rad(DOCval)
                                 Wss = LinSys["Wss"]; Was = LinSys["Was"]
-                                rhoss = [np.abs(mm(xf,mm(Wss[m],xf))) for m in range(len(Wss))]
-                                rhoas = [np.abs(mm(x0,mm(Was[m],x0))) for m in range(len(Was))]
-                                rhos = [rhoss[m] + rhoas[m] for m in range(len(rhoss))]
-                                axs_DC[g][0].plot(ivr,np.min(rhos),**kdict)
-                                # from zero
-                                xf = x0*1.0; x0 *= 0.0
-                                rhoss = [np.abs(mm(xf,mm(Wss[m],xf))) for m in range(len(Wss))]
-                                rhoas = [np.abs(mm(x0,mm(Was[m],x0))) for m in range(len(Was))]
-                                rhos = [rhoss[m] + rhoas[m] for m in range(len(rhoss))]
-                                axs_DC[g][1].plot(ivr,np.min(rhos),**kdict)
+                                for h in range(cols_DC):
+                                    rhos = np.abs(mm(xf,mm(Wss[h],xf)))
+                                    rhoa = np.abs(mm(x0,mm(Was[h],x0)))
+                                    rho = rhos + rhoa
+                                    axs_DC[g][h].plot(ivr,rho,**kdict)
+                                # # from zero
+                                # xf = x0*1.0; x0 *= 0.0
+                                # rhoss = [np.abs(mm(xf,mm(Wss[m],xf))) for m in range(len(Wss))]
+                                # rhoas = [np.abs(mm(x0,mm(Was[m],x0))) for m in range(len(Was))]
+                                # rhos = [rhoss[m] + rhoas[m] for m in range(len(rhoss))]
+                                # axs_DC[g][1].plot(ivr,np.min(rhos),**kdict)
             
             # other plot params
             if trim_type == "sct": 
-                xlabel = r"Bank angle, $\phi$ [deg]"
-                vrylbl = r"Sideslip angle, $\beta$ [deg]"
+                xlabel = r"Bank angle ($\phi$), deg"
+                vrylbl = r"Sideslip angle ($\beta$), deg"
             else: 
-                xlabel = r"Sideslip angle, $\beta$ [deg]"
-                vrylbl = r"Bank angle, $\phi$ [deg]"
+                xlabel = r"Sideslip angle ($\beta$), deg"
+                vrylbl = r"Bank angle ($\phi$), deg"
             [ax.set_xlabel(xlabel) for ax in axs]
-            axs[0].set_ylabel(r"Aileron, $\delta_a$ [deg]")
-            axs[1].set_ylabel(r"Stabilator, $\delta_e^B$ [deg]")
-            axs[2].set_ylabel(r"$\delta_B$/$\delta_r$ [deg]")
-            axs[3].set_ylabel(r"Throttle, $\tau$ [per-unit]")
+            axs[0].set_ylabel(r"Aileron ($\delta_a$), deg")
+            axs[1].set_ylabel(r"Stabilator ($\delta_e^B$/$\delta_e$), deg")
+            axs[2].set_ylabel(r"Tail Rotation/Rudder ($\delta_B$/$\delta_r$), deg")
+            axs[3].set_ylabel(r"Throttle ($\tau$), per-unit")
             axs[4].set_ylabel(vrylbl)
-            axs[5].set_ylabel(r"Angle of attack, $\alpha$ [deg]")
+            axs[5].set_ylabel(r"Angle of attack ($\alpha$), deg")
             axs_CD.set_xlabel(xlabel)
-            axs_CD.set_ylabel(r"Drag coefficient, $C_D$")
+            axs_CD.set_ylabel(r"Drag coefficient ($C_D$)")
             axs_eg.set_ylabel(xlabel)
             axs_eg.set_xlabel(r"$\max \left( \operatorname{real} \left( " + \
-                r"\lambda \right) \right)$ [1/sec]")
-            [axs_DC_i[0].set_xlabel(xlabel) for axs_DC_i in axs_DC]
-            [axs_DC_i[1].set_xlabel(xlabel) for axs_DC_i in axs_DC]
-            [axs_DC_i[0].set_ylabel("DOC" ) for axs_DC_i in axs_DC]
-            # y axis log
-            # [axs_DC_i[0].set_yscale("log" ) for axs_DC_i in axs_DC]
-            # limits = (1.0e-3,1.0e+2)
-            # for axs_DC_i in axs_DC:
-            #     bot,top = axs_DC_i[0].get_ylim()
-            #     print(bot,top)
-            #     print(top > 1.0e+3)
-            #     axs_DC_i[0].set_ylim(bottom=max(bot,limits[0]),top=min(top,limits[1]))
-            #     print(axs_DC_i[0].get_ylim())
-            #     print()
-            # # invert x axis for eig plot
-            # axs_eg.invert_xaxis()
-            # axs_eg.yaxis.set_label_position("right")
-            # axs_eg.yaxis.tick_right()
+                r"\lambda \right) \right)$, 1/sec")
+            # DOC
+            state_names = ["V","a","b","p","q","r","zf","phi","theta"]
+            state_vars = ["$V$",r"$\alpha$",r"$\beta$","$p$","$q$","$r$",
+                "$z_f$",r"$\phi$",r"$\theta$"]
+            ctrl_names = ["da","de","dB","ta"]
+            ctrl_vars = [r"$\delta_a$",r"$\delta_e^B$/$\delta_e$",
+                r"$\delta_B$/$\delta_r$",r"$\tau$"]
+            for g in range(rows_DC):
+                for h in range(cols_DC):
+                    axs_DC[g][h].set_xlabel(xlabel)
+                    axs_DC[g][h].set_ylabel(
+                        "DOC of "+state_vars[g]+" using "+ctrl_vars[h])# + state_names[g])
+                    axs_DC[g][h].set_yscale("log")
+                    axs_DC[g][h].set_ylim((1.0e-4,1.0e+2))
             # legend
             sp = [
                 Line2D([0], [0],color=str(xcg_shade_inverter(0.0)),marker=odBm,**rest_dict),
@@ -653,7 +741,14 @@ if __name__ == "__main__":
             axs[5].legend(**legdict)
             axs_CD.legend(**legdict)
             axs_eg.legend(**legdict)
-            [axs_DC_i[1].legend(**legdict) for axs_DC_i in axs_DC]
+            if plot_base_DOC:
+                legDOCdict = legdict
+            else:
+                legDOCdict = dict(handles=sp[2:],labels=lbls[2:],loc=(1.0,0.0),
+                    borderpad=0.1,handletextpad=0.0)
+            for g in range(rows_DC):
+                for h in range(cols_DC):
+                    axs_DC[g][h].legend(**legDOCdict)
 
             # save plots
             save_dict = dict(transparent=plot_transparent,dpi=300.0)
@@ -673,17 +768,24 @@ if __name__ == "__main__":
             fig_CD   .savefig(sv_fldr+"06_CD."    +plot_format,**save_dict)
             fig_eg   .savefig(sv_fldr+"07_maxeig."+plot_format,**save_dict)
             if not(skip_DOC):
-                fig_DC[0].savefig(sv_fldr+"08_Vx_DOC."   +plot_format,**save_dict)
-                fig_DC[1].savefig(sv_fldr+"09_Vy_DOC."   +plot_format,**save_dict)
-                fig_DC[2].savefig(sv_fldr+"10_Vz_DOC."   +plot_format,**save_dict)
-                fig_DC[3].savefig(sv_fldr+"11_p_DOC."    +plot_format,**save_dict)
-                fig_DC[4].savefig(sv_fldr+"12_q_DOC."    +plot_format,**save_dict)
-                fig_DC[5].savefig(sv_fldr+"13_r_DOC."    +plot_format,**save_dict)
-                # fig_DC[6].savefig(sv_fldr+"14_zf_DOC."   +plot_format,**save_dict)
-                fig_DC[7].savefig(sv_fldr+"15_phi_DOC."  +plot_format,**save_dict)
-                fig_DC[8].savefig(sv_fldr+"16_theta_DOC."+plot_format,**save_dict)
+                for g in range(rows_DC):
+                    for h in range(cols_DC):
+                        F = "13_"+state_names[g]+"_"+ctrl_names[h]+"_DOC."
+                        fig_DC[g][h].savefig(sv_fldr+F+plot_format,**save_dict)
             
             if show_plots:
+                plt.close(fig_da)
+                plt.close(fig_de)
+                plt.close(fig_dB)
+                plt.close(fig_ta)
+                plt.close(fig_vr)
+                plt.close(fig_af)
+                plt.close(fig_CD)
+                plt.close(fig_eg)
+                for g in range(rows_DC):
+                    for h in range(cols_DC):
+                        if g != 4:
+                            plt.close(fig_DC[g][h])
                 plt.show()
             else:
                 plt.close("all")
