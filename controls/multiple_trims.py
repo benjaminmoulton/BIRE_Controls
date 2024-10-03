@@ -36,14 +36,14 @@ if __name__ == "__main__":
     # settings 
     ## Continue from bire_fs_shss_T1_M02_H010_CGp10p00p00_B14
     run_bire = True # False # 
-    run_sct  = False # True # 
+    run_sct  = True # False # 
     run_fs = True
-    skip_run = True # False # 
+    skip_run = False # True # 
     skip_DOC = False # True # 
-    if run_sct: trim_bank_degs = np.linspace(0.0,60.0,num=13).tolist() # [0.0] # np.linspace(0.0,75.0,num=16).tolist() # [10.0] # [60.0] # np.linspace(0.0,75.0,num=16).tolist() # 
+    if run_sct: trim_bank_degs = [30.0] # np.linspace(0.0,75.0,num=16).tolist() # np.linspace(0.0,60.0,num=13).tolist() # [0.0] # [10.0] # [60.0] # np.linspace(0.0,75.0,num=16).tolist() # 
     else: trim_beta_degs = [6.0] # np.linspace(0.0,16.0,num=9).tolist() # np.linspace(0.0,16.0,num=9).tolist() # [14.0,16.0] # [0.0] # 
     trim_climb_deg = 0.0 # 10.0 # 
-    fc = "T1" # "C2" # "F1" # "U1" # "A1" # 
+    fc = "C2" # "T1" # "F1" # "U1" # "A1" # 
     cgshift = [0.0,0.0,0.0] # [1.0,0.0,0.0] # [0.5,0.0,0.0] # [0.5,0.0,0.0] # 
     include_compressibility =  True # False # 
     use_Anderson_corrections =  True # False # 
@@ -57,9 +57,10 @@ if __name__ == "__main__":
     plot_format = "pdf" # "png" # 
     plot_transparent = True if plot_format == "pdf" else False # False # True # 
     plot_dark = True # False # 
+    skip_save_if_not_new = False # True # 
     #
     # other settings
-    run_num = 30 # 1000 # 
+    run_num = 10 # 1000 # 30 # 
     trim_iter = 1000 # 1000
     mfc = flight_conditions[fc]["m"] # 0.2 # 
     hfc = flight_conditions[fc]["h"] # 1000.0 # 
@@ -173,13 +174,15 @@ if __name__ == "__main__":
             except: run_dict = {}
             
             # pull in saved trim states
-            x_trims=[]; u_trims=[]; CFM_trims=[]
-            guess_trims=[]; final_i_trims=[]; Lin_trims = [];
+            x_trims=[]; u_trims=[]; CFM_trims=[]; guess_bounds = []
+            guess_trims=[]; final_i_trims=[]; Lin_trims = []
             for case in run_dict:
                 x_trims.append(run_dict[case]["x_trim_euler"])
                 u_trims.append(run_dict[case]["u_trim"])
                 CFM_trims.append(run_dict[case]["CFM_trim"])
                 guess_trims.append(run_dict[case]["guess_trim"])
+                if "guess_bounds" in run_dict[case]:
+                    guess_bounds.append(run_dict[case]["guess_bounds"])
                 final_i_trims.append(run_dict[case]["final_i_trim"])
                 Lin_trims.append(run_dict[case]["Linearized_system_trim"])
             
@@ -208,6 +211,8 @@ if __name__ == "__main__":
             ugs = np.random.random(size=(run_num,4))#*0.
             ugs[:,0:3] = np.deg2rad((ugs[:,0:3]*2. - 1.)*u_scale[0:3] + u_shift[0:3])
             ugs[:,3] = ugs[:,3]*u_scale[3] + u_shift[3]
+            # save trim sols found
+            trim_sol_nums = np.array([None]*len(ags))
             #
             tol = craft.NR_tol#*1.0e+1
             # run
@@ -228,6 +233,7 @@ if __name__ == "__main__":
                     if np.linalg.norm(x_trims[j] - craft.x_trim_euler[0:12]) < tol\
                         and np.linalg.norm(u_trims[j] - craft.u_trim[0:4]) < tol:
                         have_found_before = True
+                        trim_sol_nums[i] = j
                 
                 #
                 if run_sct:
@@ -247,6 +253,8 @@ if __name__ == "__main__":
                 if not(craft.trim_failed) and not(have_found_before):
                     x_trims.append(craft.x_trim_euler[0:12].tolist())
                     u_trims.append(craft.u_trim[0:4].tolist())
+                    #
+                    trim_sol_nums[i] = len(x_trims) - 1
                     # CFM # #
                     x = craft.x_trim_euler*1.0
                     u = craft.u_trim*1.0
@@ -273,6 +281,8 @@ if __name__ == "__main__":
                     found = ", *** found new trim"
                 else:
                     found = ""
+                report +=", sol#= {:>2d}".format(
+                    trim_sol_nums[i] if trim_sol_nums[i]!=None else -1)
                 report +=", was {:>2d} now {:>2d}".format(num_b4,len(x_trims))
                 print(report+found)
                 
@@ -295,9 +305,72 @@ if __name__ == "__main__":
                 # print(Lin_Model.A_min)
                 Lin_trims.append(dict(A=Lin_Model.A_min.tolist(),
                     B=Lin_Model.B_min.tolist()))
+            
+            # guess bounds for the solution
+            for j in range(len(x_trims)):
+                # determine bounds
+                trimsj = trim_sol_nums == j
+                #
+                if any(trimsj):
+                    agsj = ags[trimsj]
+                    if run_sct:
+                        bgsj = bgs[trimsj]
+                    else:
+                        pgsj = pgs[trimsj]
+                    ugsj = ugs[trimsj]
+                    #
+                    a_max = np.max(agsj); a_max = np.rad2deg(a_max)
+                    a_min = np.min(agsj); a_min = np.rad2deg(a_min)
+                    if run_sct:
+                        b_max = np.max(bgsj); b_max = np.rad2deg(b_max)
+                        b_min = np.min(bgsj); b_min = np.rad2deg(b_min)
+                    else:
+                        p_max = np.max(pgsj); p_max = np.rad2deg(p_max)
+                        p_min = np.min(pgsj); p_min = np.rad2deg(p_min)
+                    u_max = np.max(ugsj,axis=0); u_max[0:3] = np.rad2deg(u_max[0:3])
+                    u_min = np.min(ugsj,axis=0); u_min[0:3] = np.rad2deg(u_min[0:3])
+                else:
+                    a_max = -1.3e+10; a_min = +1.3e+10
+                    if run_sct:
+                        b_max = -1.3e+10; b_min = +1.3e+10
+                    else:
+                        p_max = -1.3e+10; p_min = +1.3e+10
+                    u_max = np.array([-1.3e+10]*4)*1.0
+                    u_min = np.array([+1.3e+10]*4)*1.0
+
+                if len(guess_bounds) >= j + 1:
+                    a_min = min(a_min,guess_bounds[j]["alpha[deg]_[min,max]"][0])
+                    a_max = max(a_max,guess_bounds[j]["alpha[deg]_[min,max]"][1])
+                    if run_sct:
+                        b_min = min(b_min,guess_bounds[j]["beta[deg]_[min,max]"][0])
+                        b_max = max(b_max,guess_bounds[j]["beta[deg]_[min,max]"][1])
+                    else:
+                        p_min = min(p_min,guess_bounds[j]["phi[deg]_[min,max]"][0])
+                        p_max = max(p_max,guess_bounds[j]["phi[deg]_[min,max]"][1])
+                    u_min[0] = min(u_min[0],guess_bounds[j]["da[deg]_[min,max]"][0])
+                    u_max[0] = max(u_max[0],guess_bounds[j]["da[deg]_[min,max]"][1])
+                    u_min[1] = min(u_min[1],guess_bounds[j]["de[deg]_[min,max]"][0])
+                    u_max[1] = max(u_max[1],guess_bounds[j]["de[deg]_[min,max]"][1])
+                    u_min[2] = min(u_min[2],guess_bounds[j]["u3[deg]_[min,max]"][0])
+                    u_max[2] = max(u_max[2],guess_bounds[j]["u3[deg]_[min,max]"][1])
+                    u_min[3] = min(u_min[3],guess_bounds[j]["tau[pu]_[min,max]"][0])
+                    u_max[3] = max(u_max[3],guess_bounds[j]["tau[pu]_[min,max]"][1])
+                else:
+                    guess_bounds.append({})
+                
+                # add to guess bounds dict
+                guess_bounds[j]["alpha[deg]_[min,max]"] = [a_min,a_max]
+                if run_sct:
+                    guess_bounds[j]["beta[deg]_[min,max]"] = [b_min,b_max]
+                else:
+                    guess_bounds[j]["phi[deg]_[min,max]"] = [p_min,p_max]
+                guess_bounds[j]["da[deg]_[min,max]"] = [u_min[0],u_max[0]]
+                guess_bounds[j]["de[deg]_[min,max]"] = [u_min[1],u_max[1]]
+                guess_bounds[j]["u3[deg]_[min,max]"] = [u_min[2],u_max[2]]
+                guess_bounds[j]["tau[pu]_[min,max]"] = [u_min[3],u_max[3]]
 
             # save to file (if we found more)
-            if len(x_trims) > num_b4:
+            if len(x_trims) > num_b4 or not(skip_save_if_not_new):
                 print("\nsaving to file",run_name,"...")
                 # create datadict
                 data_dict = {}
@@ -308,6 +381,7 @@ if __name__ == "__main__":
                     data_dict[case]["u_trim"] = u_trims[j]
                     data_dict[case]["CFM_trim"] = CFM_trims[j]
                     data_dict[case]["guess_trim"] = guess_trims[j]
+                    data_dict[case]["guess_bounds"] = guess_bounds[j]
                     data_dict[case]["final_i_trim"] = final_i_trims[j]
                     data_dict[case]["Linearized_system_trim"] = Lin_trims[j]
                 # save
@@ -316,6 +390,24 @@ if __name__ == "__main__":
             else:
                 print("\nnot saving to file",run_name,
                     ", no new trim sols found")
+            
+            # report trim solutions
+            for j in range(len(x_trims)):
+                header = "trim solution {:> 3d}: ".format(j)
+                header += "phi={:> 5.2f}, ".format(np.rad2deg(x_trims[j][9]))
+                header += "{}".format("dB" if run_bire else "dr")
+                header += "={:> 5.2f}".format(np.rad2deg(u_trims[j][2]))
+                print(header)
+                keys = ["alpha[deg]_[min,max]"]
+                if run_sct: keys += ["beta[deg]_[min,max]"]
+                else      : keys += [ "phi[deg]_[min,max]"]
+                keys += ["da[deg]_[min,max]","de[deg]_[min,max]",
+                         "u3[deg]_[min,max]","tau[pu]_[min,max]"]
+                for key in keys:
+                    gls = guess_bounds[j][key]
+                    print("    {:>20s} : {:> 5.2f},{:> 5.2f}".format(
+                        key,gls[0],gls[1]))
+                print("    ")
     
     # plot trim values
     if skip_run:
