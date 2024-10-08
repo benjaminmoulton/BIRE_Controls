@@ -34,21 +34,21 @@ if __name__ == "__main__":
     }
 
     # settings 
-    ## Continue from bire_fs_shss_T1_M02_H010_CGp10p00p00_B14
     run_bire = True # False # 
-    run_sct  = True # False # 
+    run_sct  = False # True # 
     run_fs = True
-    skip_run = False # True # 
+    skip_run = True # False # 
     skip_DOC = False # True # 
-    if run_sct: trim_bank_degs = [30.0] # np.linspace(0.0,75.0,num=16).tolist() # np.linspace(0.0,60.0,num=13).tolist() # [0.0] # [10.0] # [60.0] # np.linspace(0.0,75.0,num=16).tolist() # 
-    else: trim_beta_degs = [6.0] # np.linspace(0.0,16.0,num=9).tolist() # np.linspace(0.0,16.0,num=9).tolist() # [14.0,16.0] # [0.0] # 
+    if run_sct: trim_bank_degs = np.linspace(0.0,75.0,num=16).tolist() # [30.0] # np.linspace(0.0,60.0,num=13).tolist() # [0.0] # [10.0] # [60.0] # np.linspace(0.0,75.0,num=16).tolist() # 
+    else: trim_beta_degs = np.linspace(0.0,16.0,num=9).tolist() # [6.0] # np.linspace(0.0,16.0,num=9).tolist() # [14.0,16.0] # [0.0] # 
     trim_climb_deg = 0.0 # 10.0 # 
-    fc = "C2" # "T1" # "F1" # "U1" # "A1" # 
-    cgshift = [0.0,0.0,0.0] # [1.0,0.0,0.0] # [0.5,0.0,0.0] # [0.5,0.0,0.0] # 
+    fc = "T1" # "C2" # "F1" # "U1" # "A1" # 
+    cgshift = [0.0,0.0,0.0] # [1.0,0.0,0.0] # [0.5,0.0,0.0] # 
     include_compressibility =  True # False # 
     use_Anderson_corrections =  True # False # 
     include_stall =  True # False # 
-    plotting_xcgs = [0.0,0.5,1.0]
+    bire_plotting_xcgs = [0.0,0.5,1.0]
+    base_plotting_xcgs = [0.0,1.0]
     plotting_gammas = [0.0]
     plot_inverted_trims = False # True # 
     plot_alternate_trims = True # False # 
@@ -60,7 +60,7 @@ if __name__ == "__main__":
     skip_save_if_not_new = False # True # 
     #
     # other settings
-    run_num = 10 # 1000 # 30 # 
+    run_num = 1000 # 10 # 30 # 
     trim_iter = 1000 # 1000
     mfc = flight_conditions[fc]["m"] # 0.2 # 
     hfc = flight_conditions[fc]["h"] # 1000.0 # 
@@ -85,6 +85,13 @@ if __name__ == "__main__":
     odrm = "d"
     xcg_shade = lambda xcg : xcg*0.5 + (abs(xcg)>0.0)*0.25
     # xcg_shade = lambda xcg : "k" if xcg == 0.0 else ("r" if xcg == 0.5 else ("b" if xcg == 1.0 else "y"))
+    bire_prob_bins = (6,10)
+    base_prob_bins = (6,6)
+    bire_bins = (np.linspace(-u_scale[1],u_scale[1],num=bire_prob_bins[0]+1),
+        np.linspace(-u_scale[2],u_scale[2],num=bire_prob_bins[1]+1))
+    base_bins = (np.linspace(-u_scale[1],u_scale[1],num=base_prob_bins[0]+1),
+        np.linspace(-u_scale[2],u_scale[2],num=base_prob_bins[1]+1))
+    color_bar_segs = 16
 
     # # rename files to include climb angle in file name
     # trim_files_folder = "./trim_files"
@@ -181,8 +188,8 @@ if __name__ == "__main__":
                 u_trims.append(run_dict[case]["u_trim"])
                 CFM_trims.append(run_dict[case]["CFM_trim"])
                 guess_trims.append(run_dict[case]["guess_trim"])
-                if "guess_bounds" in run_dict[case]:
-                    guess_bounds.append(run_dict[case]["guess_bounds"])
+                if "guess_bounds_aVu[deg/pu]" in run_dict[case]:
+                    guess_bounds.append(run_dict[case]["guess_bounds_aVu[deg/pu]"])
                 final_i_trims.append(run_dict[case]["final_i_trim"])
                 Lin_trims.append(run_dict[case]["Linearized_system_trim"])
             
@@ -313,62 +320,21 @@ if __name__ == "__main__":
                 #
                 if any(trimsj):
                     agsj = ags[trimsj]
-                    if run_sct:
-                        bgsj = bgs[trimsj]
-                    else:
-                        pgsj = pgs[trimsj]
+                    if run_sct: bgsj = bgs[trimsj]
+                    else:       pgsj = pgs[trimsj]
                     ugsj = ugs[trimsj]
-                    #
-                    a_max = np.max(agsj); a_max = np.rad2deg(a_max)
-                    a_min = np.min(agsj); a_min = np.rad2deg(a_min)
-                    if run_sct:
-                        b_max = np.max(bgsj); b_max = np.rad2deg(b_max)
-                        b_min = np.min(bgsj); b_min = np.rad2deg(b_min)
-                    else:
-                        p_max = np.max(pgsj); p_max = np.rad2deg(p_max)
-                        p_min = np.min(pgsj); p_min = np.rad2deg(p_min)
-                    u_max = np.max(ugsj,axis=0); u_max[0:3] = np.rad2deg(u_max[0:3])
-                    u_min = np.min(ugsj,axis=0); u_min[0:3] = np.rad2deg(u_min[0:3])
-                else:
-                    a_max = -1.3e+10; a_min = +1.3e+10
-                    if run_sct:
-                        b_max = -1.3e+10; b_min = +1.3e+10
-                    else:
-                        p_max = -1.3e+10; p_min = +1.3e+10
-                    u_max = np.array([-1.3e+10]*4)*1.0
-                    u_min = np.array([+1.3e+10]*4)*1.0
+                    # append values to list
+                    if run_sct: new_guesses = np.vstack((agsj,bgsj,ugsj.T)).T
+                    else:       new_guesses = np.vstack((agsj,pgsj,ugsj.T)).T
+                    # rad2deg
+                    new_guesses[:,:-1] = np.rad2deg(new_guesses[:,:-1])
+                    print(len(guess_bounds))
 
                 if len(guess_bounds) >= j + 1:
-                    a_min = min(a_min,guess_bounds[j]["alpha[deg]_[min,max]"][0])
-                    a_max = max(a_max,guess_bounds[j]["alpha[deg]_[min,max]"][1])
-                    if run_sct:
-                        b_min = min(b_min,guess_bounds[j]["beta[deg]_[min,max]"][0])
-                        b_max = max(b_max,guess_bounds[j]["beta[deg]_[min,max]"][1])
-                    else:
-                        p_min = min(p_min,guess_bounds[j]["phi[deg]_[min,max]"][0])
-                        p_max = max(p_max,guess_bounds[j]["phi[deg]_[min,max]"][1])
-                    u_min[0] = min(u_min[0],guess_bounds[j]["da[deg]_[min,max]"][0])
-                    u_max[0] = max(u_max[0],guess_bounds[j]["da[deg]_[min,max]"][1])
-                    u_min[1] = min(u_min[1],guess_bounds[j]["de[deg]_[min,max]"][0])
-                    u_max[1] = max(u_max[1],guess_bounds[j]["de[deg]_[min,max]"][1])
-                    u_min[2] = min(u_min[2],guess_bounds[j]["u3[deg]_[min,max]"][0])
-                    u_max[2] = max(u_max[2],guess_bounds[j]["u3[deg]_[min,max]"][1])
-                    u_min[3] = min(u_min[3],guess_bounds[j]["tau[pu]_[min,max]"][0])
-                    u_max[3] = max(u_max[3],guess_bounds[j]["tau[pu]_[min,max]"][1])
+                    guess_bounds[j] = np.concatenate((guess_bounds[j],new_guesses),axis=0).tolist()
                 else:
-                    guess_bounds.append({})
-                
-                # add to guess bounds dict
-                guess_bounds[j]["alpha[deg]_[min,max]"] = [a_min,a_max]
-                if run_sct:
-                    guess_bounds[j]["beta[deg]_[min,max]"] = [b_min,b_max]
-                else:
-                    guess_bounds[j]["phi[deg]_[min,max]"] = [p_min,p_max]
-                guess_bounds[j]["da[deg]_[min,max]"] = [u_min[0],u_max[0]]
-                guess_bounds[j]["de[deg]_[min,max]"] = [u_min[1],u_max[1]]
-                guess_bounds[j]["u3[deg]_[min,max]"] = [u_min[2],u_max[2]]
-                guess_bounds[j]["tau[pu]_[min,max]"] = [u_min[3],u_max[3]]
-
+                    guess_bounds.append(new_guesses.tolist())
+            
             # save to file (if we found more)
             if len(x_trims) > num_b4 or not(skip_save_if_not_new):
                 print("\nsaving to file",run_name,"...")
@@ -381,7 +347,7 @@ if __name__ == "__main__":
                     data_dict[case]["u_trim"] = u_trims[j]
                     data_dict[case]["CFM_trim"] = CFM_trims[j]
                     data_dict[case]["guess_trim"] = guess_trims[j]
-                    data_dict[case]["guess_bounds"] = guess_bounds[j]
+                    data_dict[case]["guess_bounds_aVu[deg/pu]"] = guess_bounds[j]
                     data_dict[case]["final_i_trim"] = final_i_trims[j]
                     data_dict[case]["Linearized_system_trim"] = Lin_trims[j]
                 # save
@@ -403,10 +369,10 @@ if __name__ == "__main__":
                 else      : keys += [ "phi[deg]_[min,max]"]
                 keys += ["da[deg]_[min,max]","de[deg]_[min,max]",
                          "u3[deg]_[min,max]","tau[pu]_[min,max]"]
-                for key in keys:
-                    gls = guess_bounds[j][key]
+                for k in range(6):
+                    gls = np.array(guess_bounds[j]).T
                     print("    {:>20s} : {:> 5.2f},{:> 5.2f}".format(
-                        key,gls[0],gls[1]))
+                        keys[k],np.min(gls[k]),np.max(gls[k])))
                 print("    ")
     
     # plot trim values
@@ -425,11 +391,13 @@ if __name__ == "__main__":
                     trims[name] = {}
                     trims[name]["ind_var"] = []
                     trims[name]["dicts"] = []
+                    trims[name]["filenames"] = []
                 
                 # read in info
                 path = folder + filename
                 trims[name]["dicts"].append(json.loads( open(path).read() ))
                 trims[name]["ind_var"].append(float(file_split[7][1:]))
+                trims[name]["filenames"].append(filename)
                 
                 # print(file_split, name)
                 # calculate alpha and beta and save to dicts
@@ -447,11 +415,13 @@ if __name__ == "__main__":
             # numpify
             trims[craft]["ind_var"] = np.array(trims[craft]["ind_var"])
             trims[craft]["dicts"] = np.array(trims[craft]["dicts"])
+            trims[craft]["filenames"] = np.array(trims[craft]["filenames"])
             # get sort indices
             sorter = np.argsort(trims[craft]["ind_var"])
             # sort
             trims[craft]["ind_var"] = trims[craft]["ind_var"][sorter]
             trims[craft]["dicts"] = trims[craft]["dicts"][sorter]
+            trims[craft]["filenames"] = trims[craft]["filenames"][sorter]
 
             # if BIRE, determine smallest tail angle case
             if craft[:4] == "bire":
@@ -579,7 +549,7 @@ if __name__ == "__main__":
         # quit()
         
         # width in inches
-        width = 4.0
+        width = 3.25 # 4.0 # 
         scale_font_size = 3.25/width
 
         if plot_dark:
@@ -613,8 +583,15 @@ if __name__ == "__main__":
             plt.rcParams['figure.dpi'] = 300.0
             plt.rcParams['figure.max_open_warning'] = 50
 
+            # initialize plot saving params
+            save_dict = dict(transparent=plot_transparent,dpi=300.0)
+            sv_fldr = "plots" if plot_type == "default" else "plots_inv"
+            sv_fldr = folder + sv_fldr + "/"
+
             # initialize plots
-            plot_dict = dict(figsize=(width,3.0),dpi=300.0, # sharex=True,
+            plot_dict = dict(figsize=(width,3.5),dpi=300.0, # sharex=True,
+                constrained_layout=True)
+            prob_dict = dict(figsize=(3.25,3.5),dpi=300.0, # sharex=True,
                 constrained_layout=True)
             fig_da,axs_da = plt.subplots(1,1,**plot_dict)
             fig_de,axs_de = plt.subplots(1,1,**plot_dict)
@@ -624,6 +601,7 @@ if __name__ == "__main__":
             fig_af,axs_af = plt.subplots(1,1,**plot_dict)
             fig_CD,axs_CD = plt.subplots(1,1,**plot_dict)
             fig_eg,axs_eg = plt.subplots(1,1,**plot_dict)
+            fig_gs,axs_gs = plt.subplots(1,1,**plot_dict)
             rows_DC = 9; cols_DC = 4
             fig_DC = [[None for _ in range(cols_DC)] for _ in range(rows_DC)]
             axs_DC = [[None for _ in range(cols_DC)] for _ in range(rows_DC)]
@@ -658,6 +636,34 @@ if __name__ == "__main__":
                 cname,cgs = craft.split("_")
                 xcg = float(cgs.replace("p","_+").replace("m","_-").split("_")[1])/10.
                 for i in range(len(trims[craft]["dicts"])):
+                    # pull out sol
+                    
+                    # pull out trim guess matrices
+                    M = []; X = []; Y = []
+                    bound_counter = 0
+                    for j,trim_sol in enumerate(trims[craft]["dicts"][i]):
+                        sol = trims[craft]["dicts"][i][trim_sol]
+                        if "guess_bounds_aVu[deg/pu]" in sol:
+                            bound_counter += 1
+                            guesses = np.array(sol["guess_bounds_aVu[deg/pu]"])
+                            de_guesses = guesses[:,3]
+                            dB_guesses = guesses[:,4]
+                            Mj, xedges, yedges = \
+                                np.histogram2d(de_guesses,dB_guesses,
+                                bins=bire_bins if cname == "bire" 
+                                else base_bins)
+                            M.append(Mj.T)
+                            Xj, Yj = np.meshgrid(xedges, yedges)
+                            X.append(Xj); Y.append(Yj)
+                    if bound_counter > 0:
+                        # determine sum
+                        Msum = np.sum(M,axis=0)
+                        # make so each is a percentage
+                        for iM in range(len(M)):
+                            M[iM][Msum==0.0] = -1.0
+                            M[iM][Msum!=0.0] /= Msum[Msum!=0.0]
+                    
+                    # move on
                     for j,trim_sol in enumerate(trims[craft]["dicts"][i]):
                         sol = trims[craft]["dicts"][i][trim_sol]
                         ivr = trims[craft]["ind_var"][i]
@@ -692,7 +698,9 @@ if __name__ == "__main__":
                         if cname == "bire" and j != trims[craft]["min_ind"][i] \
                             and not(plot_alternate_trims):
                             continue
-                        if xcg not in plotting_xcgs:
+                        if cname == "bire" and xcg not in bire_plotting_xcgs:
+                            continue
+                        if cname == "base" and xcg not in base_plotting_xcgs:
                             continue
                         if np.rad2deg(abs(sol["angles"][k])) > 90.0 and not(plot_inverted_trims):
                             continue
@@ -772,6 +780,44 @@ if __name__ == "__main__":
                                 # rhoas = [np.abs(mm(x0,mm(Was[m],x0))) for m in range(len(Was))]
                                 # rhos = [rhoss[m] + rhoas[m] for m in range(len(rhoss))]
                                 # axs_DC[g][1].plot(ivr,np.min(rhos),**kdict)
+                        # print(cname,ivr,xcg)
+                        # if cname == "bire" and ivr == 30.0 and xcg == 0.0: # len(trims[craft]["dicts"][i]) > 1:
+                        #     print(craft,ivr,xcg,np.rad2deg(sol["u_trim"][1]),
+                        #         np.rad2deg(sol["u_trim"][2]),len(trims[craft]["dicts"][i])) #trims[craft]["dicts"][i])
+                        if len(trims[craft]["dicts"][i]) > 1:
+                            # print(craft,ivr,xcg,np.rad2deg(sol["u_trim"][1]),
+                            #     np.rad2deg(sol["u_trim"][2]),len(trims[craft]["dicts"][i])) #trims[craft]["dicts"][i])
+                            # plot contingency table
+                            if plot_type == "dark_background": 
+                                cmap = "gray_r"
+                                mec = "w"
+                                mfc = "k"
+                            else:
+                                cmap = "gray"
+                                mec = "k"
+                                mfc = "w"
+                            colmap = plt.get_cmap(cmap,color_bar_segs)
+                            pc = axs_gs.pcolormesh(X[j], Y[j], M[j],
+                                cmap=colmap,vmin=-1.0,vmax=1.0)
+                            cb = fig_gs.colorbar(pc)
+                            axs_gs.plot(np.rad2deg(sol["u_trim"][1]),
+                                        np.rad2deg(sol["u_trim"][2]),".",
+                                        mec=mec,mfc=mfc)
+                            if cname == "bire":
+                                axs_gs.set_xlabel(r"$\delta_e^B$ guess")
+                                axs_gs.set_ylabel(r"$\delta_B$ guess")
+                            else:
+                                axs_gs.set_xlabel(r"$\delta_e$ guess")
+                                axs_gs.set_ylabel(r"$\delta_r$ guess")
+                            # save fig / show
+                            filename = trims[craft]["filenames"][i].replace(".json","")
+                            file_desc = filename.split("_")
+                            gs_fn = "_".join(file_desc[0:2] + file_desc[6:9])
+                            # print(craft,j,gs_fn)
+                            fig_gs.savefig(sv_fldr+"11_"+gs_fn+"_"+str(j)+"."+plot_format,**save_dict)
+                            cb.remove()
+                            axs_gs.cla()
+            # quit()
             
             # other plot params
             if trim_type == "sct": 
@@ -848,9 +894,6 @@ if __name__ == "__main__":
                     axs_DC[g][h].legend(**legDOCdict)
 
             # save plots
-            save_dict = dict(transparent=plot_transparent,dpi=300.0)
-            sv_fldr = "plots" if plot_type == "default" else "plots_inv"
-            sv_fldr = folder + sv_fldr + "/"
             # if plot type is different than previous, remove them
             for filename in listdir(sv_fldr[:-1]):
                 if filename.split(".")[-1] != plot_format:
