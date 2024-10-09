@@ -602,6 +602,7 @@ if __name__ == "__main__":
             fig_CD,axs_CD = plt.subplots(1,1,**plot_dict)
             fig_eg,axs_eg = plt.subplots(1,1,**plot_dict)
             fig_gs,axs_gs = plt.subplots(1,1,**plot_dict)
+            fig_lg,axs_lg = plt.subplots(1,1,**plot_dict)
             rows_DC = 9; cols_DC = 4
             fig_DC = [[None for _ in range(cols_DC)] for _ in range(rows_DC)]
             axs_DC = [[None for _ in range(cols_DC)] for _ in range(rows_DC)]
@@ -817,6 +818,7 @@ if __name__ == "__main__":
                             fig_gs.savefig(sv_fldr+"11_"+gs_fn+"_"+str(j)+"."+plot_format,**save_dict)
                             cb.remove()
                             axs_gs.cla()
+            plt.close(fig_gs)
             # quit()
             
             # other plot params
@@ -874,24 +876,28 @@ if __name__ == "__main__":
                 r"$\delta_B$ > $\min(|\delta_B|)$",
                 r"$\delta_B$ < $\min(|\delta_B|)$"
             ]
-            legdict = dict(handles=sp,labels=lbls,loc=(1.0,0.0),
+            # legdict = dict(handles=sp,labels=lbls,loc=(1.0,0.0),
+            #     borderpad=0.1,handletextpad=0.0)
+            # axs[0].legend(**legdict)
+            # axs[1].legend(**legdict)
+            # axs[2].legend(**legdict)
+            # axs[3].legend(**legdict)
+            # axs[4].legend(**legdict)
+            # axs[5].legend(**legdict)
+            # axs_CD.legend(**legdict)
+            # axs_eg.legend(**legdict)
+            # if plot_base_DOC:
+            #     legDOCdict = legdict
+            # else:
+            #     legDOCdict = dict(handles=sp[2:],labels=lbls[2:],loc=(1.0,0.0),
+            #         borderpad=0.1,handletextpad=0.0)
+            # for g in range(rows_DC):
+            #     for h in range(cols_DC):
+            #         axs_DC[g][h].legend(**legDOCdict)
+            LEGdict = dict(handles=sp,labels=lbls,loc="lower center", #(1.0,0.0),
                 borderpad=0.1,handletextpad=0.0)
-            axs[0].legend(**legdict)
-            axs[1].legend(**legdict)
-            axs[2].legend(**legdict)
-            axs[3].legend(**legdict)
-            axs[4].legend(**legdict)
-            axs[5].legend(**legdict)
-            axs_CD.legend(**legdict)
-            axs_eg.legend(**legdict)
-            if plot_base_DOC:
-                legDOCdict = legdict
-            else:
-                legDOCdict = dict(handles=sp[2:],labels=lbls[2:],loc=(1.0,0.0),
-                    borderpad=0.1,handletextpad=0.0)
-            for g in range(rows_DC):
-                for h in range(cols_DC):
-                    axs_DC[g][h].legend(**legDOCdict)
+            axs_lg.legend(**LEGdict)
+            axs_lg.axis("off")
 
             # save plots
             # if plot type is different than previous, remove them
@@ -907,6 +913,7 @@ if __name__ == "__main__":
             fig_af   .savefig(sv_fldr+"05_alpha." +plot_format,**save_dict)
             fig_CD   .savefig(sv_fldr+"06_CD."    +plot_format,**save_dict)
             fig_eg   .savefig(sv_fldr+"07_maxeig."+plot_format,**save_dict)
+            fig_lg   .savefig(sv_fldr+"08_legend."+plot_format,**save_dict)
             if not(skip_DOC):
                 for g in range(rows_DC):
                     for h in range(cols_DC):
@@ -922,6 +929,7 @@ if __name__ == "__main__":
                 plt.close(fig_af)
                 plt.close(fig_CD)
                 plt.close(fig_eg)
+                plt.close(fig_lg)
                 for g in range(rows_DC):
                     for h in range(cols_DC):
                         if g != 6:
