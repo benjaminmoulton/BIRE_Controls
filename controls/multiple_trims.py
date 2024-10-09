@@ -566,8 +566,8 @@ if __name__ == "__main__":
 
             # change plot text parameters
             plt.rcParams["font.family"] = "Serif"
-            plt.rcParams["font.size"] = 8.0#*scale_font_size
-            plt.rcParams["axes.labelsize"] = 8.0#*scale_font_size
+            plt.rcParams["font.size"] = 10.0#*scale_font_size
+            plt.rcParams["axes.labelsize"] = 10.0#*scale_font_size
             # plt.rcParams['axes.xmargin'] = 0 # uncomment to have xaxis fit data
             plt.rcParams['lines.linewidth'] = 0.75 # 1.0
             plt.rcParams["xtick.minor.visible"] = True
