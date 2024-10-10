@@ -35,14 +35,14 @@ if __name__ == "__main__":
 
     # settings 
     run_bire = True # False # 
-    run_sct  = False # True # 
+    run_sct  = True # False # 
     run_fs = True
     skip_run = True # False # 
     skip_DOC = False # True # 
     if run_sct: trim_bank_degs = np.linspace(0.0,75.0,num=16).tolist() # [30.0] # np.linspace(0.0,60.0,num=13).tolist() # [0.0] # [10.0] # [60.0] # np.linspace(0.0,75.0,num=16).tolist() # 
     else: trim_beta_degs = np.linspace(0.0,16.0,num=9).tolist() # [6.0] # np.linspace(0.0,16.0,num=9).tolist() # [14.0,16.0] # [0.0] # 
     trim_climb_deg = 0.0 # 10.0 # 
-    fc = "T1" # "C2" # "F1" # "U1" # "A1" # 
+    fc = "C2" # "T1" # "F1" # "U1" # "A1" # 
     cgshift = [0.0,0.0,0.0] # [1.0,0.0,0.0] # [0.5,0.0,0.0] # 
     include_compressibility =  True # False # 
     use_Anderson_corrections =  True # False # 
@@ -800,7 +800,7 @@ if __name__ == "__main__":
                             colmap = plt.get_cmap(cmap,color_bar_segs)
                             pc = axs_gs.pcolormesh(X[j], Y[j], M[j],
                                 cmap=colmap,vmin=-1.0,vmax=1.0)
-                            cb = fig_gs.colorbar(pc)
+                            # cb = fig_gs.colorbar(pc)
                             axs_gs.plot(np.rad2deg(sol["u_trim"][1]),
                                         np.rad2deg(sol["u_trim"][2]),".",
                                         mec=mec,mfc=mfc)
@@ -816,7 +816,7 @@ if __name__ == "__main__":
                             gs_fn = "_".join(file_desc[0:2] + file_desc[6:9])
                             # print(craft,j,gs_fn)
                             fig_gs.savefig(sv_fldr+"11_"+gs_fn+"_"+str(j)+"."+plot_format,**save_dict)
-                            cb.remove()
+                            # cb.remove()
                             axs_gs.cla()
             plt.close(fig_gs)
             # quit()
@@ -876,9 +876,8 @@ if __name__ == "__main__":
                 r"$\delta_B$ > $\min(|\delta_B|)$",
                 r"$\delta_B$ < $\min(|\delta_B|)$"
             ]
-            # legdict = dict(handles=sp,labels=lbls,loc=(1.0,0.0),
-            #     borderpad=0.1,handletextpad=0.0)
-            # axs[0].legend(**legdict)
+            legdict = dict(handles=sp,labels=lbls,#loc=(1.0,0.0),
+                borderpad=0.1,handletextpad=0.0)
             # axs[1].legend(**legdict)
             # axs[2].legend(**legdict)
             # axs[3].legend(**legdict)
@@ -906,19 +905,29 @@ if __name__ == "__main__":
                     remove(sv_fldr+filename)
             nm = "beta" if trim_type == "sct" else "phi"
             fig_da   .savefig(sv_fldr+"00_da."    +plot_format,**save_dict)
+            axs[0].legend(fontsize=8.0,**legdict) # aileron
+            fig_da   .savefig(sv_fldr+"00_da_wlg."+plot_format,**save_dict)
             fig_de   .savefig(sv_fldr+"01_de."    +plot_format,**save_dict)
             fig_dB   .savefig(sv_fldr+"02_dB."    +plot_format,**save_dict)
             fig_ta   .savefig(sv_fldr+"03_tau."   +plot_format,**save_dict)
             fig_vr   .savefig(sv_fldr+"04_"+nm+"."+plot_format,**save_dict)
             fig_af   .savefig(sv_fldr+"05_alpha." +plot_format,**save_dict)
             fig_CD   .savefig(sv_fldr+"06_CD."    +plot_format,**save_dict)
+            axs_CD.legend(fontsize=8.0,**legdict)
+            fig_CD   .savefig(sv_fldr+"06_CD_wlg."+plot_format,**save_dict)
             fig_eg   .savefig(sv_fldr+"07_maxeig."+plot_format,**save_dict)
+            axs_eg.legend(fontsize=8.0,**legdict)
+            fig_eg   .savefig(sv_fldr+"07_maxeig_wlg."+plot_format,**save_dict)
             fig_lg   .savefig(sv_fldr+"08_legend."+plot_format,**save_dict)
             if not(skip_DOC):
                 for g in range(rows_DC):
                     for h in range(cols_DC):
                         F = "13_"+state_names[g]+"_"+ctrl_names[h]+"_DOC."
                         fig_DC[g][h].savefig(sv_fldr+F+plot_format,**save_dict)
+                        if h == 0:
+                            axs_DC[g][h].legend(fontsize=8.0,**legdict) # aileron
+                            F = F[:-1] + "_wlg."
+                            fig_DC[g][h].savefig(sv_fldr+F+plot_format,**save_dict)
             
             if show_plots:
                 plt.close(fig_da)

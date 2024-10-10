@@ -8011,7 +8011,7 @@ if __name__ == "__main__":
     # bire._report_trim_solution(bire.x_trim,bire.u_trim,bire.trim_iter)
     # quit()
     # ##############
-    di = [90.,10.,2.5]
+    di = [200.,20.,5.] # [90.,10.,2.5]
     # di = [0.,0.,0.0]
     plot_vars["plot_full"] = False # True # 
     plot_vars["plot_delta"] = True # False # 
@@ -8026,6 +8026,7 @@ if __name__ == "__main__":
     run_base["skip_simulation"] = run_bire["skip_simulation"] = False
     # # #
     run_bire["num"] = run_base["num"] = 1
+    run_bire["save_data"] = run_base["save_data"] = True
     # ###########################################################################
     # run_base["mrrr"] = run_bire["mrrr"] = [0,2,6,7,8,9,10,11]
     # run_base["mrrc"] = run_bire["mrrc"] = [2,3]
@@ -8037,8 +8038,9 @@ if __name__ == "__main__":
     # run_bire["has_model_error"] = run_base["has_model_error"] = True # False # 
     # run_bire["fixed_FM_errors"] = run_base["fixed_FM_errors"] = \
     #     [0.1,0.1,0.1,0.1,0.1,0.1]
+    plot_vars["save_states"] = True
     run_single_simulation(bire_dict,rtdst_1sg=di,**run_bire,**plot_vars)
-    # run_single_simulation(base_dict,rtdst_1sg=di,**run_base,**plot_vars)
+    run_single_simulation(base_dict,rtdst_1sg=di,**run_base,**plot_vars)
     quit()
 
     # # run forces analysis
