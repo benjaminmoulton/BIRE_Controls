@@ -92,6 +92,8 @@ if __name__ == "__main__":
     base_bins = (np.linspace(-u_scale[1],u_scale[1],num=base_prob_bins[0]+1),
         np.linspace(-u_scale[2],u_scale[2],num=base_prob_bins[1]+1))
     color_bar_segs = 16
+    #
+    max_open_figs_warn = 60
 
     # # rename files to include climb angle in file name
     # trim_files_folder = "./trim_files"
@@ -400,7 +402,7 @@ if __name__ == "__main__":
                 trims[name]["filenames"].append(filename)
                 
                 # print(file_split, name)
-                # calculate alpha and beta and save to dicts
+                # calculate alpha and beta and save to dicts, as well as psi_dot
                 sols = trims[name]["dicts"][-1]
                 for sol in sols:
                     x = sols[sol]["x_trim_euler"]
@@ -408,6 +410,9 @@ if __name__ == "__main__":
                     V = (x[0] * x[0] + x[1] * x[1] + x[2] * x[2])**0.5
                     b = np.arcsin(x[1]/V)
                     trims[name]["dicts"][-1][sol]["angles"] = [a,b,x[9]]
+                    psi_dot = (np.sin(x[9])*x[4] 
+                        + np.cos(x[9])*x[5])/np.cos(x[10])
+                    trims[name]["dicts"][-1][sol]["psi_dot"] = psi_dot
         
         # sort by ind_var
         for craft in trims:
@@ -581,7 +586,7 @@ if __name__ == "__main__":
             plt.rcParams["xtick.minor.size"] = plt.rcParams["ytick.minor.size"] = 2.5
             plt.rcParams["mathtext.fontset"] = "dejavuserif"
             plt.rcParams['figure.dpi'] = 300.0
-            plt.rcParams['figure.max_open_warning'] = 50
+            plt.rcParams['figure.max_open_warning'] = max_open_figs_warn
 
             # initialize plot saving params
             save_dict = dict(transparent=plot_transparent,dpi=300.0)
@@ -599,6 +604,11 @@ if __name__ == "__main__":
             fig_ta,axs_ta = plt.subplots(1,1,**plot_dict)
             fig_vr,axs_vr = plt.subplots(1,1,**plot_dict)
             fig_af,axs_af = plt.subplots(1,1,**plot_dict)
+            fig_th,axs_th = plt.subplots(1,1,**plot_dict)
+            fig_wp,axs_wp = plt.subplots(1,1,**plot_dict)
+            fig_wq,axs_wq = plt.subplots(1,1,**plot_dict)
+            fig_wr,axs_wr = plt.subplots(1,1,**plot_dict)
+            fig_ps,axs_ps = plt.subplots(1,1,**plot_dict)
             fig_CD,axs_CD = plt.subplots(1,1,**plot_dict)
             fig_eg,axs_eg = plt.subplots(1,1,**plot_dict)
             fig_gs,axs_gs = plt.subplots(1,1,**plot_dict)
@@ -626,6 +636,11 @@ if __name__ == "__main__":
             axs_af.grid(which="major",lw=grid_lw,ls="-",c=grid_color)
             axs_CD.grid(which="major",lw=grid_lw,ls="-",c=grid_color)
             axs_eg.grid(which="major",lw=grid_lw,ls="-",c=grid_color)
+            axs_th.grid(which="major",lw=grid_lw,ls="-",c=grid_color)
+            axs_wp.grid(which="major",lw=grid_lw,ls="-",c=grid_color)
+            axs_wq.grid(which="major",lw=grid_lw,ls="-",c=grid_color)
+            axs_wr.grid(which="major",lw=grid_lw,ls="-",c=grid_color)
+            axs_ps.grid(which="major",lw=grid_lw,ls="-",c=grid_color)
             for i in range(rows_DC):
                 for j in range(cols_DC):
                     axs_DC[i][j].grid(which="major",lw=grid_lw,ls="-",
@@ -717,6 +732,20 @@ if __name__ == "__main__":
                         axs[4].plot(ivr,np.rad2deg(sol["angles"][k]),**kdict)
                         # aoa
                         axs[5].plot(ivr,np.rad2deg(sol["angles"][0]),**kdict)
+                        # theta
+                        axs_th.plot(ivr,np.rad2deg(sol["x_trim_euler"][10]),
+                            **kdict)
+                        # p
+                        axs_wp.plot(ivr,np.rad2deg(sol["x_trim_euler"][3]),
+                            **kdict)
+                        # q
+                        axs_wq.plot(ivr,np.rad2deg(sol["x_trim_euler"][4]),
+                            **kdict)
+                        # r
+                        axs_wr.plot(ivr,np.rad2deg(sol["x_trim_euler"][5]),
+                            **kdict)
+                        # psi_dot
+                        axs_ps.plot(ivr,np.rad2deg(sol["psi_dot"]),**kdict)
                         #
                         # CD
                         axs_CD.plot(ivr,sol["CFM_trim"][2],**kdict)
@@ -835,6 +864,18 @@ if __name__ == "__main__":
             axs[3].set_ylabel(r"Throttle ($\tau$), per-unit")
             axs[4].set_ylabel(vrylbl)
             axs[5].set_ylabel(r"Angle of attack ($\alpha$), deg")
+            #
+            axs_th.set_xlabel(xlabel)
+            axs_th.set_ylabel(r"Elevation angle ($\theta$), deg")
+            axs_wp.set_xlabel(xlabel)
+            axs_wp.set_ylabel( r"Roll rate ($p$), deg/s")
+            axs_wq.set_xlabel(xlabel)
+            axs_wq.set_ylabel(r"Pitch rate ($q$), deg/s")
+            axs_wr.set_xlabel(xlabel)
+            axs_wr.set_ylabel(  r"Yaw rate ($r$), deg/s")
+            axs_ps.set_xlabel(xlabel)
+            axs_ps.set_ylabel(r"Change in heading ($\dot{\psi}$), deg/s")
+            #
             axs_CD.set_xlabel(xlabel)
             axs_CD.set_ylabel(r"Drag coefficient ($C_D$)")
             axs_eg.set_ylabel(xlabel)
@@ -911,7 +952,14 @@ if __name__ == "__main__":
             fig_dB   .savefig(sv_fldr+"02_dB."    +plot_format,**save_dict)
             fig_ta   .savefig(sv_fldr+"03_tau."   +plot_format,**save_dict)
             fig_vr   .savefig(sv_fldr+"04_"+nm+"."+plot_format,**save_dict)
+            axs_vr.legend(fontsize=8.0,**legdict)
+            fig_vr   .savefig(sv_fldr+"04_"+nm+"_wlg."+plot_format,**save_dict)
+            fig_th   .savefig(sv_fldr+"04_theta."+plot_format,**save_dict)
+            axs_th.legend(fontsize=8.0,**legdict)
+            fig_th   .savefig(sv_fldr+"04_theta_wlg."+plot_format,**save_dict)
             fig_af   .savefig(sv_fldr+"05_alpha." +plot_format,**save_dict)
+            axs_af.legend(fontsize=8.0,**legdict)
+            fig_af   .savefig(sv_fldr+"05_alpha_wlg." +plot_format,**save_dict)
             fig_CD   .savefig(sv_fldr+"06_CD."    +plot_format,**save_dict)
             axs_CD.legend(fontsize=8.0,**legdict)
             fig_CD   .savefig(sv_fldr+"06_CD_wlg."+plot_format,**save_dict)
@@ -919,6 +967,12 @@ if __name__ == "__main__":
             axs_eg.legend(fontsize=8.0,**legdict)
             fig_eg   .savefig(sv_fldr+"07_maxeig_wlg."+plot_format,**save_dict)
             fig_lg   .savefig(sv_fldr+"08_legend."+plot_format,**save_dict)
+            fig_ps   .savefig(sv_fldr+"09_psidot."+plot_format,**save_dict)
+            axs_ps.legend(fontsize=8.0,**legdict)
+            fig_ps   .savefig(sv_fldr+"09_psidot_wlg."+plot_format,**save_dict)
+            fig_wp   .savefig(sv_fldr+"10_p."+plot_format,**save_dict)
+            fig_wq   .savefig(sv_fldr+"10_q."+plot_format,**save_dict)
+            fig_wr   .savefig(sv_fldr+"10_r."+plot_format,**save_dict)
             if not(skip_DOC):
                 for g in range(rows_DC):
                     for h in range(cols_DC):
@@ -939,6 +993,11 @@ if __name__ == "__main__":
                 plt.close(fig_CD)
                 plt.close(fig_eg)
                 plt.close(fig_lg)
+                plt.close(fig_th)
+                plt.close(fig_wp)
+                plt.close(fig_wq)
+                plt.close(fig_wr)
+                plt.close(fig_ps)
                 for g in range(rows_DC):
                     for h in range(cols_DC):
                         if g != 6:
