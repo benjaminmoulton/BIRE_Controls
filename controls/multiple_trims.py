@@ -602,6 +602,7 @@ if __name__ == "__main__":
             fig_de,axs_de = plt.subplots(1,1,**plot_dict)
             fig_dB,axs_dB = plt.subplots(1,1,**plot_dict)
             fig_ta,axs_ta = plt.subplots(1,1,**plot_dict)
+            fig_t2,axs_t2 = plt.subplots(1,1,**plot_dict)
             fig_vr,axs_vr = plt.subplots(1,1,**plot_dict)
             fig_af,axs_af = plt.subplots(1,1,**plot_dict)
             fig_th,axs_th = plt.subplots(1,1,**plot_dict)
@@ -632,6 +633,7 @@ if __name__ == "__main__":
             axs_de.grid(which="major",lw=grid_lw,ls="-",c=grid_color)
             axs_dB.grid(which="major",lw=grid_lw,ls="-",c=grid_color)
             axs_ta.grid(which="major",lw=grid_lw,ls="-",c=grid_color)
+            axs_t2.grid(which="major",lw=grid_lw,ls="-",c=grid_color)
             axs_vr.grid(which="major",lw=grid_lw,ls="-",c=grid_color)
             axs_af.grid(which="major",lw=grid_lw,ls="-",c=grid_color)
             axs_CD.grid(which="major",lw=grid_lw,ls="-",c=grid_color)
@@ -728,6 +730,11 @@ if __name__ == "__main__":
                         axs[2].plot(ivr,np.rad2deg(sol["u_trim"][2]),**kdict)
                         # throttle
                         axs[3].plot(ivr,           sol["u_trim"][3] ,**kdict)
+                        # throttle diff
+                        if cname == "bire" and j != trims[craft]["min_ind"][i]:
+                            name = str(trims[craft]["min_ind"][i])
+                            tau_zro = trims[craft]["dicts"][i][name]["u_trim"][3]
+                            axs_t2.plot(ivr,sol["u_trim"][3] - tau_zro,**kdict)
                         # sideslip / bank
                         axs[4].plot(ivr,np.rad2deg(sol["angles"][k]),**kdict)
                         # aoa
@@ -865,6 +872,9 @@ if __name__ == "__main__":
             axs[4].set_ylabel(vrylbl)
             axs[5].set_ylabel(r"Angle of attack ($\alpha$), deg")
             #
+            axs_t2.set_xlabel(xlabel)
+            axs_t2.set_ylabel(r"Throttle difference ($\tau - \tau_{n0}$), per-unit")
+            #
             axs_th.set_xlabel(xlabel)
             axs_th.set_ylabel(r"Elevation angle ($\theta$), deg")
             axs_wp.set_xlabel(xlabel)
@@ -936,6 +946,8 @@ if __name__ == "__main__":
             #         axs_DC[g][h].legend(**legDOCdict)
             LEGdict = dict(handles=sp,labels=lbls,loc="lower center", #(1.0,0.0),
                 borderpad=0.1,handletextpad=0.0)
+            fr2dict = dict(handles=sp[2:],labels=lbls[2:],#loc="lower center", #(1.0,0.0),
+                borderpad=0.1,handletextpad=0.0)
             axs_lg.legend(**LEGdict)
             axs_lg.axis("off")
 
@@ -951,6 +963,8 @@ if __name__ == "__main__":
             fig_de   .savefig(sv_fldr+"01_de."    +plot_format,**save_dict)
             fig_dB   .savefig(sv_fldr+"02_dB."    +plot_format,**save_dict)
             fig_ta   .savefig(sv_fldr+"03_tau."   +plot_format,**save_dict)
+            axs_t2.legend(fontsize=8.0,**fr2dict)
+            fig_t2   .savefig(sv_fldr+"03_tau_diff."+plot_format,**save_dict)
             fig_vr   .savefig(sv_fldr+"04_"+nm+"."+plot_format,**save_dict)
             axs_vr.legend(fontsize=8.0,**legdict)
             fig_vr   .savefig(sv_fldr+"04_"+nm+"_wlg."+plot_format,**save_dict)
@@ -988,6 +1002,7 @@ if __name__ == "__main__":
                 plt.close(fig_de)
                 plt.close(fig_dB)
                 plt.close(fig_ta)
+                plt.close(fig_t2)
                 plt.close(fig_vr)
                 plt.close(fig_af)
                 plt.close(fig_CD)
