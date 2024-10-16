@@ -543,7 +543,7 @@ if __name__ == "__main__":
     # Ir = det/(Ixx*Iyy + Ixx*Iyz - Ixy**2 + Ixy*Ixz + Ixy*Iyz + Ixz*Iyy)
     # print(adj[0,0] + adj[1,0] + adj[2,0])
     # print(adj[0,1] + adj[1,1] + adj[2,1])
-    # print(adj[0,2] + adj[1,2] + adj[2,2])    
+    # print(adj[0,2] + adj[1,2] + adj[2,2])
     #
     V_fn = ( Ip*p**2 + Iq*q**2 + Ir*r**2 )#
     V_fn = frac(1,2)*(w.T*I*w)[0,0]*det/(det - Ixy*Ixz*Iyz)/frac(1,2)/rho/V**2/Sw

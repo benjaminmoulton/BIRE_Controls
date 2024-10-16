@@ -35,14 +35,14 @@ if __name__ == "__main__":
 
     # settings 
     run_bire = True # False # 
-    run_sct  = True # False # 
+    run_sct  = False # True # 
     run_fs = True
     skip_run = True # False # 
     skip_DOC = False # True # 
     if run_sct: trim_bank_degs = np.linspace(0.0,75.0,num=16).tolist() # [30.0] # np.linspace(0.0,60.0,num=13).tolist() # [0.0] # [10.0] # [60.0] # np.linspace(0.0,75.0,num=16).tolist() # 
     else: trim_beta_degs = np.linspace(0.0,16.0,num=9).tolist() # [6.0] # np.linspace(0.0,16.0,num=9).tolist() # [14.0,16.0] # [0.0] # 
     trim_climb_deg = 0.0 # 10.0 # 
-    fc = "C2" # "T1" # "F1" # "U1" # "A1" # 
+    fc = "T1" # "C2" # "F1" # "U1" # "A1" # 
     cgshift = [0.0,0.0,0.0] # [1.0,0.0,0.0] # [0.5,0.0,0.0] # 
     include_compressibility =  True # False # 
     use_Anderson_corrections =  True # False # 
@@ -610,7 +610,12 @@ if __name__ == "__main__":
             fig_wq,axs_wq = plt.subplots(1,1,**plot_dict)
             fig_wr,axs_wr = plt.subplots(1,1,**plot_dict)
             fig_ps,axs_ps = plt.subplots(1,1,**plot_dict)
+            fig_CL,axs_CL = plt.subplots(1,1,**plot_dict)
+            fig_CS,axs_CS = plt.subplots(1,1,**plot_dict)
             fig_CD,axs_CD = plt.subplots(1,1,**plot_dict)
+            fig_Cl,axs_Cl = plt.subplots(1,1,**plot_dict)
+            fig_Cm,axs_Cm = plt.subplots(1,1,**plot_dict)
+            fig_Cn,axs_Cn = plt.subplots(1,1,**plot_dict)
             fig_eg,axs_eg = plt.subplots(1,1,**plot_dict)
             fig_gs,axs_gs = plt.subplots(1,1,**plot_dict)
             fig_lg,axs_lg = plt.subplots(1,1,**plot_dict)
@@ -636,7 +641,12 @@ if __name__ == "__main__":
             axs_t2.grid(which="major",lw=grid_lw,ls="-",c=grid_color)
             axs_vr.grid(which="major",lw=grid_lw,ls="-",c=grid_color)
             axs_af.grid(which="major",lw=grid_lw,ls="-",c=grid_color)
+            axs_CL.grid(which="major",lw=grid_lw,ls="-",c=grid_color)
+            axs_CS.grid(which="major",lw=grid_lw,ls="-",c=grid_color)
             axs_CD.grid(which="major",lw=grid_lw,ls="-",c=grid_color)
+            axs_Cl.grid(which="major",lw=grid_lw,ls="-",c=grid_color)
+            axs_Cm.grid(which="major",lw=grid_lw,ls="-",c=grid_color)
+            axs_Cn.grid(which="major",lw=grid_lw,ls="-",c=grid_color)
             axs_eg.grid(which="major",lw=grid_lw,ls="-",c=grid_color)
             axs_th.grid(which="major",lw=grid_lw,ls="-",c=grid_color)
             axs_wp.grid(which="major",lw=grid_lw,ls="-",c=grid_color)
@@ -754,8 +764,13 @@ if __name__ == "__main__":
                         # psi_dot
                         axs_ps.plot(ivr,np.rad2deg(sol["psi_dot"]),**kdict)
                         #
-                        # CD
+                        # aero
+                        axs_CL.plot(ivr,sol["CFM_trim"][0],**kdict)
+                        axs_CS.plot(ivr,sol["CFM_trim"][1],**kdict)
                         axs_CD.plot(ivr,sol["CFM_trim"][2],**kdict)
+                        axs_Cl.plot(ivr,sol["CFM_trim"][3],**kdict)
+                        axs_Cm.plot(ivr,sol["CFM_trim"][4],**kdict)
+                        axs_Cn.plot(ivr,sol["CFM_trim"][5],**kdict)
                         #
                         # most unstable eigenvalue
                         LinSys = sol["Linearized_system_trim"]
@@ -886,8 +901,19 @@ if __name__ == "__main__":
             axs_ps.set_xlabel(xlabel)
             axs_ps.set_ylabel(r"Change in heading ($\dot{\psi}$), deg/s")
             #
+            axs_CL.set_xlabel(xlabel)
+            axs_CL.set_ylabel(      r"Lift coefficient ($C_L$)")
+            axs_CS.set_xlabel(xlabel)
+            axs_CS.set_ylabel(r"Side-force coefficient ($C_S$)")
             axs_CD.set_xlabel(xlabel)
-            axs_CD.set_ylabel(r"Drag coefficient ($C_D$)")
+            axs_CD.set_ylabel(      r"Drag coefficient ($C_D$)")
+            axs_Cl.set_xlabel(xlabel)
+            axs_Cl.set_ylabel( r"Rolling moment coefficient ($C_\ell$)")
+            axs_Cm.set_xlabel(xlabel)
+            axs_Cm.set_ylabel(r"Pitching moment coefficient ($C_m$)")
+            axs_Cn.set_xlabel(xlabel)
+            axs_Cn.set_ylabel(  r"Yawing moment coefficient ($C_n$)")
+            #
             axs_eg.set_ylabel(xlabel)
             axs_eg.set_xlabel(r"$\max \left( \operatorname{real} \left( " + \
                 r"\lambda \right) \right)$, 1/sec")
@@ -965,6 +991,7 @@ if __name__ == "__main__":
             fig_ta   .savefig(sv_fldr+"03_tau."   +plot_format,**save_dict)
             axs_t2.legend(fontsize=8.0,**fr2dict)
             fig_t2   .savefig(sv_fldr+"03_tau_diff."+plot_format,**save_dict)
+            #
             fig_vr   .savefig(sv_fldr+"04_"+nm+"."+plot_format,**save_dict)
             axs_vr.legend(fontsize=8.0,**legdict)
             fig_vr   .savefig(sv_fldr+"04_"+nm+"_wlg."+plot_format,**save_dict)
@@ -974,13 +1001,32 @@ if __name__ == "__main__":
             fig_af   .savefig(sv_fldr+"05_alpha." +plot_format,**save_dict)
             axs_af.legend(fontsize=8.0,**legdict)
             fig_af   .savefig(sv_fldr+"05_alpha_wlg." +plot_format,**save_dict)
+            #
+            fig_CL   .savefig(sv_fldr+"06_CL."    +plot_format,**save_dict)
+            axs_CL.legend(fontsize=8.0,**legdict)
+            fig_CL   .savefig(sv_fldr+"06_CL_wlg."+plot_format,**save_dict)
+            fig_CS   .savefig(sv_fldr+"06_CS."    +plot_format,**save_dict)
+            axs_CS.legend(fontsize=8.0,**legdict)
+            fig_CS   .savefig(sv_fldr+"06_CS_wlg."+plot_format,**save_dict)
             fig_CD   .savefig(sv_fldr+"06_CD."    +plot_format,**save_dict)
             axs_CD.legend(fontsize=8.0,**legdict)
             fig_CD   .savefig(sv_fldr+"06_CD_wlg."+plot_format,**save_dict)
+            fig_Cl   .savefig(sv_fldr+"06_Cl."    +plot_format,**save_dict)
+            axs_Cl.legend(fontsize=8.0,**legdict)
+            fig_Cl   .savefig(sv_fldr+"06_Cl_wlg."+plot_format,**save_dict)
+            fig_Cm   .savefig(sv_fldr+"06_Cm."    +plot_format,**save_dict)
+            axs_Cm.legend(fontsize=8.0,**legdict)
+            fig_Cm   .savefig(sv_fldr+"06_Cm_wlg."+plot_format,**save_dict)
+            fig_Cn   .savefig(sv_fldr+"06_Cn."    +plot_format,**save_dict)
+            axs_Cn.legend(fontsize=8.0,**legdict)
+            fig_Cn   .savefig(sv_fldr+"06_Cn_wlg."+plot_format,**save_dict)
+            #
             fig_eg   .savefig(sv_fldr+"07_maxeig."+plot_format,**save_dict)
             axs_eg.legend(fontsize=8.0,**legdict)
             fig_eg   .savefig(sv_fldr+"07_maxeig_wlg."+plot_format,**save_dict)
+            #
             fig_lg   .savefig(sv_fldr+"08_legend."+plot_format,**save_dict)
+            #
             fig_ps   .savefig(sv_fldr+"09_psidot."+plot_format,**save_dict)
             axs_ps.legend(fontsize=8.0,**legdict)
             fig_ps   .savefig(sv_fldr+"09_psidot_wlg."+plot_format,**save_dict)
@@ -1005,7 +1051,12 @@ if __name__ == "__main__":
                 plt.close(fig_t2)
                 plt.close(fig_vr)
                 plt.close(fig_af)
+                plt.close(fig_CL)
+                plt.close(fig_CS)
                 plt.close(fig_CD)
+                plt.close(fig_Cl)
+                plt.close(fig_Cm)
+                plt.close(fig_Cn)
                 plt.close(fig_eg)
                 plt.close(fig_lg)
                 plt.close(fig_th)
