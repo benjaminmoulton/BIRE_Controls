@@ -876,10 +876,6 @@ if __name__ == "__main__":
                                 # rhoas = [np.abs(mm(x0,mm(Was[m],x0))) for m in range(len(Was))]
                                 # rhos = [rhoss[m] + rhoas[m] for m in range(len(rhoss))]
                                 # axs_DC[g][1].plot(ivr,np.min(rhos),**kdict)
-                        # print(cname,ivr,xcg)
-                        # if cname == "bire" and ivr == 30.0 and xcg == 0.0: # len(trims[craft]["dicts"][i]) > 1:
-                        #     print(craft,ivr,xcg,np.rad2deg(sol["u_trim"][1]),
-                        #         np.rad2deg(sol["u_trim"][2]),len(trims[craft]["dicts"][i])) #trims[craft]["dicts"][i])
                         if len(trims[craft]["dicts"][i]) > 1:
                             # print(craft,ivr,xcg,np.rad2deg(sol["u_trim"][1]),
                             #     np.rad2deg(sol["u_trim"][2]),len(trims[craft]["dicts"][i])) #trims[craft]["dicts"][i])
@@ -983,15 +979,49 @@ if __name__ == "__main__":
                     axs_DC[g][h].set_ylabel(
                         "DOC of "+state_vars[g]+" using "+ctrl_vars[h])# + state_names[g])
                     axs_DC[g][h].set_yscale("log")
-                    # axs_DC[g][h].invert_yaxis()
-                    # ylim = axs_DC[g][h].get_ylim()
-                    # axs_DC[g][h].set_ylim(ylim[1],ylim[0])
-                    if g == 6:
-                        axs_DC[g][h].set_ylim((1.0e-17,1.0e-26)) # (1.0e-26,1.0e-17)) # 
-                    elif g in [7,8]:
-                        axs_DC[g][h].set_ylim((1.0e+2,1.0e-6)) # (1.0e-6,1.0e+2)) # 
-                    else:
-                        axs_DC[g][h].set_ylim((1.0e+2,1.0e-4)) # (1.0e-4,1.0e+2)) # 
+                    if g == 0:
+                        if run_sct: axs_DC[g][h].set_ylim((1.0e+2,1.0e-9 ))
+                        else      : axs_DC[g][h].set_ylim((1.0e+3,1.0e-10))
+                    elif g == 1:
+                        if run_sct: axs_DC[g][h].set_ylim((1.0e+7,1.0e-9))
+                        else      : axs_DC[g][h].set_ylim((1.0e+5,1.0e-9))
+                    elif g == 2:
+                        if run_sct:
+                            if h != 3: axs_DC[g][h].set_ylim((1.0e+6 ,1.0e-10)) # no throttle 
+                            else     : axs_DC[g][h].set_ylim((1.0e+10,1.0e-10)) # throttle
+                        else:
+                            if h != 3: axs_DC[g][h].set_ylim((1.0e+4,1.0e-10)) # no throttle 
+                            else     : axs_DC[g][h].set_ylim((1.0e+6,1.0e-10)) # throttle
+                    elif g == 3:
+                        if run_sct:
+                            if h != 3: axs_DC[g][h].set_ylim((1.0e+4,1.0e-8)) # no throttle
+                            else     : axs_DC[g][h].set_ylim((1.0e+7,1.0e-8)) # throttle
+                        else:
+                            if h != 3: axs_DC[g][h].set_ylim((1.0e+4,1.0e-6)) # no throttle
+                            else     : axs_DC[g][h].set_ylim((1.0e+6,1.0e-6)) # throttle
+                    elif g == 4:
+                        if run_sct: axs_DC[g][h].set_ylim((1.0e+5,1.0e-10))
+                        else      : axs_DC[g][h].set_ylim((1.0e+4,1.0e-6 ))
+                    elif g == 5:
+                        if run_sct:
+                            if h != 3: axs_DC[g][h].set_ylim((1.0e+5 ,1.0e-7)) # no throttle
+                            else     : axs_DC[g][h].set_ylim((1.0e+10,1.0e-7)) # throttle
+                        else:
+                            if h != 3: axs_DC[g][h].set_ylim((1.0e+5,1.0e-4)) # no throttle
+                            else     : axs_DC[g][h].set_ylim((1.0e+7,1.0e-4)) # throttle
+                    elif g == 6:
+                        if run_sct: axs_DC[g][h].set_ylim((1.0e-13,1.0e-27))
+                        else      : axs_DC[g][h].set_ylim((1.0e-11,1.0e-23))
+                    elif g == 7:
+                        if run_sct:
+                            if h != 3: axs_DC[g][h].set_ylim((1.0e+3,1.0e-7)) # no throttle # 
+                            else     : axs_DC[g][h].set_ylim((1.0e+7,1.0e-7)) # throttle
+                        else:
+                            if h != 3: axs_DC[g][h].set_ylim((1.0e+4,1.0e-6)) # no throttle # 
+                            else     : axs_DC[g][h].set_ylim((1.0e+7,1.0e-6)) # throttle
+                    elif g == 8:
+                        if run_sct: axs_DC[g][h].set_ylim((1.0e+2,1.0e-10))
+                        else      : axs_DC[g][h].set_ylim((1.0e+4,1.0e-7 ))
             # legend
             sp = [
                 Line2D([0], [0],color=str(xcg_shade_inverter(0.0)),marker=odBm,**rest_dict),
@@ -1134,7 +1164,7 @@ if __name__ == "__main__":
                 plt.close(fig_ps)
                 for g in range(rows_DC):
                     for h in range(cols_DC):
-                        if g != 6:
+                        if g not in [6,7,8]: # [3,4,5]: # [0,1,2]: # # states
                             plt.close(fig_DC[g][h])
                 plt.show()
             else:
