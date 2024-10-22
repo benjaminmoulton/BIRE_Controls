@@ -31,23 +31,25 @@ if __name__ == "__main__":
         "C3" : { "m" : 0.8 , "h" : 30000., "V" : 796., "Re" : 25828000. },
         "U1" : { "m" : u1M , "h" : 15000., "V" : 350., "Re" : "unkn"    }, # no compr no stall
         "F1" : { "m" : 0.6 , "h" : 15000., "V" : 634., "Re" : 31324000. }, # no compr no stall
+        "E2" : { "m" : 0.6 , "h" : 15000., "V" : 634., "Re" : 31324000. }, # negative bank angles
     }
 
     # settings 
     run_bire = True # False # 
-    run_sct  = False # True # 
+    run_sct  = True # False # 
     run_fs = True
     skip_run = True # False # 
     skip_DOC = False # True # 
     if run_sct: trim_bank_degs = np.linspace(0.0,75.0,num=16).tolist() # [30.0] # np.linspace(0.0,60.0,num=13).tolist() # [0.0] # [10.0] # [60.0] # np.linspace(0.0,75.0,num=16).tolist() # 
     else: trim_beta_degs = np.linspace(0.0,16.0,num=9).tolist() # [6.0] # np.linspace(0.0,16.0,num=9).tolist() # [14.0,16.0] # [0.0] # 
     trim_climb_deg = 0.0 # 10.0 # 
-    fc = "T1" # "C2" # "F1" # "U1" # "A1" # 
+    fc = "C2" # "T1" # "E2" # "F1" # "U1" # "A1" # 
     cgshift = [0.0,0.0,0.0] # [1.0,0.0,0.0] # [0.5,0.0,0.0] # 
     include_compressibility =  True # False # 
     use_Anderson_corrections =  True # False # 
     include_stall =  True # False # 
-    bire_plotting_xcgs = [0.0,0.5,1.0]
+    bire_plotting_xcgs = [0.0,0.5,1.0] # [-1.5,-1.0,-0.5,0.0,0.5,1.0,1.5] # 
+    cg_v_bb_xcgs_bire = [-1.5,-1.0,-0.5,0.0,0.5,1.0,1.5]
     base_plotting_xcgs = [0.0,1.0]
     plotting_gammas = [0.0]
     plot_inverted_trims = False # True # 
@@ -58,6 +60,10 @@ if __name__ == "__main__":
     plot_transparent = True if plot_format == "pdf" else False # False # True # 
     plot_dark = True # False # 
     skip_save_if_not_new = False # True # 
+    add_to_guesses_list = False # True # 
+    reset_guesses_list = False # True # 
+    # the above only affects whether previously found trim solution guesses are saved
+    # all new trim solution guesses are saved automatically
     #
     # other settings
     run_num = 1000 # 10 # 30 # 
@@ -67,7 +73,7 @@ if __name__ == "__main__":
     a_scale = 20.0 # 0.02 # 0.0 # 
     b_scale = 20.0 # 0.2 # 0.0 # 
     p_scale = 180.0 # 0.0 # 
-    u_scale = np.array([20.0,20.0,70.0,1.0]) # np.array([0.1,0.2,20.0,0.02]) # np.array([0.0]*4) # 
+    u_scale = np.array([21.5,25.0,90.0,1.0]) # np.array([20.0,20.0,70.0,1.0]) # np.array([0.1,0.2,20.0,0.02]) # np.array([0.0]*4) # 
     a_shift = 0.0 # 3.17 # 
     b_shift = 0.0 # 0.0 # 
     p_shift = 0.0 # 0.0 # 
@@ -84,6 +90,8 @@ if __name__ == "__main__":
     odBm = "o"
     odrm = "d"
     xcg_shade = lambda xcg : xcg*0.5 + (abs(xcg)>0.0)*0.25
+    other_shade = ["r","b","g","m","c","y"]
+    shades = {}; shades_counter = 0
     # xcg_shade = lambda xcg : "k" if xcg == 0.0 else ("r" if xcg == 0.5 else ("b" if xcg == 1.0 else "y"))
     bire_prob_bins = (6,10)
     base_prob_bins = (6,6)
@@ -196,6 +204,7 @@ if __name__ == "__main__":
                 Lin_trims.append(run_dict[case]["Linearized_system_trim"])
             
             num_b4 = len(x_trims)
+            old_guess_trims = guess_trims*1
 
             # initialize aircraft -- change settings!!
             if run_sct:
@@ -348,7 +357,14 @@ if __name__ == "__main__":
                     data_dict[case]["x_trim_euler"] = x_trims[j]
                     data_dict[case]["u_trim"] = u_trims[j]
                     data_dict[case]["CFM_trim"] = CFM_trims[j]
-                    data_dict[case]["guess_trim"] = guess_trims[j]
+                    if reset_guesses_list:
+                        data_dict[case]["guess_trim"] = \
+                            guess_trims[j][len(old_guess_trims[j]):]
+                    elif (add_to_guesses_list or len(old_guess_trims) == 0 
+                        or len(old_guess_trims[j]) == 0):
+                        data_dict[case]["guess_trim"] = guess_trims[j]
+                    else:
+                        data_dict[case]["guess_trim"] = old_guess_trims[j]
                     data_dict[case]["guess_bounds_aVu[deg/pu]"] = guess_bounds[j]
                     data_dict[case]["final_i_trim"] = final_i_trims[j]
                     data_dict[case]["Linearized_system_trim"] = Lin_trims[j]
@@ -388,7 +404,7 @@ if __name__ == "__main__":
             file_split = filename.replace(".json","").split("_")
             if file_split[1:4] == [scale_type, trim_type, fc]:
                 # name of aircraft is bire/base + CG info
-                name = file_split[0] + "_" + file_split[6]
+                name = file_split[0] + "_" + file_split[6] + "_" + file_split[8]
                 if name not in trims:
                     trims[name] = {}
                     trims[name]["ind_var"] = []
@@ -448,10 +464,6 @@ if __name__ == "__main__":
             if not(skip_DOC):
                 for j,trim_set in enumerate(trims[craft]["dicts"]):
                     for trim_sol in trim_set:
-                        # if craft[:4] == "bire":
-                        #     continue
-                        # if craft[4:] != "_CGp10p00p00":
-                        #     continue
                         solution = trim_set[trim_sol]
                         A = solution["Linearized_system_trim"]["A"]
                         B = solution["Linearized_system_trim"]["B"]
@@ -617,6 +629,8 @@ if __name__ == "__main__":
             fig_Cm,axs_Cm = plt.subplots(1,1,**plot_dict)
             fig_Cn,axs_Cn = plt.subplots(1,1,**plot_dict)
             fig_eg,axs_eg = plt.subplots(1,1,**plot_dict)
+            fig_bb,axs_bb = plt.subplots(1,1,**plot_dict)
+            fig_bp,axs_bp = plt.subplots(1,1,**plot_dict)
             fig_gs,axs_gs = plt.subplots(1,1,**plot_dict)
             fig_lg,axs_lg = plt.subplots(1,1,**plot_dict)
             rows_DC = 9; cols_DC = 4
@@ -628,6 +642,15 @@ if __name__ == "__main__":
                     else: shares ={"sharex":axs_DC[i][0],"sharey":axs_DC[i][0]}
                     fig_DC[i][j],axs_DC[i][j] = plt.subplots(1,1,**shares,**plot_dict)
             axs = [axs_da,axs_de,axs_dB,axs_ta,axs_vr,axs_af]
+            # # ctrb plots
+            # ctrb_fig = {}
+            # for craft in trims:
+            #     if craft not in ctrb_fig:
+            #         ctrb_fig[craft] = {}
+            #         ctrb_fig[craft]["fig"],ctrb_fig[craft]["ax"] = \
+            #             plt.subplots(1,1,**plot_dict)
+            #         print(ctrb_fig.keys())
+            # #
             if run_sct: k = 1
             else:       k = 2
             # add grids
@@ -648,6 +671,8 @@ if __name__ == "__main__":
             axs_Cm.grid(which="major",lw=grid_lw,ls="-",c=grid_color)
             axs_Cn.grid(which="major",lw=grid_lw,ls="-",c=grid_color)
             axs_eg.grid(which="major",lw=grid_lw,ls="-",c=grid_color)
+            axs_bb.grid(which="major",lw=grid_lw,ls="-",c=grid_color)
+            axs_bp.grid(which="major",lw=grid_lw,ls="-",c=grid_color)
             axs_th.grid(which="major",lw=grid_lw,ls="-",c=grid_color)
             axs_wp.grid(which="major",lw=grid_lw,ls="-",c=grid_color)
             axs_wq.grid(which="major",lw=grid_lw,ls="-",c=grid_color)
@@ -661,7 +686,7 @@ if __name__ == "__main__":
             # plot points
             rest_dict = dict(ms=3.5,mew=0.75,fillstyle="none",ls="none")
             for craft in trims:
-                cname,cgs = craft.split("_")
+                cname,cgs,clm = craft.split("_")
                 xcg = float(cgs.replace("p","_+").replace("m","_-").split("_")[1])/10.
                 for i in range(len(trims[craft]["dicts"])):
                     # pull out sol
@@ -710,27 +735,39 @@ if __name__ == "__main__":
                         # cg loc
                         kdict = {**kdict, **dict(color = str(xcg_shade_inverter(xcg)))}
                         # neg xcgs
-                        if xcg == -1.0:
-                            kdict["color"] = "b"
-                        elif xcg == -0.5:
-                            kdict["color"] = "r"
-                        elif xcg == -0.2:
-                            kdict["color"] = "y"
-                        elif xcg == -0.1:
-                            kdict["color"] = "g"
+                        if xcg < 0.0 or xcg > 1.0:
+                            if xcg not in shades:
+                                shades[xcg] = shades_counter % len(other_shade)
+                                shades_counter += 1
+                            kdict["color"] = other_shade[shades[xcg]]
+                        #
                         if np.rad2deg(abs(sol["angles"][k])) > 90.0:
-                            kdict["color"] = "m"
+                            kdict["color"] = "#FFA500"
                         # others
                         kdict = {**kdict, **rest_dict}
-                        # PLOTS!
+                        # #
+                        # Amat = sol["Linearized_system_trim"]["A"]
+                        # Bmat = sol["Linearized_system_trim"]["B"]
+                        # Gmat = co.ctrb(Amat,Bmat)
+                        # print(craft,np.linalg.matrix_rank(Gmat))
+                        # #
+                        # PLOTS! quit if not meeting criterion
                         if cname == "bire" and j != trims[craft]["min_ind"][i] \
                             and not(plot_alternate_trims):
                             continue
+                        if np.rad2deg(abs(sol["angles"][k])) > 90.0 and not(plot_inverted_trims):
+                            continue
+                        # cg vs beta / phi
+                        if cname == "bire" and xcg in cg_v_bb_xcgs_bire:
+                            temp_c = kdict["color"]*1
+                            kdict["color"] = "k"
+                            axs_bb.plot(xcg,np.rad2deg(sol["angles"][1]),**kdict)
+                            axs_bp.plot(xcg,np.rad2deg(sol["angles"][2]),**kdict)
+                            kdict["color"] = temp_c
+                        # #
                         if cname == "bire" and xcg not in bire_plotting_xcgs:
                             continue
                         if cname == "base" and xcg not in base_plotting_xcgs:
-                            continue
-                        if np.rad2deg(abs(sol["angles"][k])) > 90.0 and not(plot_inverted_trims):
                             continue
                         # aileron
                         axs[0].plot(ivr,np.rad2deg(sol["u_trim"][0]),**kdict)
@@ -882,8 +919,8 @@ if __name__ == "__main__":
             [ax.set_xlabel(xlabel) for ax in axs]
             axs[0].set_ylabel(r"Aileron ($\delta_a$), deg")
             axs[1].set_ylabel(r"Stabilator ($\delta_e^B$/$\delta_e$), deg")
-            axs[2].set_ylabel(r"Tail Rotation/Rudder ($\delta_B$/$\delta_r$), deg")
-            axs[3].set_ylabel(r"Throttle ($\tau$), per-unit")
+            axs[2].set_ylabel(r"Tail rotation/rudder ($\delta_B$/$\delta_r$), deg")
+            axs[3].set_ylabel(r"Throttle setting ($\tau$), per-unit")
             axs[4].set_ylabel(vrylbl)
             axs[5].set_ylabel(r"Angle of attack ($\alpha$), deg")
             #
@@ -917,6 +954,11 @@ if __name__ == "__main__":
             axs_eg.set_ylabel(xlabel)
             axs_eg.set_xlabel(r"$\max \left( \operatorname{real} \left( " + \
                 r"\lambda \right) \right)$, 1/sec")
+            #
+            axs_bb.set_xlabel(r"Center of gravity shift ($\Delta x_{cg}$), ft")
+            axs_bb.set_ylabel(r"Sideslip angle ($\beta$), deg")
+            axs_bp.set_xlabel(r"Center of gravity shift ($\Delta x_{cg}$), ft")
+            axs_bp.set_ylabel(r"Bank angle ($\phi$), deg")
             # DOC
             state_names = ["V","a","b","p","q","r","zf","phi","theta"]
             state_vars = ["$V$",r"$\alpha$",r"$\beta$","$p$","$q$","$r$",
@@ -974,6 +1016,8 @@ if __name__ == "__main__":
                 borderpad=0.1,handletextpad=0.0)
             fr2dict = dict(handles=sp[2:],labels=lbls[2:],#loc="lower center", #(1.0,0.0),
                 borderpad=0.1,handletextpad=0.0)
+            cmpdict = dict(handles=sp[4:],labels=lbls[4:],#loc="lower center", #(1.0,0.0),
+                borderpad=0.1,handletextpad=0.0)
             axs_lg.legend(**LEGdict)
             axs_lg.axis("off")
 
@@ -1027,6 +1071,11 @@ if __name__ == "__main__":
             #
             fig_lg   .savefig(sv_fldr+"08_legend."+plot_format,**save_dict)
             #
+            axs_bb.legend(fontsize=8.0,**cmpdict)
+            fig_bb   .savefig(sv_fldr+"08_cg_v_beta."+plot_format,**save_dict)
+            axs_bp.legend(fontsize=8.0,**cmpdict)
+            fig_bp   .savefig(sv_fldr+"08_cg_v_phi."+plot_format,**save_dict)
+            #
             fig_ps   .savefig(sv_fldr+"09_psidot."+plot_format,**save_dict)
             axs_ps.legend(fontsize=8.0,**legdict)
             fig_ps   .savefig(sv_fldr+"09_psidot_wlg."+plot_format,**save_dict)
@@ -1058,6 +1107,8 @@ if __name__ == "__main__":
                 plt.close(fig_Cm)
                 plt.close(fig_Cn)
                 plt.close(fig_eg)
+                plt.close(fig_bb)
+                plt.close(fig_bp)
                 plt.close(fig_lg)
                 plt.close(fig_th)
                 plt.close(fig_wp)
