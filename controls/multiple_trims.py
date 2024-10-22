@@ -36,14 +36,14 @@ if __name__ == "__main__":
 
     # settings 
     run_bire = True # False # 
-    run_sct  = False # True # 
+    run_sct  = True # False # 
     run_fs = True
     skip_run = True # False # 
     skip_DOC = False # True # 
     if run_sct: trim_bank_degs = np.linspace(0.0,75.0,num=16).tolist() # [30.0] # np.linspace(0.0,60.0,num=13).tolist() # [0.0] # [10.0] # [60.0] # np.linspace(0.0,75.0,num=16).tolist() # 
     else: trim_beta_degs = np.linspace(0.0,16.0,num=9).tolist() # [6.0] # np.linspace(0.0,16.0,num=9).tolist() # [14.0,16.0] # [0.0] # 
     trim_climb_deg = 0.0 # 10.0 # 
-    fc = "T1" # "C2" # "E2" # "F1" # "U1" # "A1" # 
+    fc = "C2" # "T1" # "E2" # "F1" # "U1" # "A1" # 
     cgshift = [0.0,0.0,0.0] # [1.0,0.0,0.0] # [0.5,0.0,0.0] # 
     include_compressibility =  True # False # 
     use_Anderson_corrections =  True # False # 
@@ -625,6 +625,7 @@ if __name__ == "__main__":
             fig_CL,axs_CL = plt.subplots(1,1,**plot_dict)
             fig_CS,axs_CS = plt.subplots(1,1,**plot_dict)
             fig_CD,axs_CD = plt.subplots(1,1,**plot_dict)
+            fig_2D,axs_2D = plt.subplots(1,1,**plot_dict)
             fig_Cl,axs_Cl = plt.subplots(1,1,**plot_dict)
             fig_Cm,axs_Cm = plt.subplots(1,1,**plot_dict)
             fig_Cn,axs_Cn = plt.subplots(1,1,**plot_dict)
@@ -667,6 +668,7 @@ if __name__ == "__main__":
             axs_CL.grid(which="major",lw=grid_lw,ls="-",c=grid_color)
             axs_CS.grid(which="major",lw=grid_lw,ls="-",c=grid_color)
             axs_CD.grid(which="major",lw=grid_lw,ls="-",c=grid_color)
+            axs_2D.grid(which="major",lw=grid_lw,ls="-",c=grid_color)
             axs_Cl.grid(which="major",lw=grid_lw,ls="-",c=grid_color)
             axs_Cm.grid(which="major",lw=grid_lw,ls="-",c=grid_color)
             axs_Cn.grid(which="major",lw=grid_lw,ls="-",c=grid_color)
@@ -808,6 +810,11 @@ if __name__ == "__main__":
                         axs_Cl.plot(ivr,sol["CFM_trim"][3],**kdict)
                         axs_Cm.plot(ivr,sol["CFM_trim"][4],**kdict)
                         axs_Cn.plot(ivr,sol["CFM_trim"][5],**kdict)
+                        # drag diff
+                        if cname == "bire" and j != trims[craft]["min_ind"][i]:
+                            name = str(trims[craft]["min_ind"][i])
+                            CD_zro = trims[craft]["dicts"][i][name]["CFM_trim"][2]
+                            axs_2D.plot(ivr,sol["CFM_trim"][2] - CD_zro,**kdict)
                         #
                         # most unstable eigenvalue
                         LinSys = sol["Linearized_system_trim"]
@@ -944,6 +951,10 @@ if __name__ == "__main__":
             axs_CS.set_ylabel(r"Side-force coefficient ($C_S$)")
             axs_CD.set_xlabel(xlabel)
             axs_CD.set_ylabel(      r"Drag coefficient ($C_D$)")
+            #
+            axs_2D.set_xlabel(xlabel)
+            axs_2D.set_ylabel(      r"Drag difference ($C_D - C_{D \, n0}$)")
+            #
             axs_Cl.set_xlabel(xlabel)
             axs_Cl.set_ylabel( r"Rolling moment coefficient ($C_\ell$)")
             axs_Cm.set_xlabel(xlabel)
@@ -1055,6 +1066,8 @@ if __name__ == "__main__":
             fig_CD   .savefig(sv_fldr+"06_CD."    +plot_format,**save_dict)
             axs_CD.legend(fontsize=8.0,**legdict)
             fig_CD   .savefig(sv_fldr+"06_CD_wlg."+plot_format,**save_dict)
+            axs_2D.legend(fontsize=8.0,**fr2dict)
+            fig_2D   .savefig(sv_fldr+"06_CD_diff."+plot_format,**save_dict)
             fig_Cl   .savefig(sv_fldr+"06_Cl."    +plot_format,**save_dict)
             axs_Cl.legend(fontsize=8.0,**legdict)
             fig_Cl   .savefig(sv_fldr+"06_Cl_wlg."+plot_format,**save_dict)
@@ -1103,6 +1116,7 @@ if __name__ == "__main__":
                 plt.close(fig_CL)
                 plt.close(fig_CS)
                 plt.close(fig_CD)
+                plt.close(fig_2D)
                 plt.close(fig_Cl)
                 plt.close(fig_Cm)
                 plt.close(fig_Cn)
