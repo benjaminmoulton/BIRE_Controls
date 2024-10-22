@@ -983,12 +983,15 @@ if __name__ == "__main__":
                     axs_DC[g][h].set_ylabel(
                         "DOC of "+state_vars[g]+" using "+ctrl_vars[h])# + state_names[g])
                     axs_DC[g][h].set_yscale("log")
+                    # axs_DC[g][h].invert_yaxis()
+                    # ylim = axs_DC[g][h].get_ylim()
+                    # axs_DC[g][h].set_ylim(ylim[1],ylim[0])
                     if g == 6:
-                        axs_DC[g][h].set_ylim((1.0e-26,1.0e-17))
+                        axs_DC[g][h].set_ylim((1.0e-17,1.0e-26)) # (1.0e-26,1.0e-17)) # 
                     elif g in [7,8]:
-                        axs_DC[g][h].set_ylim((1.0e-6,1.0e+2))
+                        axs_DC[g][h].set_ylim((1.0e+2,1.0e-6)) # (1.0e-6,1.0e+2)) # 
                     else:
-                        axs_DC[g][h].set_ylim((1.0e-4,1.0e+2))
+                        axs_DC[g][h].set_ylim((1.0e+2,1.0e-4)) # (1.0e-4,1.0e+2)) # 
             # legend
             sp = [
                 Line2D([0], [0],color=str(xcg_shade_inverter(0.0)),marker=odBm,**rest_dict),
