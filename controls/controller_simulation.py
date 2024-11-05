@@ -7306,6 +7306,32 @@ if __name__ == "__main__":
     run_bire["inertia_model_errors"] = bire_iner
     run_bire["FM_errors"] = bire_FM_errs
 
+    #### Troy Run
+    di = [0.0,0.0,0.0]
+    base_dict["aircraft"]["CG_shift[ft]"] = \
+        bire_dict["aircraft"]["CG_shift[ft]"] = [1.0,0.0,0.0]
+    base_dict["simulation"]["include_compressibility"] = \
+        bire_dict["simulation"]["include_compressibility"] = False # True # 
+    base_dict["simulation"]["use_Anderson_corrections"] = \
+        bire_dict["simulation"]["use_Anderson_corrections"] = False # True # 
+    base_dict["simulation"]["include_stall"] = \
+        bire_dict["simulation"]["include_stall"] = False # True # 
+    base_dict["simulation"]["use_fitted_thrust_model"] = \
+        bire_dict["simulation"]["use_fitted_thrust_model"] = False
+    run_base["skip_simulation"] = run_bire["skip_simulation"] = True
+    run_base["save_data"] = run_bire["save_data"] = False
+    run_base["trim_bank"] = run_bire["trim_bank"] = 0.0
+    run_base["num"] = run_bire["num"] = 1
+    run_base.pop("initial_mach"); run_bire.pop("initial_mach")
+    run_base.pop("final_mach")  ; run_bire.pop("final_mach")
+    run_base["initial_velocity"] = run_bire["initial_velocity"] = 350.0
+    run_base["initial_altitude"] = run_bire["initial_altitude"] = 5000.0
+    run_base["final_altitude"] = run_bire["final_altitude"] = 5000.0
+    # run_single_simulation(bire_dict,rtdst_1sg=di,**run_bire,**plot_vars)
+    run_single_simulation(base_dict,rtdst_1sg=di,**run_base,**plot_vars)
+    quit()
+    ####
+
     # #####
     # # # for running in unreal sim
     # di = [90.0,10.0,2.5]

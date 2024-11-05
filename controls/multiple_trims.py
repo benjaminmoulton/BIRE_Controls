@@ -3,6 +3,7 @@ from numpy import matmul as mm
 import json
 from matplotlib import pyplot as plt
 from matplotlib.lines import Line2D
+from matplotlib.legend_handler import HandlerTuple
 from controller_simulation import Aircraft#,monte_carlo_perturbations,run_single_simulation
 from os import mkdir, rmdir, walk, remove, listdir
 from linearization import linearization
@@ -32,6 +33,7 @@ if __name__ == "__main__":
         "U1" : { "m" : u1M , "h" : 15000., "V" : 350., "Re" : "unkn"    }, # no compr no stall
         "F1" : { "m" : 0.6 , "h" : 15000., "V" : 634., "Re" : 31324000. }, # no compr no stall
         "E2" : { "m" : 0.6 , "h" : 15000., "V" : 634., "Re" : 31324000. }, # negative bank angles
+        "S1" : { "m" : 0.2 , "h" :  2000., "V" : 222., "Re" : "unkn"    }, # spencer negative bank angles
     }
 
     # settings 
@@ -43,14 +45,14 @@ if __name__ == "__main__":
     if run_sct: trim_bank_degs = np.linspace(0.0,75.0,num=16).tolist() # [30.0] # np.linspace(0.0,60.0,num=13).tolist() # [0.0] # [10.0] # [60.0] # np.linspace(0.0,75.0,num=16).tolist() # 
     else: trim_beta_degs = np.linspace(0.0,16.0,num=9).tolist() # [6.0] # np.linspace(0.0,16.0,num=9).tolist() # [14.0,16.0] # [0.0] # 
     trim_climb_deg = 0.0 # 10.0 # 
-    fc = "C2" # "T1" # "E2" # "F1" # "U1" # "A1" # 
+    fc = "C2" # "T1" # "S1" # "E2" # "F1" # "U1" # "A1" # 
     cgshift = [0.0,0.0,0.0] # [1.0,0.0,0.0] # [0.5,0.0,0.0] # 
     include_compressibility =  True # False # 
     use_Anderson_corrections =  True # False # 
     include_stall =  True # False # 
     bire_plotting_xcgs = [0.0,0.5,1.0] # [-1.5,-1.0,-0.5,0.0,0.5,1.0,1.5] # 
     cg_v_bb_xcgs_bire = [-1.5,-1.0,-0.5,0.0,0.5,1.0,1.5]
-    base_plotting_xcgs = [0.0,1.0]
+    base_plotting_xcgs = [0.0,0.5,1.0]
     plotting_gammas = [0.0]
     plot_inverted_trims = False # True # 
     plot_alternate_trims = True # False # 
@@ -66,7 +68,7 @@ if __name__ == "__main__":
     # all new trim solution guesses are saved automatically
     #
     # other settings
-    run_num = 1000 # 10 # 30 # 
+    run_num = 10 # 1000 # 30 # 
     trim_iter = 1000 # 1000
     mfc = flight_conditions[fc]["m"] # 0.2 # 
     hfc = flight_conditions[fc]["h"] # 1000.0 # 
@@ -575,6 +577,7 @@ if __name__ == "__main__":
             plots_to_run = ["default"]
         
         for plot_type in plots_to_run:
+            print("        ",plot_type,"...")
             plt.style.use([plot_type])
             if plot_type == "dark_background":
                 xcg_shade_inverter = lambda xcg : xcg_shade(xcg)*-1. + 1.
@@ -1024,23 +1027,30 @@ if __name__ == "__main__":
                         else      : axs_DC[g][h].set_ylim((1.0e+4,1.0e-7 ))
             # legend
             sp = [
-                Line2D([0], [0],color=str(xcg_shade_inverter(0.0)),marker=odBm,**rest_dict),
                 Line2D([0], [0],color=str(xcg_shade_inverter(0.0)),marker=odrm,**rest_dict),
-                Line2D([0], [0],color=str(xcg_shade_inverter(0.5)),marker=odBm,**rest_dict),
-                Line2D([0], [0],color=str(xcg_shade_inverter(1.0)),marker=odBm,**rest_dict),
+                Line2D([0], [0],color=str(xcg_shade_inverter(0.0)),marker=odBm,**rest_dict),
                 Line2D([0], [0],color=str(xcg_shade_inverter(0.0)),marker=pdBm,**rest_dict),
-                Line2D([0], [0],color=str(xcg_shade_inverter(0.0)),marker=ndBm,**rest_dict)
+                Line2D([0], [0],color=str(xcg_shade_inverter(0.0)),marker=ndBm,**rest_dict),
+                (Line2D([0], [0],color=str(xcg_shade_inverter(0.5)),marker=odrm,**rest_dict),Line2D([0], [0],color=str(xcg_shade_inverter(0.5)),marker=odBm,**rest_dict)),
+                (Line2D([0], [0],color=str(xcg_shade_inverter(1.0)),marker=odrm,**rest_dict),Line2D([0], [0],color=str(xcg_shade_inverter(1.0)),marker=odBm,**rest_dict)),
             ]
             lbls = [
-                "BIRE",
-                "base",
+                "baseline",
+                r"BIRE, $\delta_B \approx 0$",
+                r"          $\delta_B  \gtrsim 0$", # r"$\delta_B$ > $\min(|\delta_B|)$",
+                r"          $\delta_B \lesssim 0$", # r"$\delta_B$ < $\min(|\delta_B|)$",
                 r"$\Delta x_{cg} = 0.5$",
-                r"$\Delta x_{cg} = 1.0$",
-                r"$\delta_B$ > $\min(|\delta_B|)$",
-                r"$\delta_B$ < $\min(|\delta_B|)$"
+                r"$\Delta x_{cg} = 1.0$"
+            ]
+            lbls2 = [
+                r"$\delta_B  \gtrsim 0$", # r"$\delta_B$ > $\min(|\delta_B|)$",
+                r"$\delta_B \lesssim 0$", # r"$\delta_B$ < $\min(|\delta_B|)$",
+                r"$\Delta x_{cg} = 0.5$",
+                r"$\Delta x_{cg} = 1.0$"
             ]
             legdict = dict(handles=sp,labels=lbls,#loc=(1.0,0.0),
-                borderpad=0.1,handletextpad=0.0)
+                borderpad=0.1,handletextpad=0.0, 
+                handler_map={tuple: HandlerTuple(ndivide=None)})
             # axs[1].legend(**legdict)
             # axs[2].legend(**legdict)
             # axs[3].legend(**legdict)
@@ -1057,11 +1067,14 @@ if __name__ == "__main__":
             #     for h in range(cols_DC):
             #         axs_DC[g][h].legend(**legDOCdict)
             LEGdict = dict(handles=sp,labels=lbls,loc="lower center", #(1.0,0.0),
-                borderpad=0.1,handletextpad=0.0)
-            fr2dict = dict(handles=sp[2:],labels=lbls[2:],#loc="lower center", #(1.0,0.0),
-                borderpad=0.1,handletextpad=0.0)
-            cmpdict = dict(handles=sp[4:],labels=lbls[4:],#loc="lower center", #(1.0,0.0),
-                borderpad=0.1,handletextpad=0.0)
+                borderpad=0.1,handletextpad=0.0, 
+                handler_map={tuple: HandlerTuple(ndivide=None)})
+            fr2dict = dict(handles=sp[2:],labels=lbls2,#loc="lower center", #(1.0,0.0),
+                borderpad=0.1,handletextpad=0.0, 
+                handler_map={tuple: HandlerTuple(ndivide=None)})
+            cmpdict = dict(handles=sp[1:4],labels=lbls[1:4],#loc="lower center", #(1.0,0.0),
+                borderpad=0.1,handletextpad=0.0, 
+                handler_map={tuple: HandlerTuple(ndivide=None)})
             axs_lg.legend(**LEGdict)
             axs_lg.axis("off")
 
