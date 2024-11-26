@@ -182,7 +182,7 @@ class Aircraft:
             self._get_thrust_model = self._get_BOL_thrust_model
 
         # initialize aircraft model
-        aero_dict = {
+        self.aero_dict = aero_dict = {
             "inp_dir" : aero_directory,
             "thrust_dir" : aero_directory,
             "use_fitted_thrust_model" : self.use_fitted_thrust,
@@ -485,7 +485,7 @@ class Aircraft:
         # # Inertia parameter
         # Tx_max = 45800.0
         # Ixx = 15682.0
-        # self.dBmax = Tx_max / Ixx
+        # self.dBmax = Tx_max / Ixx # # 167.33495100767 deg/s/s
 
         # FM model error
         self.FM_errors = np.zeros((6,))
@@ -1195,10 +1195,10 @@ class Aircraft:
 
         # 2nd order
         ## INTSTATE
-        ddda = -2.*self.z_da *self.w_da *x[16+q] +self.w_da**2.*(u[0]-x[12+q])
-        ddde = -2.*self.z_de *self.w_de *x[17+q] +self.w_de**2.*(u[1]-x[13+q])
-        dddr = -2.*self.z_dr *self.w_dr *x[18+q] +self.w_dr**2.*(u[2]-x[14+q])
-        dddt = -2.*self.z_tau*self.w_tau*x[19+q]+self.w_tau**2.*(u[3]-x[15+q])
+        ddda = -2.*self.z_da *self.w_da *dda + self.w_da **2.*(u[0] - x[12+q])
+        ddde = -2.*self.z_de *self.w_de *dde + self.w_de **2.*(u[1] - x[13+q])
+        dddr = -2.*self.z_dr *self.w_dr *ddr + self.w_dr **2.*(u[2] - x[14+q])
+        dddt = -2.*self.z_tau*self.w_tau*ddt + self.w_tau**2.*(u[3] - x[15+q])
 
         # limit accelerations
         ddda,ddde,dddr,dddt = self._limit_input_accelerations(
@@ -1265,10 +1265,10 @@ class Aircraft:
 
 
     def _hit_limit_input_accelerations(self,ddu):
-        ddda  = ddda
-        ddde  = ddde
+        ddda  = ddu[0]
+        ddde  = ddu[1]
         dddr  = max(min(ddu[2],self.max_drddot ),self.min_drddot )
-        ddtau = ddtau
+        ddtau = ddu[3]
         return ddda,ddde,dddr,ddtau
 
 
@@ -2136,6 +2136,14 @@ class Aircraft:
         return ex
 
 
+    def euler2quat_state(self,x):
+        ## INTSTATE
+        ex = np.insert(x,12,0.0)*1.
+        quat = euler_2_quat(ex[9:12])
+        ex[9:13] = quat
+        return ex
+
+
     def _load_factors(self,x,u,axis="stab"):
         """Method whichs determines the loading on the aircraft, in one of
         three specified types of axes.
@@ -2465,10 +2473,72 @@ class Aircraft:
         return 
 
 
-    def _report_simulation_deltas(self):
-        # report max vals from trim
-        xs = self.xarr - self.x_trim_euler[:,None]
-        us = self.uarr - self.u_trim[:,None]
+    def _report_simulation_deltas(self,
+        ts:str|np.ndarray="o",xs:str|np.ndarray="o",
+        us:str|np.ndarray="o",rs:str|np.ndarray="o",
+        shift_to_trim:bool=True,file_folder:str="."):
+        # pull in values or use member saved info
+        if isinstance(ts,str):
+            ts = self.tarr
+        if isinstance(xs,str):
+            xs = self.xarr
+        if isinstance(us,str):
+            us = self.uarr 
+        if isinstance(rs,str):
+            rs = np.array([self._get_reference(ti) for ti in ts]).T
+            rs[self.xicnv] = np.rad2deg(rs[self.xicnv])
+        if shift_to_trim:
+            xs = xs - self.x_trim_euler[:,None]
+            us = us - self.u_trim[:,None]
+        # turbulence
+        if self.has_turbulence:
+            turb_interps = [
+                self.disturbance_model.Vgu,
+                self.disturbance_model.Vgv,
+                self.disturbance_model.Vgw,
+                lambda t : np.rad2deg(self.disturbance_model.Wgp(t)),
+                lambda t : np.rad2deg(self.disturbance_model.Wgq(t)),
+                lambda t : np.rad2deg(self.disturbance_model.Wgr(t))]
+        # error for tracking
+        if self.tracking:
+            xerr = xs[self.xPi_eul,:] - rs[self.xPi_eul,:]
+        # derivatives
+        if   self.order == 0:
+            _dxus = np.array([
+                first__low__order_finite_difference(us[0],ts),
+                first__low__order_finite_difference(us[1],ts),
+                first__low__order_finite_difference(us[2],ts),
+                first__low__order_finite_difference(us[3],ts),
+            ])
+            ddxus = np.array([
+                second_low__order_finite_difference(us[0],ts),
+                second_low__order_finite_difference(us[1],ts),
+                second_low__order_finite_difference(us[2],ts),
+                second_low__order_finite_difference(us[3],ts),
+            ])
+        elif self.order == 1:
+            _dxus = np.array([
+                first__low__order_finite_difference(xs[12],ts),
+                first__low__order_finite_difference(xs[13],ts),
+                first__low__order_finite_difference(xs[14],ts),
+                first__low__order_finite_difference(xs[15],ts),
+            ])
+            ddxus = np.array([
+                second_low__order_finite_difference(xs[12],ts),
+                second_low__order_finite_difference(xs[13],ts),
+                second_low__order_finite_difference(xs[14],ts),
+                second_low__order_finite_difference(xs[15],ts),
+            ])
+        elif self.order == 2:
+            _dxus = xs[16:20]
+            ddxus = np.array([
+                first__low__order_finite_difference(xs[16],ts),
+                first__low__order_finite_difference(xs[17],ts),
+                first__low__order_finite_difference(xs[18],ts),
+                first__low__order_finite_difference(xs[19],ts),
+            ])
+        
+        # initialize naming and units
         state_names = [
             "Vxb","Vyb","Vzb",
             "p","q","r",
@@ -2476,39 +2546,135 @@ class Aircraft:
             "phi","theta","psi",
             "da","de"+"B"*self.is_BIRE,
             "dB"*self.is_BIRE+"dr"*(not(self.is_BIRE)),"tau",
-            "da dot","de"+"B"*self.is_BIRE+" dot",
-            "dB"*self.is_BIRE+"dr"*(not(self.is_BIRE))+" dot","tau dot"
+            # "da dot","de"+"B"*self.is_BIRE+" dot",
+            # "dB"*self.is_BIRE+"dr"*(not(self.is_BIRE))+" dot","tau dot"
         ]
         state_units = ["ft/s"]*3 + ["deg/s"]*3 + ["ft"]*3 + \
-            ["deg"]*6 + [""] + ["deg/s"]*3 + [""]
+            ["deg"]*6 + ["p-u"] + ["deg/s"]*3 + ["p-u/s"]
         control_names = [
             "da cmd","de"+"B"*self.is_BIRE+" cmd",
             "dB"*self.is_BIRE+"dr"*(not(self.is_BIRE))+" cmd","tau cmd"
         ]
-        control_units = ["deg"]*3 + [""]
+        control_units = ["deg"]*3 + ["p-u"]
+
+        # report
+        # start
         n = 25
-        print("-"*(n*2+14))
-        print("-"*n + "  max states  " + "-"*n)
-        for i in range(xs.shape[0]):
+        nadd = 16
+        print("-"*(n*2+nadd))
+        print("-"*(n*2+nadd))
+        # states
+        print("-"*n + "   max states   " + "-"*n)
+        for i in range(min(xs.shape[0] - self.additional_states,len(state_names))):
             vals = xs[i,:]
             name = state_names[i]
             unit = state_units[i]
             max_val = np.max(np.abs(vals))
-            print("max{:^10s}= {:> 9.3f} {:<5s}".format("\u0394"+name,max_val,\
+            print("max{:^12s}= {:> 9.3f} {:<5s}".format("\u0394"+name,max_val,\
                 unit))
-        print("-"*n + " max controls " + "-"*n)
+        # actuator rates and accelerations
+        print("-"*n + " max actn rates " + "-"*n)
+        for i in range(us.shape[0]):
+            vals = _dxus[i,:]
+            name = state_names[i+12]
+            unit = state_units[i+12]
+            max_val = np.max(np.abs(vals))
+            print("max{:^12s}= {:> 9.3f} {:<5s}".format("\u0394"+name+" dot",\
+                max_val,unit+"/s"))
+        print("-"*n + " max actn accel " + "-"*n)
+        for i in range(us.shape[0]):
+            vals = ddxus[i,:]
+            name = state_names[i+12]
+            unit = state_units[i+12]
+            max_val = np.max(np.abs(vals))
+            print("max{:^12s}= {:> 9.3f} {:<5s}".format("\u0394"+name+" ddot",\
+                max_val,unit+"/s/s"))
+        # controls
+        print("-"*n + "  max controls  " + "-"*n)
         for i in range(us.shape[0]):
             vals = us[i,:]
             name = control_names[i]
             unit = control_units[i]
             max_val = np.max(vals)
             min_val = np.min(vals)
-            print("max{:^10s}= {:> 9.3f} {:<5s}".format("\u0394"+name,max_val,\
+            print("max{:^12s}= {:> 9.3f} {:<5s}".format("\u0394"+name,max_val,\
                 unit),end="")
-            print(", min{:^10s}= {:> 9.3f} {:<5s}".format("\u0394"+name,\
+            print(", min{:^12s}= {:> 9.3f} {:<5s}".format("\u0394"+name,\
                 min_val,unit))
-        print("-"*(n*2+14))
-        print("-"*(n*2+14))
+        # turbulence
+        if self.has_turbulence:
+            print("-"*n + " max turbulence " + "-"*n)
+            for i in range(6):
+                turb_fun = turb_interps[i]
+                vals = [turb_fun(tk) for tk in ts]
+                name = state_names[i]
+                unit = state_units[i]
+                max_val = np.max(np.abs(vals))
+                print("max{:^12s}= {:> 9.3f} {:<5s}".format("\u0394"+name,\
+                    max_val,unit))
+        # tracking
+        if self.tracking:
+            print("-"*n + " error response " + "-"*n)
+            # calc signal
+            info_txt = ("   {:<7s}  & {:^7s} & {:^7s}" + \
+                    " & {:^10s} \\\\ \n").format(" ","Trs [s]","Tst [s]","%OS")
+            for i in range(len(self.xPi_eul)):
+                # determine when signal stops changing
+                xp = self.ref_data_xp[self.xPi_eul[i]]
+                fp = self.ref_data_fp[self.xPi_eul[i]]
+                iT = len(fp) - 1
+                while fp[iT] == fp[-1] and iT > 0:
+                    iT -= 1
+                if iT != 0: iT += 1
+                iT = np.argwhere(ts >= xp[iT])[0,0]
+                # determine error at this timestep
+                xe0 = xerr[i,iT]
+                # determine rise time 10% -> 90%
+                xe0_10 = xe0*0.9; xe0_90 = xe0*0.1
+                i_10 = iT; i_90 = len(ts)
+                for it in range(iT+1,len(ts)):
+                    if (abs(xerr[i,it]) <= abs(xe0_10) or \
+                        np.sign(xerr[i,it]) == -np.sign(xe0)):
+                        i_10 = it
+                        break
+                for it in range(iT+1,len(ts)):
+                    if (abs(xerr[i,it]) <= abs(xe0_90) or \
+                        np.sign(xerr[i,it]) == -np.sign(xe0)):
+                        i_90 = it
+                        break
+                if i_90 == i_10: i_90 += 1
+                # calculate
+                try:
+                    tris = ts[i_90] - ts[i_10]
+                except:
+                    tris = np.inf
+                # settling time
+                try:
+                    tstl = ts[iT + \
+                        np.argwhere(np.abs(xerr[i,iT:]) >=0.05*abs(xe0))[-1,0] + 1]
+                    tstl -= ts[iT]
+                except:
+                    tstl = np.inf
+                # overshoot
+                try:
+                    if abs(xe0) <= 1.0e-10:
+                        quit()
+                    posh = (np.max(np.abs(xerr[i,iT:] - xe0)))/abs(xe0) - 1.0
+                except:
+                    posh = np.inf
+                info_txt+=("$e_{{{:<5s}}}$ & {:> 7.2f} & {:> 7.2f}" + \
+                    " & {:> 7.1f} \% \\\\ \n").format(
+                    state_names[self.xPi_eul[i]],tris,tstl,posh*100.0
+                    )
+            print(info_txt,end="")
+            # save to file
+            with open(file_folder+"/signal_info.txt","w") as f:
+                f.write(info_txt)
+                f.close()
+        # ending
+        print("-"*(n*2+nadd))
+        print("-"*(n*2+nadd))
+
         return
 
 
@@ -2632,18 +2798,18 @@ class Aircraft:
                 end = np.kron(xs[:,-1],np.ones((ts.shape[0]-t_index,1)))
                 xs = np.block([xs,end.T])
             self.t_u_next_update = 0.0
-            for i in range(self.n_steps-1):
+            for i in range(self.n_steps): # -1
                 # for plots
                 # check if we can update the controls or not
                 if self.tarr[i] >= self.t_u_next_update:
                     self.t_u_next_update = self.tarr[i] + self.dt_u_update
                     self.can_update = True
-                self.uarr[:,i+1],_ = self._get_control(ts[i],xs[:,i],
+                self.uarr[:,i],_ = self._get_control(ts[i],xs[:,i], # i+1 for uarr
                     is_controlled=not(self.run_unctrl))
                 if self.use_quaternions:
-                    self.xarr[9:12,i+1] = self._euler_angles(xs[:,i])
+                    self.xarr[9:12,i] = self._euler_angles(xs[:,i]) # +1
                 else:
-                    self.xarr[9:12,i+1] = xs[9:12,i]
+                    self.xarr[9:12,i] = xs[9:12,i] # +1
             self.xarr[9:12,1:] = np.rad2deg(self.xarr[9:12,1:])
             self.xarr[:9,1:] = xs[:9,:]
             if self.use_quaternions:
@@ -2664,7 +2830,7 @@ class Aircraft:
                 self.x_old = self.x*1.
                 dt = ts[i+1] - ts[i]
                 self.x = self.sim_step(dt,self.x)
-                u,_ = self._get_control(self.tarr[i],self.x_old)
+                u,_ = self._get_control(self.tarr[i],self.x)# _old)
                 # Dx = self.x[self.Lin_Model.Cslice]-self.Lin_Model.xhat_eq
                 # Dxn = np.linalg.norm(Dx)
                 # if self.t > 2.0 and Dxn <= 1.99:
@@ -3195,6 +3361,11 @@ class Aircraft:
         return
 
 
+    def returns_zero(self,tarr,xarr,uarr,subdict,xticks,perc_zoom,
+        predir,format,savedict,save_plot):
+        return 0
+
+
     def _plot_results(self,**kwargs):
 
         # pull out kwargs
@@ -3675,7 +3846,7 @@ class Aircraft:
             if self.tracking:
                 # axis labels, legends
                 errs_fig.supxlabel(r"Time, s")
-                errs_fig.supylabel(r"Error")
+                errs_fig.supylabel(r"Error, deg/s")
                 # xticks
                 errs_axs.set_xticks(ticks=xticks)
                 # grid, axis labels, legends
@@ -3698,7 +3869,7 @@ class Aircraft:
             if self.tracking:
                 # axis labels, legends
                 igrs_fig.supxlabel(r"Time, s")
-                igrs_fig.supylabel(r"Integrator State")
+                igrs_fig.supylabel(r"Integrator State, deg")
                 # xticks
                 igrs_axs.set_xticks(ticks=xticks)
                 # grid, axis labels, legends
@@ -3837,6 +4008,9 @@ class Aircraft:
             if deltas:
                 ornt_axs[0].legend()
 
+        # MFBL error plot
+        self.returns_zero(tarr,xarr,uarr,subdict,xticks,perc_zoom,
+            predir,format,savedict,not(save_states and not(plot_full)))
         
         svuc = uarr*0.0
         for i in range(run_len + 1):
@@ -3989,66 +4163,16 @@ class Aircraft:
         min_lim = max(min_delta,min_max)
         surf_axs.set_ylim((min_lim,max_lim))
 
-        # finite diffs (1)st and (2)nd order, (c)entered, (f)orward, (b)ackward
-        # (l)ower and (h)igher accuracy
-        # centered
-        F1cl = lambda a,t : (a[2:]-a[:-2])/(t[2:]-t[:-2])
-        F1ch = lambda a,t : (-a[4:]+8.*(a[3:-1]-a[1:-3])+a[:-4])\
-            /3./(t[4:]-t[:-4])
-        F2cl = lambda a,t : (a[2:]-2.*a[1:-1]+a[:-2])/((t[2:]-t[:-2])/2.)**2.
-        F2ch = lambda a,t : (-a[4:]+16.*(a[3:-1]+a[1:-3])-30.*a[2:-2]-a[:-4])\
-            /12./((t[4:]-t[:-4])/4.)**2.
-        # forward
-        F1fl = lambda a,t : (a[1:]-a[:-1])/(t[1:]-t[:-1])
-        F1fh = lambda a,t : (-a[2:]+4.*a[1:-1]-3.*a[:-2])/2./(t[1:-1]-t[:-2])
-        F2fl = lambda a,t : (a[2:]-2.*a[1:-1]+a[:-2])/(t[1:-1]-t[:-2])**2.
-        F2fh = lambda a,t : (-a[3:]+4.*a[2:-1]-5.*a[1:-2]+2.*a[:-3])\
-            /(t[1:-2]-t[:-3])**2.
-        # backward
-        F1bl = lambda a,t : (a[1:]-a[:-1])/(t[1:]-t[:-1])
-        F1bh = lambda a,t : (3*a[2:]-4.*a[1:-1]+a[:-2])/2./(t[2:]-t[1:-1])
-        F2bl = lambda a,t : (a[2:]-2.*a[1:-1]+a[:-2])/(t[2:]-t[1:-1])**2.
-        F2bh = lambda a,t : (2.*a[3:]-5.*a[2:-1]+4.*a[1:-2]-a[:-3])\
-            /(t[3:]-t[1:-2])**2.
-        #
-        _dxl = lambda a,t : np.concatenate((F1fl(a[:2],t[:2]),F1cl(a,t),\
-            F1bl(a[-2:],t[-2:])),axis=0)
-        _dxh = lambda a,t : np.concatenate((F1fh(a[:4],t[:4]),F1ch(a,t),\
-            F1bh(a[-4:],t[-4:])),axis=0)
-        ddxl = lambda a,t : np.concatenate((F2fl(a[:3],t[:3]),F2cl(a,t),\
-            F2fl(a[-3:],t[-3:])),axis=0)
-        ddxh = lambda a,t : np.concatenate((F2fh(a[:5],t[:5]),F2ch(a,t),\
-            F2bh(a[-5:],t[-5:])),axis=0)
-        # de2 = lambda a,t : F1ca(a,t)
+        # # elevator only plot
+        # de_fig, de_axs = plt.subplots(1,1,**subdict)
+        # de_axs.plot(tarr,xarr[13],c="k",ls="-")
+        # de_fig.savefig(predir+"inputs_de_only."+format,**savedict)
 
-        # # ex
-        # plt.close("all")
-        # tf = 100.0
-        # num = 1001
-        # ts   = np.linspace(0.0,tf,num=num)
-        # __f = lambda x :  np.sin(x) + 1.0e-4*   x**3. + 1.0e-4*   x**2. + 153.0
-        # _df = lambda x :  np.cos(x) + 1.0e-4*3.*x**2. + 1.0e-4*2.*x
-        # ddf = lambda x : -np.sin(x) + 1.0e-4*6.*x     + 1.0e-4*2.
-        # xs   = __f(ts)
-        # dxa  = _df(ts)
-        # ddxa = ddf(ts)
-        # dxl  = _dxl(xs,ts)
-        # ddxl = ddxl(xs,ts)
-        # dxh  = _dxh(xs,ts)
-        # ddxh = ddxh(xs,ts)
-
-        # h = np.average(ts[1:]-ts[:-1])+ts*0.0
-
-        # fig, axs = plt.subplots(2,1,figsize=(6.0,3.0),
-        #     constrained_layout=True,sharex=True)
-        # axs[0].plot(ts,dxa,"k") # dxa - 
-        # axs[0].plot(ts,dxl,"m") # dxa - 
-        # axs[0].plot(ts,dxh,"y") # dxa - 
-        # axs[1].plot(ts,ddxa,"k") # ddxa - 
-        # axs[1].plot(ts,ddxl,"m") # ddxa - 
-        # axs[1].plot(ts,ddxh,"y") # ddxa - 
-        # plt.show()
-        # quit()
+        # finite diffs
+        _dxl = first__low__order_finite_difference
+        _dxh = first__high_order_finite_difference
+        ddxl = second_low__order_finite_difference
+        ddxh = second_high_order_finite_difference
         
         udot_fig, udot_axs = plt.subplots(4,1,**subdict)
 
@@ -4382,6 +4506,7 @@ class Aircraft:
             self._plot_results(plot_deltas=True, **kwargs)
         if zm_delt:
             self._plot_results(plot_deltas=True, percent_zoom=zm_frc,**kwargs)
+
 
 
 
@@ -5162,126 +5287,11 @@ def run_single_simulation(filename,rtdst_1sg=[20.,10.,5.],
         print(succ)
         
         # report max vals from trim
-        # xs = xr - aircraft.x_trim_euler_deg[:,None]
-        # us = ur - aircraft.u_trim_deg[:,None]
         xs = xr - np.array([aircraft.x_tr_deg_itp(w) for w in aircraft.tarr]).T
         us = ur - np.array([aircraft.u_tr_deg_itp(w) for w in aircraft.tarr]).T
-        state_names = [
-            "Vxb","Vyb","Vzb",
-            "p","q","r",
-            "xf","yf","zf",
-            "phi","theta","psi",
-            "da","de"+"B"*aircraft.is_BIRE,
-            "dB"*aircraft.is_BIRE+"dr"*(not(aircraft.is_BIRE)),"tau",
-            "da dot","de"+"B"*aircraft.is_BIRE+" dot",
-            "dB"*aircraft.is_BIRE+"dr"*(not(aircraft.is_BIRE))+" dot","tau dot"
-        ]
-        state_units = ["ft/s"]*3 + ["deg/s"]*3 + ["ft"]*3 + \
-            ["deg"]*6 + [""] + ["deg/s"]*3 + [""]
-        control_names = [
-            "da cmd","de"+"B"*aircraft.is_BIRE+" cmd",
-            "dB"*aircraft.is_BIRE+"dr"*(not(aircraft.is_BIRE))+" cmd","tau cmd"
-        ]
-        control_units = ["deg"]*3 + [""]
-        if aircraft.has_turbulence:
-            turb_interps = [
-                aircraft.disturbance_model.Vgu,
-                aircraft.disturbance_model.Vgv,
-                aircraft.disturbance_model.Vgw,
-                lambda t : np.rad2deg(aircraft.disturbance_model.Wgp(t)),
-                lambda t : np.rad2deg(aircraft.disturbance_model.Wgq(t)),
-                lambda t : np.rad2deg(aircraft.disturbance_model.Wgr(t))]
-        n = 25
-        nadd = 16
-        print("-"*(n*2+nadd))
-        print("-"*(n*2+nadd))
-        print("-"*n + "   max states   " + "-"*n)
-        for i in range(xs.shape[0] - aircraft.additional_states):
-            vals = xs[i,:]
-            name = state_names[i]
-            unit = state_units[i]
-            max_val = np.max(np.abs(vals))
-            print("max{:^10s}= {:> 9.3f} {:<5s}".format("\u0394"+name,max_val,\
-                unit))
-        print("-"*n + "  max controls  " + "-"*n)
-        for i in range(us.shape[0]):
-            vals = us[i,:]
-            name = control_names[i]
-            unit = control_units[i]
-            max_val = np.max(vals)
-            min_val = np.min(vals)
-            print("max{:^10s}= {:> 9.3f} {:<5s}".format("\u0394"+name,max_val,\
-                unit),end="")
-            print(", min{:^10s}= {:> 9.3f} {:<5s}".format("\u0394"+name,\
-                min_val,unit))
-        if aircraft.has_turbulence:
-            print("-"*n + " max turbulence " + "-"*n)
-            for i in range(6):
-                turb_fun = turb_interps[i]
-                vals = [turb_fun(tk) for tk in aircraft.tarr]
-                name = state_names[i]
-                unit = state_units[i]
-                max_val = np.max(np.abs(vals))
-                print("max{:^10s}= {:> 9.3f} {:<5s}".format("\u0394"+name,\
-                    max_val,unit))
-        if aircraft.tracking:
-            print("-"*n + " error response " + "-"*n)
-            # calc signal
-            ref = np.array([aircraft._get_reference(ti) for ti in aircraft.tarr]).T
-            ref[aircraft.xicnv] = np.rad2deg(ref[aircraft.xicnv])
-            xerr = xr[aircraft.xPi_eul,:] - ref[aircraft.xPi_eul,:]
-            info_txt = ("   {:<7s}  & {:^7s} & {:^7s}" + \
-                    " & {:^10s} \\\\\n").format(" ","Trs [s]","Tst [s]","%OS")
-            for i in range(len(aircraft.xPi_eul)):
-                # determine when signal stops changing
-                xp = aircraft.ref_data_xp[aircraft.xPi_eul[i]]
-                fp = aircraft.ref_data_fp[aircraft.xPi_eul[i]]
-                iT = len(fp) - 1
-                while fp[iT] == fp[-1] and iT > 0:
-                    iT -= 1
-                if iT != 0: iT += 1
-                iT = np.argwhere(aircraft.tarr >= xp[iT])[0,0]
-                # determine error at this timestep
-                xe0 = xerr[i,iT]
-                # determine rise time 10% -> 90%
-                xe0_10 = xe0*0.9; xe0_90 = xe0*0.1
-                i_10 = iT; i_90 = len(aircraft.tarr)
-                for it in range(iT+1,len(aircraft.tarr)):
-                    if (abs(xerr[i,it]) <= abs(xe0_10) or \
-                        np.sign(xerr[i,it]) == -np.sign(xe0)):
-                        i_10 = it
-                        break
-                for it in range(iT+1,len(aircraft.tarr)):
-                    if (abs(xerr[i,it]) <= abs(xe0_90) or \
-                        np.sign(xerr[i,it]) == -np.sign(xe0)):
-                        i_90 = it
-                        break
-                if i_90 == i_10: i_90 += 1
-                # calculate
-                try:
-                    tris = aircraft.tarr[i_90] - aircraft.tarr[i_10]
-                except:
-                    tris = np.inf
-                # settling time
-                try:
-                    tstl = aircraft.tarr[iT + \
-                        np.argwhere(np.abs(xerr[i,iT:]) >=0.05*abs(xe0))[-1,0] + 1]
-                    tstl -= aircraft.tarr[iT]
-                except:
-                    tstl = np.inf
-                # overshoot
-                posh = (np.max(np.abs(xerr[i,iT:] - xe0)))/abs(xe0) - 1.0
-                info_txt+=("$e_{{{:<5s}}}$ & {:> 7.2f} & {:> 7.2f}" + \
-                    r" & {:> 7.1f} \% \\\\\n").format(
-                    state_names[aircraft.xPi_eul[i]],tris,tstl,posh*100.0
-                    )
-            print(info_txt,end="")
-            # save to file
-            with open(file_folder+"/signal_info.txt","w") as f:
-                f.write(info_txt)
-                f.close()
-        print("-"*(n*2+nadd))
-        print("-"*(n*2+nadd))
+        aircraft._report_simulation_deltas(xs=xs,us=us,shift_to_trim=False,
+            file_folder=file_folder)
+
         # plot
         if save_data:
             aircraft.plot_results(**plot_dict)
@@ -7017,6 +7027,81 @@ def report_eigprops(eigs,predecs=3, decs=4, edec=3, add_tab=True,
     if print_report:
         print(return_string,end="")
     return return_string 
+
+
+# finite difference functions
+# First and Second order
+# Centered, Forward, Backward
+# Lower and Higher accuracy
+# central
+def first__central__low__order_finite_difference(a,t):
+    return (a[2:]-a[:-2])/(t[2:]-t[:-2])
+#
+def first__central__high_order_finite_difference(a,t):
+    return (-a[4:]+8.*(a[3:-1]-a[1:-3])+a[:-4])/3./(t[4:]-t[:-4])
+#
+def second_central__low__order_finite_difference(a,t):
+    return (a[2:]-2.*a[1:-1]+a[:-2])/((t[2:]-t[:-2])/2.)**2.
+#
+def second_central__high_order_finite_difference(a,t):
+    return (-a[4:]+16.*(a[3:-1]+a[1:-3])-30.*a[2:-2]-a[:-4])\
+        /12./((t[4:]-t[:-4])/4.)**2.
+#
+# forward
+def first__forward__low__order_finite_difference(a,t):
+    return (a[1:]-a[:-1])/(t[1:]-t[:-1])
+#
+def first__forward__high_order_finite_difference(a,t):
+    return (-a[2:]+4.*a[1:-1]-3.*a[:-2])/2./(t[1:-1]-t[:-2])
+#
+def second_forward__low__order_finite_difference(a,t):
+    return (a[2:]-2.*a[1:-1]+a[:-2])/(t[1:-1]-t[:-2])**2.
+#
+def second_forward__high_order_finite_difference(a,t):
+    return (-a[3:]+4.*a[2:-1]-5.*a[1:-2]+2.*a[:-3])/(t[1:-2]-t[:-3])**2.
+#
+# backward
+def first__backward_low__order_finite_difference(a,t):
+    return (a[1:]-a[:-1])/(t[1:]-t[:-1])
+#
+def first__backward_high_order_finite_difference(a,t):
+    return (3*a[2:]-4.*a[1:-1]+a[:-2])/2./(t[2:]-t[1:-1])
+#
+def second_backward_low__order_finite_difference(a,t):
+    return (a[2:]-2.*a[1:-1]+a[:-2])/(t[2:]-t[1:-1])**2.
+#
+def second_backward_high_order_finite_difference(a,t):
+    return (2.*a[3:]-5.*a[2:-1]+4.*a[1:-2]-a[:-3])/(t[3:]-t[1:-2])**2.
+#
+# Full range
+# first, low
+def first__low__order_finite_difference(a,t):
+    return np.concatenate((
+        first__forward__low__order_finite_difference(a[:2],t[:2]),
+        first__central__low__order_finite_difference(a,t),\
+        first__backward_low__order_finite_difference(a[-2:],t[-2:])),axis=0)
+#
+# first, high
+def first__high_order_finite_difference(a,t):
+    return np.concatenate((
+        first__forward__high_order_finite_difference(a[:4],t[:4]),
+        first__central__high_order_finite_difference(a,t),\
+        first__backward_high_order_finite_difference(a[-4:],t[-4:])),axis=0)
+#
+# second, low
+def second_low__order_finite_difference(a,t):
+    return np.concatenate((
+        second_forward__low__order_finite_difference(a[:3],t[:3]),
+        second_central__low__order_finite_difference(a,t),\
+        second_backward_low__order_finite_difference(a[-3:],t[-3:])),axis=0)
+#
+# second, high
+def second_high_order_finite_difference(a,t):
+    return np.concatenate((
+        second_forward__high_order_finite_difference(a[:5],t[:5]),
+        second_central__high_order_finite_difference(a,t),\
+        second_backward_low__order_finite_difference(a[-5:],t[-5:])),axis=0)
+
 
 
 if __name__ == "__main__":

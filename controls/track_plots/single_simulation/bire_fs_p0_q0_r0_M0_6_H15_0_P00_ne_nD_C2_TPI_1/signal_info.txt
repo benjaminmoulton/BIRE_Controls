@@ -1,2 +1,4 @@
-            & Trs [s] & Tst [s] &    %OS     \\
-$e_{p    }$ &    0.04 &    0.34 &    34.5 \% \\\\\n$e_{q    }$ &     inf &     inf &     inf \% \\\\\n$e_{r    }$ &     inf &     inf &     inf \% \\\\\n
+            & Trs [s] & Tst [s] &    %OS     \\ 
+$e_{p    }$ &    0.04 &    0.34 &    34.5 \% \\ 
+$e_{q    }$ &     inf &     inf &     inf \% \\ 
+$e_{r    }$ &     inf &     inf &     inf \% \\ 

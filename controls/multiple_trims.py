@@ -50,22 +50,23 @@ if __name__ == "__main__":
     include_compressibility =  True # False # 
     use_Anderson_corrections =  True # False # 
     include_stall =  True # False # 
-    bire_plotting_xcgs = [0.0,0.5,1.0] # [-1.5,-1.0,-0.5,0.0,0.5,1.0,1.5] # 
+    bire_plotting_xcgs = [0.0,0.5,1.0] # [0.0] # [-1.5,-1.0,-0.5,0.0,0.5,1.0,1.5] # 
     cg_v_bb_xcgs_bire = [-1.5,-1.0,-0.5,0.0,0.5,1.0,1.5]
-    base_plotting_xcgs = [0.0,0.5,1.0]
+    base_plotting_xcgs = [0.0,0.5,1.0] # [0.0] # 
     plotting_gammas = [0.0]
     plot_inverted_trims = False # True # 
     plot_alternate_trims = True # False # 
     plot_base_DOC = True # False # 
     show_plots = False # True # 
     plot_format = "pdf" # "png" # 
-    plot_transparent = True if plot_format == "pdf" else False # False # True # 
+    plot_transparent = True if plot_format == "pdf" else False # True # False # 
     plot_dark = True # False # 
     skip_save_if_not_new = False # True # 
     add_to_guesses_list = False # True # 
     reset_guesses_list = False # True # 
     # the above only affects whether previously found trim solution guesses are saved
     # all new trim solution guesses are saved automatically
+    plot_diff_pqrpsi_plots = False # True # 
     #
     # other settings
     run_num = 10 # 1000 # 30 # 
@@ -624,10 +625,11 @@ if __name__ == "__main__":
             fig_wq,axs_wq = plt.subplots(1,1,**plot_dict)
             fig_wr,axs_wr = plt.subplots(1,1,**plot_dict)
             fig_ps,axs_ps = plt.subplots(1,1,**plot_dict)
-            fig_2p,axs_2p = plt.subplots(1,1,**plot_dict)
-            fig_2q,axs_2q = plt.subplots(1,1,**plot_dict)
-            fig_2r,axs_2r = plt.subplots(1,1,**plot_dict)
-            fig_2s,axs_2s = plt.subplots(1,1,**plot_dict)
+            if plot_diff_pqrpsi_plots:
+                fig_2p,axs_2p = plt.subplots(1,1,**plot_dict)
+                fig_2q,axs_2q = plt.subplots(1,1,**plot_dict)
+                fig_2r,axs_2r = plt.subplots(1,1,**plot_dict)
+                fig_2s,axs_2s = plt.subplots(1,1,**plot_dict)
             fig_CL,axs_CL = plt.subplots(1,1,**plot_dict)
             fig_CS,axs_CS = plt.subplots(1,1,**plot_dict)
             fig_CD,axs_CD = plt.subplots(1,1,**plot_dict)
@@ -686,10 +688,11 @@ if __name__ == "__main__":
             axs_wq.grid(which="major",lw=grid_lw,ls="-",c=grid_color)
             axs_wr.grid(which="major",lw=grid_lw,ls="-",c=grid_color)
             axs_ps.grid(which="major",lw=grid_lw,ls="-",c=grid_color)
-            axs_2p.grid(which="major",lw=grid_lw,ls="-",c=grid_color)
-            axs_2q.grid(which="major",lw=grid_lw,ls="-",c=grid_color)
-            axs_2r.grid(which="major",lw=grid_lw,ls="-",c=grid_color)
-            axs_2s.grid(which="major",lw=grid_lw,ls="-",c=grid_color)
+            if plot_diff_pqrpsi_plots:
+                axs_2p.grid(which="major",lw=grid_lw,ls="-",c=grid_color)
+                axs_2q.grid(which="major",lw=grid_lw,ls="-",c=grid_color)
+                axs_2r.grid(which="major",lw=grid_lw,ls="-",c=grid_color)
+                axs_2s.grid(which="major",lw=grid_lw,ls="-",c=grid_color)
             for i in range(rows_DC):
                 for j in range(cols_DC):
                     axs_DC[i][j].grid(which="major",lw=grid_lw,ls="-",
@@ -813,7 +816,7 @@ if __name__ == "__main__":
                         # psi_dot
                         axs_ps.plot(ivr,np.rad2deg(sol["psi_dot"]),**kdict)
                         # p q r psi_dot diff
-                        if not(cname == "bire" and j == trims[craft]["min_ind"][i]):
+                        if plot_diff_pqrpsi_plots and not(cname == "bire" and j == trims[craft]["min_ind"][i]):
                             ccrft = "bire_" + craft[5:]
                             name = str(trims[ccrft]["min_ind"][i])
                             p_base = np.rad2deg(trims[ccrft]["dicts"][i][name]["x_trim_euler"][3])
@@ -854,88 +857,88 @@ if __name__ == "__main__":
                         # # # if skip for base, then skip
                         if cname == "base" and not(plot_base_DOC): continue
                         DOCval = 10.0
-                        # if not(skip_DOC):
-                        #     for g in range(rows_DC):
-                        #         # to zero
-                        #         x0 = np.zeros((9,)); x0[g] = DOCval; xf = x0*0.0
-                        #         # info
-                        #         Vxb,Vyb,Vzb = sol["x_trim_euler"][0:3]
-                        #         V = (Vxb**2. + Vyb**2. + Vzb**2.)**0.5
-                        #         a = atan2(Vzb,Vxb)
-                        #         b = asin(Vyb/V)
-                        #         if g == 0: # do V
-                        #             V_new = V + DOCval
-                        #             Vyb_new = sin(b)*V_new
-                        #             Vxb_new = ((V_new**2. - Vyb_new**2.)/
-                        #                 (1. + tan(a)**2.))**0.5
-                        #             Vzb_new = Vxb_new*tan(a)
-                        #             x0[0] = Vxb_new - Vxb
-                        #             x0[1] = Vyb_new - Vyb
-                        #             x0[2] = Vzb_new - Vzb
-                        #         elif g == 1: # do alpha
-                        #             a_new = a + np.deg2rad(DOCval)
-                        #             Vyb_new = Vyb
-                        #             Vxb_new = ((Vxb**2. + Vzb**2.)/
-                        #                 (1. + tan(a_new)**2.))**0.5
-                        #             Vzb_new = Vxb_new*tan(a_new)
-                        #             x0[0] = Vxb_new - Vxb
-                        #             x0[1] = Vyb_new - Vyb
-                        #             x0[2] = Vzb_new - Vzb
-                        #         elif g == 2: # do beta
-                        #             b_new = b + np.deg2rad(DOCval)
-                        #             Vyb_new = sin(b_new)*V
-                        #             Vxb_new = Vxb
-                        #             Vzb_new = Vzb
-                        #             x0[0] = Vxb_new - Vxb
-                        #             x0[1] = Vyb_new - Vyb
-                        #             x0[2] = Vzb_new - Vzb
-                        #         elif g in [3,4,5,7,8]: # put in radians
-                        #             x0[g] = np.deg2rad(DOCval)
-                        #         Wss = LinSys["Wss"]; Was = LinSys["Was"]
-                        #         for h in range(cols_DC):
-                        #             rhos = np.abs(mm(xf,mm(Wss[h],xf)))
-                        #             rhoa = np.abs(mm(x0,mm(Was[h],x0)))
-                        #             rho = rhos + rhoa
-                        #             axs_DC[g][h].plot(ivr,rho,**kdict)
-                        #         # # from zero
-                        #         # xf = x0*1.0; x0 *= 0.0
-                        #         # rhoss = [np.abs(mm(xf,mm(Wss[m],xf))) for m in range(len(Wss))]
-                        #         # rhoas = [np.abs(mm(x0,mm(Was[m],x0))) for m in range(len(Was))]
-                        #         # rhos = [rhoss[m] + rhoas[m] for m in range(len(rhoss))]
-                        #         # axs_DC[g][1].plot(ivr,np.min(rhos),**kdict)
-                        # if len(trims[craft]["dicts"][i]) > 1:
-                        #     # print(craft,ivr,xcg,np.rad2deg(sol["u_trim"][1]),
-                        #     #     np.rad2deg(sol["u_trim"][2]),len(trims[craft]["dicts"][i])) #trims[craft]["dicts"][i])
-                        #     # plot contingency table
-                        #     if plot_type == "dark_background": 
-                        #         cmap = "gray_r"
-                        #         mec = "w"
-                        #         mfc = "k"
-                        #     else:
-                        #         cmap = "gray"
-                        #         mec = "k"
-                        #         mfc = "w"
-                        #     colmap = plt.get_cmap(cmap,color_bar_segs)
-                        #     pc = axs_gs.pcolormesh(X[j], Y[j], M[j],
-                        #         cmap=colmap,vmin=-1.0,vmax=1.0)
-                        #     # cb = fig_gs.colorbar(pc)
-                        #     axs_gs.plot(np.rad2deg(sol["u_trim"][1]),
-                        #                 np.rad2deg(sol["u_trim"][2]),".",
-                        #                 mec=mec,mfc=mfc)
-                        #     if cname == "bire":
-                        #         axs_gs.set_xlabel(r"$\delta_e^B$ guess")
-                        #         axs_gs.set_ylabel(r"$\delta_B$ guess")
-                        #     else:
-                        #         axs_gs.set_xlabel(r"$\delta_e$ guess")
-                        #         axs_gs.set_ylabel(r"$\delta_r$ guess")
-                        #     # save fig / show
-                        #     filename = trims[craft]["filenames"][i].replace(".json","")
-                        #     file_desc = filename.split("_")
-                        #     gs_fn = "_".join(file_desc[0:2] + file_desc[6:9])
-                        #     # print(craft,j,gs_fn)
-                        #     fig_gs.savefig(sv_fldr+"11_"+gs_fn+"_"+str(j)+"."+plot_format,**save_dict)
-                        #     # cb.remove()
-                        #     axs_gs.cla()
+                        if not(skip_DOC):
+                            for g in range(rows_DC):
+                                # to zero
+                                x0 = np.zeros((9,)); x0[g] = DOCval; xf = x0*0.0
+                                # info
+                                Vxb,Vyb,Vzb = sol["x_trim_euler"][0:3]
+                                V = (Vxb**2. + Vyb**2. + Vzb**2.)**0.5
+                                a = atan2(Vzb,Vxb)
+                                b = asin(Vyb/V)
+                                if g == 0: # do V
+                                    V_new = V + DOCval
+                                    Vyb_new = sin(b)*V_new
+                                    Vxb_new = ((V_new**2. - Vyb_new**2.)/
+                                        (1. + tan(a)**2.))**0.5
+                                    Vzb_new = Vxb_new*tan(a)
+                                    x0[0] = Vxb_new - Vxb
+                                    x0[1] = Vyb_new - Vyb
+                                    x0[2] = Vzb_new - Vzb
+                                elif g == 1: # do alpha
+                                    a_new = a + np.deg2rad(DOCval)
+                                    Vyb_new = Vyb
+                                    Vxb_new = ((Vxb**2. + Vzb**2.)/
+                                        (1. + tan(a_new)**2.))**0.5
+                                    Vzb_new = Vxb_new*tan(a_new)
+                                    x0[0] = Vxb_new - Vxb
+                                    x0[1] = Vyb_new - Vyb
+                                    x0[2] = Vzb_new - Vzb
+                                elif g == 2: # do beta
+                                    b_new = b + np.deg2rad(DOCval)
+                                    Vyb_new = sin(b_new)*V
+                                    Vxb_new = Vxb
+                                    Vzb_new = Vzb
+                                    x0[0] = Vxb_new - Vxb
+                                    x0[1] = Vyb_new - Vyb
+                                    x0[2] = Vzb_new - Vzb
+                                elif g in [3,4,5,7,8]: # put in radians
+                                    x0[g] = np.deg2rad(DOCval)
+                                Wss = LinSys["Wss"]; Was = LinSys["Was"]
+                                for h in range(cols_DC):
+                                    rhos = np.abs(mm(xf,mm(Wss[h],xf)))
+                                    rhoa = np.abs(mm(x0,mm(Was[h],x0)))
+                                    rho = rhos + rhoa
+                                    axs_DC[g][h].plot(ivr,rho,**kdict)
+                                # # from zero
+                                # xf = x0*1.0; x0 *= 0.0
+                                # rhoss = [np.abs(mm(xf,mm(Wss[m],xf))) for m in range(len(Wss))]
+                                # rhoas = [np.abs(mm(x0,mm(Was[m],x0))) for m in range(len(Was))]
+                                # rhos = [rhoss[m] + rhoas[m] for m in range(len(rhoss))]
+                                # axs_DC[g][1].plot(ivr,np.min(rhos),**kdict)
+                        if len(trims[craft]["dicts"][i]) > 1:
+                            # print(craft,ivr,xcg,np.rad2deg(sol["u_trim"][1]),
+                            #     np.rad2deg(sol["u_trim"][2]),len(trims[craft]["dicts"][i])) #trims[craft]["dicts"][i])
+                            # plot contingency table
+                            if plot_type == "dark_background": 
+                                cmap = "gray_r"
+                                mec = "w"
+                                mfc = "k"
+                            else:
+                                cmap = "gray"
+                                mec = "k"
+                                mfc = "w"
+                            colmap = plt.get_cmap(cmap,color_bar_segs)
+                            pc = axs_gs.pcolormesh(X[j], Y[j], M[j],
+                                cmap=colmap,vmin=-1.0,vmax=1.0)
+                            # cb = fig_gs.colorbar(pc)
+                            axs_gs.plot(np.rad2deg(sol["u_trim"][1]),
+                                        np.rad2deg(sol["u_trim"][2]),".",
+                                        mec=mec,mfc=mfc)
+                            if cname == "bire":
+                                axs_gs.set_xlabel(r"$\delta_e^B$ guess")
+                                axs_gs.set_ylabel(r"$\delta_B$ guess")
+                            else:
+                                axs_gs.set_xlabel(r"$\delta_e$ guess")
+                                axs_gs.set_ylabel(r"$\delta_r$ guess")
+                            # save fig / show
+                            filename = trims[craft]["filenames"][i].replace(".json","")
+                            file_desc = filename.split("_")
+                            gs_fn = "_".join(file_desc[0:2] + file_desc[6:9])
+                            # print(craft,j,gs_fn)
+                            fig_gs.savefig(sv_fldr+"11_"+gs_fn+"_"+str(j)+"."+plot_format,**save_dict)
+                            # cb.remove()
+                            axs_gs.cla()
             plt.close(fig_gs)
             # quit()
             
@@ -968,14 +971,15 @@ if __name__ == "__main__":
             axs_ps.set_xlabel(xlabel)
             axs_ps.set_ylabel(r"Change in heading ($\dot{\psi}$), deg/s")
             #
-            axs_2p.set_xlabel(xlabel)
-            axs_2p.set_ylabel( r"Roll rate difference ($p - p_{n0}$), deg/s")
-            axs_2q.set_xlabel(xlabel)
-            axs_2q.set_ylabel(r"Pitch rate difference ($q - q_{n0}$), deg/s")
-            axs_2r.set_xlabel(xlabel)
-            axs_2r.set_ylabel(  r"Yaw rate difference ($r - r_{n0}$), deg/s")
-            axs_2s.set_xlabel(xlabel)
-            axs_2s.set_ylabel( r"Heading change difference ($\dot{\psi} - \dot{\psi}_{n0}$), deg/s")
+            if plot_diff_pqrpsi_plots:
+                axs_2p.set_xlabel(xlabel)
+                axs_2p.set_ylabel( r"Roll rate difference ($p - p_{n0}$), deg/s")
+                axs_2q.set_xlabel(xlabel)
+                axs_2q.set_ylabel(r"Pitch rate difference ($q - q_{n0}$), deg/s")
+                axs_2r.set_xlabel(xlabel)
+                axs_2r.set_ylabel(  r"Yaw rate difference ($r - r_{n0}$), deg/s")
+                axs_2s.set_xlabel(xlabel)
+                axs_2s.set_ylabel( r"Heading change difference ($\dot{\psi} - \dot{\psi}_{n0}$), deg/s")
             #
             axs_CL.set_xlabel(xlabel)
             axs_CL.set_ylabel(      r"Lift coefficient ($C_L$)")
@@ -1059,36 +1063,65 @@ if __name__ == "__main__":
                         if run_sct: axs_DC[g][h].set_ylim((1.0e+2,1.0e-10))
                         else      : axs_DC[g][h].set_ylim((1.0e+4,1.0e-7 ))
             # legend
+            min_cg = min(bire_plotting_xcgs)
+            legcol = str(xcg_shade_inverter(min_cg))
+            cg00col = str(xcg_shade_inverter(0.0))
+            cg05col = str(xcg_shade_inverter(0.5))
+            cg10col = str(xcg_shade_inverter(1.0))
             sp = [
-                Line2D([0], [0],color=str(xcg_shade_inverter(0.0)),marker=odrm,**rest_dict),
-                Line2D([0], [0],color=str(xcg_shade_inverter(0.0)),marker=odBm,**rest_dict),
-                Line2D([0], [0],color=str(xcg_shade_inverter(0.0)),marker=pdBm,**rest_dict),
-                Line2D([0], [0],color=str(xcg_shade_inverter(0.0)),marker=ndBm,**rest_dict),
-                (Line2D([0], [0],color=str(xcg_shade_inverter(0.5)),marker=odrm,**rest_dict),Line2D([0], [0],color=str(xcg_shade_inverter(0.5)),marker=odBm,**rest_dict)),
-                (Line2D([0], [0],color=str(xcg_shade_inverter(1.0)),marker=odrm,**rest_dict),Line2D([0], [0],color=str(xcg_shade_inverter(1.0)),marker=odBm,**rest_dict)),
+                Line2D([0], [0],color=legcol,marker=odrm,**rest_dict),
+                Line2D([0], [0],color=legcol,marker=odBm,**rest_dict),
+                Line2D([0], [0],color=legcol,marker=pdBm,**rest_dict),
+                Line2D([0], [0],color=legcol,marker=ndBm,**rest_dict),
+                # (Line2D([0], [0],color=cg05col,marker=odrm,**rest_dict),
+                #  Line2D([0], [0],color=cg05col,marker=odBm,**rest_dict)),
+                # (Line2D([0], [0],color=cg10col,marker=odrm,**rest_dict),
+                #  Line2D([0], [0],color=cg10col,marker=odBm,**rest_dict)),
             ]
             sp2 = [
-                Line2D([0], [0],color=str(xcg_shade_inverter(0.0)),marker=odrm,**rest_dict),
-                Line2D([0], [0],color=str(xcg_shade_inverter(0.0)),marker=pdBm,**rest_dict),
-                Line2D([0], [0],color=str(xcg_shade_inverter(0.0)),marker=ndBm,**rest_dict),
-                (Line2D([0], [0],color=str(xcg_shade_inverter(0.5)),marker=odrm,**rest_dict),Line2D([0], [0],color=str(xcg_shade_inverter(0.5)),marker=odBm,**rest_dict)),
-                (Line2D([0], [0],color=str(xcg_shade_inverter(1.0)),marker=odrm,**rest_dict),Line2D([0], [0],color=str(xcg_shade_inverter(1.0)),marker=odBm,**rest_dict)),
+                Line2D([0], [0],color=legcol,marker=odrm,**rest_dict),
+                Line2D([0], [0],color=legcol,marker=pdBm,**rest_dict),
+                Line2D([0], [0],color=legcol,marker=ndBm,**rest_dict),
+                # (Line2D([0], [0],color=cg05col,marker=odrm,**rest_dict),
+                #  Line2D([0], [0],color=cg05col,marker=odBm,**rest_dict)),
+                # (Line2D([0], [0],color=cg10col,marker=odrm,**rest_dict),
+                #  Line2D([0], [0],color=cg10col,marker=odBm,**rest_dict)),
             ]
             lbls = [
                 "baseline",
                 r"BIRE, $\delta_B \approx 0$",
                 r"          $\delta_B  \gtrsim 0$", # r"$\delta_B$ > $\min(|\delta_B|)$",
                 r"          $\delta_B \lesssim 0$", # r"$\delta_B$ < $\min(|\delta_B|)$",
-                r"$\Delta x_{cg} = 0.5$",
-                r"$\Delta x_{cg} = 1.0$"
+                # r"$\Delta x_{cg} = 0.5$",
+                # r"$\Delta x_{cg} = 1.0$"
             ]
             lbls2 = [
                 "baseline",
                 r"$\delta_B  \gtrsim 0$", # r"$\delta_B$ > $\min(|\delta_B|)$",
                 r"$\delta_B \lesssim 0$", # r"$\delta_B$ < $\min(|\delta_B|)$",
-                r"$\Delta x_{cg} = 0.5$",
-                r"$\Delta x_{cg} = 1.0$"
+                # r"$\Delta x_{cg} = 0.5$",
+                # r"$\Delta x_{cg} = 1.0$"
             ]
+            # add in cg vals
+            if 0.5 in (bire_plotting_xcgs + base_plotting_xcgs) and 0.5 != min_cg:
+                # add in marker
+                mk05 = (Line2D([0], [0],color=cg05col,marker=odrm,**rest_dict),
+                    Line2D([0], [0],color=cg05col,marker=odBm,**rest_dict))
+                ln05 = r"$\Delta x_{cg} = 0.5$"
+                sp   .append(mk05)
+                sp2  .append(mk05)
+                lbls .append(ln05)
+                lbls2.append(ln05)
+            if 1.0 in (bire_plotting_xcgs + base_plotting_xcgs) and 1.0 != min_cg:
+                # add in marker
+                mk10 = (Line2D([0], [0],color=cg10col,marker=odrm,**rest_dict),
+                    Line2D([0], [0],color=cg10col,marker=odBm,**rest_dict))
+                ln10 = r"$\Delta x_{cg} = 1.0$"
+                sp   .append(mk10)
+                sp2  .append(mk10)
+                lbls .append(ln10)
+                lbls2.append(ln10)
+
             legdict = dict(handles=sp,labels=lbls,#loc=(1.0,0.0),
                 borderpad=0.1,handletextpad=0.0, 
                 handler_map={tuple: HandlerTuple(ndivide=None)})
@@ -1113,7 +1146,7 @@ if __name__ == "__main__":
             fr2dict = dict(handles=sp[2:],labels=lbls2[1:],#loc="lower center", #(1.0,0.0),
                 borderpad=0.1,handletextpad=0.0, 
                 handler_map={tuple: HandlerTuple(ndivide=None)})
-            fr3dict = dict(handles=sp2[1:],labels=lbls2,#loc="lower center", #(1.0,0.0),
+            fr3dict = dict(handles=sp2,labels=lbls2,#loc="lower center", #(1.0,0.0),
                 borderpad=0.1,handletextpad=0.0, 
                 handler_map={tuple: HandlerTuple(ndivide=None)})
             cmpdict = dict(handles=sp[1:4],labels=lbls[1:4],#loc="lower center", #(1.0,0.0),
@@ -1121,6 +1154,37 @@ if __name__ == "__main__":
                 handler_map={tuple: HandlerTuple(ndivide=None)})
             axs_lg.legend(**LEGdict)
             axs_lg.axis("off")
+
+            # determine / set axis limits
+            if run_sct and bire_plotting_xcgs == [0.0] and \
+                base_plotting_xcgs == [0.0]:
+                axs_da.set_xlim((-3.75,78.75)); axs_da.set_ylim((-0.25690926945446085, 0.3730970519700059)) # print("da",axs_da.get_xlim(),axs_da.get_ylim())
+                axs_de.set_xlim((-3.75,78.75)); axs_de.set_ylim((-6.0781895601012685, 2.0705537097073003)) # print("de",axs_de.get_xlim(),axs_de.get_ylim())
+                axs_dB.set_xlim((-3.75,78.75)); axs_dB.set_ylim((-94.58206897637467, 96.33296571209728)) # print("dB",axs_dB.get_xlim(),axs_dB.get_ylim())
+                axs_ta.set_xlim((-3.75,78.75)); axs_ta.set_ylim((0.24323978768270088, 0.8947909296317877)) # print("ta",axs_ta.get_xlim(),axs_ta.get_ylim())
+                axs_vr.set_xlim((-3.75,78.75)); axs_vr.set_ylim((-0.36764186742069865, 0.4215223236673418)) # print("vr",axs_vr.get_xlim(),axs_vr.get_ylim())
+                axs_af.set_xlim((-3.75,78.75)); axs_af.set_ylim((2.099854346469737, 14.088162283920191)) # print("af",axs_af.get_xlim(),axs_af.get_ylim())
+                axs_CL.set_xlim((-3.75,78.75)); axs_CL.set_ylim((0.19459354605249318, 0.8807594960843725)) # print("CL",axs_CL.get_xlim(),axs_CL.get_ylim())
+                axs_CS.set_xlim((-3.75,78.75)); axs_CS.set_ylim((-0.0008175304335633611, 0.0009193293949199687)) # print("CS",axs_CS.get_xlim(),axs_CS.get_ylim())
+                axs_CD.set_xlim((-3.75,78.75)); axs_CD.set_ylim((0.016662208852249824, 0.13657203364558979)) # print("CD",axs_CD.get_xlim(),axs_CD.get_ylim())
+                axs_Cl.set_xlim((-3.75,78.75)); axs_Cl.set_ylim((-1.1747348107891637e-06, 2.466943102221268e-05)) # print("Cl",axs_Cl.get_xlim(),axs_Cl.get_ylim())
+                axs_Cm.set_xlim((-3.75,78.75)); axs_Cm.set_ylim((-0.0037769178169560526, 0.07931527415608144)) # print("Cm",axs_Cm.get_xlim(),axs_Cm.get_ylim())
+                axs_Cn.set_xlim((-3.75,78.75)); axs_Cn.set_ylim((-5.264904513265271e-05, 2.5070973873791913e-06)) # print("Cn",axs_Cn.get_xlim(),axs_Cn.get_ylim())
+                axs_th.set_xlim((-3.75,78.75)); axs_th.set_ylim((2.581515573926769, 3.973276507322521)) # print("th",axs_th.get_xlim(),axs_th.get_ylim())
+                axs_wp.set_xlim((-3.75,78.75)); axs_wp.set_ylim((-0.7498701672083745, 0.03570810320039879)) # print("wp",axs_wp.get_xlim(),axs_wp.get_ylim())
+                axs_wq.set_xlim((-3.75,78.75)); axs_wq.set_ylim((-0.5102250739003791, 10.71472655190796)) # print("wq",axs_wq.get_xlim(),axs_wq.get_ylim())
+                axs_wr.set_xlim((-3.75,78.75)); axs_wr.set_ylim((-0.13671439650971645, 2.8710023267040454)) # print("wr",axs_wr.get_xlim(),axs_wr.get_ylim())
+                axs_ps.set_xlim((-3.75,78.75)); axs_ps.set_ylim((-0.5290689994121346, 11.110448987654825)) # print("ps",axs_ps.get_xlim(),axs_ps.get_ylim())
+                axs_t2.set_xlim((22.5,  77.5)); axs_t2.set_ylim((-0.02785381718383647, 0.0008514152747926191)) # print("t2",axs_t2.get_xlim(),axs_t2.get_ylim())
+                axs_2D.set_xlim((22.5,  77.5)); axs_2D.set_ylim((-0.006579023400909361, 0.0002424589803903147)) # print("2D",axs_2D.get_xlim(),axs_2D.get_ylim())
+                axs_eg.set_xlim((-0.12695491843259302, 2.6660532870844533)); axs_eg.set_ylim((-3.75,78.75)) # print("eg",axs_eg.get_xlim(),axs_eg.get_ylim())
+                axs_bb.set_xlim((-1.65, 1.65)); axs_bb.set_ylim((-0.36764186742069865, 0.4215223236673418)) # print("bb",axs_bb.get_xlim(),axs_bb.get_ylim())
+                axs_bp.set_xlim((-1.65, 1.65)); axs_bp.set_ylim((-3.75,78.75)) # print("bp",axs_bp.get_xlim(),axs_bp.get_ylim())
+                # print("lg",axs_lg.get_xlim(),axs_lg.get_ylim())
+                for g in range(rows_DC):
+                    for h in range(cols_DC):
+                        # print("    DC",g,h,axs_DC[g][h].get_xlim(),axs_DC[g][h].get_ylim())
+                        axs_DC[g][h].set_xlim((-3.75, 78.75))
 
             # save plots
             # if plot type is different than previous, remove them
@@ -1182,14 +1246,15 @@ if __name__ == "__main__":
             fig_ps   .savefig(sv_fldr+"09_psidot."+plot_format,**save_dict)
             axs_ps.legend(fontsize=8.0,**legdict)
             fig_ps   .savefig(sv_fldr+"09_psidot_wlg."+plot_format,**save_dict)
-            axs_2s.legend(fontsize=8.0,**fr3dict)
-            fig_2s   .savefig(sv_fldr+"09_psidot_diff_wlg."+plot_format,**save_dict)
             fig_wp   .savefig(sv_fldr+"10_p."+plot_format,**save_dict)
             fig_wq   .savefig(sv_fldr+"10_q."+plot_format,**save_dict)
             fig_wr   .savefig(sv_fldr+"10_r."+plot_format,**save_dict)
-            fig_2p   .savefig(sv_fldr+"10_p_diff."+plot_format,**save_dict)
-            fig_2q   .savefig(sv_fldr+"10_q_diff."+plot_format,**save_dict)
-            fig_2r   .savefig(sv_fldr+"10_r_diff."+plot_format,**save_dict)
+            if plot_diff_pqrpsi_plots:
+                axs_2s.legend(fontsize=8.0,**fr3dict)
+                fig_2s   .savefig(sv_fldr+"09_psidot_diff_wlg."+plot_format,**save_dict)
+                fig_2p   .savefig(sv_fldr+"10_p_diff."+plot_format,**save_dict)
+                fig_2q   .savefig(sv_fldr+"10_q_diff."+plot_format,**save_dict)
+                fig_2r   .savefig(sv_fldr+"10_r_diff."+plot_format,**save_dict)
             if not(skip_DOC):
                 for g in range(rows_DC):
                     for h in range(cols_DC):
@@ -1224,10 +1289,11 @@ if __name__ == "__main__":
                 plt.close(fig_wq)
                 plt.close(fig_wr)
                 plt.close(fig_ps)
-                plt.close(fig_2p)
-                plt.close(fig_2q)
-                plt.close(fig_2r)
-                plt.close(fig_2s)
+                if plot_diff_pqrpsi_plots:
+                    plt.close(fig_2p)
+                    plt.close(fig_2q)
+                    plt.close(fig_2r)
+                    plt.close(fig_2s)
                 for g in range(rows_DC):
                     for h in range(cols_DC):
                         if g not in [6,7,8]: # [3,4,5]: # [0,1,2]: # # states

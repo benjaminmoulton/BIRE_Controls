@@ -52,6 +52,7 @@ class linearization:
 
     def __init__(self, x_eq, u_eq, cg_shift = [0.,0.,0.], **kwargs):
 
+
         # pull out key-word arguments
         self.use_quats = False # kwargs.get("use_quaternion", True) # 
         self.is_bire = kwargs.get("is_bire", False)
@@ -1345,7 +1346,7 @@ class linearization:
             )
             B[3:6,r3] = ( 
             np.matmul(Iinv,wdot_dB) + 
-            np.matmul(dIinv,wdot) )
+            np.matmul(dIinv,wdot) ) # 
         else:
             B[0:3,r3] = np.array([Fx_dr, Fy_dr, Fz_dr])/m
             B[3:6,r3] = np.matmul(Iinv,np.array([
