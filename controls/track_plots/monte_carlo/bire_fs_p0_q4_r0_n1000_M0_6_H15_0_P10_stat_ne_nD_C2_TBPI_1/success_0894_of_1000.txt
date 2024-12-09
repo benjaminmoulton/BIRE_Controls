@@ -1,0 +1,1044 @@
+   1 Dp =     0.000 Dq =    -3.691 Dr =     0.000 |Dx| =     0.000,   Stable ->  r  p  q
+   2 Dp =     0.000 Dq =     0.245 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+   3 Dp =     0.000 Dq =     2.656 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+   4 Dp =     0.000 Dq =     3.639 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+   5 Dp =     0.000 Dq =    -2.804 Dr =     0.000 |Dx| =     0.000,   Stable ->  r  p  q
+   6 Dp =     0.000 Dq =     0.024 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+   7 Dp =     0.000 Dq =     2.103 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+   8 Dp =     0.000 Dq =     5.647 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+   9 Dp =     0.000 Dq =    -3.622 Dr =     0.000 |Dx| =     0.000,   Stable ->  r  p  q
+  10 Dp =     0.000 Dq =    -5.044 Dr =     0.000 |Dx| = 55163.148, Unstable >>  p  r ->  q  p  r
+  11 Dp =     0.000 Dq =     1.871 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+  12 Dp =     0.000 Dq =    -1.068 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+  13 Dp =     0.000 Dq =     5.326 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+  14 Dp =     0.000 Dq =     0.035 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+  15 Dp =     0.000 Dq =     1.232 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+  16 Dp =     0.000 Dq =    -3.207 Dr =     0.000 |Dx| =     0.000,   Stable ->  r  p  q
+  17 Dp =     0.000 Dq =     1.050 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+  18 Dp =     0.000 Dq =     4.825 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+  19 Dp =     0.000 Dq =    -1.059 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+  20 Dp =     0.000 Dq =    -4.838 Dr =     0.000 |Dx| = 75859.711, Unstable >>  p ->  r  q  p
+  21 Dp =     0.000 Dq =     3.468 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+  22 Dp =     0.000 Dq =    -1.309 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+  23 Dp =     0.000 Dq =     0.150 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+  24 Dp =     0.000 Dq =    -2.930 Dr =     0.000 |Dx| =     0.000,   Stable ->  r  p  q
+  25 Dp =     0.000 Dq =     3.692 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+  23/  25 conv, est  920/ 1000 for bire_fs_p0_q4_r0_n1000_M0_6_H15_0_P10_stat_ne_nD_C2_TBPI_1
+  26 Dp =     0.000 Dq =    -3.057 Dr =     0.000 |Dx| =     0.000,   Stable ->  r  p  q
+  27 Dp =     0.000 Dq =    -2.007 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+  28 Dp =     0.000 Dq =    -0.050 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+  29 Dp =     0.000 Dq =    -0.886 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+  30 Dp =     0.000 Dq =    -9.051 Dr =     0.000 |Dx| = 113098.823, Unstable >> ->  q  r  p
+  31 Dp =     0.000 Dq =     1.799 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+  32 Dp =     0.000 Dq =    -4.747 Dr =     0.000 |Dx| =     0.000,   Stable ->  r  p  q
+  33 Dp =     0.000 Dq =     0.946 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+  34 Dp =     0.000 Dq =    -1.644 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+  35 Dp =     0.000 Dq =    -0.579 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+  36 Dp =     0.000 Dq =    -3.027 Dr =     0.000 |Dx| =     0.000,   Stable ->  r  p  q
+  37 Dp =     0.000 Dq =    -4.336 Dr =     0.000 |Dx| =     0.000,   Stable ->  r  p  q
+  38 Dp =     0.000 Dq =     0.486 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+  39 Dp =     0.000 Dq =     0.774 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+  40 Dp =     0.000 Dq =     3.946 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+  41 Dp =     0.000 Dq =     2.062 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+  42 Dp =     0.000 Dq =    -2.894 Dr =     0.000 |Dx| =     0.000,   Stable ->  r  p  q
+  43 Dp =     0.000 Dq =     4.577 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+  44 Dp =     0.000 Dq =     8.728 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+  45 Dp =     0.000 Dq =     2.773 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+  46 Dp =     0.000 Dq =    -0.858 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+  47 Dp =     0.000 Dq =    -3.965 Dr =     0.000 |Dx| =     0.000,   Stable ->  r  p  q
+  48 Dp =     0.000 Dq =     0.255 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+  49 Dp =     0.000 Dq =    -5.844 Dr =     0.000 |Dx| =    13.000, Unstable >> ->  r  q  p
+  50 Dp =     0.000 Dq =     3.073 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+  46/  50 conv, est  920/ 1000 for bire_fs_p0_q4_r0_n1000_M0_6_H15_0_P10_stat_ne_nD_C2_TBPI_1
+  51 Dp =     0.000 Dq =    -1.625 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+  52 Dp =     0.000 Dq =    -2.404 Dr =     0.000 |Dx| =     0.000,   Stable ->  r  p  q
+  53 Dp =     0.000 Dq =     0.923 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+  54 Dp =     0.000 Dq =    -5.071 Dr =     0.000 |Dx| =    13.000, Unstable >> ->  r  q  p
+  55 Dp =     0.000 Dq =    -7.069 Dr =     0.000 |Dx| =    13.000, Unstable >> ->  r  q  p
+  56 Dp =     0.000 Dq =    -1.862 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+  57 Dp =     0.000 Dq =     4.751 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+  58 Dp =     0.000 Dq =    -3.510 Dr =     0.000 |Dx| =     0.000,   Stable ->  r  p  q
+  59 Dp =     0.000 Dq =     3.364 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+  60 Dp =     0.000 Dq =    -7.469 Dr =     0.000 |Dx| = 25457.085, Unstable >>  p  r ->  q  r  p
+  61 Dp =     0.000 Dq =    -0.378 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+  62 Dp =     0.000 Dq =     1.921 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+  63 Dp =     0.000 Dq =     7.020 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+  64 Dp =     0.000 Dq =    -7.161 Dr =     0.000 |Dx| =    13.000, Unstable >> ->  r  q  p
+  65 Dp =     0.000 Dq =    -0.383 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+  66 Dp =     0.000 Dq =    -3.750 Dr =     0.000 |Dx| =     0.000,   Stable ->  r  p  q
+  67 Dp =     0.000 Dq =     1.095 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+  68 Dp =     0.000 Dq =    -2.335 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+  69 Dp =     0.000 Dq =     0.281 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+  70 Dp =     0.000 Dq =    -3.149 Dr =     0.000 |Dx| =     0.000,   Stable ->  r  p  q
+  71 Dp =     0.000 Dq =    -2.343 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+  72 Dp =     0.000 Dq =     1.468 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+  73 Dp =     0.000 Dq =     5.828 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+  74 Dp =     0.000 Dq =     0.704 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+  75 Dp =     0.000 Dq =     0.355 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+  67/  75 conv, est  893/ 1000 for bire_fs_p0_q4_r0_n1000_M0_6_H15_0_P10_stat_ne_nD_C2_TBPI_1
+  76 Dp =     0.000 Dq =    -1.983 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+  77 Dp =     0.000 Dq =     6.171 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+  78 Dp =     0.000 Dq =    -7.883 Dr =     0.000 |Dx| = 210750.057, Unstable >>  p  q  r ->  p  q  r
+  79 Dp =     0.000 Dq =    -8.086 Dr =     0.000 |Dx| = 18780.085, Unstable >>  p ->  r  q  p
+  80 Dp =     0.000 Dq =    -3.245 Dr =     0.000 |Dx| =     0.000,   Stable ->  r  p  q
+  81 Dp =     0.000 Dq =     1.628 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+  82 Dp =     0.000 Dq =     3.649 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+  83 Dp =     0.000 Dq =     2.136 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+  84 Dp =     0.000 Dq =     2.870 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+  85 Dp =     0.000 Dq =     0.522 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+  86 Dp =     0.000 Dq =    -2.005 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+  87 Dp =     0.000 Dq =    -4.364 Dr =     0.000 |Dx| =     0.000,   Stable ->  r  p  q
+  88 Dp =     0.000 Dq =     1.656 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+  89 Dp =     0.000 Dq =    -3.913 Dr =     0.000 |Dx| =     0.000,   Stable ->  r  p  q
+  90 Dp =     0.000 Dq =     1.543 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+  91 Dp =     0.000 Dq =     2.826 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+  92 Dp =     0.000 Dq =    -2.595 Dr =     0.000 |Dx| =     0.000,   Stable ->  r  p  q
+  93 Dp =     0.000 Dq =    -1.917 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+  94 Dp =     0.000 Dq =    -2.325 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+  95 Dp =     0.000 Dq =     2.595 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+  96 Dp =     0.000 Dq =     0.490 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+  97 Dp =     0.000 Dq =    -2.796 Dr =     0.000 |Dx| =     0.000,   Stable ->  r  p  q
+  98 Dp =     0.000 Dq =     0.933 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+  99 Dp =     0.000 Dq =     5.874 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 100 Dp =     0.000 Dq =     0.990 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+  90/ 100 conv, est  900/ 1000 for bire_fs_p0_q4_r0_n1000_M0_6_H15_0_P10_stat_ne_nD_C2_TBPI_1
+ 101 Dp =     0.000 Dq =     0.370 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 102 Dp =     0.000 Dq =    -1.724 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 103 Dp =     0.000 Dq =    -3.836 Dr =     0.000 |Dx| =     0.000,   Stable ->  r  p  q
+ 104 Dp =     0.000 Dq =    -0.115 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 105 Dp =     0.000 Dq =     0.134 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 106 Dp =     0.000 Dq =    -1.360 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 107 Dp =     0.000 Dq =     4.577 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 108 Dp =     0.000 Dq =    -1.058 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 109 Dp =     0.000 Dq =    -0.763 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 110 Dp =     0.000 Dq =     0.642 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 111 Dp =     0.000 Dq =     1.989 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 112 Dp =     0.000 Dq =    -7.251 Dr =     0.000 |Dx| = 95015.792, Unstable >>  p  q ->  r  p  q
+ 113 Dp =     0.000 Dq =     0.923 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 114 Dp =     0.000 Dq =     4.860 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 115 Dp =     0.000 Dq =    -4.550 Dr =     0.000 |Dx| =     0.000,   Stable ->  r  p  q
+ 116 Dp =     0.000 Dq =     1.428 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 117 Dp =     0.000 Dq =    -2.139 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 118 Dp =     0.000 Dq =    -4.054 Dr =     0.000 |Dx| =     0.000,   Stable ->  r  p  q
+ 119 Dp =     0.000 Dq =     0.934 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 120 Dp =     0.000 Dq =    -0.517 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 121 Dp =     0.000 Dq =    -8.375 Dr =     0.000 |Dx| = 21244.294, Unstable >> ->  r  p  q
+ 122 Dp =     0.000 Dq =    -2.450 Dr =     0.000 |Dx| =     0.000,   Stable ->  r  p  q
+ 123 Dp =     0.000 Dq =     3.119 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 124 Dp =     0.000 Dq =    -2.443 Dr =     0.000 |Dx| =     0.000,   Stable ->  r  p  q
+ 125 Dp =     0.000 Dq =    -3.067 Dr =     0.000 |Dx| =     0.000,   Stable ->  r  p  q
+ 113/ 125 conv, est  904/ 1000 for bire_fs_p0_q4_r0_n1000_M0_6_H15_0_P10_stat_ne_nD_C2_TBPI_1
+ 126 Dp =     0.000 Dq =    -1.576 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 127 Dp =     0.000 Dq =    -1.873 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 128 Dp =     0.000 Dq =     2.842 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 129 Dp =     0.000 Dq =    -3.479 Dr =     0.000 |Dx| =     0.000,   Stable ->  r  p  q
+ 130 Dp =     0.000 Dq =    -4.737 Dr =     0.000 |Dx| =     0.000,   Stable ->  r  p  q
+ 131 Dp =     0.000 Dq =     1.607 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 132 Dp =     0.000 Dq =     3.837 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 133 Dp =     0.000 Dq =     2.677 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 134 Dp =     0.000 Dq =     3.229 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 135 Dp =     0.000 Dq =    -2.672 Dr =     0.000 |Dx| =     0.000,   Stable ->  r  p  q
+ 136 Dp =     0.000 Dq =    -5.934 Dr =     0.000 |Dx| = 45923.682, Unstable >>  p  r ->  q  r  p
+ 137 Dp =     0.000 Dq =    -2.879 Dr =     0.000 |Dx| =     0.000,   Stable ->  r  p  q
+ 138 Dp =     0.000 Dq =    -0.181 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 139 Dp =     0.000 Dq =    -6.817 Dr =     0.000 |Dx| = 62160.269, Unstable >> ->  r  p  q
+ 140 Dp =     0.000 Dq =    -1.284 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 141 Dp =     0.000 Dq =     2.220 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 142 Dp =     0.000 Dq =    -2.822 Dr =     0.000 |Dx| =     0.000,   Stable ->  r  p  q
+ 143 Dp =     0.000 Dq =     7.789 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 144 Dp =     0.000 Dq =     2.895 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 145 Dp =     0.000 Dq =    -4.897 Dr =     0.000 |Dx| = 10076.867, Unstable >>  p  q  r ->  p  q  r
+ 146 Dp =     0.000 Dq =    -4.560 Dr =     0.000 |Dx| =     0.000,   Stable ->  r  p  q
+ 147 Dp =     0.000 Dq =    -2.876 Dr =     0.000 |Dx| =     0.000,   Stable ->  r  p  q
+ 148 Dp =     0.000 Dq =     2.729 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 149 Dp =     0.000 Dq =     1.770 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 150 Dp =     0.000 Dq =    -2.294 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 135/ 150 conv, est  900/ 1000 for bire_fs_p0_q4_r0_n1000_M0_6_H15_0_P10_stat_ne_nD_C2_TBPI_1
+ 151 Dp =     0.000 Dq =     0.599 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 152 Dp =     0.000 Dq =     3.092 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 153 Dp =     0.000 Dq =     1.998 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 154 Dp =     0.000 Dq =    -6.429 Dr =     0.000 |Dx| = 51145.851, Unstable >> ->  r  q  p
+ 155 Dp =     0.000 Dq =    -4.375 Dr =     0.000 |Dx| =     0.000,   Stable ->  r  p  q
+ 156 Dp =     0.000 Dq =    -3.695 Dr =     0.000 |Dx| =     0.000,   Stable ->  r  p  q
+ 157 Dp =     0.000 Dq =    -6.916 Dr =     0.000 |Dx| = 17504.327, Unstable >>  p  q  r ->  p  q  r
+ 158 Dp =     0.000 Dq =     3.325 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 159 Dp =     0.000 Dq =    -2.621 Dr =     0.000 |Dx| =     0.000,   Stable ->  r  p  q
+ 160 Dp =     0.000 Dq =    -2.667 Dr =     0.000 |Dx| =     0.000,   Stable ->  r  p  q
+ 161 Dp =     0.000 Dq =    -3.386 Dr =     0.000 |Dx| =     0.000,   Stable ->  r  p  q
+ 162 Dp =     0.000 Dq =     1.121 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 163 Dp =     0.000 Dq =     2.169 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 164 Dp =     0.000 Dq =     2.597 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 165 Dp =     0.000 Dq =     4.827 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 166 Dp =     0.000 Dq =    -3.759 Dr =     0.000 |Dx| =     0.000,   Stable ->  r  p  q
+ 167 Dp =     0.000 Dq =     6.364 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 168 Dp =     0.000 Dq =     9.745 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 169 Dp =     0.000 Dq =    -2.166 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 170 Dp =     0.000 Dq =    -1.494 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 171 Dp =     0.000 Dq =     2.323 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 172 Dp =     0.000 Dq =     4.843 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 173 Dp =     0.000 Dq =    -1.128 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 174 Dp =     0.000 Dq =    -3.257 Dr =     0.000 |Dx| =     0.000,   Stable ->  r  p  q
+ 175 Dp =     0.000 Dq =     8.183 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 158/ 175 conv, est  902/ 1000 for bire_fs_p0_q4_r0_n1000_M0_6_H15_0_P10_stat_ne_nD_C2_TBPI_1
+ 176 Dp =     0.000 Dq =    -2.044 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 177 Dp =     0.000 Dq =   -10.933 Dr =     0.000 |Dx| = 139783.173, Unstable >> ->  r  p  q
+ 178 Dp =     0.000 Dq =     2.073 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 179 Dp =     0.000 Dq =     3.906 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 180 Dp =     0.000 Dq =     6.735 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 181 Dp =     0.000 Dq =     6.992 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 182 Dp =     0.000 Dq =    12.245 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  q  r
+ 183 Dp =     0.000 Dq =    -2.251 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 184 Dp =     0.000 Dq =    -3.943 Dr =     0.000 |Dx| =     0.000,   Stable ->  r  p  q
+ 185 Dp =     0.000 Dq =    -5.816 Dr =     0.000 |Dx| = 65764.963, Unstable >> ->  q  r  p
+ 186 Dp =     0.000 Dq =     6.771 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 187 Dp =     0.000 Dq =    -1.766 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 188 Dp =     0.000 Dq =    -6.718 Dr =     0.000 |Dx| = 50561.513, Unstable >>  p ->  q  r  p
+ 189 Dp =     0.000 Dq =    -8.231 Dr =     0.000 |Dx| = 426641.465, Unstable >>  q ->  r  p  q
+ 190 Dp =     0.000 Dq =     0.476 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 191 Dp =     0.000 Dq =    -1.745 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 192 Dp =     0.000 Dq =     1.221 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 193 Dp =     0.000 Dq =    -3.448 Dr =     0.000 |Dx| =     0.000,   Stable ->  r  p  q
+ 194 Dp =     0.000 Dq =    -2.966 Dr =     0.000 |Dx| =     0.000,   Stable ->  r  p  q
+ 195 Dp =     0.000 Dq =     1.839 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 196 Dp =     0.000 Dq =    -0.834 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 197 Dp =     0.000 Dq =     2.272 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 198 Dp =     0.000 Dq =    -0.542 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 199 Dp =     0.000 Dq =    -1.172 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 200 Dp =     0.000 Dq =     1.409 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 179/ 200 conv, est  895/ 1000 for bire_fs_p0_q4_r0_n1000_M0_6_H15_0_P10_stat_ne_nD_C2_TBPI_1
+ 201 Dp =     0.000 Dq =    -1.335 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 202 Dp =     0.000 Dq =     0.675 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 203 Dp =     0.000 Dq =     1.750 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 204 Dp =     0.000 Dq =    -2.070 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 205 Dp =     0.000 Dq =    -0.502 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 206 Dp =     0.000 Dq =     0.376 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 207 Dp =     0.000 Dq =     2.640 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 208 Dp =     0.000 Dq =     0.906 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 209 Dp =     0.000 Dq =     0.944 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 210 Dp =     0.000 Dq =     1.811 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 211 Dp =     0.000 Dq =    -1.277 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 212 Dp =     0.000 Dq =     1.382 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 213 Dp =     0.000 Dq =    -2.971 Dr =     0.000 |Dx| =     0.000,   Stable ->  r  p  q
+ 214 Dp =     0.000 Dq =    -7.303 Dr =     0.000 |Dx| =    13.000, Unstable >> ->  r  q  p
+ 215 Dp =     0.000 Dq =     1.591 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 216 Dp =     0.000 Dq =    -7.839 Dr =     0.000 |Dx| =    13.000, Unstable >> ->  r  q  p
+ 217 Dp =     0.000 Dq =    -0.659 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 218 Dp =     0.000 Dq =     6.060 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 219 Dp =     0.000 Dq =     2.831 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 220 Dp =     0.000 Dq =    -4.100 Dr =     0.000 |Dx| =     0.000,   Stable ->  r  p  q
+ 221 Dp =     0.000 Dq =     2.882 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 222 Dp =     0.000 Dq =     0.900 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 223 Dp =     0.000 Dq =    -3.374 Dr =     0.000 |Dx| =     0.000,   Stable ->  r  p  q
+ 224 Dp =     0.000 Dq =    -0.439 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 225 Dp =     0.000 Dq =    -2.170 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 202/ 225 conv, est  897/ 1000 for bire_fs_p0_q4_r0_n1000_M0_6_H15_0_P10_stat_ne_nD_C2_TBPI_1
+ 226 Dp =     0.000 Dq =    -1.289 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 227 Dp =     0.000 Dq =     1.278 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 228 Dp =     0.000 Dq =    -6.215 Dr =     0.000 |Dx| =    13.000, Unstable >> ->  r  q  p
+ 229 Dp =     0.000 Dq =     3.320 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 230 Dp =     0.000 Dq =     7.956 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 231 Dp =     0.000 Dq =    -0.667 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 232 Dp =     0.000 Dq =    -3.907 Dr =     0.000 |Dx| =     0.000,   Stable ->  r  p  q
+ 233 Dp =     0.000 Dq =    -1.656 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 234 Dp =     0.000 Dq =     4.842 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 235 Dp =     0.000 Dq =    -2.032 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 236 Dp =     0.000 Dq =     1.867 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 237 Dp =     0.000 Dq =     9.055 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 238 Dp =     0.000 Dq =    -2.893 Dr =     0.000 |Dx| =     0.000,   Stable ->  r  p  q
+ 239 Dp =     0.000 Dq =     0.388 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 240 Dp =     0.000 Dq =    -2.280 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 241 Dp =     0.000 Dq =    -1.479 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 242 Dp =     0.000 Dq =     0.468 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 243 Dp =     0.000 Dq =    -2.968 Dr =     0.000 |Dx| =     0.000,   Stable ->  r  p  q
+ 244 Dp =     0.000 Dq =     1.809 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 245 Dp =     0.000 Dq =     0.705 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 246 Dp =     0.000 Dq =     4.645 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 247 Dp =     0.000 Dq =     2.736 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 248 Dp =     0.000 Dq =     1.532 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 249 Dp =     0.000 Dq =     5.985 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 250 Dp =     0.000 Dq =    -0.756 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 226/ 250 conv, est  904/ 1000 for bire_fs_p0_q4_r0_n1000_M0_6_H15_0_P10_stat_ne_nD_C2_TBPI_1
+ 251 Dp =     0.000 Dq =     2.538 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 252 Dp =     0.000 Dq =    -2.523 Dr =     0.000 |Dx| =     0.000,   Stable ->  r  p  q
+ 253 Dp =     0.000 Dq =     5.735 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 254 Dp =     0.000 Dq =    -2.830 Dr =     0.000 |Dx| =     0.000,   Stable ->  r  p  q
+ 255 Dp =     0.000 Dq =     3.944 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 256 Dp =     0.000 Dq =    -2.772 Dr =     0.000 |Dx| =     0.000,   Stable ->  r  p  q
+ 257 Dp =     0.000 Dq =     0.975 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 258 Dp =     0.000 Dq =    -4.101 Dr =     0.000 |Dx| =     0.000,   Stable ->  r  p  q
+ 259 Dp =     0.000 Dq =    -2.908 Dr =     0.000 |Dx| =     0.000,   Stable ->  r  p  q
+ 260 Dp =     0.000 Dq =    -3.618 Dr =     0.000 |Dx| =     0.000,   Stable ->  r  p  q
+ 261 Dp =     0.000 Dq =     1.907 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 262 Dp =     0.000 Dq =     2.272 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 263 Dp =     0.000 Dq =     3.198 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 264 Dp =     0.000 Dq =     1.796 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 265 Dp =     0.000 Dq =    -0.593 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 266 Dp =     0.000 Dq =     2.896 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 267 Dp =     0.000 Dq =     6.443 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 268 Dp =     0.000 Dq =    -1.216 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 269 Dp =     0.000 Dq =    -2.670 Dr =     0.000 |Dx| =     0.000,   Stable ->  r  p  q
+ 270 Dp =     0.000 Dq =     2.552 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 271 Dp =     0.000 Dq =     8.442 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 272 Dp =     0.000 Dq =     0.010 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 273 Dp =     0.000 Dq =    -0.946 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 274 Dp =     0.000 Dq =    -3.646 Dr =     0.000 |Dx| =     0.000,   Stable ->  r  p  q
+ 275 Dp =     0.000 Dq =    -2.506 Dr =     0.000 |Dx| =     0.000,   Stable ->  r  p  q
+ 251/ 275 conv, est  912/ 1000 for bire_fs_p0_q4_r0_n1000_M0_6_H15_0_P10_stat_ne_nD_C2_TBPI_1
+ 276 Dp =     0.000 Dq =    -3.366 Dr =     0.000 |Dx| =     0.000,   Stable ->  r  p  q
+ 277 Dp =     0.000 Dq =    -3.457 Dr =     0.000 |Dx| =     0.000,   Stable ->  r  p  q
+ 278 Dp =     0.000 Dq =     4.580 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 279 Dp =     0.000 Dq =     5.439 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 280 Dp =     0.000 Dq =     0.803 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 281 Dp =     0.000 Dq =     0.827 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 282 Dp =     0.000 Dq =     3.687 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 283 Dp =     0.000 Dq =     0.523 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 284 Dp =     0.000 Dq =     0.894 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 285 Dp =     0.000 Dq =     2.842 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 286 Dp =     0.000 Dq =     0.315 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 287 Dp =     0.000 Dq =     5.598 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 288 Dp =     0.000 Dq =    13.373 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  q  r
+ 289 Dp =     0.000 Dq =     0.499 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 290 Dp =     0.000 Dq =     1.622 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 291 Dp =     0.000 Dq =    -2.784 Dr =     0.000 |Dx| =     0.000,   Stable ->  r  p  q
+ 292 Dp =     0.000 Dq =    -1.269 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 293 Dp =     0.000 Dq =     0.869 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 294 Dp =     0.000 Dq =     2.192 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 295 Dp =     0.000 Dq =    -0.226 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 296 Dp =     0.000 Dq =    -4.218 Dr =     0.000 |Dx| =     0.000,   Stable ->  r  p  q
+ 297 Dp =     0.000 Dq =     2.066 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 298 Dp =     0.000 Dq =    -1.585 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 299 Dp =     0.000 Dq =     2.148 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 300 Dp =     0.000 Dq =    -0.344 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 276/ 300 conv, est  920/ 1000 for bire_fs_p0_q4_r0_n1000_M0_6_H15_0_P10_stat_ne_nD_C2_TBPI_1
+ 301 Dp =     0.000 Dq =     0.020 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 302 Dp =     0.000 Dq =     0.223 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 303 Dp =     0.000 Dq =    -7.901 Dr =     0.000 |Dx| = 77864.978, Unstable >>  p  r ->  q  p  r
+ 304 Dp =     0.000 Dq =     5.453 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 305 Dp =     0.000 Dq =    -3.084 Dr =     0.000 |Dx| =     0.000,   Stable ->  r  p  q
+ 306 Dp =     0.000 Dq =     1.967 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 307 Dp =     0.000 Dq =     2.734 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 308 Dp =     0.000 Dq =    -1.711 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 309 Dp =     0.000 Dq =    -4.866 Dr =     0.000 |Dx| =    13.000, Unstable >> ->  r  q  p
+ 310 Dp =     0.000 Dq =     2.828 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 311 Dp =     0.000 Dq =    -3.267 Dr =     0.000 |Dx| =     0.000,   Stable ->  r  p  q
+ 312 Dp =     0.000 Dq =     0.202 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 313 Dp =     0.000 Dq =     2.341 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 314 Dp =     0.000 Dq =    -1.382 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 315 Dp =     0.000 Dq =    -6.317 Dr =     0.000 |Dx| =    13.000, Unstable >> ->  r  q  p
+ 316 Dp =     0.000 Dq =    -2.199 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 317 Dp =     0.000 Dq =     2.472 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 318 Dp =     0.000 Dq =    -2.750 Dr =     0.000 |Dx| =     0.000,   Stable ->  r  p  q
+ 319 Dp =     0.000 Dq =     3.959 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 320 Dp =     0.000 Dq =    -5.643 Dr =     0.000 |Dx| = 84892.354, Unstable >>  r ->  q  p  r
+ 321 Dp =     0.000 Dq =    -3.385 Dr =     0.000 |Dx| =     0.000,   Stable ->  r  p  q
+ 322 Dp =     0.000 Dq =    -6.550 Dr =     0.000 |Dx| = 176694.254, Unstable >>  q  r ->  p  r  q
+ 323 Dp =     0.000 Dq =    -3.384 Dr =     0.000 |Dx| =     0.000,   Stable ->  r  p  q
+ 324 Dp =     0.000 Dq =     6.413 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 325 Dp =     0.000 Dq =     2.632 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 296/ 325 conv, est  910/ 1000 for bire_fs_p0_q4_r0_n1000_M0_6_H15_0_P10_stat_ne_nD_C2_TBPI_1
+ 326 Dp =     0.000 Dq =    -0.723 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 327 Dp =     0.000 Dq =    -2.164 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 328 Dp =     0.000 Dq =     4.871 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 329 Dp =     0.000 Dq =    -0.196 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 330 Dp =     0.000 Dq =    -3.668 Dr =     0.000 |Dx| =     0.000,   Stable ->  r  p  q
+ 331 Dp =     0.000 Dq =     6.433 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 332 Dp =     0.000 Dq =    -4.974 Dr =     0.000 |Dx| =    13.000, Unstable >> ->  r  q  p
+ 333 Dp =     0.000 Dq =     1.002 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 334 Dp =     0.000 Dq =     2.800 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 335 Dp =     0.000 Dq =     4.073 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 336 Dp =     0.000 Dq =     8.075 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 337 Dp =     0.000 Dq =     3.560 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 338 Dp =     0.000 Dq =    -2.557 Dr =     0.000 |Dx| =     0.000,   Stable ->  r  p  q
+ 339 Dp =     0.000 Dq =     4.784 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 340 Dp =     0.000 Dq =     1.401 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 341 Dp =     0.000 Dq =    -4.671 Dr =     0.000 |Dx| =     0.000,   Stable ->  r  p  q
+ 342 Dp =     0.000 Dq =    -4.114 Dr =     0.000 |Dx| =     0.000,   Stable ->  r  p  q
+ 343 Dp =     0.000 Dq =    -3.062 Dr =     0.000 |Dx| =     0.000,   Stable ->  r  p  q
+ 344 Dp =     0.000 Dq =    -8.447 Dr =     0.000 |Dx| =    13.000, Unstable >> ->  r  q  p
+ 345 Dp =     0.000 Dq =     1.865 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 346 Dp =     0.000 Dq =     2.378 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 347 Dp =     0.000 Dq =     2.079 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 348 Dp =     0.000 Dq =    -3.169 Dr =     0.000 |Dx| =     0.000,   Stable ->  r  p  q
+ 349 Dp =     0.000 Dq =    -0.096 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 350 Dp =     0.000 Dq =     4.864 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 319/ 350 conv, est  911/ 1000 for bire_fs_p0_q4_r0_n1000_M0_6_H15_0_P10_stat_ne_nD_C2_TBPI_1
+ 351 Dp =     0.000 Dq =     1.617 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 352 Dp =     0.000 Dq =    -0.472 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 353 Dp =     0.000 Dq =    -2.855 Dr =     0.000 |Dx| =     0.000,   Stable ->  r  p  q
+ 354 Dp =     0.000 Dq =    -0.074 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 355 Dp =     0.000 Dq =     5.177 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 356 Dp =     0.000 Dq =     0.187 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 357 Dp =     0.000 Dq =     9.226 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 358 Dp =     0.000 Dq =     9.748 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 359 Dp =     0.000 Dq =     2.938 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 360 Dp =     0.000 Dq =    -6.403 Dr =     0.000 |Dx| = 39075.896, Unstable >>  q ->  r  p  q
+ 361 Dp =     0.000 Dq =    -0.942 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 362 Dp =     0.000 Dq =     5.167 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 363 Dp =     0.000 Dq =    -2.146 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 364 Dp =     0.000 Dq =    -2.668 Dr =     0.000 |Dx| =     0.000,   Stable ->  r  p  q
+ 365 Dp =     0.000 Dq =     0.167 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 366 Dp =     0.000 Dq =    10.773 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  q  r
+ 367 Dp =     0.000 Dq =    -1.815 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 368 Dp =     0.000 Dq =    -7.702 Dr =     0.000 |Dx| = 62684.519, Unstable >>  p  r ->  q  p  r
+ 369 Dp =     0.000 Dq =     1.212 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 370 Dp =     0.000 Dq =     1.652 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 371 Dp =     0.000 Dq =     3.030 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 372 Dp =     0.000 Dq =     0.357 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 373 Dp =     0.000 Dq =     1.433 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 374 Dp =     0.000 Dq =    -1.813 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 375 Dp =     0.000 Dq =     3.892 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 342/ 375 conv, est  912/ 1000 for bire_fs_p0_q4_r0_n1000_M0_6_H15_0_P10_stat_ne_nD_C2_TBPI_1
+ 376 Dp =     0.000 Dq =    -0.048 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 377 Dp =     0.000 Dq =     2.114 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 378 Dp =     0.000 Dq =    -2.900 Dr =     0.000 |Dx| =     0.000,   Stable ->  r  p  q
+ 379 Dp =     0.000 Dq =     5.606 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 380 Dp =     0.000 Dq =     1.024 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 381 Dp =     0.000 Dq =    -1.670 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 382 Dp =     0.000 Dq =     0.224 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 383 Dp =     0.000 Dq =    -4.358 Dr =     0.000 |Dx| =     0.000,   Stable ->  r  p  q
+ 384 Dp =     0.000 Dq =    -2.367 Dr =     0.000 |Dx| =     0.000,   Stable ->  r  p  q
+ 385 Dp =     0.000 Dq =     3.335 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 386 Dp =     0.000 Dq =     2.459 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 387 Dp =     0.000 Dq =     3.385 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 388 Dp =     0.000 Dq =     2.871 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 389 Dp =     0.000 Dq =    -1.076 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 390 Dp =     0.000 Dq =     0.445 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 391 Dp =     0.000 Dq =     7.587 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 392 Dp =     0.000 Dq =    -0.403 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 393 Dp =     0.000 Dq =    -6.111 Dr =     0.000 |Dx| = 74119.672, Unstable >>  q  r ->  p  r  q
+ 394 Dp =     0.000 Dq =    -0.048 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 395 Dp =     0.000 Dq =    -1.669 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 396 Dp =     0.000 Dq =    -0.440 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 397 Dp =     0.000 Dq =     0.039 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 398 Dp =     0.000 Dq =    -4.162 Dr =     0.000 |Dx| =     0.000,   Stable ->  r  p  q
+ 399 Dp =     0.000 Dq =     1.626 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 400 Dp =     0.000 Dq =    -0.733 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 366/ 400 conv, est  915/ 1000 for bire_fs_p0_q4_r0_n1000_M0_6_H15_0_P10_stat_ne_nD_C2_TBPI_1
+ 401 Dp =     0.000 Dq =     2.277 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 402 Dp =     0.000 Dq =    -2.878 Dr =     0.000 |Dx| =     0.000,   Stable ->  r  p  q
+ 403 Dp =     0.000 Dq =    -4.059 Dr =     0.000 |Dx| =     0.000,   Stable ->  r  p  q
+ 404 Dp =     0.000 Dq =    -1.839 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 405 Dp =     0.000 Dq =     6.476 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 406 Dp =     0.000 Dq =    -7.357 Dr =     0.000 |Dx| = 73601.287, Unstable >> ->  r  q  p
+ 407 Dp =     0.000 Dq =     4.224 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 408 Dp =     0.000 Dq =    -0.360 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 409 Dp =     0.000 Dq =     4.433 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 410 Dp =     0.000 Dq =    -1.740 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 411 Dp =     0.000 Dq =     1.365 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 412 Dp =     0.000 Dq =     1.269 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 413 Dp =     0.000 Dq =     8.292 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 414 Dp =     0.000 Dq =    -0.694 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 415 Dp =     0.000 Dq =     0.743 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 416 Dp =     0.000 Dq =    -3.265 Dr =     0.000 |Dx| =     0.000,   Stable ->  r  p  q
+ 417 Dp =     0.000 Dq =     0.981 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 418 Dp =     0.000 Dq =    -3.191 Dr =     0.000 |Dx| =     0.000,   Stable ->  r  p  q
+ 419 Dp =     0.000 Dq =    -0.680 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 420 Dp =     0.000 Dq =     1.300 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 421 Dp =     0.000 Dq =     2.004 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 422 Dp =     0.000 Dq =    -3.847 Dr =     0.000 |Dx| =     0.000,   Stable ->  r  p  q
+ 423 Dp =     0.000 Dq =    -3.766 Dr =     0.000 |Dx| =     0.000,   Stable ->  r  p  q
+ 424 Dp =     0.000 Dq =     4.435 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 425 Dp =     0.000 Dq =    -2.326 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 390/ 425 conv, est  917/ 1000 for bire_fs_p0_q4_r0_n1000_M0_6_H15_0_P10_stat_ne_nD_C2_TBPI_1
+ 426 Dp =     0.000 Dq =     0.498 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 427 Dp =     0.000 Dq =    -1.354 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 428 Dp =     0.000 Dq =    -6.509 Dr =     0.000 |Dx| = 18317.999, Unstable >>  p  q  r ->  p  q  r
+ 429 Dp =     0.000 Dq =    -0.644 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 430 Dp =     0.000 Dq =    -0.707 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 431 Dp =     0.000 Dq =     6.840 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 432 Dp =     0.000 Dq =    -7.805 Dr =     0.000 |Dx| = 93716.268, Unstable >>  p  r ->  q  p  r
+ 433 Dp =     0.000 Dq =    -2.328 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 434 Dp =     0.000 Dq =     2.240 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 435 Dp =     0.000 Dq =    -2.355 Dr =     0.000 |Dx| =     0.000,   Stable ->  r  p  q
+ 436 Dp =     0.000 Dq =    -8.812 Dr =     0.000 |Dx| =    13.000, Unstable >> ->  r  q  p
+ 437 Dp =     0.000 Dq =     2.254 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 438 Dp =     0.000 Dq =     0.452 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 439 Dp =     0.000 Dq =    -3.600 Dr =     0.000 |Dx| =     0.000,   Stable ->  r  p  q
+ 440 Dp =     0.000 Dq =    -4.191 Dr =     0.000 |Dx| =     0.000,   Stable ->  r  p  q
+ 441 Dp =     0.000 Dq =    -2.957 Dr =     0.000 |Dx| =     0.000,   Stable ->  r  p  q
+ 442 Dp =     0.000 Dq =     0.532 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 443 Dp =     0.000 Dq =    -0.947 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 444 Dp =     0.000 Dq =    -2.865 Dr =     0.000 |Dx| =     0.000,   Stable ->  r  p  q
+ 445 Dp =     0.000 Dq =     1.116 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 446 Dp =     0.000 Dq =     3.909 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 447 Dp =     0.000 Dq =    -2.653 Dr =     0.000 |Dx| =     0.000,   Stable ->  r  p  q
+ 448 Dp =     0.000 Dq =     5.960 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 449 Dp =     0.000 Dq =    -0.144 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 450 Dp =     0.000 Dq =     2.113 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 412/ 450 conv, est  915/ 1000 for bire_fs_p0_q4_r0_n1000_M0_6_H15_0_P10_stat_ne_nD_C2_TBPI_1
+ 451 Dp =     0.000 Dq =     1.391 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 452 Dp =     0.000 Dq =     1.700 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 453 Dp =     0.000 Dq =     0.644 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 454 Dp =     0.000 Dq =    -9.288 Dr =     0.000 |Dx| = 209089.761, Unstable >>  p  q ->  r  p  q
+ 455 Dp =     0.000 Dq =    -4.085 Dr =     0.000 |Dx| =     0.000,   Stable ->  r  p  q
+ 456 Dp =     0.000 Dq =     3.179 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 457 Dp =     0.000 Dq =    -4.478 Dr =     0.000 |Dx| =     0.000,   Stable ->  r  p  q
+ 458 Dp =     0.000 Dq =     0.109 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 459 Dp =     0.000 Dq =    -6.537 Dr =     0.000 |Dx| = 47545.064, Unstable >>  q ->  p  r  q
+ 460 Dp =     0.000 Dq =    -2.793 Dr =     0.000 |Dx| =     0.000,   Stable ->  r  p  q
+ 461 Dp =     0.000 Dq =     5.748 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 462 Dp =     0.000 Dq =     0.610 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 463 Dp =     0.000 Dq =    -3.810 Dr =     0.000 |Dx| =     0.000,   Stable ->  r  p  q
+ 464 Dp =     0.000 Dq =    -2.907 Dr =     0.000 |Dx| =     0.000,   Stable ->  r  p  q
+ 465 Dp =     0.000 Dq =    -7.120 Dr =     0.000 |Dx| = 85084.064, Unstable >> ->  r  p  q
+ 466 Dp =     0.000 Dq =     1.424 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 467 Dp =     0.000 Dq =    -1.386 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 468 Dp =     0.000 Dq =     2.467 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 469 Dp =     0.000 Dq =     2.702 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 470 Dp =     0.000 Dq =    -1.639 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 471 Dp =     0.000 Dq =    -4.267 Dr =     0.000 |Dx| =     0.000,   Stable ->  r  p  q
+ 472 Dp =     0.000 Dq =    -5.285 Dr =     0.000 |Dx| = 233829.363, Unstable >>  q  r ->  p  q  r
+ 473 Dp =     0.000 Dq =    -2.104 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 474 Dp =     0.000 Dq =    -0.449 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 475 Dp =     0.000 Dq =     4.948 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 433/ 475 conv, est  911/ 1000 for bire_fs_p0_q4_r0_n1000_M0_6_H15_0_P10_stat_ne_nD_C2_TBPI_1
+ 476 Dp =     0.000 Dq =    -4.320 Dr =     0.000 |Dx| =     0.000,   Stable ->  r  p  q
+ 477 Dp =     0.000 Dq =     1.255 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 478 Dp =     0.000 Dq =    -4.698 Dr =     0.000 |Dx| =     0.000,   Stable ->  r  p  q
+ 479 Dp =     0.000 Dq =    -2.851 Dr =     0.000 |Dx| =     0.000,   Stable ->  r  p  q
+ 480 Dp =     0.000 Dq =     2.516 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 481 Dp =     0.000 Dq =     1.488 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 482 Dp =     0.000 Dq =    -2.684 Dr =     0.000 |Dx| =     0.000,   Stable ->  r  p  q
+ 483 Dp =     0.000 Dq =    -3.152 Dr =     0.000 |Dx| =     0.000,   Stable ->  r  p  q
+ 484 Dp =     0.000 Dq =     3.809 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 485 Dp =     0.000 Dq =    -1.293 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 486 Dp =     0.000 Dq =    -1.798 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 487 Dp =     0.000 Dq =    -4.774 Dr =     0.000 |Dx| = 275837.468, Unstable >>  q ->  r  p  q
+ 488 Dp =     0.000 Dq =     9.383 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 489 Dp =     0.000 Dq =     6.755 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 490 Dp =     0.000 Dq =     1.530 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 491 Dp =     0.000 Dq =     8.329 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 492 Dp =     0.000 Dq =     1.466 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 493 Dp =     0.000 Dq =    -1.815 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 494 Dp =     0.000 Dq =     1.724 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 495 Dp =     0.000 Dq =     5.233 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 496 Dp =     0.000 Dq =    -4.822 Dr =     0.000 |Dx| =     0.000,   Stable ->  r  p  q
+ 497 Dp =     0.000 Dq =     4.569 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 498 Dp =     0.000 Dq =     4.394 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 499 Dp =     0.000 Dq =     5.669 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 500 Dp =     0.000 Dq =     1.653 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 457/ 500 conv, est  914/ 1000 for bire_fs_p0_q4_r0_n1000_M0_6_H15_0_P10_stat_ne_nD_C2_TBPI_1
+ 501 Dp =     0.000 Dq =     4.174 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 502 Dp =     0.000 Dq =    -7.117 Dr =     0.000 |Dx| =    13.000, Unstable >> ->  r  q  p
+ 503 Dp =     0.000 Dq =    -0.452 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 504 Dp =     0.000 Dq =     3.892 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 505 Dp =     0.000 Dq =     2.005 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 506 Dp =     0.000 Dq =     0.900 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 507 Dp =     0.000 Dq =    -5.122 Dr =     0.000 |Dx| = 43338.273, Unstable >>  p  r ->  q  r  p
+ 508 Dp =     0.000 Dq =    -0.828 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 509 Dp =     0.000 Dq =    -7.036 Dr =     0.000 |Dx| = 21685.602, Unstable >>  p  r ->  q  r  p
+ 510 Dp =     0.000 Dq =    -1.111 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 511 Dp =     0.000 Dq =     1.181 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 512 Dp =     0.000 Dq =    -2.200 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 513 Dp =     0.000 Dq =     1.783 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 514 Dp =     0.000 Dq =    -0.103 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 515 Dp =     0.000 Dq =     3.432 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 516 Dp =     0.000 Dq =    -1.516 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 517 Dp =     0.000 Dq =    -6.505 Dr =     0.000 |Dx| = 48602.248, Unstable >>  q ->  r  p  q
+ 518 Dp =     0.000 Dq =    -5.136 Dr =     0.000 |Dx| = 77998.925, Unstable >>  q  r ->  p  r  q
+ 519 Dp =     0.000 Dq =    -3.148 Dr =     0.000 |Dx| =     0.000,   Stable ->  r  p  q
+ 520 Dp =     0.000 Dq =    -0.106 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 521 Dp =     0.000 Dq =     0.292 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 522 Dp =     0.000 Dq =    -3.039 Dr =     0.000 |Dx| =     0.000,   Stable ->  r  p  q
+ 523 Dp =     0.000 Dq =     0.366 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 524 Dp =     0.000 Dq =    -2.692 Dr =     0.000 |Dx| =     0.000,   Stable ->  r  p  q
+ 525 Dp =     0.000 Dq =     2.500 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 477/ 525 conv, est  908/ 1000 for bire_fs_p0_q4_r0_n1000_M0_6_H15_0_P10_stat_ne_nD_C2_TBPI_1
+ 526 Dp =     0.000 Dq =    -5.357 Dr =     0.000 |Dx| = 83147.093, Unstable >>  p  r ->  q  p  r
+ 527 Dp =     0.000 Dq =     4.600 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 528 Dp =     0.000 Dq =     1.100 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 529 Dp =     0.000 Dq =    -1.581 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 530 Dp =     0.000 Dq =    -4.277 Dr =     0.000 |Dx| =     0.000,   Stable ->  r  p  q
+ 531 Dp =     0.000 Dq =     2.237 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 532 Dp =     0.000 Dq =    -2.323 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 533 Dp =     0.000 Dq =     2.662 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 534 Dp =     0.000 Dq =     7.403 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 535 Dp =     0.000 Dq =     0.812 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 536 Dp =     0.000 Dq =     1.111 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 537 Dp =     0.000 Dq =     2.338 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 538 Dp =     0.000 Dq =    -1.918 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 539 Dp =     0.000 Dq =     7.963 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 540 Dp =     0.000 Dq =    -0.577 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 541 Dp =     0.000 Dq =     3.070 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 542 Dp =     0.000 Dq =     1.694 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 543 Dp =     0.000 Dq =    -1.936 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 544 Dp =     0.000 Dq =     5.848 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 545 Dp =     0.000 Dq =     1.945 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 546 Dp =     0.000 Dq =    -2.110 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 547 Dp =     0.000 Dq =    -2.065 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 548 Dp =     0.000 Dq =    -7.113 Dr =     0.000 |Dx| = 93043.270, Unstable >> ->  r  p  q
+ 549 Dp =     0.000 Dq =    -3.690 Dr =     0.000 |Dx| =     0.000,   Stable ->  r  p  q
+ 550 Dp =     0.000 Dq =     3.916 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 500/ 550 conv, est  909/ 1000 for bire_fs_p0_q4_r0_n1000_M0_6_H15_0_P10_stat_ne_nD_C2_TBPI_1
+ 551 Dp =     0.000 Dq =     3.978 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 552 Dp =     0.000 Dq =    -3.073 Dr =     0.000 |Dx| =     0.000,   Stable ->  r  p  q
+ 553 Dp =     0.000 Dq =     3.129 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 554 Dp =     0.000 Dq =     4.544 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 555 Dp =     0.000 Dq =     3.757 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 556 Dp =     0.000 Dq =     5.659 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 557 Dp =     0.000 Dq =    -6.876 Dr =     0.000 |Dx| = 78262.819, Unstable >> ->  r  q  p
+ 558 Dp =     0.000 Dq =     1.496 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 559 Dp =     0.000 Dq =    -3.100 Dr =     0.000 |Dx| =     0.000,   Stable ->  r  p  q
+ 560 Dp =     0.000 Dq =     3.379 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 561 Dp =     0.000 Dq =    -2.261 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 562 Dp =     0.000 Dq =     1.088 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 563 Dp =     0.000 Dq =     4.163 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 564 Dp =     0.000 Dq =    -5.595 Dr =     0.000 |Dx| = 14053.586, Unstable >>  p ->  q  r  p
+ 565 Dp =     0.000 Dq =    -1.943 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 566 Dp =     0.000 Dq =    -2.162 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 567 Dp =     0.000 Dq =     0.462 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 568 Dp =     0.000 Dq =    -5.671 Dr =     0.000 |Dx| = 13669.625, Unstable >>  p  r ->  q  p  r
+ 569 Dp =     0.000 Dq =     3.676 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 570 Dp =     0.000 Dq =     8.193 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 571 Dp =     0.000 Dq =    -0.615 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 572 Dp =     0.000 Dq =     2.534 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 573 Dp =     0.000 Dq =   -10.131 Dr =     0.000 |Dx| = 159046.912, Unstable >>  q ->  r  p  q
+ 574 Dp =     0.000 Dq =    -4.367 Dr =     0.000 |Dx| =     0.000,   Stable ->  r  p  q
+ 575 Dp =     0.000 Dq =     3.017 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 521/ 575 conv, est  906/ 1000 for bire_fs_p0_q4_r0_n1000_M0_6_H15_0_P10_stat_ne_nD_C2_TBPI_1
+ 576 Dp =     0.000 Dq =     1.526 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 577 Dp =     0.000 Dq =     2.993 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 578 Dp =     0.000 Dq =     5.629 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 579 Dp =     0.000 Dq =     0.685 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 580 Dp =     0.000 Dq =    -0.680 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 581 Dp =     0.000 Dq =    -1.585 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 582 Dp =     0.000 Dq =     0.671 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 583 Dp =     0.000 Dq =    -8.197 Dr =     0.000 |Dx| =    13.000, Unstable >> ->  r  q  p
+ 584 Dp =     0.000 Dq =     6.114 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 585 Dp =     0.000 Dq =    -8.451 Dr =     0.000 |Dx| = 86112.658, Unstable >>  p ->  r  q  p
+ 586 Dp =     0.000 Dq =    -6.150 Dr =     0.000 |Dx| = 149631.687, Unstable >>  p ->  q  r  p
+ 587 Dp =     0.000 Dq =     0.421 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 588 Dp =     0.000 Dq =     3.873 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 589 Dp =     0.000 Dq =     2.303 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 590 Dp =     0.000 Dq =     6.073 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 591 Dp =     0.000 Dq =    -1.656 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 592 Dp =     0.000 Dq =    -2.494 Dr =     0.000 |Dx| =     0.000,   Stable ->  r  p  q
+ 593 Dp =     0.000 Dq =     2.271 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 594 Dp =     0.000 Dq =    -4.420 Dr =     0.000 |Dx| =     0.000,   Stable ->  r  p  q
+ 595 Dp =     0.000 Dq =     0.883 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 596 Dp =     0.000 Dq =     2.089 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 597 Dp =     0.000 Dq =     1.221 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 598 Dp =     0.000 Dq =    -8.089 Dr =     0.000 |Dx| = 45464.313, Unstable >> ->  q  r  p
+ 599 Dp =     0.000 Dq =    -0.910 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 600 Dp =     0.000 Dq =    -8.139 Dr =     0.000 |Dx| = 98151.622, Unstable >>  q  r ->  p  r  q
+ 541/ 600 conv, est  901/ 1000 for bire_fs_p0_q4_r0_n1000_M0_6_H15_0_P10_stat_ne_nD_C2_TBPI_1
+ 601 Dp =     0.000 Dq =     3.421 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 602 Dp =     0.000 Dq =    -1.752 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 603 Dp =     0.000 Dq =     3.957 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 604 Dp =     0.000 Dq =     5.246 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 605 Dp =     0.000 Dq =    -5.390 Dr =     0.000 |Dx| = 46303.456, Unstable >>  p  q  r ->  q  r  p
+ 606 Dp =     0.000 Dq =     3.630 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 607 Dp =     0.000 Dq =     1.573 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 608 Dp =     0.000 Dq =     5.951 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 609 Dp =     0.000 Dq =    -5.048 Dr =     0.000 |Dx| = 24449.501, Unstable >>  r ->  p  q  r
+ 610 Dp =     0.000 Dq =    -5.094 Dr =     0.000 |Dx| = 63261.611, Unstable >>  r ->  q  p  r
+ 611 Dp =     0.000 Dq =    -3.151 Dr =     0.000 |Dx| =     0.000,   Stable ->  r  p  q
+ 612 Dp =     0.000 Dq =    -7.364 Dr =     0.000 |Dx| = 98300.547, Unstable >> ->  r  q  p
+ 613 Dp =     0.000 Dq =     0.491 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 614 Dp =     0.000 Dq =    -2.898 Dr =     0.000 |Dx| =     0.000,   Stable ->  r  p  q
+ 615 Dp =     0.000 Dq =     0.759 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 616 Dp =     0.000 Dq =     1.334 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 617 Dp =     0.000 Dq =     3.315 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 618 Dp =     0.000 Dq =    -5.325 Dr =     0.000 |Dx| =    13.000, Unstable >> ->  r  q  p
+ 619 Dp =     0.000 Dq =     2.877 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 620 Dp =     0.000 Dq =     2.848 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 621 Dp =     0.000 Dq =    -4.019 Dr =     0.000 |Dx| =     0.000,   Stable ->  r  p  q
+ 622 Dp =     0.000 Dq =    -2.531 Dr =     0.000 |Dx| =     0.000,   Stable ->  r  p  q
+ 623 Dp =     0.000 Dq =    -5.875 Dr =     0.000 |Dx| =    13.000, Unstable >> ->  r  q  p
+ 624 Dp =     0.000 Dq =     4.798 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 625 Dp =     0.000 Dq =     5.262 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 560/ 625 conv, est  896/ 1000 for bire_fs_p0_q4_r0_n1000_M0_6_H15_0_P10_stat_ne_nD_C2_TBPI_1
+ 626 Dp =     0.000 Dq =    -3.476 Dr =     0.000 |Dx| =     0.000,   Stable ->  r  p  q
+ 627 Dp =     0.000 Dq =    -0.523 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 628 Dp =     0.000 Dq =     1.503 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 629 Dp =     0.000 Dq =     2.684 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 630 Dp =     0.000 Dq =    -0.397 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 631 Dp =     0.000 Dq =     6.471 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 632 Dp =     0.000 Dq =    -3.854 Dr =     0.000 |Dx| =     0.000,   Stable ->  r  p  q
+ 633 Dp =     0.000 Dq =     3.307 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 634 Dp =     0.000 Dq =     0.259 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 635 Dp =     0.000 Dq =     1.045 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 636 Dp =     0.000 Dq =    -3.053 Dr =     0.000 |Dx| =     0.000,   Stable ->  r  p  q
+ 637 Dp =     0.000 Dq =    -7.012 Dr =     0.000 |Dx| =    13.000, Unstable >> ->  r  q  p
+ 638 Dp =     0.000 Dq =    -2.187 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 639 Dp =     0.000 Dq =     1.766 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 640 Dp =     0.000 Dq =    -3.443 Dr =     0.000 |Dx| =     0.000,   Stable ->  r  p  q
+ 641 Dp =     0.000 Dq =    -6.866 Dr =     0.000 |Dx| =    13.000, Unstable >> ->  r  q  p
+ 642 Dp =     0.000 Dq =    -0.795 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 643 Dp =     0.000 Dq =    -0.212 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 644 Dp =     0.000 Dq =    -4.115 Dr =     0.000 |Dx| =     0.000,   Stable ->  r  p  q
+ 645 Dp =     0.000 Dq =    -0.586 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 646 Dp =     0.000 Dq =     1.520 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 647 Dp =     0.000 Dq =     0.707 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 648 Dp =     0.000 Dq =     3.530 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 649 Dp =     0.000 Dq =     4.593 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 650 Dp =     0.000 Dq =    -0.258 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 583/ 650 conv, est  896/ 1000 for bire_fs_p0_q4_r0_n1000_M0_6_H15_0_P10_stat_ne_nD_C2_TBPI_1
+ 651 Dp =     0.000 Dq =    -3.339 Dr =     0.000 |Dx| =     0.000,   Stable ->  r  p  q
+ 652 Dp =     0.000 Dq =    -7.068 Dr =     0.000 |Dx| =    13.000, Unstable >> ->  r  q  p
+ 653 Dp =     0.000 Dq =     3.863 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 654 Dp =     0.000 Dq =     1.247 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 655 Dp =     0.000 Dq =     3.886 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 656 Dp =     0.000 Dq =    -3.397 Dr =     0.000 |Dx| =     0.000,   Stable ->  r  p  q
+ 657 Dp =     0.000 Dq =     0.368 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 658 Dp =     0.000 Dq =    -3.365 Dr =     0.000 |Dx| =     0.000,   Stable ->  r  p  q
+ 659 Dp =     0.000 Dq =    -3.712 Dr =     0.000 |Dx| =     0.000,   Stable ->  r  p  q
+ 660 Dp =     0.000 Dq =    -5.934 Dr =     0.000 |Dx| =    13.000, Unstable >> ->  r  q  p
+ 661 Dp =     0.000 Dq =    -1.045 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 662 Dp =     0.000 Dq =     1.759 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 663 Dp =     0.000 Dq =     2.953 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 664 Dp =     0.000 Dq =     0.808 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 665 Dp =     0.000 Dq =    -1.265 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 666 Dp =     0.000 Dq =     7.876 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 667 Dp =     0.000 Dq =     6.008 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 668 Dp =     0.000 Dq =     3.915 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 669 Dp =     0.000 Dq =     0.455 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 670 Dp =     0.000 Dq =     4.921 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 671 Dp =     0.000 Dq =    -3.165 Dr =     0.000 |Dx| =     0.000,   Stable ->  r  p  q
+ 672 Dp =     0.000 Dq =    -5.212 Dr =     0.000 |Dx| =  5329.759, Unstable >>  p  r ->  q  p  r
+ 673 Dp =     0.000 Dq =     2.359 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 674 Dp =     0.000 Dq =     0.542 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 675 Dp =     0.000 Dq =     4.040 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 605/ 675 conv, est  896/ 1000 for bire_fs_p0_q4_r0_n1000_M0_6_H15_0_P10_stat_ne_nD_C2_TBPI_1
+ 676 Dp =     0.000 Dq =    -3.266 Dr =     0.000 |Dx| =     0.000,   Stable ->  r  p  q
+ 677 Dp =     0.000 Dq =     1.032 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 678 Dp =     0.000 Dq =    -4.281 Dr =     0.000 |Dx| =     0.000,   Stable ->  r  p  q
+ 679 Dp =     0.000 Dq =    -1.505 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 680 Dp =     0.000 Dq =     1.721 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 681 Dp =     0.000 Dq =    -0.401 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 682 Dp =     0.000 Dq =    -3.883 Dr =     0.000 |Dx| =     0.000,   Stable ->  r  p  q
+ 683 Dp =     0.000 Dq =    -5.916 Dr =     0.000 |Dx| = 28625.062, Unstable >>  p  r ->  q  p  r
+ 684 Dp =     0.000 Dq =    -1.674 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 685 Dp =     0.000 Dq =    -3.807 Dr =     0.000 |Dx| =     0.000,   Stable ->  r  p  q
+ 686 Dp =     0.000 Dq =    -5.879 Dr =     0.000 |Dx| = 77067.272, Unstable >> ->  q  r  p
+ 687 Dp =     0.000 Dq =     0.211 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 688 Dp =     0.000 Dq =    -3.762 Dr =     0.000 |Dx| =     0.000,   Stable ->  r  p  q
+ 689 Dp =     0.000 Dq =     4.940 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 690 Dp =     0.000 Dq =     8.132 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 691 Dp =     0.000 Dq =     4.327 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 692 Dp =     0.000 Dq =    11.008 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  q  r
+ 693 Dp =     0.000 Dq =    -4.980 Dr =     0.000 |Dx| =    13.000, Unstable >> ->  r  q  p
+ 694 Dp =     0.000 Dq =    -6.964 Dr =     0.000 |Dx| =    13.000, Unstable >> ->  r  q  p
+ 695 Dp =     0.000 Dq =    -0.691 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 696 Dp =     0.000 Dq =    -7.143 Dr =     0.000 |Dx| = 135214.631, Unstable >>  q ->  r  p  q
+ 697 Dp =     0.000 Dq =     0.454 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 698 Dp =     0.000 Dq =     3.398 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 699 Dp =     0.000 Dq =     2.995 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 700 Dp =     0.000 Dq =     3.770 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 625/ 700 conv, est  892/ 1000 for bire_fs_p0_q4_r0_n1000_M0_6_H15_0_P10_stat_ne_nD_C2_TBPI_1
+ 701 Dp =     0.000 Dq =    -0.938 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 702 Dp =     0.000 Dq =    -0.381 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 703 Dp =     0.000 Dq =     0.865 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 704 Dp =     0.000 Dq =    -0.341 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 705 Dp =     0.000 Dq =     3.594 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 706 Dp =     0.000 Dq =    -1.731 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 707 Dp =     0.000 Dq =    -0.286 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 708 Dp =     0.000 Dq =    -2.880 Dr =     0.000 |Dx| =     0.000,   Stable ->  r  p  q
+ 709 Dp =     0.000 Dq =     3.718 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 710 Dp =     0.000 Dq =     0.377 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 711 Dp =     0.000 Dq =     0.416 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 712 Dp =     0.000 Dq =    -2.056 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 713 Dp =     0.000 Dq =    -7.192 Dr =     0.000 |Dx| = 140802.524, Unstable >>  q ->  r  p  q
+ 714 Dp =     0.000 Dq =    -1.929 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 715 Dp =     0.000 Dq =    -8.762 Dr =     0.000 |Dx| = 40068.020, Unstable >>  p ->  r  q  p
+ 716 Dp =     0.000 Dq =    -0.397 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 717 Dp =     0.000 Dq =    -5.047 Dr =     0.000 |Dx| = 96580.404, Unstable >>  q ->  r  p  q
+ 718 Dp =     0.000 Dq =     4.943 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 719 Dp =     0.000 Dq =    -2.684 Dr =     0.000 |Dx| =     0.000,   Stable ->  r  p  q
+ 720 Dp =     0.000 Dq =    -0.407 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 721 Dp =     0.000 Dq =    -2.106 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 722 Dp =     0.000 Dq =    -4.692 Dr =     0.000 |Dx| =     0.000,   Stable ->  r  p  q
+ 723 Dp =     0.000 Dq =    -6.286 Dr =     0.000 |Dx| =  4023.186, Unstable >>  p  q ->  r  p  q
+ 724 Dp =     0.000 Dq =   -10.175 Dr =     0.000 |Dx| = 118752.533, Unstable >>  p  r ->  q  p  r
+ 725 Dp =     0.000 Dq =    -2.746 Dr =     0.000 |Dx| =     0.000,   Stable ->  r  p  q
+ 645/ 725 conv, est  889/ 1000 for bire_fs_p0_q4_r0_n1000_M0_6_H15_0_P10_stat_ne_nD_C2_TBPI_1
+ 726 Dp =     0.000 Dq =    -8.260 Dr =     0.000 |Dx| =    13.000, Unstable >> ->  r  q  p
+ 727 Dp =     0.000 Dq =     4.305 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 728 Dp =     0.000 Dq =    -5.321 Dr =     0.000 |Dx| = 89313.960, Unstable >>  q  r ->  p  q  r
+ 729 Dp =     0.000 Dq =    -2.586 Dr =     0.000 |Dx| =     0.000,   Stable ->  r  p  q
+ 730 Dp =     0.000 Dq =    -0.288 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 731 Dp =     0.000 Dq =    -0.790 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 732 Dp =     0.000 Dq =     4.468 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 733 Dp =     0.000 Dq =    -0.449 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 734 Dp =     0.000 Dq =    -2.120 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 735 Dp =     0.000 Dq =    -0.649 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 736 Dp =     0.000 Dq =     5.942 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 737 Dp =     0.000 Dq =     2.931 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 738 Dp =     0.000 Dq =    -7.960 Dr =     0.000 |Dx| = 268820.461, Unstable >>  p  q ->  r  q  p
+ 739 Dp =     0.000 Dq =    -0.940 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 740 Dp =     0.000 Dq =    -3.790 Dr =     0.000 |Dx| =     0.000,   Stable ->  r  p  q
+ 741 Dp =     0.000 Dq =    -0.084 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 742 Dp =     0.000 Dq =     2.347 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 743 Dp =     0.000 Dq =    -0.119 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 744 Dp =     0.000 Dq =     2.251 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 745 Dp =     0.000 Dq =     6.554 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 746 Dp =     0.000 Dq =    -7.088 Dr =     0.000 |Dx| =    13.000, Unstable >> ->  r  q  p
+ 747 Dp =     0.000 Dq =    -0.313 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 748 Dp =     0.000 Dq =     0.085 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 749 Dp =     0.000 Dq =     1.655 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 750 Dp =     0.000 Dq =     0.254 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 666/ 750 conv, est  888/ 1000 for bire_fs_p0_q4_r0_n1000_M0_6_H15_0_P10_stat_ne_nD_C2_TBPI_1
+ 751 Dp =     0.000 Dq =     3.545 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 752 Dp =     0.000 Dq =    -0.198 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 753 Dp =     0.000 Dq =     1.619 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 754 Dp =     0.000 Dq =    -6.287 Dr =     0.000 |Dx| =    13.000, Unstable >> ->  r  q  p
+ 755 Dp =     0.000 Dq =     0.665 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 756 Dp =     0.000 Dq =    -4.920 Dr =     0.000 |Dx| = 124772.259, Unstable >>  q ->  r  p  q
+ 757 Dp =     0.000 Dq =     2.198 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 758 Dp =     0.000 Dq =     6.913 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 759 Dp =     0.000 Dq =    -0.316 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 760 Dp =     0.000 Dq =     1.643 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 761 Dp =     0.000 Dq =     2.889 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 762 Dp =     0.000 Dq =     5.424 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 763 Dp =     0.000 Dq =     3.075 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 764 Dp =     0.000 Dq =     4.872 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 765 Dp =     0.000 Dq =    -2.127 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 766 Dp =     0.000 Dq =    -0.306 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 767 Dp =     0.000 Dq =    -5.804 Dr =     0.000 |Dx| = 71041.989, Unstable >>  r ->  q  p  r
+ 768 Dp =     0.000 Dq =     8.799 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 769 Dp =     0.000 Dq =    -4.690 Dr =     0.000 |Dx| =     0.000,   Stable ->  r  p  q
+ 770 Dp =     0.000 Dq =     3.661 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 771 Dp =     0.000 Dq =     0.665 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 772 Dp =     0.000 Dq =     0.500 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 773 Dp =     0.000 Dq =    -4.636 Dr =     0.000 |Dx| =     0.000,   Stable ->  r  p  q
+ 774 Dp =     0.000 Dq =    -0.124 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 775 Dp =     0.000 Dq =     0.373 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 688/ 775 conv, est  887/ 1000 for bire_fs_p0_q4_r0_n1000_M0_6_H15_0_P10_stat_ne_nD_C2_TBPI_1
+ 776 Dp =     0.000 Dq =     1.669 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 777 Dp =     0.000 Dq =    -1.303 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 778 Dp =     0.000 Dq =     1.000 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 779 Dp =     0.000 Dq =    -3.775 Dr =     0.000 |Dx| =     0.000,   Stable ->  r  p  q
+ 780 Dp =     0.000 Dq =     4.853 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 781 Dp =     0.000 Dq =    -2.539 Dr =     0.000 |Dx| =     0.000,   Stable ->  r  p  q
+ 782 Dp =     0.000 Dq =    14.396 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  q  r
+ 783 Dp =     0.000 Dq =    -1.182 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 784 Dp =     0.000 Dq =    -2.500 Dr =     0.000 |Dx| =     0.000,   Stable ->  r  p  q
+ 785 Dp =     0.000 Dq =     0.817 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 786 Dp =     0.000 Dq =    -0.433 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 787 Dp =     0.000 Dq =     4.439 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 788 Dp =     0.000 Dq =     4.976 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 789 Dp =     0.000 Dq =    -2.343 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 790 Dp =     0.000 Dq =    -2.512 Dr =     0.000 |Dx| =     0.000,   Stable ->  r  p  q
+ 791 Dp =     0.000 Dq =    -2.817 Dr =     0.000 |Dx| =     0.000,   Stable ->  r  p  q
+ 792 Dp =     0.000 Dq =     2.057 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 793 Dp =     0.000 Dq =     4.089 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 794 Dp =     0.000 Dq =     2.838 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 795 Dp =     0.000 Dq =    -0.361 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 796 Dp =     0.000 Dq =     0.363 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 797 Dp =     0.000 Dq =     2.862 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 798 Dp =     0.000 Dq =     5.188 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 799 Dp =     0.000 Dq =     0.093 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 800 Dp =     0.000 Dq =     4.921 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 713/ 800 conv, est  891/ 1000 for bire_fs_p0_q4_r0_n1000_M0_6_H15_0_P10_stat_ne_nD_C2_TBPI_1
+ 801 Dp =     0.000 Dq =    -1.085 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 802 Dp =     0.000 Dq =     1.037 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 803 Dp =     0.000 Dq =     4.743 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 804 Dp =     0.000 Dq =    -3.176 Dr =     0.000 |Dx| =     0.000,   Stable ->  r  p  q
+ 805 Dp =     0.000 Dq =    -6.603 Dr =     0.000 |Dx| = 76381.257, Unstable >>  q  r ->  p  r  q
+ 806 Dp =     0.000 Dq =    -4.169 Dr =     0.000 |Dx| =     0.000,   Stable ->  r  p  q
+ 807 Dp =     0.000 Dq =    -0.340 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 808 Dp =     0.000 Dq =    -3.877 Dr =     0.000 |Dx| =     0.000,   Stable ->  r  p  q
+ 809 Dp =     0.000 Dq =    -0.278 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 810 Dp =     0.000 Dq =     5.661 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 811 Dp =     0.000 Dq =    -1.197 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 812 Dp =     0.000 Dq =     5.481 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 813 Dp =     0.000 Dq =     3.657 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 814 Dp =     0.000 Dq =    -4.009 Dr =     0.000 |Dx| =     0.000,   Stable ->  r  p  q
+ 815 Dp =     0.000 Dq =     4.052 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 816 Dp =     0.000 Dq =     3.643 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 817 Dp =     0.000 Dq =     4.102 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 818 Dp =     0.000 Dq =     1.044 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 819 Dp =     0.000 Dq =     1.292 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 820 Dp =     0.000 Dq =    -1.995 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 821 Dp =     0.000 Dq =    -3.267 Dr =     0.000 |Dx| =     0.000,   Stable ->  r  p  q
+ 822 Dp =     0.000 Dq =     0.015 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 823 Dp =     0.000 Dq =     3.056 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 824 Dp =     0.000 Dq =    -2.142 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 825 Dp =     0.000 Dq =     6.727 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 737/ 825 conv, est  893/ 1000 for bire_fs_p0_q4_r0_n1000_M0_6_H15_0_P10_stat_ne_nD_C2_TBPI_1
+ 826 Dp =     0.000 Dq =    -1.493 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 827 Dp =     0.000 Dq =     1.580 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 828 Dp =     0.000 Dq =    -5.040 Dr =     0.000 |Dx| = 63364.414, Unstable >>  r ->  q  p  r
+ 829 Dp =     0.000 Dq =     6.489 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 830 Dp =     0.000 Dq =     3.221 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 831 Dp =     0.000 Dq =     5.506 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 832 Dp =     0.000 Dq =    -4.429 Dr =     0.000 |Dx| =     0.000,   Stable ->  r  p  q
+ 833 Dp =     0.000 Dq =     6.122 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 834 Dp =     0.000 Dq =     2.290 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 835 Dp =     0.000 Dq =    -2.028 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 836 Dp =     0.000 Dq =    -1.155 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 837 Dp =     0.000 Dq =    -5.527 Dr =     0.000 |Dx| = 77144.842, Unstable >>  q  r ->  p  r  q
+ 838 Dp =     0.000 Dq =    -0.260 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 839 Dp =     0.000 Dq =     4.016 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 840 Dp =     0.000 Dq =    -2.950 Dr =     0.000 |Dx| =     0.000,   Stable ->  r  p  q
+ 841 Dp =     0.000 Dq =     1.981 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 842 Dp =     0.000 Dq =    -4.329 Dr =     0.000 |Dx| =     0.000,   Stable ->  r  p  q
+ 843 Dp =     0.000 Dq =   -10.146 Dr =     0.000 |Dx| = 20791.291, Unstable >>  p  q ->  r  q  p
+ 844 Dp =     0.000 Dq =    -0.282 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 845 Dp =     0.000 Dq =     6.317 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 846 Dp =     0.000 Dq =     5.206 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 847 Dp =     0.000 Dq =    -2.260 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 848 Dp =     0.000 Dq =     5.428 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 849 Dp =     0.000 Dq =     4.534 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 850 Dp =     0.000 Dq =     1.867 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 759/ 850 conv, est  892/ 1000 for bire_fs_p0_q4_r0_n1000_M0_6_H15_0_P10_stat_ne_nD_C2_TBPI_1
+ 851 Dp =     0.000 Dq =    -1.058 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 852 Dp =     0.000 Dq =     4.266 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 853 Dp =     0.000 Dq =    -0.047 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 854 Dp =     0.000 Dq =    -1.266 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 855 Dp =     0.000 Dq =     4.481 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 856 Dp =     0.000 Dq =    -2.477 Dr =     0.000 |Dx| =     0.000,   Stable ->  r  p  q
+ 857 Dp =     0.000 Dq =     2.978 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 858 Dp =     0.000 Dq =     6.181 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 859 Dp =     0.000 Dq =    -2.476 Dr =     0.000 |Dx| =     0.000,   Stable ->  r  p  q
+ 860 Dp =     0.000 Dq =     0.929 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 861 Dp =     0.000 Dq =     2.352 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 862 Dp =     0.000 Dq =    -6.807 Dr =     0.000 |Dx| =    13.000, Unstable >> ->  r  q  p
+ 863 Dp =     0.000 Dq =    -1.783 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 864 Dp =     0.000 Dq =    -2.029 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 865 Dp =     0.000 Dq =    -1.991 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 866 Dp =     0.000 Dq =    -3.327 Dr =     0.000 |Dx| =     0.000,   Stable ->  r  p  q
+ 867 Dp =     0.000 Dq =     5.264 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 868 Dp =     0.000 Dq =    -3.495 Dr =     0.000 |Dx| =     0.000,   Stable ->  r  p  q
+ 869 Dp =     0.000 Dq =    -0.319 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 870 Dp =     0.000 Dq =     2.467 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 871 Dp =     0.000 Dq =     6.320 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 872 Dp =     0.000 Dq =    -6.305 Dr =     0.000 |Dx| = 163607.027, Unstable >>  p  q  r ->  p  q  r
+ 873 Dp =     0.000 Dq =    -5.135 Dr =     0.000 |Dx| =    13.000, Unstable >> ->  r  q  p
+ 874 Dp =     0.000 Dq =    -4.158 Dr =     0.000 |Dx| =     0.000,   Stable ->  r  p  q
+ 875 Dp =     0.000 Dq =    -1.164 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 781/ 875 conv, est  892/ 1000 for bire_fs_p0_q4_r0_n1000_M0_6_H15_0_P10_stat_ne_nD_C2_TBPI_1
+ 876 Dp =     0.000 Dq =     3.778 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 877 Dp =     0.000 Dq =    -0.491 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 878 Dp =     0.000 Dq =     0.644 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 879 Dp =     0.000 Dq =     6.168 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 880 Dp =     0.000 Dq =    -1.222 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 881 Dp =     0.000 Dq =     0.745 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 882 Dp =     0.000 Dq =     7.963 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 883 Dp =     0.000 Dq =     3.205 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 884 Dp =     0.000 Dq =    -2.346 Dr =     0.000 |Dx| =     0.000,   Stable ->  r  p  q
+ 885 Dp =     0.000 Dq =    -2.498 Dr =     0.000 |Dx| =     0.000,   Stable ->  r  p  q
+ 886 Dp =     0.000 Dq =     4.557 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 887 Dp =     0.000 Dq =    -4.456 Dr =     0.000 |Dx| =     0.000,   Stable ->  r  p  q
+ 888 Dp =     0.000 Dq =    -3.427 Dr =     0.000 |Dx| =     0.000,   Stable ->  r  p  q
+ 889 Dp =     0.000 Dq =     3.319 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 890 Dp =     0.000 Dq =     5.460 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 891 Dp =     0.000 Dq =     6.803 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 892 Dp =     0.000 Dq =    -3.787 Dr =     0.000 |Dx| =     0.000,   Stable ->  r  p  q
+ 893 Dp =     0.000 Dq =     2.196 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 894 Dp =     0.000 Dq =   -13.141 Dr =     0.000 |Dx| = 43581.907, Unstable >>  p  q ->  r  q  p
+ 895 Dp =     0.000 Dq =    -3.243 Dr =     0.000 |Dx| =     0.000,   Stable ->  r  p  q
+ 896 Dp =     0.000 Dq =    11.887 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  q  r
+ 897 Dp =     0.000 Dq =     6.418 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 898 Dp =     0.000 Dq =     3.045 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 899 Dp =     0.000 Dq =    -3.497 Dr =     0.000 |Dx| =     0.000,   Stable ->  r  p  q
+ 900 Dp =     0.000 Dq =    -4.803 Dr =     0.000 |Dx| = 129419.508, Unstable >> ->  r  q  p
+ 804/ 900 conv, est  893/ 1000 for bire_fs_p0_q4_r0_n1000_M0_6_H15_0_P10_stat_ne_nD_C2_TBPI_1
+ 901 Dp =     0.000 Dq =     4.653 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 902 Dp =     0.000 Dq =    -0.395 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 903 Dp =     0.000 Dq =    -3.004 Dr =     0.000 |Dx| =     0.000,   Stable ->  r  p  q
+ 904 Dp =     0.000 Dq =     3.158 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 905 Dp =     0.000 Dq =     2.989 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 906 Dp =     0.000 Dq =    -2.540 Dr =     0.000 |Dx| =     0.000,   Stable ->  r  p  q
+ 907 Dp =     0.000 Dq =    -1.494 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 908 Dp =     0.000 Dq =     9.119 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 909 Dp =     0.000 Dq =    -3.652 Dr =     0.000 |Dx| =     0.000,   Stable ->  r  p  q
+ 910 Dp =     0.000 Dq =     4.333 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 911 Dp =     0.000 Dq =    -2.535 Dr =     0.000 |Dx| =     0.000,   Stable ->  r  p  q
+ 912 Dp =     0.000 Dq =    -3.149 Dr =     0.000 |Dx| =     0.000,   Stable ->  r  p  q
+ 913 Dp =     0.000 Dq =    -3.902 Dr =     0.000 |Dx| =     0.000,   Stable ->  r  p  q
+ 914 Dp =     0.000 Dq =    -0.206 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 915 Dp =     0.000 Dq =     0.194 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 916 Dp =     0.000 Dq =     3.236 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 917 Dp =     0.000 Dq =    -2.692 Dr =     0.000 |Dx| =     0.000,   Stable ->  r  p  q
+ 918 Dp =     0.000 Dq =     1.913 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 919 Dp =     0.000 Dq =    -1.971 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 920 Dp =     0.000 Dq =    -2.654 Dr =     0.000 |Dx| =     0.000,   Stable ->  r  p  q
+ 921 Dp =     0.000 Dq =     2.807 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 922 Dp =     0.000 Dq =     2.069 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 923 Dp =     0.000 Dq =    -5.813 Dr =     0.000 |Dx| = 39115.464, Unstable >> ->  q  r  p
+ 924 Dp =     0.000 Dq =     0.866 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 925 Dp =     0.000 Dq =    -7.071 Dr =     0.000 |Dx| =    13.000, Unstable >> ->  r  q  p
+ 827/ 925 conv, est  894/ 1000 for bire_fs_p0_q4_r0_n1000_M0_6_H15_0_P10_stat_ne_nD_C2_TBPI_1
+ 926 Dp =     0.000 Dq =    -4.044 Dr =     0.000 |Dx| =     0.000,   Stable ->  r  p  q
+ 927 Dp =     0.000 Dq =     6.683 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 928 Dp =     0.000 Dq =     5.463 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 929 Dp =     0.000 Dq =    -0.583 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 930 Dp =     0.000 Dq =     2.578 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 931 Dp =     0.000 Dq =     5.231 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 932 Dp =     0.000 Dq =     7.056 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 933 Dp =     0.000 Dq =     7.009 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 934 Dp =     0.000 Dq =    -2.935 Dr =     0.000 |Dx| =     0.000,   Stable ->  r  p  q
+ 935 Dp =     0.000 Dq =    -0.081 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 936 Dp =     0.000 Dq =     0.537 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 937 Dp =     0.000 Dq =    -9.601 Dr =     0.000 |Dx| =    13.000, Unstable >> ->  r  q  p
+ 938 Dp =     0.000 Dq =    -2.939 Dr =     0.000 |Dx| =     0.000,   Stable ->  r  p  q
+ 939 Dp =     0.000 Dq =     1.642 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 940 Dp =     0.000 Dq =    -0.821 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 941 Dp =     0.000 Dq =    -2.378 Dr =     0.000 |Dx| =     0.000,   Stable ->  r  p  q
+ 942 Dp =     0.000 Dq =    -4.664 Dr =     0.000 |Dx| =     0.000,   Stable ->  r  p  q
+ 943 Dp =     0.000 Dq =    -2.290 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 944 Dp =     0.000 Dq =    -0.090 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 945 Dp =     0.000 Dq =    -1.256 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 946 Dp =     0.000 Dq =     4.559 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 947 Dp =     0.000 Dq =     3.262 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 948 Dp =     0.000 Dq =    -5.149 Dr =     0.000 |Dx| =    13.000, Unstable >> ->  r  q  p
+ 949 Dp =     0.000 Dq =     3.742 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 950 Dp =     0.000 Dq =     0.116 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 850/ 950 conv, est  894/ 1000 for bire_fs_p0_q4_r0_n1000_M0_6_H15_0_P10_stat_ne_nD_C2_TBPI_1
+ 951 Dp =     0.000 Dq =     3.051 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 952 Dp =     0.000 Dq =    -2.630 Dr =     0.000 |Dx| =     0.000,   Stable ->  r  p  q
+ 953 Dp =     0.000 Dq =     3.587 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 954 Dp =     0.000 Dq =    -2.855 Dr =     0.000 |Dx| =     0.000,   Stable ->  r  p  q
+ 955 Dp =     0.000 Dq =     4.078 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 956 Dp =     0.000 Dq =    -0.119 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 957 Dp =     0.000 Dq =    -1.034 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 958 Dp =     0.000 Dq =    -5.272 Dr =     0.000 |Dx| = 84223.941, Unstable >> ->  q  r  p
+ 959 Dp =     0.000 Dq =    -6.443 Dr =     0.000 |Dx| =    13.000, Unstable >> ->  r  q  p
+ 960 Dp =     0.000 Dq =     3.455 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 961 Dp =     0.000 Dq =    -4.476 Dr =     0.000 |Dx| =     0.000,   Stable ->  r  p  q
+ 962 Dp =     0.000 Dq =    -4.696 Dr =     0.000 |Dx| =     0.000,   Stable ->  r  p  q
+ 963 Dp =     0.000 Dq =     1.584 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 964 Dp =     0.000 Dq =     0.079 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 965 Dp =     0.000 Dq =     2.321 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 966 Dp =     0.000 Dq =    -5.245 Dr =     0.000 |Dx| =    13.000, Unstable >> ->  r  q  p
+ 967 Dp =     0.000 Dq =    -8.489 Dr =     0.000 |Dx| = 362740.724, Unstable >>  p  q ->  r  p  q
+ 968 Dp =     0.000 Dq =    -3.631 Dr =     0.000 |Dx| =     0.000,   Stable ->  r  p  q
+ 969 Dp =     0.000 Dq =     3.979 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 970 Dp =     0.000 Dq =    -0.143 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 971 Dp =     0.000 Dq =     1.738 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 972 Dp =     0.000 Dq =     2.071 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 973 Dp =     0.000 Dq =     0.659 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 974 Dp =     0.000 Dq =     0.667 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 975 Dp =     0.000 Dq =    -0.834 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 871/ 975 conv, est  893/ 1000 for bire_fs_p0_q4_r0_n1000_M0_6_H15_0_P10_stat_ne_nD_C2_TBPI_1
+ 976 Dp =     0.000 Dq =     0.866 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 977 Dp =     0.000 Dq =     1.289 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 978 Dp =     0.000 Dq =    -2.602 Dr =     0.000 |Dx| =     0.000,   Stable ->  r  p  q
+ 979 Dp =     0.000 Dq =     2.388 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 980 Dp =     0.000 Dq =    -0.007 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 981 Dp =     0.000 Dq =    -0.335 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 982 Dp =     0.000 Dq =    -0.629 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 983 Dp =     0.000 Dq =     3.514 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 984 Dp =     0.000 Dq =    -0.578 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 985 Dp =     0.000 Dq =     4.756 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 986 Dp =     0.000 Dq =    -4.002 Dr =     0.000 |Dx| =     0.000,   Stable ->  r  p  q
+ 987 Dp =     0.000 Dq =     2.298 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 988 Dp =     0.000 Dq =    -6.157 Dr =     0.000 |Dx| = 77285.254, Unstable >>  q  r ->  p  r  q
+ 989 Dp =     0.000 Dq =     0.210 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 990 Dp =     0.000 Dq =    -2.005 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 991 Dp =     0.000 Dq =    -1.825 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 992 Dp =     0.000 Dq =    -4.136 Dr =     0.000 |Dx| =     0.000,   Stable ->  r  p  q
+ 993 Dp =     0.000 Dq =    -0.104 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 994 Dp =     0.000 Dq =     2.164 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 995 Dp =     0.000 Dq =    -7.322 Dr =     0.000 |Dx| = 83628.380, Unstable >>  p  q ->  r  p  q
+ 996 Dp =     0.000 Dq =    -0.521 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 997 Dp =     0.000 Dq =     0.722 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 998 Dp =     0.000 Dq =     2.416 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+ 999 Dp =     0.000 Dq =     1.409 Dr =     0.000 |Dx| =     0.000,   Stable ->  p  r  q
+1000 Dp =     0.000 Dq =    -4.313 Dr =     0.000 |Dx| =     0.000,   Stable ->  r  p  q
+ 894/ 1000 conv, est  894/ 1000 for bire_fs_p0_q4_r0_n1000_M0_6_H15_0_P10_stat_ne_nD_C2_TBPI_1
+ 894/ 1000 cases stable
+|Dx| threshold is        1.0
+ 440 cases tc early was not tc true
+

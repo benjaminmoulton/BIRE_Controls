@@ -4,6 +4,7 @@ import json
 from matplotlib import pyplot as plt
 from matplotlib.lines import Line2D
 from matplotlib.legend_handler import HandlerTuple
+from matplotlib.markers import MarkerStyle
 from controller_simulation import Aircraft#,monte_carlo_perturbations,run_single_simulation
 from os import mkdir, rmdir, walk, remove, listdir
 from linearization import linearization
@@ -90,6 +91,9 @@ if __name__ == "__main__":
     ind = [0,1,2,3,4,5,8,9,10]
     pdBm = "+" # "$/$" # 
     ndBm = "_" # "$-$" # "x" # 
+    msl = MarkerStyle(marker="_")
+    msl._transform = msl.get_transform().rotate_deg(45.0)
+    ndBA = msl
     odBm = "o"
     odrm = "d"
     xcg_shade = lambda xcg : xcg*0.5 + (abs(xcg)>0.0)*0.25
@@ -775,10 +779,15 @@ if __name__ == "__main__":
                         # cg vs beta / phi
                         if cname == "bire" and xcg in cg_v_bb_xcgs_bire:
                             temp_c = kdict["color"]*1
+                            temp_m = kdict["marker"]*1
                             kdict["color"] = str(xcg_shade_inverter(0.0))
+                            kdict["color"] = str(xcg_shade_inverter(0.0))
+                            if j != trims[craft]["min_ind"][i] and sol["u_trim"][2] < 0.0:
+                                kdict["marker"] = ndBA
                             axs_bb.plot(xcg,np.rad2deg(sol["angles"][1]),**kdict)
                             axs_bp.plot(xcg,np.rad2deg(sol["angles"][2]),**kdict)
                             kdict["color"] = temp_c
+                            kdict["marker"] = temp_m
                         # #
                         if cname == "bire" and xcg not in bire_plotting_xcgs:
                             continue
@@ -1149,7 +1158,9 @@ if __name__ == "__main__":
             fr3dict = dict(handles=sp2,labels=lbls2,#loc="lower center", #(1.0,0.0),
                 borderpad=0.1,handletextpad=0.0, 
                 handler_map={tuple: HandlerTuple(ndivide=None)})
-            cmpdict = dict(handles=sp[1:4],labels=lbls[1:4],#loc="lower center", #(1.0,0.0),
+            spcmp = sp*1
+            spcmp[3] = Line2D([0], [0],color=legcol,marker=ndBA,**rest_dict)
+            cmpdict = dict(handles=spcmp[1:4],labels=lbls[1:4],#loc="lower center", #(1.0,0.0),
                 borderpad=0.1,handletextpad=0.0, 
                 handler_map={tuple: HandlerTuple(ndivide=None)})
             axs_lg.legend(**LEGdict)

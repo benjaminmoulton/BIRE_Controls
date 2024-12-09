@@ -7,10 +7,10 @@ Created on Tue Dec 21 15:15:06 2021
 """
 
 from math import sin,cos,pi,exp
-from numpy import sign, deg2rad, zeros, array
+from numpy import sign, deg2rad, zeros, array,  cos, sin, tan, arctan2 as atan2
 import json
 from thrust import Propulsion
-from math import cos, sin, tan, atan2
+# from math import cos, sin, tan, atan2
 
 class BIREAero:
     def __init__(self, inp_dir='./', **kwargs):
@@ -450,6 +450,83 @@ class BIREAero:
         self.dCnLda = self._Cn_Lda(d_B)
         self.dCnde = self._Cn_de(d_B)
         self.deriv = False
+
+    def _make_double_derivative_model(self):
+
+        # CL
+        self.CL_0_A = -self.CL_0_A*self.CL_0_w**2.0; self.CL_0_z = self.CL_0_d = 0.0
+        self.CL_a_A = -self.CL_a_A*self.CL_a_w**2.0; self.CL_a_z = self.CL_a_d = 0.0
+        self.CL_b_A = -self.CL_b_A*self.CL_b_w**2.0; self.CL_b_z = self.CL_b_d = 0.0
+        self.CL_p_A = -self.CL_p_A*self.CL_p_w**2.0; self.CL_p_z = self.CL_p_d = 0.0
+        self.CL_q_A = -self.CL_q_A*self.CL_q_w**2.0; self.CL_q_z = self.CL_q_d = 0.0
+        self.CL_r_A = -self.CL_r_A*self.CL_r_w**2.0; self.CL_r_z = self.CL_r_d = 0.0
+        self.CL_da_A = -self.CL_da_A*self.CL_da_w**2.0; self.CL_da_z = self.CL_da_d = 0.0
+        self.CL_de_A = -self.CL_de_A*self.CL_de_w**2.0; self.CL_de_z = self.CL_de_d = 0.0
+
+        # CS
+        self.CS_0_A = -self.CS_0_A*self.CS_0_w**2.0; self.CS_0_z = self.CS_0_d = 0.0
+        self.CS_a_A = -self.CS_a_A*self.CS_a_w**2.0; self.CS_a_z = self.CS_a_d = 0.0
+        self.CS_b_A = -self.CS_b_A*self.CS_b_w**2.0; self.CS_b_z = self.CS_b_d = 0.0
+        self.CS_p_A = -self.CS_p_A*self.CS_p_w**2.0; self.CS_p_z = self.CS_p_d = 0.0
+        self.CS_Lp_A = -self.CS_Lp_A*self.CS_Lp_w**2.0; self.CS_Lp_z = self.CS_Lp_d = 0.0
+        self.CS_q_A = -self.CS_q_A*self.CS_q_w**2.0; self.CS_q_z = self.CS_q_d = 0.0
+        self.CS_r_A = -self.CS_r_A*self.CS_r_w**2.0; self.CS_r_z = self.CS_r_d = 0.0
+        self.CS_da_A = -self.CS_da_A*self.CS_da_w**2.0; self.CS_da_z = self.CS_da_d = 0.0
+        self.CS_de_A = -self.CS_de_A*self.CS_de_w**2.0; self.CS_de_z = self.CS_de_d = 0.0
+
+        # CD
+        self.CD_0_A = -self.CD_0_A*self.CD_0_w**2.0; self.CD_0_z = self.CD_0_d = 0.0
+        self.CD_L_A = -self.CD_L_A*self.CD_L_w**2.0; self.CD_L_z = self.CD_L_d = 0.0
+        self.CD_L2_A = -self.CD_L2_A*self.CD_L2_w**2.0; self.CD_L2_z = self.CD_L2_d = 0.0
+        self.CD_S_A = -self.CD_S_A*self.CD_S_w**2.0; self.CD_S_z = self.CD_S_d = 0.0
+        self.CD_S2_A = -self.CD_S2_A*self.CD_S2_w**2.0; self.CD_S2_z = self.CD_S2_d = 0.0
+        self.CD_p_A = -self.CD_p_A*self.CD_p_w**2.0; self.CD_p_z = self.CD_p_d = 0.0
+        self.CD_Sp_A = -self.CD_Sp_A*self.CD_Sp_w**2.0; self.CD_Sp_z = self.CD_Sp_d = 0.0
+        self.CD_q_A = -self.CD_q_A*self.CD_q_w**2.0; self.CD_q_z = self.CD_q_d = 0.0
+        self.CD_Lq_A = -self.CD_Lq_A*self.CD_Lq_w**2.0; self.CD_Lq_z = self.CD_Lq_d = 0.0
+        self.CD_L2q_A = -self.CD_L2q_A*self.CD_L2q_w**2.0; self.CD_L2q_z = self.CD_L2q_d = 0.0
+        self.CD_r_A = -self.CD_r_A*self.CD_r_w**2.0; self.CD_r_z = self.CD_r_d = 0.0
+        self.CD_Sr_A = -self.CD_Sr_A*self.CD_Sr_w**2.0; self.CD_Sr_z = self.CD_Sr_d = 0.0
+        self.CD_da_A = -self.CD_da_A*self.CD_da_w**2.0; self.CD_da_z = self.CD_da_d = 0.0
+        self.CD_Sda_A = -self.CD_Sda_A*self.CD_Sda_w**2.0; self.CD_Sda_z = self.CD_Sda_d = 0.0
+        self.CD_de_A = -self.CD_de_A*self.CD_de_w**2.0; self.CD_de_z = self.CD_de_d = 0.0
+        self.CD_Lde_A = -self.CD_Lde_A*self.CD_Lde_w**2.0; self.CD_Lde_z = self.CD_Lde_d = 0.0
+        self.CD_de2_A = -self.CD_de2_A*self.CD_de2_w**2.0; self.CD_de2_z = self.CD_de2_d = 0.0
+
+        # Cl
+        self.Cl_0_A = -self.Cl_0_A*self.Cl_0_w**2.0; self.Cl_0_z = self.Cl_0_d = 0.0
+        self.Cl_a_A = -self.Cl_a_A*self.Cl_a_w**2.0; self.Cl_a_z = self.Cl_a_d = 0.0
+        self.Cl_b_A = -self.Cl_b_A*self.Cl_b_w**2.0; self.Cl_b_z = self.Cl_b_d = 0.0
+        self.Cl_p_A = -self.Cl_p_A*self.Cl_p_w**2.0; self.Cl_p_z = self.Cl_p_d = 0.0
+        self.Cl_q_A = -self.Cl_q_A*self.Cl_q_w**2.0; self.Cl_q_z = self.Cl_q_d = 0.0
+        self.Cl_r_A = -self.Cl_r_A*self.Cl_r_w**2.0; self.Cl_r_z = self.Cl_r_d = 0.0
+        self.Cl_Lr_A = -self.Cl_Lr_A*self.Cl_Lr_w**2.0; self.Cl_Lr_z = self.Cl_Lr_d = 0.0
+        self.Cl_da_A = -self.Cl_da_A*self.Cl_da_w**2.0; self.Cl_da_z = self.Cl_da_d = 0.0
+        self.Cl_de_A = -self.Cl_de_A*self.Cl_de_w**2.0; self.Cl_de_z = self.Cl_de_d = 0.0
+
+        # Cm
+        self.Cm_0_A = -self.Cm_0_A*self.Cm_0_w**2.0; self.Cm_0_z = self.Cm_0_d = 0.0
+        self.Cm_a_A = -self.Cm_a_A*self.Cm_a_w**2.0; self.Cm_a_z = self.Cm_a_d = 0.0
+        self.Cm_b_A = -self.Cm_b_A*self.Cm_b_w**2.0; self.Cm_b_z = self.Cm_b_d = 0.0
+        self.Cm_p_A = -self.Cm_p_A*self.Cm_p_w**2.0; self.Cm_p_z = self.Cm_p_d = 0.0
+        self.Cm_q_A = -self.Cm_q_A*self.Cm_q_w**2.0; self.Cm_q_z = self.Cm_q_d = 0.0
+        self.Cm_r_A = -self.Cm_r_A*self.Cm_r_w**2.0; self.Cm_r_z = self.Cm_r_d = 0.0
+        self.Cm_da_A = -self.Cm_da_A*self.Cm_da_w**2.0; self.Cm_da_z = self.Cm_da_d = 0.0
+        self.Cm_de_A = -self.Cm_de_A*self.Cm_de_w**2.0; self.Cm_de_z = self.Cm_de_d = 0.0
+
+        # Cn
+        self.Cn_0_A = -self.Cn_0_A*self.Cn_0_w**2.0; self.Cn_0_z = self.Cn_0_d = 0.0
+        self.Cn_a_A = -self.Cn_a_A*self.Cn_a_w**2.0; self.Cn_a_z = self.Cn_a_d = 0.0
+        self.Cn_b_A = -self.Cn_b_A*self.Cn_b_w**2.0; self.Cn_b_z = self.Cn_b_d = 0.0
+        self.Cn_p_A = -self.Cn_p_A*self.Cn_p_w**2.0; self.Cn_p_z = self.Cn_p_d = 0.0
+        self.Cn_Lp_A = -self.Cn_Lp_A*self.Cn_Lp_w**2.0; self.Cn_Lp_z = self.Cn_Lp_d = 0.0
+        self.Cn_q_A = -self.Cn_q_A*self.Cn_q_w**2.0; self.Cn_q_z = self.Cn_q_d = 0.0
+        self.Cn_r_A = -self.Cn_r_A*self.Cn_r_w**2.0; self.Cn_r_z = self.Cn_r_d = 0.0
+        self.Cn_da_A = -self.Cn_da_A*self.Cn_da_w**2.0; self.Cn_da_z = self.Cn_da_d = 0.0
+        self.Cn_Lda_A = -self.Cn_Lda_A*self.Cn_Lda_w**2.0; self.Cn_Lda_z = self.Cn_Lda_d = 0.0
+        self.Cn_de_A = -self.Cn_de_A*self.Cn_de_w**2.0; self.Cn_de_z = self.Cn_de_d = 0.0
+
+        return
 
     def _CL0(self, d_B):
         if not self.deriv:

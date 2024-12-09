@@ -1,6 +1,7 @@
 import numpy as np
 import control as co
 import json
+from time import time as current_time
 from matplotlib import pyplot as plt
 from matplotlib.lines import Line2D
 import mpl_toolkits.mplot3d.axes3d as ax3
@@ -73,6 +74,8 @@ class Aircraft:
             print("\ninitializing aircraft...")
         
         self.fldr_prfx = folder_prefix
+        self.tracking = False
+        self.additional_states = 0
 
         # get input variables
         self._get_input_vars(input_dictionary)
@@ -83,8 +86,6 @@ class Aircraft:
 
         # initialize
         self.x,self.t = self.initialize_sim(self.x0)
-        self.tracking = False
-        self.additional_states = 0
 
 
     def _reinitialize(self):
@@ -631,6 +632,10 @@ class Aircraft:
         return b,phi,theta,x
 
 
+    def _report_trim_other(self,u):
+        return 0
+
+
     def _report_trim_solution(self,x="o",u="o",iter="o",
         load_factors_axis="stab",report_coord_frame_rates=False):
 
@@ -707,6 +712,8 @@ class Aircraft:
         else:
             print("    {:<23s} : {:> 23.16f} : {:> 23.16f}".format(\
                 "\"rudder[deg,rad]\"",u[2]*self.rtod,u[2]))
+        # empty for most controllers
+        self._report_trim_other(u)
         print("    {:<23s} : {:> 23.16f}".format("\"throttle\"",u[3]))
         print(thrust_string)
         if load_factors_axis != "none":
@@ -968,11 +975,18 @@ class Aircraft:
         return G[0:4],x
 
 
+    def _overwrite_initial_x_u(self,x,u):
+        return x,u
+
+
     def _initialize_state(self,a_guess=None,b_guess=None,phi_guess=None,
         u_guess=None,run2=False,no_report=False):
         # run trim at condition
         u_trim,x_trim = self.run_trim(a_guess,b_guess,phi_guess,u_guess,
             verbose=self.verbose_trim,no_report=no_report)
+        # # # modify state 
+        if self.state_type == "trim":
+            x_trim,u_trim = self._overwrite_initial_x_u(x_trim,u_trim)
         ## INTSTATE
         x_trim_euler = np.delete(x_trim,9)
         x_trim_euler[9:12] = self._euler_angles(x_trim)
@@ -1001,6 +1015,7 @@ class Aircraft:
         # if state not given, determine
         if self.state_type == "state":
             u0,x0 = self._given_state()
+            x0,u0 = self._overwrite_initial_x_u(x0,u0)
         elif self.state_type == "trim":
             u0,x0 = u_trim*1.,x_trim*1.
         
@@ -1247,8 +1262,8 @@ class Aircraft:
 
 
     def _skip_limit_input(self,u):
-        print("these things ought not so to be!!")
-        quit()
+        # print("these things ought not so to be!!")
+        # quit()
         return u
 
 
@@ -1963,10 +1978,10 @@ class Aircraft:
             else:
                 ps = ""
             repstr += report_latex(Lin_Model.K,"K"+ps,print_report=report)#,sci=True)
-            repstr += rep2D(Lin_Model.K,"K"+ps,decimals=16)
+            repstr += rep2D(Lin_Model.K,"K"+ps,decimals=16,print_report=report)
             if len(self.xIi):
                 repstr += report_latex(Lin_Model.KI,"K_I",print_report=report)
-                repstr += rep2D(Lin_Model.KI,"K_I",decimals=16)
+                repstr += rep2D(Lin_Model.KI,"K_I",decimals=16,print_report=report)
             # repstr += report_latex(Lin_Model.K.T,"K",transpose=True,
             #     print_report=report)#,sci=True)
             # report_latex(Lin_Model.K.T,"K",transpose=True,sci=True)
@@ -2782,6 +2797,9 @@ class Aircraft:
             atol=1e-10,rtol=1e-10,
             nonlinear=self.use_nonlinear,quat=self.use_quaternions)
         
+        # get time
+        start = current_time()
+
         if self.integrator == "odeint":
             ts = np.linspace(0.,self.tf,num=self.n_steps,endpoint=False)
             self.tarr = ts*1.
@@ -2853,8 +2871,15 @@ class Aircraft:
                 self.tarr[counter] = self.t*1.
                 counter = counter + 1
         
+        # get end time
+        duration = current_time() - start
+
         if report_simulation:
-            print("finished simulating...")
+            hr = int(duration//3600)
+            mn = int(int((duration/3600-hr)*3600)//60)
+            sc = float(duration%60)
+            print("finished simulating",end="")
+            print(", duration = {:>02d}:{:>02d}:{:>05.2f}".format(hr,mn,sc))
             # print(np.max(self.xarr[6,:]))
             # print(np.min(self.xarr[6,:]))
         
@@ -5790,6 +5815,8 @@ def monte_carlo_perturbations(filename,rtdst_1sg=[5.,5.,5.],
     aupp = np.zeros((4,tnum)) - 1.0e100
     alow = aupp*0. + 1.0e100; aavg = aupp*0.
     ###################################
+    start_time = current_time()
+    ###################################
     for i in range(num):
         # create shift
         pshift = p_vals[i]
@@ -6030,6 +6057,7 @@ def monte_carlo_perturbations(filename,rtdst_1sg=[5.,5.,5.],
         # store plot params
         disturbs[:,i] = [pdeg,qdeg,rdeg]
         stables[i] = is_stable
+    duration_time = current_time() - start_time
     stable_num = "{:> 4d}/{:> 4d} cases stable".format(counter,num)
     run_str += stable_num + "\n"
     plt.rcdefaults()
@@ -6053,6 +6081,10 @@ def monte_carlo_perturbations(filename,rtdst_1sg=[5.,5.,5.],
             f.write(r50_str)
             f.close()
     print("finished simulating {}...".format(run_name))
+    hr = int(duration_time//3600)
+    mn = int(int((duration_time/3600-hr)*3600)//60)
+    sc = float(duration_time%60)
+    print("    duration = {:>02d}:{:>02d}:{:>05.2f}".format(hr,mn,sc))
 
     # divide average responses
     if counter > 0:
