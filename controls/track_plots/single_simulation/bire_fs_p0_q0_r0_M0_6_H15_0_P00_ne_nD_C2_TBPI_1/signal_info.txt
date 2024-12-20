@@ -1,4 +1,0 @@
-            & Trs [s] & Tst [s] &    %OS     \\ 
-$e_{p    }$ &     inf &     inf &     inf \% \\ 
-$e_{q    }$ &     inf &     inf &     inf \% \\ 
-$e_{r    }$ &     inf &     inf &     inf \% \\ 

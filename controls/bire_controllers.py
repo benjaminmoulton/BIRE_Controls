@@ -13,7 +13,8 @@ from scipy.interpolate import interp1d, interpn
 from scipy.optimize import curve_fit,minimize,minimize_scalar,newton
 from scipy.io import savemat, loadmat
 from scipy.signal import tf2zpk as scipy_tf2zpk
-from math import pi, sin, cos, tan, exp, asin, atan2
+# from math import pi, sin, cos, tan, exp, asin, acos, atan, atan2
+from numpy import pi, sin, cos, tan, exp, arcsin as asin, arccos as acos, arctan as atan, arctan2 as atan2
 from std_atm import stdatm_english
 from quat import quat_mult, euler_2_quat, quat_2_euler, quat_norm, body_2_fixed, fixed_2_body, eulerdot_2_quatdot, quatdot_2_eulerdot
 from linearization import linearization as lin,Anderson_correction_der_coeff,Anderson_correction_der_M
@@ -876,6 +877,8 @@ class NonlinearDynamicInversionAircraft(Aircraft):
         self.K_FB_2 = K
         # print(K)
         # rep2D(K,"K",decimals=15,np_array=True)
+        report_latex(Q,"Q")
+        report_latex(R,"R")
         report_latex(K,"K_{lqr}")
         report_latex(K_eigs,r"\lambda_{cl \, lqr}")
 
@@ -1043,6 +1046,7 @@ class NonlinearDynamicInversionAircraft(Aircraft):
                 #
                 S = np.diag([self.s_da,self.s_de,self.s_dr])
                 N = dfddS = np.matmul(dfdd,S)
+                # print(t,np.linalg.det(B[3:6,0:3])) # ,np.linalg.det(N))
                 Nadj = np.array([
                     [ (N[1,1]*N[2,2]-N[1,2]*N[2,1]),
                         -(N[0,1]*N[2,2]-N[0,2]*N[2,1]),
@@ -1161,6 +1165,19 @@ class NonlinearDynamicInversionAircraft(Aircraft):
 
         return u,inputs
 
+    def _add_to_delta_x0(self,delta_x0):
+        # delta_beta_deg = 0.6
+        # vx_trim = self.x_trim[0]; vy_trim = self.x_trim[1]; vz_trim = self.x_trim[2]
+        # V_trim = (vx_trim**2.0 + vy_trim**2.0 + vz_trim**2.0)**0.5
+        # a_trim = atan2(vz_trim,vx_trim)
+        # b_trim = asin(vy_trim/V_trim)
+        # Vnew = V_trim
+        # anew = a_trim
+        # bnew = b_trim + np.deg2rad(delta_beta_deg)
+        # delta_x0[0] = - vx_trim + Vnew*cos(anew)*cos(bnew)
+        # delta_x0[1] = - vy_trim + Vnew*sin(bnew)
+        # delta_x0[2] = - vz_trim + Vnew*sin(anew)*cos(bnew)
+        return delta_x0
 
 class TransformedNonlinearDynamicInversionAircraft(NonlinearDynamicInversionAircraft):
     """A default class for calculating and containing the mass properties of a
@@ -1903,7 +1920,7 @@ class TransformedDynamicInversionAircraft(Aircraft):
         return u,inputs
 
 
-class MomentFeedbackLinearizationAircraft(Aircraft):
+class ControlAllocationMomentAssignmentAircraft(Aircraft):
     """A default class for calculating and containing the mass properties of a
     Cuboid.
 
@@ -1993,92 +2010,6 @@ class MomentFeedbackLinearizationAircraft(Aircraft):
         print("Keigs =",K_eigs)
         rep2D(self.KI_DI,"KI",decimals=3)# print("KI =",self.KI_DI)
         rep2D(self.KP_DI,"KP",decimals=3)# print("KP =",self.KP_DI)
-
-        if False: # True: # 
-            # closed-loop simulation
-            # change plot text parameters
-            plt.rcParams["font.family"] = "Serif"
-            plt.rcParams["font.size"] = 8.0
-            plt.rcParams["axes.labelsize"] = 8.0
-            plt.rcParams['axes.xmargin'] = 0
-            plt.rcParams['lines.linewidth'] = 0.75 # 1.0
-            plt.rcParams["xtick.minor.visible"] = True
-            plt.rcParams["ytick.minor.visible"] = True
-            plt.rcParams["xtick.direction"] = plt.rcParams["ytick.direction"] = "in"
-            plt.rcParams["xtick.bottom"] = plt.rcParams["xtick.top"] = True
-            plt.rcParams["ytick.left"] = plt.rcParams["ytick.right"] = True
-            plt.rcParams["xtick.major.width"] = plt.rcParams["ytick.major.width"] = 0.75
-            plt.rcParams["xtick.minor.width"] = plt.rcParams["ytick.minor.width"] = 0.75
-            plt.rcParams["xtick.major.size"] = plt.rcParams["ytick.major.size"] = 5.0
-            plt.rcParams["xtick.minor.size"] = plt.rcParams["ytick.minor.size"] = 2.5
-            plt.rcParams["mathtext.fontset"] = "dejavuserif"
-            plt.rcParams['figure.dpi'] = 300.0
-            x0 = np.zeros((6,))
-            has_actuators = False
-            limit_actuators = False
-            limit_actuator_rates = False
-            # # include actuator dynamics
-            has_actuators = True
-            limit_actuators = False # True # 
-            limit_actuator_rates = False # True # 
-            x0 = np.zeros((9,))
-            S = np.diag([1./0.0495]*3)
-            A = np.block([[A,np.block([[Z],[I]])],[Z,Z,-S]])
-            B = np.block([[Z],[Z],[S]])
-            C = np.block([C,np.block([[Z],[Z]])])
-            #
-            x0[3] = -self._get_reference(0.0)[3]
-            def dyn(t,x,has_actuators,limit_actuators,limit_actuator_rates): 
-                if has_actuators:
-                    if limit_actuators:
-                        x[6] = max(min(x[6],self.max_da),self.min_da)
-                        x[7] = max(min(x[7],self.max_de),self.min_de)
-                        x[8] = max(min(x[8],self.max_dr),self.min_dr)
-                dx = np.matmul(A-np.matmul(B,np.matmul(K,C)),x)
-                if has_actuators:
-                    if limit_actuator_rates:
-                        dx[6] = max(min(dx[6],self.max_dadot),self.min_dadot)
-                        dx[7] = max(min(dx[7],self.max_dedot),self.min_dedot)
-                        dx[8] = max(min(dx[8],self.max_drdot),self.min_drdot)
-                return dx
-            
-            # simulate
-            ts  = np.linspace(0.0,10.0,num=1001)
-            ts0 = np.linspace(0.0, 2.0,num= 201)
-            args = (has_actuators,limit_actuators,limit_actuator_rates)
-            xs0 = odeint(dyn,x0,ts0,args=args,tfirst=True).T
-            x1 = xs0[:,-1]
-            x1[3] = x1[3] - x0[3] - self._get_reference(2.1)[3]
-            x1[4] = x1[4] - x0[4] - self._get_reference(2.1)[4]
-            x1[5] = x1[5] - x0[5] - self._get_reference(2.1)[5]
-            ts1 = np.linspace(2.0,10.0,num= 801)
-            xs1 = odeint(dyn,x1,ts1,args=args,tfirst=True).T
-            xs = np.concatenate((xs0[:,:-1],xs1),axis=1)
-            # print(xs.shape)
-            xs = np.rad2deg(xs)
-            us = np.array([-np.matmul(np.matmul(K,C),xsi) for xsi in xs.T]).T
-            fgs,axs = plt.subplots(1,3,
-                figsize=(6.0,3.0),dpi=300.0,sharex=True,constrained_layout=True)
-            lss = ["-","--","-."]
-            names = ["p","q","r"]
-            cnms = [r"$\delta_a$",r"$\delta_e^B$",r"$\delta_B$"]
-            for i in range(3):#xs.shape[0]):
-                par = dict(c="k",ls=lss[i],lw=0.5)
-                axs[0].plot(ts,xs[i  ],label=r"$\int e_{"+names[i]+r"} \, dt$",**par)
-                axs[1].plot(ts,xs[i+3],label=     r"$e_{"+names[i]+r"}$"      ,**par)
-                if has_actuators:
-                    axs[2].plot(ts,xs[i+6],c="0.5",ls=lss[i],lw=0.5)
-                axs[2].plot(ts,us[i  ],label=cnms[i],**par)
-            axs[1].set_xlim(ts[0],ts[-1])
-            axs[0].set_ylabel(r"integrator [$^\circ$]")
-            axs[1].set_ylabel(r"error [$^\circ$/s]")
-            axs[2].set_ylabel(r"control [$^\circ$]")
-            axs[0].legend()
-            axs[1].legend()
-            axs[2].legend()
-            plt.show()
-
-            quit()
 
         # search functions
         def delta_E_fun(rho,V,dBj,a,b,pbar,qbar,rbar,Md):
@@ -2352,11 +2283,13 @@ class MomentFeedbackLinearizationAircraft(Aircraft):
         self.delta_E_dE_fun_sq = delta_E_dE_fun_sq
         self.delta_E_dE_wE_fun_sq = delta_E_dE_wE_fun_sq
         ###
-        self.time_check = 2.0 # 0.0 # 20.0 # 
-        self.dt_check = 0.00001 # 0.05 # 0.01 # 
+        self.time_check = 20.0 # 20.0 # 0.0 # 
+        self.dt_check = 0.05 # 0.000001 # 0.05 # 0.01 # 
         self._err_plot_pause_time = 0.000001 # 1.0 # 
-        self._end_plot_time = 6.9 # 4.9 # 9.9 # 0.325 # 0.1 # 
+        self._end_plot_time = 2.7 # 4.9 # 9.9 # 0.325 # 0.1 # 
         self.have_saved = False
+        self.log_scale = True # False # 
+        self.first_plot = True # False # 
         self.feval = 0
 
     def __del__(self):
@@ -2712,17 +2645,23 @@ class MomentFeedbackLinearizationAircraft(Aircraft):
                         # dB_d = (dB_d + dB)/2.0
                         # dB_d = np.deg2rad(-30.0)
                         step = np.deg2rad(self.ls_dB_lim)*2/(self.ls_num-1)
+                        # step = self.max_drdot*self.dt
                         bracket = (dB_d - step, dB_d, dB_d + step)
                         # if t >= 2.0:
                         #     dB_d = 0.0
-                        if abs(dB_d) > np.pi/2.0:
-                            dB_d = 0.0
+                        # # if abs(dB_d) > np.pi/2.0:
+                        # #     dB_d = 0.0
                         dBbrack = np.deg2rad(90.0)
                         bracket = (-dBbrack, dB_d, dBbrack)
                     
 
-                    print(t) # ,self.integrator) # 
+                    # print(t) # ,self.integrator) # 
                     if t >= self.time_check and t <= self._end_plot_time:
+                        if self.first_plot:
+                            plt.xlabel("Tail rotation, deg")
+                            plt.ylabel("Error $E = ||M - M_d||$") # ^2$") # 
+                            if self.log_scale:
+                                plt.yscale("log")
                         E = lambda dBj : self.delta_E_fun_sq(\
                             rho,V,dBj,a,b,pbar,qbar,rbar,Md)[2]
                         # E = lambda dBj : self.delta_E_fun_sum(\
@@ -2741,8 +2680,6 @@ class MomentFeedbackLinearizationAircraft(Aircraft):
                         plt.show(block=False)
                         if not(self.have_saved) and \
                             self._end_plot_time - self.dt_check <= t:
-                            plt.xlabel("Tail rotation, deg")
-                            plt.ylabel("Error $E = ||M - M_d||$") # ^2$") # 
                             print("end of times!!!")
                             now = datetime.now()
                             ct = now.strftime("%Y-%m-%d_%H-%M-%S")
@@ -2760,11 +2697,54 @@ class MomentFeedbackLinearizationAircraft(Aircraft):
                             rho,V,dBj,a,b,pbar,qbar,rbar,Md)[2]
                         dE = lambda dBj : self.delta_E_dE_fun_sq(\
                             rho,V,dBj,a,b,pbar,qbar,rbar,Md)[3]
-                        dB_d,res = newton(E,dB_d, # res.x, # 
-                            dE,
-                            maxiter=self.opt_max_iter,tol=self.opt_tol,
-                            disp=False,
-                            full_output=True)
+                        # # # # # # # #
+                        try:
+                            dB_1,res_1 = newton(E,dB_d, # res.x, # 
+                                dE,
+                                maxiter=self.opt_max_iter,tol=self.opt_tol,
+                                disp=False,
+                                full_output=True)
+                            if dB_1 >= np.pi/2.0:
+                                dB_1 = np.pi/2.0 # dB_1 -= np.pi # 
+                            elif dB_1 <= -np.pi/2.0:
+                                dB_1 = -np.pi/2.0 # dB_1 += np.pi # 
+                            res_1.fun = self.delta_E_fun_sq(\
+                                rho,V,dB_1,a,b,pbar,qbar,rbar,Md)[2]
+                            fail_1 = False
+                        except:
+                            fail_1 = True
+                        try:
+                            dB_2,res_2 = newton(E,0.0, # res.x, # 
+                                dE,
+                                maxiter=self.opt_max_iter,tol=self.opt_tol,
+                                disp=False,
+                                full_output=True)
+                            if dB_2 >= np.pi/2.0:
+                                dB_2 = np.pi/2.0 # dB_2 -= np.pi # 
+                            elif dB_2 <= -np.pi/2.0:
+                                dB_2 = -np.pi/2.0 # dB_2 += np.pi # 
+                            res_2.fun = self.delta_E_fun_sq(\
+                                rho,V,dB_2,a,b,pbar,qbar,rbar,Md)[2]
+                            fail_2 = False
+                        except:
+                            fail_2 = True
+                        #
+                        if   not(fail_1) and not(fail_2):
+                            if res_1.fun > res_2.fun:
+                                dB_d = dB_2
+                                res = res_2
+                            else:
+                                dB_d = dB_1
+                                res = res_1
+                        elif not(fail_1) and    fail_2 :
+                            dB_d = dB_1
+                            res = res_1
+                        elif     fail_1 and not(fail_2):
+                            dB_d = dB_2
+                            res = res_2
+                        else:
+                            raise RuntimeError("Newton Solver Failed!!!!")
+                        # # # # # # # #
                         res.fun = self.delta_E_fun_sq(\
                             rho,V,dB_d,a,b,pbar,qbar,rbar,Md)[2]
                         res.nit = res.iterations
@@ -2935,7 +2915,7 @@ class MomentFeedbackLinearizationAircraft(Aircraft):
         return u,inputs
 
 
-class MomentFeedbackLinearizationActuatorsAircraft(Aircraft):
+class ControlAllocationMomentAssignmentActuatorsAircraft(Aircraft):
     """A default class for calculating and containing the mass properties of a
     Cuboid.
 
@@ -3344,7 +3324,7 @@ class MomentFeedbackLinearizationActuatorsAircraft(Aircraft):
         return u,inputs
 
 
-class TPIAircraft(Aircraft):
+class Old_TPIAircraft(Aircraft):
     """A default class for calculating and containing the mass properties of a
     Cuboid.
 
@@ -3516,7 +3496,7 @@ class TPIAircraft(Aircraft):
         return u,inputs
 
 
-class TBPIAircraft(Aircraft):
+class ITPIAircraft(Aircraft):
     """A default class for calculating and containing the mass properties of a
     Cuboid.
 
@@ -3529,12 +3509,34 @@ class TBPIAircraft(Aircraft):
 
         # gains
         # damping and natural frequency in each axis
+        # # # old
+        # z_p = 3.0
+        # z_q = 2.0
+        # z_r = 0.8
+        # wn_p = 8.0
+        # wn_q = 8.0
+        # wn_r = 8.0
+        # # # # new
+        # z_p = 3.0
+        # z_q = 2.0
+        # z_r = 0.8
+        # wn_p = 8.0
+        # wn_q = 8.0
+        # wn_r = 6.0
+        # # # # new
+        # z_p = 3.0
+        # z_q = 3.0
+        # z_r = 0.8
+        # wn_p = 8.0
+        # wn_q = 8.0
+        # wn_r = 6.0
+        # # # new
         z_p = 3.0
-        z_q = 2.0
+        z_q = 4.0
         z_r = 0.8
         wn_p = 8.0
         wn_q = 8.0
-        wn_r = 8.0
+        wn_r = 6.0
         #
         self.z = np.diag([ z_p, z_q, z_r])
         self.w = np.diag([wn_p,wn_q,wn_r])
@@ -3606,6 +3608,8 @@ class TBPIAircraft(Aircraft):
             # # transform
             dedm =  abs(dm_trim)/(dn_trim**2. + dm_trim**2.)**0.5
             dedn =  np.sign(dm_trim)*dn_trim/(dn_trim**2. + dm_trim**2.)**0.5
+            # dedm =  dm_trim/(dn_trim**2. + dm_trim**2.)**0.5
+            # dedn =  dn_trim/(dn_trim**2. + dm_trim**2.)**0.5
             dBdm = -dn_trim/(dn_trim**2. + dm_trim**2.)
             dBdn =  dm_trim/(dn_trim**2. + dm_trim**2.)
             # apply
@@ -3786,15 +3790,511 @@ class TBPIAircraft(Aircraft):
                 # dm = -(dm - self.altu_trim[1]) + self.altu_trim[1]
                 # 
                 de = (dm**2. + dn**2.)**0.5
-                dB = atan2(dn,dm)
+                # dB = atan2(dn,dm)
+                dB = atan(dn/dm)
                 # print(t,np.rad2deg(de),np.rad2deg(dB))
+                if dm < 0.0:
+                    de *= -1.0
+                #     dB += -np.pi*np.sign(dn)
                 
-                if   dB < -np.pi/2.: de,dB = -de,dB+np.pi
-                elif dB > +np.pi/2.: de,dB = -de,dB-np.pi
+                # if   dB < -np.pi/2.: de,dB = -de,dB+np.pi
+                # elif dB > +np.pi/2.: de,dB = -de,dB-np.pi
                 # print("   ",t,np.rad2deg(de),np.rad2deg(dB))
                 # print(t,np.rad2deg(de - self.u_trim[1]),np.rad2deg(dB - self.u_trim[2]))
 
                 v = np.array([da,de,dB])
+                u = np.concatenate((v,[self.u_trim[3]]))# #
+
+
+                if self.order > 0:
+                    q = 1*self.use_quaternions
+                    inputs = x[12+q:16+q]*1.
+                else:
+                    inputs = u*1.
+                # #
+                self.u_til_next_update = u*1.
+                self.can_update = False
+            elif is_controlled and self.enforce_update_frequency and \
+                not(self.can_update):
+                u = self.u_til_next_update*1.
+                if self.order > 0:
+                    q = 1*self.use_quaternions
+                    ## INTSTATE
+                    inputs = x[12+q:16+q]*1.
+                else:
+                    inputs = u*1.
+            else:
+                inputs = u = self.Lin_Model.uhat_eq*1.
+        elif given_control:
+            if u[0] == "o":
+                raise TypeError("Control input required.")
+            else:
+                if self.order > 0 and not force_control_to_inputs:
+                    q = 1*self.use_quaternions
+                    inputs = x[12+q:16+q]*1.
+                else:
+                    inputs = u*1.
+        
+        # limit actuators
+        # #vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
+        if self.integrator == "odeint":
+            u = self._limit_input(u)
+        # #^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        inputs = self._limit_input(inputs)
+        if self.order > 0:
+            q = 1*self.use_quaternions
+            x[12+q:16+q] = np.array(inputs)*1.
+        # quantize actuators
+        inputs = self._quantize_input(inputs)
+
+        return u,inputs
+
+
+class StabilityAugmentationircraft(Aircraft):
+    """A default class for calculating and containing the mass properties of a
+    Cuboid.
+
+    Parameters
+    ----------
+    input_vars : dict , optional
+        Must be a python dictionary
+    """
+    def __init__(self,input_dict={}):
+
+        # invoke init of parent
+        self.first_step = True # False # 
+        Aircraft.__init__(self,input_dict,folder_prefix = "track")
+        self.tracking = True
+        # self.aero_model.Cm_a_z = -0.3
+        self.aero_model.Cn_b_z = +0.5
+
+    def __del__(self):
+        # # report gain matrix
+        # rep2D(self.kI,"Ki",decimals=3)
+        # rep2D(self.kP,"Kp",decimals=3)
+        pass
+
+    def _overwrite_initial_x_u(self,x,u):
+        # # Build Controller!!!!
+        if self.first_step:
+            # solve for trim in SLF and build linear system
+            phi_trim = self.phi_trim*1.0
+            self.phi_trim = 0.0
+            u_trim,x_trim = self.run_trim(verbose=False,no_report=True)
+            x_trim_euler = np.delete(x_trim,9)
+            x_trim_euler[9:12] = self._euler_angles(x_trim)
+            x_trim_euler[12:] = x_trim[13:]*1.
+            self.x_trim = x_trim; self.u_trim = u_trim
+            # print(self.x_trim)
+            self.x_trim2 = x_trim; self.u_trim2 = u_trim
+            self.x_trim2_euler = x_trim_euler*1.0
+            # _,self.Lin_Model = self._build_controller(x_tr = x_trim_euler,u_tr = u_trim,
+            #     report=False,save_matrices=False,
+            #     mrrr=[0,1,2,6,7,8,9,10,11],mrrc=[3],
+            #     include_stall_derivatives=False,run_freq=False)
+            #
+            # # transform system
+            # A = self.Lin_Model.A_min
+            # Bo = self.Lin_Model.B_min
+            #
+            #
+            x = x_trim*1.0
+            u = u_trim*1.0
+
+        # add in integrator states
+        # ref = x[3:6] - self.x_trim2[self.xPi]
+        # da,de,dB = u[0:3]
+        # dm = de*np.cos(dB)
+        # dn = de*np.sin(dB)
+        # delta = [da,dm,dn]
+        # uff = - mm(self.Binv,mm(self.A,ref)) #- mm(self.Binv,self.Abeta*(b-b_trim)) #  *0.0 # 
+        # eI = np.linalg.solve(self.kI, uff + self.altu_trim - delta)
+        # x[self.xIi] = eI
+
+        if self.first_step:
+            # return to previous trim solution, linear system
+            self.phi_trim = phi_trim
+            u_trim,x_trim = self.run_trim(verbose=False,no_report=True)
+            x_trim_euler = np.delete(x_trim,9)
+            x_trim_euler[9:12] = self._euler_angles(x_trim)
+            x_trim_euler[12:] = x_trim[13:]*1.
+            self.x_trim = x_trim; self.u_trim = u_trim
+            # _,self.Lin_Model = self._build_controller(x_tr = x_trim_euler,u_tr = u_trim,
+            #     report=False,save_matrices=False,
+            #     mrrr=self.Lin_Model.mrrr,mrrc=self.Lin_Model.mrrc,
+            #     include_stall_derivatives=False,run_freq=False)
+            # #
+            # self.first_step=False
+        return x,u
+
+    def _add_to_delta_x0(self,delta_x0):
+        delta_alpha_deg = 0.0 # 1.0 # 0.1 # 
+        delta_beta_deg = 0.1 # 0.0 # 
+        delta_rad_dps = 0.0 # 0.1 # 
+        vx_trim = self.x_trim[0]; vy_trim = self.x_trim[1]; vz_trim = self.x_trim[2]
+        V_trim = (vx_trim**2.0 + vy_trim**2.0 + vz_trim**2.0)**0.5
+        a_trim = atan2(vz_trim,vx_trim)
+        b_trim = asin(vy_trim/V_trim)
+        Vnew = V_trim
+        anew = a_trim + np.deg2rad(delta_alpha_deg)
+        bnew = b_trim + np.deg2rad(delta_beta_deg)
+        delta_x0[0] = - vx_trim + Vnew*cos(anew)*cos(bnew)
+        delta_x0[1] = - vy_trim + Vnew*sin(bnew)
+        delta_x0[2] = - vz_trim + Vnew*sin(anew)*cos(bnew)
+        #
+        delta_x0[5] = self.x_trim[5] + np.deg2rad(delta_rad_dps)
+        return delta_x0
+    
+    def _solve_quartic(self,t,A,B,C,D,E):
+        """ Solves quartic equaton.
+        """
+        # get roots
+        poly = np.polynomial.Polynomial([E,D,C,B,A])
+        roots = poly.roots()
+
+        # determine smallest real root
+        reals = roots[np.imag(roots) == 0.0]
+        if len(reals) == 0:
+            # raise ValueError("No real roots found for quartic SA equation!")
+            # raise Warning("No real roots found for quartic SA equation!")
+            print("\nWarning:: No real roots found for quartic SA equation!\n")
+            return 0.0
+        else:
+            dB = asin(np.real(reals[np.argmin(np.abs(reals))]))
+            print(t,np.rad2deg(asin(np.real(reals))),np.rad2deg(dB))
+            return dB
+
+    def _get_control(self,t,x,is_controlled=True,given_control=False,u="o",
+        force_control_to_inputs=False):
+        # build control or pass through
+        if not given_control:
+            if is_controlled and (not(self.enforce_update_frequency) or 
+                (self.enforce_update_frequency and self.can_update) ):
+                if self.use_quaternions:
+                    x_euler = self.quat2euler_state(x)
+                else:
+                    x_euler = x*1.
+                    # reset angles
+                    x_euler[9:12] = quat_2_euler(euler_2_quat(x_euler[9:12]))
+                #
+                ref = self._get_reference(t)[self.Lin_Model.Cslice]
+                ref = ref - self.x_trim2_euler[self.xPi_eul]
+                # per dave, full stick should be 270 deg/s in aileron
+                # 120 deg/s in elevator
+                # 60 deg/s in rudder
+                #
+
+                # # # transform system
+                # if self.first_step:
+                #     self.first_step = False
+                #     # quit()
+
+                #-------------------#
+                # STATE DEFINITIONS #
+                #-------------------#
+                Vx      = x_euler[0]
+                Vy      = x_euler[1]
+                Vz      = x_euler[2]
+                p       = x_euler[3]
+                q       = x_euler[4]
+                r       = x_euler[5]
+                epI     = x_euler[self.xIi_eul[0]]
+                eqI     = x_euler[self.xIi_eul[1]]
+                erI     = x_euler[self.xIi_eul[2]]
+                w  = np.array([  p,  q,  r]) - self.x_trim2_euler[self.xPi_eul]
+                eI = np.array([epI,eqI,erI]) - self.x_trim2_euler[self.xIi_eul]
+                e = w - ref
+                #
+                V = (Vx**2. + Vy**2. + Vz**2.)**0.5
+                a = atan2(Vz,Vx)
+                b = asin(Vy/V)
+                # BAM = self.aero_model
+                # print(t,r,b,np.rad2deg(acos(0.00001*b*r/BAM.Cn_r_A)/2.0))
+                #
+                V_trim = (self.x_trim2[0]**2. + self.x_trim2[1]**2. + self.x_trim2[2]**2.)**0.5
+                a_trim = atan2(self.x_trim2[2],self.x_trim2[0])
+                b_trim = asin(self.x_trim2[1]/V_trim)
+                #
+                af = a - a_trim
+                bf = b - b_trim
+                # # # # # # # # #
+                BAM = self.aero_model
+                ka = 0.5
+                kb = 0.05 # 0.2 # 1.0 # 0.0001 # 
+                ke = 10.0
+                #
+                da = self.u_trim[0]
+                de = self.u_trim[1]
+                dB = self.u_trim[2]
+                #
+                if bf != 0.0: # False: # True: # 
+                    A = 2.0*BAM.Cm_de_A*2.0*bf*BAM.Cn_b_A
+                    B = BAM.Cn_de_A*2.0*af*BAM.Cm_a_A
+                    C = ((BAM.Cn_de_z + BAM.Cn_de_d)*2.0*af*BAM.Cm_a_A 
+                        + (-BAM.Cm_de_A -(BAM.Cm_de_z + BAM.Cm_de_d))
+                        *2.0*bf*BAM.Cn_b_A 
+                        + 2.0*BAM.Cm_de_A*bf
+                        *(kb - BAM.Cn_b_A - (BAM.Cn_b_z + BAM.Cn_b_d)))
+                    D = (BAM.Cn_de_A*af
+                        *(ka - BAM.Cm_a_A - (BAM.Cm_a_z + BAM.Cm_a_d)))
+                    E = ((BAM.Cn_de_z + BAM.Cn_de_d)
+                        *af*(ka - BAM.Cm_a_A - (BAM.Cm_a_z + BAM.Cm_a_d)) 
+                        + (-BAM.Cm_de_A -(BAM.Cm_de_z + BAM.Cm_de_d))
+                        *bf*(kb - BAM.Cn_b_A - (BAM.Cn_b_z + BAM.Cn_b_d)))
+                    # A = B = C = D = 2.0; E = -2.0
+                    dB = dB + self._solve_quartic(t,A,B,C,D,E)
+                    # # #
+                    # Cnb = BAM.Cn_b_A*sin(BAM.Cn_b_w*dB + BAM.Cn_b_p) + (BAM.Cn_b_z + BAM.Cn_b_d)
+                    # Cnde = BAM.Cn_de_A*sin(BAM.Cn_de_w*dB + BAM.Cn_de_p) + (BAM.Cn_de_z + BAM.Cn_de_d)
+                    # # #
+                    # de = de + (kb - Cnb)*bf/Cnde
+                    # quit()
+                    # dB = dB + kb*atan((b - b_trim)/(a - a_trim))
+                    # dB = dB + kb*b/BAM.Cn_de_A # asin(kb*b/BAM.Cn_de_A) # + acos(kb*b/BAM.Cn_r_A)/2.0
+                    # de = de + ke*(1.0 - cos(dB))
+                #
+                Cma = BAM.Cm_a_A*sin(BAM.Cm_a_w*dB + BAM.Cm_a_p) + (BAM.Cm_a_z + BAM.Cm_a_d)
+                Cmde = BAM.Cm_de_A*sin(BAM.Cm_de_w*dB + BAM.Cm_de_p) + (BAM.Cm_de_z + BAM.Cm_de_d)
+                #
+                de = de - (ka + Cma)*(af)/Cmde
+                # #
+                # CL0 = BAM.CL_0_A*sin(BAM.CL_0_w*dB + BAM.CL_0_p) + (BAM.CL_0_z + BAM.CL_0_d)
+                # CLa = BAM.CL_a_A*sin(BAM.CL_a_w*dB + BAM.CL_a_p) + (BAM.CL_a_z + BAM.CL_a_d)
+                # Cnb = BAM.Cn_b_A*sin(BAM.Cn_b_w*dB + BAM.Cn_b_p) + (BAM.Cn_b_z + BAM.Cn_b_d)
+                # Cnda0 = BAM.Cn_da_A*sin(BAM.Cn_da_w*dB + BAM.Cn_da_p) + (BAM.Cn_da_z + BAM.Cn_da_d)
+                # CnLda = BAM.Cn_da_A*sin(BAM.Cn_Lda_w*dB + BAM.Cn_Lda_p) + (BAM.Cn_Lda_z + BAM.Cn_Lda_d)
+                # Cnda = Cnda0 + CnLda*(CL0 + CLa*a)
+                # #
+                # da = da + (kb - Cnb)*(bf)/Cnda
+                #
+                v = [da,de,dB]
+                #
+                u = np.concatenate((v,[self.u_trim[3]]))# #
+
+
+                if self.order > 0:
+                    q = 1*self.use_quaternions
+                    inputs = x[12+q:16+q]*1.
+                else:
+                    inputs = u*1.
+                # #
+                self.u_til_next_update = u*1.
+                self.can_update = False
+            elif is_controlled and self.enforce_update_frequency and \
+                not(self.can_update):
+                u = self.u_til_next_update*1.
+                if self.order > 0:
+                    q = 1*self.use_quaternions
+                    ## INTSTATE
+                    inputs = x[12+q:16+q]*1.
+                else:
+                    inputs = u*1.
+            else:
+                inputs = u = self.Lin_Model.uhat_eq*1.
+        elif given_control:
+            if u[0] == "o":
+                raise TypeError("Control input required.")
+            else:
+                if self.order > 0 and not force_control_to_inputs:
+                    q = 1*self.use_quaternions
+                    inputs = x[12+q:16+q]*1.
+                else:
+                    inputs = u*1.
+        
+        # limit actuators
+        # #vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
+        if self.integrator == "odeint":
+            u = self._limit_input(u)
+        # #^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        inputs = self._limit_input(inputs)
+        if self.order > 0:
+            q = 1*self.use_quaternions
+            x[12+q:16+q] = np.array(inputs)*1.
+        # quantize actuators
+        inputs = self._quantize_input(inputs)
+
+        return u,inputs
+
+
+class HinfDIAircraft(Aircraft):
+    """A default class for calculating and containing the mass properties of a
+    Cuboid.
+
+    Parameters
+    ----------
+    input_vars : dict , optional
+        Must be a python dictionary
+    """
+    def __init__(self,input_dict={}):
+
+        # invoke init of parent
+        self.first_step = True # False # 
+        Aircraft.__init__(self,input_dict,folder_prefix = "track")
+        self.tracking = True
+
+  
+    def _overwrite_initial_x_u(self,x,u):
+        # # Build Controller!!!!
+        if self.first_step:
+            # solve for trim in SLF and build linear system
+            phi_trim = self.phi_trim*1.0
+            self.phi_trim = 0.0
+            u_trim,x_trim = self.run_trim(verbose=False,no_report=True)
+            x_trim_euler = np.delete(x_trim,9)
+            x_trim_euler[9:12] = self._euler_angles(x_trim)
+            x_trim_euler[12:] = x_trim[13:]*1.
+            self.x_trim = x_trim; self.u_trim = u_trim
+            # print(self.x_trim)
+            self.x_trim2 = x_trim; self.u_trim2 = u_trim
+            self.x_trim2_euler = x_trim_euler*1.0
+            _,self.Lin_Model = self._build_controller(x_tr = x_trim_euler,u_tr = u_trim,
+                report=False,save_matrices=False,
+                mrrr=[0,1,2,6,7,8,9,10,11],mrrc=[3],
+                include_stall_derivatives=False,run_freq=False)
+            #
+            # control system
+            self.A = A = self.Lin_Model.A_min
+            self.B = B = self.Lin_Model.B_min
+            self.Binv = Binv = np.linalg.solve(B,np.eye(3))
+            #
+            self.kP = mm(Binv,mm(2.0*np.eye(3),np.eye(3)) + A)
+            self.kI = mm(Binv,mm(np.eye(3),np.eye(3)))
+            #
+            AwI = np.block([[np.zeros((3,3)),np.eye(3)],[np.zeros((3,3)),A]])
+            BwI = np.block([[np.zeros((3,3))],[B]])
+            P = co.StateSpace(A,B,np.eye(3),np.zeros((3,3)))
+            print(P)
+            K,CL,gam,rcond = co.hinfsyn(P,3,3)
+            print(K)
+            quit()
+            
+
+            self.A = A
+            self.B = B
+
+            # prepare for integrator states
+            da_trim = self.u_trim2[0]
+            dm_trim = self.u_trim2[1]*cos(self.u_trim2[2])
+            dn_trim = self.u_trim2[1]*sin(self.u_trim2[2])
+            self.altu_trim = np.array([da_trim,dm_trim,dn_trim])
+
+        # add in integrator states
+        ref = x[3:6] - self.x_trim2[self.xPi]
+        da,de,dB = u[0:3]
+        dm = de*np.cos(dB)
+        dn = de*np.sin(dB)
+        delta = [da,dm,dn]
+        uff = - mm(self.Binv,mm(self.A,ref)) #- mm(self.Binv,self.Abeta*(b-b_trim)) #  *0.0 # 
+        eI = np.linalg.solve(self.kI, uff + self.altu_trim - delta)
+        x[self.xIi] = eI
+
+        if self.first_step:
+            # return to previous trim solution, linear system
+            self.phi_trim = phi_trim
+            u_trim,x_trim = self.run_trim(verbose=False,no_report=True)
+            x_trim_euler = np.delete(x_trim,9)
+            x_trim_euler[9:12] = self._euler_angles(x_trim)
+            x_trim_euler[12:] = x_trim[13:]*1.
+            self.x_trim = x_trim; self.u_trim = u_trim
+            _,self.Lin_Model = self._build_controller(x_tr = x_trim_euler,u_tr = u_trim,
+                report=False,save_matrices=False,
+                mrrr=self.Lin_Model.mrrr,mrrc=self.Lin_Model.mrrc,
+                include_stall_derivatives=False,run_freq=False)
+
+            # report
+            print("Bo =",repr(Bo))
+            print()
+            print("Bo^-1 =",repr(np.linalg.solve(Bo,np.eye(3))))
+            print()
+            # print("np.diag(Bo) =",repr(np.diag(Bo)))
+            print("cond(Bo) =",repr(np.linalg.cond(Bo)))
+            print()
+            # print("cond(Bo**) dB = 100*db =",repr(np.linalg.cond(mm(Bo,[
+            #     [1.0,0.0,0.0],[0.0,1.0,0.0],[0.0,0.0,100.0]]))))
+            # print("Bo**^-1 =",repr(np.linalg.solve(mm(Bo,[
+            #     [1.0,0.0,0.0],[0.0,1.0,0.0],[0.0,0.0,100.0]]),np.eye(3))))
+            # print()
+            print("rank(Go) =",rGo)
+            print()
+            print()
+            print("Abeta =",repr(Abeta))
+            print()
+            print("A =",repr(A))
+            print()
+            # print("np.diag(A) =",repr(np.diag(A)))
+            print("T =",repr(T))
+            print()
+            print("B =",repr(B))
+            print()
+            print("B^-1 =",repr(Binv))
+            print()
+            # print("np.diag(B) =",repr(np.diag(B)))
+            print("cond(B) =",repr(np.linalg.cond(B)))
+            print()
+            print("rank(G) =",rG)
+            print()
+            print("eI0 =",eI)
+            print()
+            self.first_step=False
+        return x,u
+
+    def __del__(self):
+        # report gain matrix
+        rep2D(self.kI,"Ki",decimals=3)
+        rep2D(self.kP,"Kp",decimals=3)
+        pass
+
+    def _get_control(self,t,x,is_controlled=True,given_control=False,u="o",
+        force_control_to_inputs=False):
+        # build control or pass through
+        if not given_control:
+            if is_controlled and (not(self.enforce_update_frequency) or 
+                (self.enforce_update_frequency and self.can_update) ):
+                if self.use_quaternions:
+                    x_euler = self.quat2euler_state(x)
+                else:
+                    x_euler = x*1.
+                    # reset angles
+                    x_euler[9:12] = quat_2_euler(euler_2_quat(x_euler[9:12]))
+                #
+                ref = self._get_reference(t)[self.Lin_Model.Cslice]
+                ref = ref - self.x_trim2_euler[self.xPi_eul]
+                # per dave, full stick should be 270 deg/s in aileron
+                # 120 deg/s in elevator
+                # 60 deg/s in rudder
+                #
+
+                # # # transform system
+                # if self.first_step:
+                #     self.first_step = False
+                #     # quit()
+
+                #-------------------#
+                # STATE DEFINITIONS #
+                #-------------------#
+                Vx      = x_euler[0]
+                Vy      = x_euler[1]
+                Vz      = x_euler[2]
+                p       = x_euler[3]
+                q       = x_euler[4]
+                r       = x_euler[5]
+                epI     = x_euler[self.xIi_eul[0]]
+                eqI     = x_euler[self.xIi_eul[1]]
+                erI     = x_euler[self.xIi_eul[2]]
+                w  = np.array([  p,  q,  r]) - self.x_trim2_euler[self.xPi_eul]
+                eI = np.array([epI,eqI,erI]) - self.x_trim2_euler[self.xIi_eul]
+                e = w - ref
+                #
+                # V = (Vx**2. + Vy**2. + Vz**2.)**0.5
+                # a = atan2(Vz,Vx)
+                # b = asin(Vy/V)
+                #
+                # V_trim = (self.x_trim2[0]**2. + self.x_trim2[1]**2. + self.x_trim2[2]**2.)**0.5
+                # a_trim = atan2(self.x_trim2[2],self.x_trim2[0])
+                # b_trim = asin(self.x_trim2[1]/V_trim)
+                # # # # # # # # # 
+                uff = - mm(self.Binv,mm(self.A,ref)) #- mm(self.Binv,self.Abeta*(b-b_trim)) #  *0.0 # 
+                v = - mm(self.kP,e) - mm(self.kI,eI) + uff + self.u_trim2[0:3]
                 u = np.concatenate((v,[self.u_trim[3]]))# #
 
 
@@ -4698,6 +5198,12 @@ class LinearQuadraticRegulatorDynamicInversionAircraft(Aircraft):
         Aircraft.__init__(self,input_dict,folder_prefix = "track")
         self.tracking = True
         self.first_LQDI_step = True # False # 
+    
+    def __del__(self):
+        print("A =",self.A_tr)
+        print("Binv =",self.Binv_LQRDI)
+        print("KI =",self.KI_LQRDI)
+        print("KP =",self.KP_LQRDI)
 
     def _get_control(self,t,x,is_controlled=True,given_control=False,u="o",
         force_control_to_inputs=False):
@@ -4721,6 +5227,9 @@ class LinearQuadraticRegulatorDynamicInversionAircraft(Aircraft):
                 # dynamic inversion!!!
                 if self.first_LQDI_step:
                     # state
+                    self.b_prev = 0.0
+                    self.b_counter = 0. # -1 # 
+                    self.b_ref = np.deg2rad(+0.0020460560691862)
                     Vxb = self.x_trim[0]; Vyb = self.x_trim[1]; Vzb = self.x_trim[2]
                     V = (Vxb**2. + Vyb**2. + Vzb**2.)**0.5
                     u2w2 = Vxb**2. + Vzb**2.
@@ -4754,8 +5263,14 @@ class LinearQuadraticRegulatorDynamicInversionAircraft(Aircraft):
                     A = np.block([[Z,I],[Z,A_tr]])
                     B = np.block([[np.zeros((4,3))],[B_tr]])
                     # Q = np.diag([1.0e-2,1.0e-2,1.0e-2]+[1.0e+0,2.0e+0,1.0e+1])
+                    ## vvv FROM SUMMER REPORT
                     Q = np.diag([1.0e-2]+[1.0e-1]*3+[1.0e-0,1.0e+1,1.0e+1,1.0e+1])
                     R = np.diag([1.0e+0,1.0e+0,1.0e+1])
+                    ## ^^^ FROM SUMMER REPORT
+                    # Q = np.diag([1.0e-2]+[5.0e-1]*3+[1.0e-0,1.0e+1,1.0e+1,1.0e+1])
+                    # Q[1,3] = Q[3,1] = 5.0e-1
+                    # Q[5,7] = Q[7,5] = 1.0e+1
+                    # R = np.diag([1.0e+0,1.0e+0,1.0e+1]) # 5.0e-1]) # 
                     K,_,K_eigs = co.lqr(A,B,Q,R,method="scipy")
                     self.KI_LQRDI,self.KP_LQRDI = K[:,0:4],K[:,4:8]
                     print("KI =",self.KI_LQRDI)
@@ -4785,8 +5300,15 @@ class LinearQuadraticRegulatorDynamicInversionAircraft(Aircraft):
                 dref = np.concatenate(([0.0],dref))
                 refdot = dref*0.0
                 e = w - ref
+                self.b_counter += 1
+                bI = self.b_prev + (b - self.b_prev)*self.dt
+                if self.b_counter % 5 == 0: self.b_prev = b
+                # print(t,self.b_prev)
+                # # vvv FROM SUMMER REPORT
                 eI = np.concatenate(([0.0],eI))
-                e = np.concatenate(([b - np.deg2rad(+0.0020460560691862)],e))
+                # # ^^^ FROM SUMMER REPORT
+                # eI = np.concatenate(([bI],eI))
+                e = np.concatenate(([b - self.b_ref],e))
                 # if 0.0 <= t <= 0.0 + self.dt:
                 #     refdot = e/self.dt
                 # elif 2.0 <= t <= 2.0 + self.dt:
@@ -5866,7 +6388,7 @@ if __name__ == "__main__":
     # # # # # NDI_1
     # run_bire_fs["aircraft_class"] = NonlinearDynamicInversionAircraft
     # run_bire_fs["name_end"] = "_" + f1 + "_NDI_1" # nolim" # 
-    # run_bire_rc["name_end"] = "_LGN"   + "_NDI_1" # nolim" # 
+    # # bire_fs_dict["aircraft"]["CG_shift[ft]"] = [+1.0,+0.0,0.0]
     # zt_p,zt_q,zt_r =  0.6 , 0.6 , 0.6
     # wn_p,wn_q,wn_r =  8.0 , 8.0 , 8.0 
     # #
@@ -5910,15 +6432,15 @@ if __name__ == "__main__":
     # run_bire_fs["name_end"] = "_" + f1 + "_DIGS_1"
     # run_bire_rc["name_end"] = "_LGN"   + "_DIGS_1"
     # # # 
-    run_bire_rc["aircraft_class"] = \
-        run_bire_fs["aircraft_class"] = MomentFeedbackLinearizationAircraft
-    run_bire_fs["name_end"] = "_" + f1 + "_MFBL_1" # 2" # 
-    run_bire_rc["name_end"] = "_LGN"   + "_MFBL_1" # 2" # 
+    # run_bire_rc["aircraft_class"] = \
+    #     run_bire_fs["aircraft_class"] = ControlAllocationMomentAssignmentAircraft
+    # run_bire_fs["name_end"] = "_" + f1 + "_CAMA_1" # 2" # 
+    # # bire_fs_dict["aircraft"]["CG_shift[ft]"] = [+1.0,+0.0,0.0]
     # # # # # # 
     # # # run_bire_rc["aircraft_class"] = \
-    # # #     run_bire_fs["aircraft_class"] = MomentFeedbackLinearizationActuatorsAircraft
-    # # # run_bire_fs["name_end"] = "_" + f1 + "_MFBLA_1"
-    # # # run_bire_rc["name_end"] = "_LGN"   + "_MFBLA_1"
+    # # #     run_bire_fs["aircraft_class"] = ControlAllocationMomentAssignmentActuatorsAircraft
+    # # # run_bire_fs["name_end"] = "_" + f1 + "_CAMAA_1"
+    # # # run_bire_rc["name_end"] = "_LGN"   + "_CAMAA_1"
     # # # zt_p,zt_q,zt_r =  0.6 , 0.6 , 0.6
     # # # wn_p,wn_q,wn_r =  8.0 , 8.0 , 8.0 
     # # # #
@@ -5942,11 +6464,16 @@ if __name__ == "__main__":
     # zt_p,zt_q,zt_r =  0.6 , 0.6 , 0.6
     # wn_p,wn_q,wn_r =  8.0 , 8.0 , 8.0 
     # # # # 
-    # run_bire_rc["aircraft_class"] = \
-    #     run_bire_fs["aircraft_class"] = TBPIAircraft
-    # run_bire_fs["name_end"] = "_" + f1 + "_TBPI_noABup" # 1" # 
-    # run_bire_rc["name_end"] = "_LGN"   + "_TBPI_noABup" # 1" # 
-    # bire_fs_dict["aircraft"]["CG_shift[ft]"] = [+1.0,+1.0,0.0] # [0.0,0.0,0.0] # 
+    # # # # 
+    # run_bire_fs["aircraft_class"] = StabilityAugmentationircraft
+    # run_bire_fs["name_end"] = "_" + f1 + "_SA_1"
+    # bire_fs_dict["aircraft"]["CG_shift[ft]"] = [+1.0,+0.0,0.0]
+    # # # # 
+    # # # # 
+    run_bire_fs["aircraft_class"] = ITPIAircraft
+    run_bire_fs["name_end"] = "_" + f1 + "_ITPI_noABup" # 1" # 
+    bire_fs_dict["aircraft"]["CG_shift[ft]"] = [+1.0,+0.0,0.0] # [0.0,0.0,0.0] # 
+    # left_roll = True # False # 
     # run_bire_fs["time_step"] = 0.001
     # # run_bire_fs["initial_mach"] = run_bire_fs["final_mach"] = 0.614417991271374
     # # # # #
@@ -5962,6 +6489,10 @@ if __name__ == "__main__":
     #     [     0.0,wn_q**2.,     0.0],
     #     [     0.0,     0.0,wn_r**2.]
     # ]).tolist()
+    #
+    # run_bire_rc["aircraft_class"] = \
+    #     run_bire_fs["aircraft_class"] = HinfDIAircraft
+    # run_bire_fs["name_end"] = "_" + f1 + "_HIDI_1" # 
     # # # 
     # run_bire_rc["aircraft_class"] = \
     #     run_bire_fs["aircraft_class"] = TransformedDynamicInversionAircraft
@@ -5982,7 +6513,7 @@ if __name__ == "__main__":
     # run_bire_fs["aircraft_class"] = LinearQuadraticRegulatorDynamicInversionAircraft
     # # LQR_1
     # run_bire_fs["name_end"] = "_" + f1 + "_LQRDI_1" # 2" # 
-    # run_bire_rc["name_end"] = "_LGN"   + "_LQRDI_1" # 2" # 
+    # # bire_fs_dict["aircraft"]["CG_shift[ft]"] = [+1.0,+0.0,0.0]
     # #
     # run_bire_fs["aircraft_class"] = LinearAdaptiveAircraft
     # # LAC_1
@@ -6023,16 +6554,6 @@ if __name__ == "__main__":
     p_tr_deg = -0.0236847366216922
     q_tr_deg =  0.0886486340380570
     r_tr_deg =  0.5027513865539764
-    if bire_fs_dict["aircraft"]["CG_shift[ft]"][0] == -1.0:
-        # # # # xcg = -1ft
-        p_tr_deg = -0.0213194463661382
-        q_tr_deg =  0.0886854701539209
-        r_tr_deg =  0.5029602945481806
-    elif bire_fs_dict["aircraft"]["CG_shift[ft]"][0] == 1.0:
-        # # # xcg = +1ft
-        p_tr_deg = -0.0260490036020438
-        q_tr_deg =  0.0886079085570976
-        r_tr_deg =  0.5025204208742160
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
     # # 15 deg bank fullscale BIRE
     # p_tr_deg = -0.0361891562749016
@@ -6091,22 +6612,17 @@ if __name__ == "__main__":
     # p_tr_deg = -0.3294739663431505
     # q_tr_deg =  0.5582409457023837
     # r_tr_deg =  3.1659417263281258
-    p_bfcm = 10.0 # 5.0 # 
-    # right_roll = False # True # 
-    # if not(right_roll):
-    #     p_bcfm = - p_bfcm
-    #     p_tr_deg = - p_tr_deg
-    #     r_tr_deg = - r_tr_deg
+    p_bfcm = 10.0 # 20.0 # 30.0 # 5.0 # 50.0 # 40.0 # 60.0 # 15.0 # 7.5 # 
+    if "left_roll" in locals():
+        p_bfcm = - p_bfcm
+        p_tr_deg = - p_tr_deg
+        r_tr_deg = - r_tr_deg
     r_comm = 0.0    # 
     p_comm = p_bfcm # 
     a_tr_rad =  np.deg2rad(2.6447774345355031)
     r_comm = p_bfcm*np.sin(a_tr_rad) # 
     p_comm = p_bfcm*np.cos(a_tr_rad) # 
-    # ###########################################################################
-    # p_tr_deg2 = -0.0495920266927013
-    # q_tr_deg2 =  0.3603497293338741
-    # r_tr_deg2 =  0.9900527444514043
-    # ###########################################################################
+    ###########################################################################
     t_zero = 0.0
     recover_time = 10.0
     transition_time = 2.0 # 1.0 # 
@@ -6114,7 +6630,7 @@ if __name__ == "__main__":
     # p_time2 = p_time  + recover_time
     # p_time3 = p_time2 + transition_time
     t_end = 0.0 # 25.0 # 
-    tf = 6.9 # 10.0 # 3.0 # 10.0 # t_end + p_time + 8.0 #+ 10.0 # # + 20.0 # 
+    tf = 10.0 # 5.0 # 6.9 # 3.0 # 10.0 # t_end + p_time + 8.0 #+ 10.0 # # + 20.0 # 
     bire_fs_dict["reference"] = bire_rc_dict["reference"] = {
         "deg2rad_states" : [3,4,5],
         "3" : [ [0.0, 0.0], [t_zero, 0.0], [t_zero, p_comm], [p_time, p_comm], [p_time, p_tr_deg], ], # [p_time2, p_tr_deg ], [p_time2, p_comm], [p_time3, p_comm], [p_time3, p_tr_deg2] ], # [p_time + recover_time, p_tr_deg], [p_time + recover_time, -p_comm], [p_time + recover_time + transition_time, -p_comm], [p_time + recover_time + transition_time, 0.0], ], # 
@@ -6127,8 +6643,8 @@ if __name__ == "__main__":
     # bire_fs_dict["simulation"]["include_stall"] = \
     #     bire_rc_dict["simulation"]["include_stall"] = False
     # bire_fs_dict["simulation"]["include_compressibility"] = False
-    bire_fs_dict["simulation"]["integrator"] = \
-        bire_rc_dict["simulation"]["integrator"] = "rk4"
+    bire_fs_dict["simulation"]["integrator"] = "rk4"
+    # run_bire_fs["time_step"] = 0.001 # 0.0001 # 
     # bire_fs_dict["actuators"]["order"] = 0
     # run_bire_fs["state_threshold"] = run_bire_fs["state_threshold"][:-4]
     # bire_fs_dict["aircraft"]["CG_shift[ft]"] = [0.0, 0.0, 0.0] # [1.0, 2.0, -1.0] # 
@@ -6161,7 +6677,7 @@ if __name__ == "__main__":
     # run_bire_fs["has_turbulence"] = True # False # 
     # run_bire_fs["has_model_error"] = False # True # 
     # # #########################################################################
-    # # # zeros
+    # # # # zeros
     # bire_fs_dict["reference"] = {
     #     "deg2rad_states" : [3,4,5],
     #     "3" : [[0.0]*2]*2, "4" : [[0.0]*2]*2, "5" : [[0.0]*2]*2, "sct_on_5" : False
@@ -6203,7 +6719,7 @@ if __name__ == "__main__":
     # di = [16.0, 2.0, 0.4] # DI_2
     # di = [ 3.0, 1.0, 0.1] # LQT_1
     # di = [30.0,15.0, 1.0] # LQRDI_1
-    # di = [ 6.0, 1.0, 0.1] # TBPI_1
+    # di = [ 6.0, 1.0, 0.1] # TPI_1
     # # di = [ 5.0, 6.0, 0.1] # MFBL_1
     # # di = [12.0, 0.2, 0.3] # NDI_1
     # # # 
@@ -6211,7 +6727,7 @@ if __name__ == "__main__":
     # run_bire_fs["FM_errors"] = [0.06,0.25,0.25,0.25,0.25,0.25] # DI_2
     # run_bire_fs["FM_errors"] = [0.08,0.25,0.25,0.25,0.25,0.25] # LQT_1
     # run_bire_fs["FM_errors"] = [0.16,0.25,0.25,0.25,0.25,0.25] # LQRDI_1
-    # run_bire_fs["FM_errors"] = [0.06,0.25,0.25,0.15,0.13,0.25] # TBPI_1
+    # run_bire_fs["FM_errors"] = [0.06,0.25,0.25,0.15,0.13,0.25] # TPI_1
     # # run_bire_fs["FM_errors"] = [0.02,0.25,0.25,0.25,0.25,0.25] # MFBL_1
     # # run_bire_fs["FM_errors"] = [0.01,0.25,0.25,0.25,0.25,0.25] # NDI_1
     # # # 
@@ -6238,7 +6754,7 @@ if __name__ == "__main__":
     # # disa = [[ 25.,0.,0.],[0., 10.,0.],[0.,0.,  1.1]] # DI_2
     # # disa = [[ 25.,0.,0.],[0.,  3.,0.],[0.,0.,  1.1]] # LQT_1
     # # disa = [[100.,0.,0.],[0., 60.,0.],[0.,0.,  3.0]] # LQRDI_1
-    # disa = [[ 10.,0.,0.],[0., 10.,0.],[0.,0.,  0.4]] # TBPI_1
+    # disa = [[ 10.,0.,0.],[0., 10.,0.],[0.,0.,  0.4]] # TPI_1
     # # disa = [[  5.,0.,0.],[0., 20.,0.],[0.,0.,  0.2]] # MFBL_1
     # # disa = [[ 15.,0.,0.],[0., 20.,0.],[0.,0.,  1.1]] # NDI_1
     # for i in [1]: # [2]: # [0]: # range(3): # 
@@ -6259,7 +6775,7 @@ if __name__ == "__main__":
     # di = [16.0, 2.0, 0.4] # DI_2
     # di = [ 3.0, 1.0, 0.1] # LQT_1
     # di = [30.0,15.0, 1.0] # LQRDI_1
-    # di = [ 6.0, 1.0, 0.1] # TBPI_1
+    # di = [ 6.0, 1.0, 0.1] # TPI_1
     # # di = [ 5.0, 6.0, 0.1] # MFBL_1
     # # di = [12.0, 0.2, 0.3] # NDI_1
     # bire_fs_dict["reference"] = {

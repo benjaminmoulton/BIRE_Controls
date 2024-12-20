@@ -1939,7 +1939,12 @@ class Aircraft:
                 predecimals=5,align=True,endln=True,print_report=report)
             repstr += report_latex(Lin_Model.B_full,"B_{full}",
                 predecimals=5,align=True,print_report=report)
-            # print(Lin_Model.B_full[5,1])
+            #
+            Bf_cond = ("B_'full' cond number = {:>10.3f}\n\n"
+                .format(np.linalg.cond(Lin_Model.B_full)))
+            if report:
+                print(Bf_cond,end="")
+            repstr += Bf_cond
             reorganize = False
             if reorganize:
                 # this doesn't include integrator states
@@ -1952,6 +1957,12 @@ class Aircraft:
                 predecimals=5,align=True,endln=True,print_report=report)
             repstr += report_latex((Lin_Model.B_min[rows,:])[:,cols],"B",
                 align=True,print_report=report)
+            #
+            B_cond = ("B        cond number = {:>10.3f}\n\n"
+                .format(np.linalg.cond((Lin_Model.B_min[rows,:])[:,cols])))
+            if report:
+                print(B_cond,end="")
+            repstr += B_cond
             # open-loop eigenvalues
             # report_latex(Lin_Model.A_eigs,r"\lambda_{ol}")#,decimals=16)
             repstr += report_latex(Lin_Model.A_min_eigs,r"\lambda_{ol}",
