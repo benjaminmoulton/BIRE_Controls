@@ -1136,7 +1136,7 @@ class BIREAero:
 
         # derivatives
         CLplate_a = sign(a) * sin(a) * (3.*cos(2.*a) + 1.)
-        CDplate_a = 3.*a/abs(a)*sin(abs(a))**0.5 if a != 0. else 0.
+        CDplate_a = 3.*a/abs(a)*sin(abs(a))**0.5*cos(abs(a)) if a != 0. else 0.
         Cmplate_a = -0.8*cos(a)
 
         # stall sigmoid derivative
