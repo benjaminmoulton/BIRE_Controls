@@ -52,6 +52,22 @@ class Propulsion:
         return THRUST
 
 
+    def T_der_V(self,POW,ALT,RMACH):
+        raise RuntimeError("Function not built -- SAL T_der_V")
+
+
+    def T_der_H(self,POW,ALT,RMACH):
+        raise RuntimeError("Function not built -- SAL T_der_H")
+
+
+    def T_der_tau(self,POW,ALT,RMACH):
+        raise RuntimeError("Function not built -- SAL T_der_H")
+
+    
+    def T_ders(self,POW,ALT,RMACH):
+        return self.T_der_V(POW,ALT,RMACH),self.T_der_H(POW,ALT,RMACH)
+
+
 def TGEAR(THTL):
     # Power command v. thtl. relationship
     if THTL <= 0.77:

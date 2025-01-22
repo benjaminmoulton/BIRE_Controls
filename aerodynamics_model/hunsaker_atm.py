@@ -57,6 +57,110 @@ def stdatm_english(H):
    a/=0.3048
    return Z,T,p,rho,a
 
+def moulton_stdatm_derivative_si(H):
+    """Given the geometric altitude (m), calculates and returns the
+    derivative of the
+    geopotential altitude (-), gravitational acceleration (1/s^2),
+    temperature (K/m), pressure (N/m^3), density (kg/m^4), and 
+    speed of sound (1/s) with respect to the geometric altitude.
+
+    Parameters
+    ----------
+    H : float
+        geometric altitude (m).
+    
+    Returns
+    -------
+    dZdH : float
+        derivative of geopotential altitude wrt geometric altitude (-).
+    
+    dGdH : float
+        derivative of gravitational acceleration wrt geometric altitude (1/s^2)
+    
+    dTdH : float
+        derivative of temperature wrt geometric altitude (K/m).
+    
+    dPdH : float
+        derivative of pressure wrt geometric altitude (N/m^3).
+    
+    dRdH : float
+        derivative of density wrt geometric altitude (kg/m^4).
+    
+    dAdH : float
+        derivative of speed of sound wrt geometric altitude (1/s).
+    """
+    # get current properties
+    Z,T,P,R,A = stdatm_si(H)
+    G = gravity_si(H)
+
+    # geopotential altitude derivative
+    dZdH = 40408473978756.0/(6356766.0+H)/(6356766.0+H)
+
+    # gravitation acceleration derivative
+    dGdH = -19.61329*dZdH/(6356766.0+H)
+
+    # temperature derivative
+    if   Z < 11000.0: dTdZ = -0.0065
+    elif Z < 20000.0: dTdZ = +0.0000
+    elif Z < 32000.0: dTdZ = +0.0010
+    elif Z < 47000.0: dTdZ = +0.0028
+    elif Z < 52000.0: dTdZ = +0.0000
+    elif Z < 61000.0: dTdZ = -0.0020
+    elif Z < 79000.0: dTdZ = -0.0040
+    elif Z < 90000.0: dTdZ = +0.0000
+    else            : dTdZ = +0.0000
+    dTdH = dTdZ*dZdH
+
+    # pressure derivative
+    dPdH = -G*P/287.0528/T
+
+    # density derivative
+    dRdH = dPdH/287.0528/T - P/287.0528/T/T*dTdH
+
+    # speed of sound derivative
+    dAdH = 10.023396629885498*T**-0.5*dTdH
+    
+    return dZdH,dGdH,dTdH,dPdH,dRdH,dAdH
+
+
+def moulton_stdatm_derivative_english(H):
+    """Given the geometric altitude (ft), calculates and returns the
+    derivative of the
+    geopotential altitude (-), gravitational acceleration (1/s^2), 
+    temperature (deg R/ft), pressure (lbf/ft^3), density (slugs/ft^4), and 
+    speed of sound (1/s) with respect to the geometric altitude.
+
+    Parameters
+    ----------
+    H : float
+        geometric altitude (ft).
+    
+    Returns
+    -------
+    dZdH : float
+        derivative of geopotential altitude wrt geometric altitude (-).
+    
+    dGdH : float
+        derivative of gravitational acceleration wrt geometric altitude (1/s^2)
+    
+    dTdH : float
+        derivative of temperature wrt geometric altitude (deg R/ft).
+    
+    dPdH : float
+        derivative of pressure wrt geometric altitude (lbf/ft^3).
+    
+    dRdH : float
+        derivative of density wrt geometric altitude (slugs/ft^4).
+    
+    dAdH : float
+        derivative of speed of sound wrt geometric altitude (1/s).
+    """
+
+    # calculate values
+    dZdH,dGdH,dTdH,dPdH,dRdH,dAdH = moulton_stdatm_derivative_si(H*0.3048)
+    return dZdH, dGdH, dTdH*0.54864, dPdH*0.006365880376103566, dRdH*0.000591409634642741, dAdH
+
+
 def atm_print():
    output = open('stdatmos_si.txt','w')
    output.write('     Geometric Altitude [m]   Geopotential Altitude [m]   Temperature [K]          Pressure [N/m^2]         Density [kg/m^3]         Speed of Sound [m/s]\n')

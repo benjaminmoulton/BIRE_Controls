@@ -4,6 +4,7 @@ import json
 from time import time as current_time
 from matplotlib import pyplot as plt
 from matplotlib.lines import Line2D
+from matplotlib.patches import FancyArrowPatch as mpl_arrow
 import mpl_toolkits.mplot3d.axes3d as ax3
 from matplotlib.animation import FuncAnimation
 from numpy import sign
@@ -13,8 +14,8 @@ from scipy.interpolate import interp1d
 from scipy.optimize import curve_fit
 from scipy.io import savemat, loadmat
 from math import pi, sin, cos, tan, exp, acos, asin, atan2, fmod
-from std_atm import stdatm_english
-from SAL_std_atm import SAL_stdatm_english
+from std_atm import stdatm_english,stdatm_derivative_english
+from SAL_std_atm import SAL_stdatm_english, SAL_stdatm_derivative_english
 from quat import quat_mult, euler_2_quat, quat_2_euler, quat_norm, \
     body_2_fixed, fixed_2_body, eulerdot_2_quatdot, quatdot_2_eulerdot
 from linearization import linearization as lin, Anderson_correction_der_coeff,\
@@ -43,7 +44,8 @@ from thrust import Propulsion
 from SAL_thrust import TGEAR,PDOT
 from inertia_model import InertiaModel
 from turbulence import ZeroTurbulence, DampedSinusoidGust, VonKarmanTurbulence
-from hunsaker_atm import stdatm_english as stdatm_hunsaker, gravity_english
+from hunsaker_atm import stdatm_english as stdatm_hunsaker, gravity_english, \
+    moulton_stdatm_derivative_english
 
 # def rwfn(file_name,sep="/"):
 #     if sysplat() == "Windows":
@@ -154,10 +156,13 @@ class Aircraft:
         #
         if self.atmosphere == "moulton":
             self.stdatm = stdatm_english
+            self.stdatm_der = stdatm_derivative_english
         elif self.atmosphere == "hunsaker":
             self.stdatm = self._stdatm_hunsaker
+            self.stdatm_der = moulton_stdatm_derivative_english
         elif self.atmosphere == "stevens_and_lewis":
             self.stdatm = SAL_stdatm_english
+            self.stdatm_der = SAL_stdatm_derivative_english
         else:
             raise TypeError("Incorrect atmosphere type specified.")
         self.states_file = simulation.get("states_output","states_output.txt")
@@ -189,6 +194,7 @@ class Aircraft:
             "use_fitted_thrust_model" : self.use_fitted_thrust,
             "use_rc_thrust_model" : self.is_rc,
             "atmosphere_model" : self.stdatm,
+            "atmosphere_derivative_model" : self.stdatm_der,
             "rho_index_in_model" : 4
         }
         if self.is_BIRE:
@@ -1059,7 +1065,10 @@ class Aircraft:
         a = atan2(Vw,Vu)
         V = (Vu * Vu + Vv * Vv + Vw * Vw)**0.5
         b = asin(Vv/V)
-        _,g,_,_,rho,sos = self.stdatm(-x[8])
+        if self.constant_density:
+            _,g,_,_,rho,sos = self.stdatm(self.H0)
+        else:
+            _,g,_,_,rho,sos = self.stdatm(-x[8])
         # ##############################
         # g = 32.12780074195162
         # ##############################
@@ -1085,6 +1094,10 @@ class Aircraft:
         # add in errors
         [CL, CS, CD, Cl, Cm, Cn] = [aero_results[i]*(1. + self.FM_errors[i]) \
             for i in range(len(aero_results))]
+        # # # # # # CHECKING NDI # # # # #
+        self.CFM = [CL, CS, CD, Cl, Cm, Cn]
+        self.Cparams = [a,b,pbar,qbar,rbar,ail,ele,rud]
+        # # # # # # CHECKING NDI # # # # #
 
         # thrust forces
         ## INTSTATE
@@ -1489,6 +1502,38 @@ class Aircraft:
         dx[3] = Im1[0][0]*rhs0 + Im1[0][1]*rhs1 + Im1[0][2]*rhs2
         dx[4] = Im1[1][0]*rhs0 + Im1[1][1]*rhs1 + Im1[1][2]*rhs2
         dx[5] = Im1[2][0]*rhs0 + Im1[2][1]*rhs1 + Im1[2][2]*rhs2
+        # # # # # # # # CHECKING NDI # # # # # #
+        # print("t =",t)
+        # vI = self.vI + self.v_cl*(t-self.v_t0)
+        # pd_Fx = (Fx - self.v_Fx)/Fx; print(pd_Fx, "" if abs(pd_Fx) < 1.0e-8 else Fx ) # Fx, self.v_Fx)
+        # pd_Fy = (Fy - self.v_Fy)/Fy; print(pd_Fy, "" if abs(pd_Fy) < 1.0e-8 else Fy ) # Fy, self.v_Fy)
+        # pd_Fz = (Fz - self.v_Fz)/Fz; print(pd_Fz, "" if abs(pd_Fz) < 1.0e-8 else Fz ) # Fz, self.v_Fz)
+        # pd_Mx = (Mx - self.v_Mx)/Mx; print(pd_Mx, "" if abs(pd_Mx) < 1.0e-8 else Mx ) # Mx, self.v_Mx)
+        # pd_My = (My - self.v_My)/My; print(pd_My, "" if abs(pd_My) < 1.0e-8 else My ) # My, self.v_My)
+        # pd_Mz = (Mz - self.v_Mz)/Mz; print(pd_Mz, "" if abs(pd_Mz) < 1.0e-8 else Mz ) # Mz, self.v_Mz)
+        # CL,CS,CD,Cl,Cm,Cn = self.CFM
+        # pd_CL = (CL - self.v_CL)/CL; print(pd_CL, "" if abs(pd_CL) < 1.0e-8 else CL ) # CL, self.v_CL)
+        # pd_CS = (CS - self.v_CS)/CS; print(pd_CS, "" if abs(pd_CS) < 1.0e-8 else CS ) # CS, self.v_CS)
+        # pd_CD = (CD - self.v_CD)/CD; print(pd_CD, "" if abs(pd_CD) < 1.0e-8 else CD ) # CD, self.v_CD)
+        # pd_Cl = (Cl - self.v_Cl)/Cl; print(pd_Cl, "" if abs(pd_Cl) < 1.0e-8 else Cl ) # Cl, self.v_Cl)
+        # pd_Cm = (Cm - self.v_Cm)/Cm; print(pd_Cm, "" if abs(pd_Cm) < 1.0e-8 else Cm ) # Cm, self.v_Cm)
+        # pd_Cn = (Cn - self.v_Cn)/Cn; print(pd_Cn, "" if abs(pd_Cn) < 1.0e-8 else Cn ) # Cn, self.v_Cn)
+        # aa,bb,pp,qq,rr,da,de,dB = self.Cparams
+        # v_aa,v_bb,v_pp,v_qq,v_rr,v_da,v_de,v_dB = self.v_params
+        # pd_aa = (aa - v_aa)/aa; print(pd_aa, "" if abs(pd_aa) < 1.0e-8 else aa ) # aa, v_aa)
+        # pd_bb = (bb - v_bb)/bb; print(pd_bb, "" if abs(pd_bb) < 1.0e-8 else bb ) # bb, v_bb)
+        # pd_pp = (pp - v_pp)/pp; print(pd_pp, "" if abs(pd_pp) < 1.0e-8 else pp ) # pp, v_pp)
+        # pd_qq = (qq - v_qq)/qq; print(pd_qq, "" if abs(pd_qq) < 1.0e-8 else qq ) # qq, v_qq)
+        # pd_rr = (rr - v_rr)/rr; print(pd_rr, "" if abs(pd_rr) < 1.0e-8 else rr ) # rr, v_rr)
+        # pd_da = (da - v_da)/da; print(pd_da, "" if abs(pd_da) < 1.0e-8 else da ) # da, v_da)
+        # pd_de = (de - v_de)/de; print(pd_de, "" if abs(pd_de) < 1.0e-8 else de ) # de, v_de)
+        # pd_dB = (dB - v_dB)/dB; print(pd_dB, "" if abs(pd_dB) < 1.0e-8 else dB ) # dB, v_dB)
+        # print("--------")
+        # print(dx[3], vI[0]) # self.z3_cl[0]) # self.v_cl[0]) # 
+        # print(dx[4], vI[1]) # self.z3_cl[1]) # self.v_cl[1]) # 
+        # print(dx[5], vI[2]) # self.z3_cl[2]) # self.v_cl[2]) # 
+        # print()
+        # # # # # # # CHECKING NDI # # # # # #
         
         ud = Vu
         vd = Vv
@@ -1755,14 +1800,23 @@ class Aircraft:
 
     def _rk4(self,t0,x0,dt):
 
+        # # # # # # # CHECKING NDI # # # # # #
+        self.v_t0 = t0*1.0
+        # # # # # # # CHECKING NDI # # # # # #
+
         # calculate k values
         ht = 0.5 * dt
-        k1 = self._dynamics(t0   ,x0        )
-        k2 = self._dynamics(t0+ht,x0 + ht*k1)
-        k3 = self._dynamics(t0+ht,x0 + ht*k2)
+        k1 = self._dynamics(t0   ,x0        ); v1 = self.v_cl*1.0 # CHECKING NDI
+        k2 = self._dynamics(t0+ht,x0 + ht*k1); v2 = self.v_cl*1.0 # CHECKING NDI
+        k3 = self._dynamics(t0+ht,x0 + ht*k2); v3 = self.v_cl*1.0 # CHECKING NDI
 
         # calculate derivatives
         ks = (k1 + 2.*(k2 + k3) + self._dynamics(t0+dt,x0 + dt*k3)) / 6.
+        # # # # # # # CHECKING NDI # # # # # #
+        v4 = self.v_cl*1.0
+        vf = (v1 + 2.*(v2 + v3) + v4) / 6.
+        self.vI = self.vI + vf*dt
+        # # # # # # # CHECKING NDI # # # # # #
 
         # update x1
         x1 = x0 + dt*ks
@@ -2689,7 +2743,7 @@ class Aircraft:
                 except:
                     posh = np.inf
                 info_txt+=("$e_{{{:<5s}}}$ & {:> 7.2f} & {:> 7.2f}" + \
-                    " & {:> 7.1f} \% \\\\ \n").format(
+                    r" & {:> 7.1f} \% \\\\ \n").format(
                     state_names[self.xPi_eul[i]],tris,tstl,posh*100.0
                     )
             print(info_txt,end="")
@@ -2902,8 +2956,12 @@ class Aircraft:
         Vxarr = (self.xarr[0]**2. + self.xarr[1]**2. + self.xarr[2]**2.)**0.5
         axarr = np.rad2deg(np.arctan2(self.xarr[2],self.xarr[0]))
         bxarr = np.rad2deg(np.arcsin(self.xarr[1]/Vxarr)) # experimental beta
-        Mxarr = np.array([Vxarr[i]/self.stdatm(-self.xarr[8,i])[5] \
-            for i in range(len(self.tarr))])
+        if self.constant_density:
+            Mxarr = np.array([Vxarr[i]/self.stdatm(self.H0)[5] \
+                for i in range(len(self.tarr))])
+        else:
+            Mxarr = np.array([Vxarr[i]/self.stdatm(-self.xarr[8,i])[5] \
+                for i in range(len(self.tarr))])
         self.aerox = np.array([Vxarr,Mxarr,axarr,bxarr])
 
         # ############################
@@ -3066,9 +3124,13 @@ class Aircraft:
         Vxarr = (self.xarr[0]**2. + self.xarr[1]**2. + self.xarr[2]**2.)**0.5
         axarr = np.rad2deg(np.arctan2(self.xarr[2],self.xarr[0]))
         bxarr = np.rad2deg(np.arcsin(self.xarr[1]/Vxarr)) # experimental beta
-        Mxarr = np.array([Vxarr[i]/self.stdatm(self.xarr[8,i])[5] \
-            for i in range(len(self.tarr))])
-        self.aerox = np.array([Vxarr,axarr,bxarr])
+        if self.constant_density:
+            Mxarr = np.array([Vxarr[i]/self.stdatm(self.H0)[5] \
+                for i in range(len(self.tarr))])
+        else:
+            Mxarr = np.array([Vxarr[i]/self.stdatm(-self.xarr[8,i])[5] \
+                for i in range(len(self.tarr))])
+        self.aerox = np.array([Vxarr,Mxarr,axarr,bxarr])
         Vzarr = (self.zarr[0]**2. + self.zarr[1]**2. + self.zarr[2]**2.)**0.5
         azarr = np.rad2deg(np.arctan2(self.zarr[2],self.zarr[0]))
         if self.run_unctrl:
@@ -3420,6 +3482,7 @@ class Aircraft:
         plot_input_limits_zoomed = kwargs.get("plot_input_limits_zoomed",True)
         plot_norm = kwargs.get("plot_norm",False) # True) # 
         plot_ul_bounds = kwargs.get("plot_upp_and_low",False)
+        color_the_sky = kwargs.get("color_the_sky",False)
 
         # determine where to save plots
         folder = kwargs.get("plotting_directory","")
@@ -3456,8 +3519,12 @@ class Aircraft:
         V_eq = (xhat_eq[0,:]**2. + xhat_eq[1,:]**2. +xhat_eq[2,:]**2.)**0.5
         a_eq = np.rad2deg(np.arctan2(xhat_eq[2,:],xhat_eq[0,:]))
         b_eq = np.rad2deg(np.arcsin(xhat_eq[1,:]/V_eq)) # experimental beta
-        M_eq = np.array([V_eq[ti]/self.stdatm(-xhat_eq[8,ti])[5] \
-            for ti in range(len(self.tarr))])
+        if self.constant_density:
+            M_eq = np.array([V_eq[ti]/self.stdatm(self.H0)[5] \
+                for ti in range(len(self.tarr))])
+        else:
+            M_eq = np.array([V_eq[ti]/self.stdatm(-xhat_eq[8,ti])[5] \
+                for ti in range(len(self.tarr))])
         aerohat_eq = np.array([V_eq,M_eq,a_eq,b_eq])
         fill = dict(fc="k",alpha=0.1,ec="none")#color="k",alpha=0.2,ec=None)
         fil2 = dict(fc="none",ec="0.5",lw=0.75)#color="k",alpha=0.2,ec=None)
@@ -3602,6 +3669,9 @@ class Aircraft:
             igrs_fig, igrs_axs = plt.subplots(1,1,**subdict)
         ctrl_fig, ctrl_axs = plt.subplots(4,1,**subdict)
         surf_fig, surf_axs = plt.subplots(1,1,**subdict)
+        path_fig, path_axs = plt.subplots(figsize=(3.25,2.4375),
+                                        #   constrained_layout=True,
+                                          subplot_kw={"projection":"3d"})
         if self.is_BIRE:
             de = r"e^B"
             dr = r"B"
@@ -4044,6 +4114,46 @@ class Aircraft:
             if deltas:
                 ornt_axs[0].legend()
 
+        # path plot
+        # put in kft
+        path = state[6:9]/1000.0
+        max_path = np.max(path,axis=1)
+        min_path = np.min(path,axis=1)
+        mid_path = (max_path - min_path)/2.0 + min_path
+        mid_dist = np.max( np.abs(max_path - min_path) )/2.0
+        path_axs.set_xlim(mid_path[0] - mid_dist, mid_path[0] + mid_dist)
+        path_axs.set_ylim(mid_path[1] - mid_dist, mid_path[1] + mid_dist)
+        path_axs.set_zlim(mid_path[2] - mid_dist, mid_path[2] + mid_dist)
+        # max_rate = np.max(np.abs(disturbs))
+        path_axs.set_xlabel(r'$x$-position ($x_f$), kft',labelpad=0.0)
+        path_axs.set_ylabel(r'$y$-position ($y_f$), kft',labelpad=0.0)
+        path_axs.zaxis.set_rotate_label(False)
+        path_axs.set_zlabel(r'$z$-position ($z_f$), kft',rotation=90,
+                            labelpad=0.0)
+        # plt.tight_layout()
+        gc = "0.75"
+        sky = "c" if color_the_sky else "0.7"
+        gnd = "g" if color_the_sky else "0.0"
+        path_axs.xaxis._axinfo["grid"].update({"linewidth":0.25, "color":gc})
+        path_axs.yaxis._axinfo["grid"].update({"linewidth":0.25, "color":gc})
+        path_axs.zaxis._axinfo["grid"].update({"linewidth":0.25, "color":gc})
+        #
+        path_axs.xaxis.set_pane_color(sky,alpha=0.2)
+        path_axs.yaxis.set_pane_color(sky,alpha=0.2)
+        path_axs.zaxis.set_pane_color(gnd,alpha=0.2)
+        #
+        path_axs.invert_zaxis()
+        path_axs.invert_yaxis()
+        # plot
+        path_axs.plot(path[0],path[1],path[2],c="k",ls="-")
+        path_axs.plot(path[0,0],path[1,0],path[2,0],c="k",ms=2.0,marker="o",
+                      mfc="w")
+        path_axs.plot(path[0,-1],path[1,-1],path[2,-1],c="k",ms=2.0,
+                      marker="^", # ">", # 
+                      mfc="w",mew=0.75)
+        path_axs.tick_params(pad=0.0)
+        path_axs.view_init(22.5,-135.0)
+
         # MFBL error plot
         self.returns_zero(tarr,xarr,uarr,subdict,xticks,perc_zoom,
             predir,format,savedict,not(save_states and not(plot_full)))
@@ -4445,6 +4555,7 @@ class Aircraft:
                 errs_fig.savefig(predir+"errors."+format,**savedict)
                 igrs_fig.savefig(predir+"integrator_states."+format,**savedict)
             posn_fig.savefig(predir+"position."+format,**savedict)
+            path_fig.savefig(predir+"flight_path."+format,**savedict)
             ornt_fig.savefig(predir+"orientation."+format,**savedict)
             ctrl_fig.savefig(predir+"inputs_all."+format,**savedict)
             surf_fig.savefig(predir+"inputs_surfaces."+format,**savedict)
@@ -4560,58 +4671,45 @@ class GainSchedulingAircraft(Aircraft):
         # invoke init of parent
         Aircraft.__init__(self,input_dict,folder_prefix = "stblz")
     
-
-    def _get_control(self,t,x,is_controlled=True,given_control=False,u="o"):
+    def _get_control(self,t,x,is_controlled=True,given_control=False,u="o",
+        force_control_to_inputs=False):
         # build control or pass through
         if not given_control:
-            if is_controlled:
+            if is_controlled and (not(self.enforce_update_frequency) or 
+                (self.enforce_update_frequency and self.can_update) ):
                 if self.use_quaternions:
                     x_euler = self.quat2euler_state(x)
                 else:
                     x_euler = x*1.
                     # reset angles
+                    ## INTSTATE
                     x_euler[9:12] = quat_2_euler(euler_2_quat(x_euler[9:12]))
-                # # # uncomment for gain scheduling
+                ##################################
                 try:
-                    # determine time for gain scheduling
-                    # tt = t/self.t_gs # 1. if t >= self.t_gs else
-                    # # 2 points
-                    # x_tr = (1. - tt)*self.Lin_Model.xhat_eq + \
-                    #     tt*self.Lin_Model2.xhat_eq
-                    # u_tr = (1. - tt)*self.Lin_Model.uhat_eq + \
-                    #     tt*self.Lin_Model2.uhat_eq
-                    # u = (1. - tt)*self.u_trim + tt*self.u_trim2
-                    # K_tr = (1. - tt)*self.Lin_Model.K + tt*self.Lin_Model2.K
-                    # # many points
-                    # x_tr = np.array([np.interp(\
-                    #     tt,self.t_tr,self.x_tr_euler[:,i], \
-                    #     # left=, \
-                    #     right=self.x_trim2_euler_slf[i] \
-                    #     ) \
-                    #     for i in self.Lin_Model.Cslice])
-                    # K_tr = [[np.interp(tt,self.t_tr,self.K_tr[:,j,i], \
-                    #     # left=,
-                    #     right=self.K_slf[j,i] \
-                    #     ) \
-                    #     for i in range(self.K_tr.shape[2])] \
-                    #     for j in range(self.K_tr.shape[1])]
-                    # # scipy nearest neighbor
                     x_tr = self.x_tr_itp(t)
                     u_tr = self.u_tr_itp(t)
                     K_tr = self.K_tr_itp(t)
                 except:
                     raise TypeError("Error! Error! Error!")
-                # x_tr = self.Lin_Model.xhat_eq*1.
-                # u_tr = self.Lin_Model.uhat_eq*1.
-                # K_tr = self.Lin_Model.K
                 #
                 u = self.u_trim*1.
-                # u_tr = self.Lin_Model.uhat_eq*1.
                 ###################################
                 Dx = x_euler[self.Lin_Model.Cslice] - x_tr
                 u[self.Lin_Model.Cuslice] = u_tr - np.matmul(K_tr,Dx)#*0.
                 if self.order > 0:
                     q = 1*self.use_quaternions
+                    ## INTSTATE
+                    inputs = x[12+q:16+q]*1.
+                else:
+                    inputs = u*1.
+                self.u_til_next_update = u*1.
+                self.can_update = False
+            elif is_controlled and self.enforce_update_frequency and \
+                not(self.can_update):
+                u = self.u_til_next_update*1.
+                if self.order > 0:
+                    q = 1*self.use_quaternions
+                    ## INTSTATE
                     inputs = x[12+q:16+q]*1.
                 else:
                     inputs = u*1.
@@ -4621,22 +4719,31 @@ class GainSchedulingAircraft(Aircraft):
             if u[0] == "o":
                 raise TypeError("Control input required.")
             else:
-                inputs = u*1.
+                if self.order > 0 and not force_control_to_inputs:
+                    q = 1*self.use_quaternions
+                    ## INTSTATE
+                    inputs = x[12+q:16+q]*1.
+                else:
+                    inputs = u*1.
         
         # limit actuators
         # #vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
+        # This ensures that the actuator state is limited in odeint runs
+        # While this is not totally accurate (the controller commands should 
+        # not be limited), it is conservative. This is because when the 
+        # actuator rate limit is not constraining in that it will command the 
+        # actuators to move slower than otherwise near the saturation limit.
         if self.integrator == "odeint":
             u = self._limit_input(u)
         # #^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-        inputs = self._limit_input(inputs)
-        if self.order > 0:
-            q = 1*self.use_quaternions
-            x[12+q:16+q] = np.array(inputs)*1.
         # quantize actuators
-        inputs = self._quantize_input(inputs)
+        inputs = self._quantize_input(self._limit_input(inputs))
+        if inputs[0] > self.max_da:
+            print(t,np.rad2deg(inputs[0]))
+        if inputs[0] < self.min_da:
+            print(t,np.rad2deg(inputs[0]))
 
         return u,inputs
-
 
 
 def damped_sinusoid(x,A,s,w,p):
@@ -4878,11 +4985,11 @@ def run_single_simulation(filename,rtdst_1sg=[20.,10.,5.],
     rerandomize_turbulence=False,
     final_time=15.0,track_check_time="o",time_step=0.01,
     initial_velocity=634.,
-    initial_mach="o",initial_altitude=15000.0,
+    initial_mach="o",initial_altitude=15000.0,initial_bank="o",
     start_climbing=False,end_gs_climbing=False,
     trim_climb=0.0,trim_bank=0.0,
     final_velocity="o",
-    final_mach="o",final_altitude="o",
+    final_mach="o",final_altitude="o",final_bank="o",
     t_gain_schedule=8.,gain_steps=10,trim_steps=2,
     interpolation_type="linear",
     include_stall_derivatives=False,
@@ -4907,6 +5014,8 @@ def run_single_simulation(filename,rtdst_1sg=[20.,10.,5.],
     
     if initial_mach == "o":
         initial_mach = initial_velocity / stdatm_english(initial_altitude)[5]
+    if initial_bank == "o":
+        initial_bank = trim_bank
     if final_altitude == "o":
         final_altitude = initial_altitude
     if final_mach == "o":
@@ -4914,15 +5023,15 @@ def run_single_simulation(filename,rtdst_1sg=[20.,10.,5.],
             final_mach = initial_mach
         else:
             final_mach = final_velocity / stdatm_english(final_altitude)[5]
+    if final_bank == "o":
+        final_bank = initial_bank
 
     # get linear nonlinear parameter and initialize aircraft
     simulation = input_dict.get("simulation",{})
-    # compressible = simulation["include_compressibility"] # True # False # 
-    stallable = True # False # 
     use_quats = True
     climb_mult = ( 1. + np.tan(np.deg2rad(trim_climb))**2. )**0.5
     simulation = {
-        "constant_density" : True,
+        "constant_density" : simulation.get("constant_density",False),
         "time_step[sec]" : time_step,
         "total_time[sec]" : final_time,
         "integrator" : simulation.get("integrator","odeint"),
@@ -4978,7 +5087,7 @@ def run_single_simulation(filename,rtdst_1sg=[20.,10.,5.],
     disturbance["turbulence_intensity"] = turbulence_setting
     input_dict["disturbance"] = disturbance
     #
-    if initial_altitude != final_altitude or initial_mach != final_mach:
+    if initial_altitude != final_altitude or initial_mach != final_mach or initial_bank != final_bank:
         aircraft = GainSchedulingAircraft(input_dict)
     else:
         aircraft = aircraft_class(input_dict)
@@ -5008,9 +5117,15 @@ def run_single_simulation(filename,rtdst_1sg=[20.,10.,5.],
         else:
             Y = (1. - perc)*trim_climb
         aircraft.climb_trim = np.deg2rad(Y)
-        H = perc*(final_altitude - initial_altitude)+initial_altitude
+        #
+        P = perc*(final_bank - initial_bank) + initial_bank
+        aircraft.phi_trim = np.deg2rad(P)
+        # change guess to stay at tail near-zero trim condition
+        guesses["u_guess"] = np.array([0.0,aircraft.max_de*1.0,0.0,0.0])
+        #
+        H = perc*(final_altitude - initial_altitude) + initial_altitude
         aircraft.H0 = H
-        M = perc*(final_mach - initial_mach)+initial_mach
+        M = perc*(final_mach - initial_mach) + initial_mach
         Y_mult = ( 1. + np.tan(np.deg2rad(Y))**2. )**0.5
         aircraft.V0 = M*aircraft.stdatm(H)[5]*Y_mult
         aircraft._initialize_state(run2=True,no_report=True,**guesses)
@@ -5021,16 +5136,17 @@ def run_single_simulation(filename,rtdst_1sg=[20.,10.,5.],
             print("steady climbing flight at " + \
                 "{} ft altitude, climb angle = {} deg".format(H,Y))
         else:
-            print("steady level flight at {} ft altitude".format(H))
+            print("steady flight at {} ft altitude".format(H))
         aircraft._report_trim_solution(aircraft.x_trim2,aircraft.u_trim2)
 
     aircraft.climb_trim = 0.
     aircraft.V0 = final_mach*aircraft.stdatm(final_altitude)[5]
+    aircraft.phi_trim = np.deg2rad(final_bank)
     aircraft._initialize_state(run2=True,no_report=True,**guesses)
     aircraft.x_trim2_euler_slf = aircraft.x_trim2_euler*1.
     aircraft.u_trim2_slf = aircraft.u_trim2*1.
     print()
-    print("steady level flight at {} ft altitude".format(final_altitude))
+    print("steady flight at {} ft altitude".format(final_altitude))
     aircraft._report_trim_solution(aircraft.x_trim2,aircraft.u_trim2)
     aircraft.x0 = aircraft.x_trim*1.
     aircraft.u = aircraft.u_trim*1.
@@ -5371,23 +5487,19 @@ def monte_carlo_perturbations(filename,rtdst_1sg=[5.,5.,5.],
 
     # get linear nonlinear parameter and initialize aircraft
     simulation = input_dict.get("simulation",{})
-    lim_u = True
-    lim_du = True
-    # compressible = simulation["include_compressibility"] # True # False # 
-    stallable = True # False # 
     simulation = {
-        "constant_density" : True,
+        "constant_density" : simulation.get("constant_density",False),
         "time_step[sec]" : time_step,
         "total_time[sec]" : final_time,
         "integrator" : simulation.get("integrator","odeint"),
         "nonlinear_dynamics" : True,
         "use_quaternions" : True,
         #############################
-        "limit_input" : lim_u,
-        "limit_input_rates" : lim_du,
+        "limit_input" : simulation.get("limit_input",True),
+        "limit_input_rates" : simulation.get("limit_input_rates",True),
         "include_compressibility" : simulation["include_compressibility"],
         "use_Anderson_corrections" : simulation["use_Anderson_corrections"],
-        "include_stall" : stallable,
+        "include_stall" : simulation["include_stall"],
         #############################
         "simulate_uncontrolled" : False,
         "use_fitted_thrust_model" : simulation["use_fitted_thrust_model"],
@@ -5828,10 +5940,11 @@ def monte_carlo_perturbations(filename,rtdst_1sg=[5.,5.,5.],
     ###################################
     start_time = current_time()
     ###################################
-    for i in range(num):
+    for i in range(num): # [42,44,228]: # 
         # create shift
         pshift = p_vals[i]
         qshift = q_vals[i]
+        print(np.rad2deg(qshift))
         rshift = r_vals[i]
         # add to shifting array
         dx0[3:6] = [pshift,qshift,rshift]
@@ -7157,6 +7270,36 @@ if __name__ == "__main__":
     base_dict = json.loads( open(base_file).read() )
     bire_dict = json.loads( open(bire_file).read() )
 
+    # # # # # # #
+    bire_dict["actuators"]["order"] = 0
+    bire = Aircraft(bire_dict)
+    cg = bire.cgshift
+    x = bire.x_trim_euler#[:-4]
+    # print(x)
+    u = bire.u_trim
+    np.set_printoptions(precision=16)
+    # test linearization
+
+    # dict of other vals
+    inputs = {
+        "compressible" : True,
+        "use_Anderson" : True,
+        "enforce_stall" : True,
+        "actuators_properties" : {
+            "order" : 0
+        },
+        "aero_model" : bire.aero_model,
+    }
+    rep_dec = 16 # 6 # 4 # 
+    BIRE_euler = lin(x,u,cg,use_quaternion=False,is_bire=True,**inputs)
+    rep2D(BIRE_euler.A[:,:],"  A  ",decimals=rep_dec)
+    rng = [0,1,2,3] # [2] # 
+    rep2D(BIRE_euler.B[:,rng],"  B  ",decimals=rep_dec)
+    A,B = BIRE_euler.build_jacobians(x,u,cg,True,bire._nonlinear_euler_dynamics)
+    rep2D(A[:,:],"  An ",decimals=rep_dec)
+    rep2D(B[:,rng],"  Bn ",decimals=rep_dec)
+    quit()
+
     plot_vars = {
         "show" : False,
         "plot_full" : True,
@@ -7434,10 +7577,34 @@ if __name__ == "__main__":
     run_bire["inertia_model_errors"] = bire_iner
     run_bire["FM_errors"] = bire_FM_errs
 
-    #### Troy Run
+    # #### Troy Run
+    # di = [0.0,0.0,0.0]
+    # base_dict["aircraft"]["CG_shift[ft]"] = \
+    #     bire_dict["aircraft"]["CG_shift[ft]"] = [1.0,0.0,0.0]
+    # base_dict["simulation"]["include_compressibility"] = \
+    #     bire_dict["simulation"]["include_compressibility"] = False # True # 
+    # base_dict["simulation"]["use_Anderson_corrections"] = \
+    #     bire_dict["simulation"]["use_Anderson_corrections"] = False # True # 
+    # base_dict["simulation"]["include_stall"] = \
+    #     bire_dict["simulation"]["include_stall"] = False # True # 
+    # base_dict["simulation"]["use_fitted_thrust_model"] = \
+    #     bire_dict["simulation"]["use_fitted_thrust_model"] = False
+    # run_base["skip_simulation"] = run_bire["skip_simulation"] = True
+    # run_base["save_data"] = run_bire["save_data"] = False
+    # run_base["trim_bank"] = run_bire["trim_bank"] = 0.0
+    # run_base["num"] = run_bire["num"] = 1
+    # run_base.pop("initial_mach"); run_bire.pop("initial_mach")
+    # run_base.pop("final_mach")  ; run_bire.pop("final_mach")
+    # run_base["initial_velocity"] = run_bire["initial_velocity"] = 350.0
+    # run_base["initial_altitude"] = run_bire["initial_altitude"] = 5000.0
+    # run_base["final_altitude"] = run_bire["final_altitude"] = 5000.0
+    # # run_single_simulation(bire_dict,rtdst_1sg=di,**run_bire,**plot_vars)
+    # run_single_simulation(base_dict,rtdst_1sg=di,**run_base,**plot_vars)
+    # quit()
+    # ####
+    #### Troy Run -- check effect of change in Cl,b -- 1/13/2025
     di = [0.0,0.0,0.0]
-    base_dict["aircraft"]["CG_shift[ft]"] = \
-        bire_dict["aircraft"]["CG_shift[ft]"] = [1.0,0.0,0.0]
+    base_dict["aircraft"]["CG_shift[ft]"] = [1.0,0.0,0.0]
     base_dict["simulation"]["include_compressibility"] = \
         bire_dict["simulation"]["include_compressibility"] = False # True # 
     base_dict["simulation"]["use_Anderson_corrections"] = \

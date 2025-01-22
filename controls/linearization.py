@@ -4,7 +4,7 @@ from matplotlib import pyplot as plt
 from math import pi, sin, cos, tan, exp, asin, atan, atan2
 from scipy.linalg import block_diag
 # from slycot.exceptions import SlycotArithmeticError
-from std_atm import stdatm_english
+from std_atm import stdatm_english, stdatm_derivative_english
 import warnings as wrn
 
 import sys
@@ -386,6 +386,8 @@ class linearization:
         #
         _,g,_,_, rho,sos = stdatm_english( -z)
         _,_,_,_,rho0,_   = stdatm_english(0.0)
+        _,g_H,_,_,R_H,S_H = stdatm_derivative_english( -z)
+        g_z = -g_H; rho_z = -R_H; sos_z = -S_H
         # #####################
         # g = 32.12780074195162
         # print("g =",g)
@@ -407,23 +409,23 @@ class linearization:
         hx, hy, hz = IM.angular_momentum_results()
         
         # component derivatives for later use
-        a_u = - w/(u**2. + w**2.)
-        a_w =   u/(u**2. + w**2.)
-        b_u = - u*v/V**2./(u**2. + w**2.)**0.5
-        b_v = (u**2. + w**2.)**0.5/V**2.
-        b_w = - v*w/V**2./(u**2. + w**2.)**0.5
+        a_u = - w/(u**2.0 + w**2.0)
+        a_w =   u/(u**2.0 + w**2.0)
+        b_u = - u*v/V**2.0/(u**2.0 + w**2.0)**0.5
+        b_v = (u**2.0 + w**2.0)**0.5/V**2.0
+        b_w = - v*w/V**2./(u**2.0 + w**2.0)**0.5
         #
-        pbar_u = - pbar*u/V**2.
-        pbar_v = - pbar*v/V**2.
-        pbar_w = - pbar*w/V**2.
+        pbar_u = - pbar*u/V**2.0
+        pbar_v = - pbar*v/V**2.0
+        pbar_w = - pbar*w/V**2.0
         #
-        qbar_u = - qbar*u/V**2.
-        qbar_v = - qbar*v/V**2.
-        qbar_w = - qbar*w/V**2.
+        qbar_u = - qbar*u/V**2.0
+        qbar_v = - qbar*v/V**2.0
+        qbar_w = - qbar*w/V**2.0
         #
-        rbar_u = - rbar*u/V**2.
-        rbar_v = - rbar*v/V**2.
-        rbar_w = - rbar*w/V**2.
+        rbar_u = - rbar*u/V**2.0
+        rbar_v = - rbar*v/V**2.0
+        rbar_w = - rbar*w/V**2.0
         #
         Q_u = rho*C.S_w*u
         Q_v = rho*C.S_w*v
@@ -434,6 +436,10 @@ class linearization:
         Qlat_u = Q_u*C.b_w
         Qlat_v = Q_v*C.b_w
         Qlat_w = Q_w*C.b_w
+        #
+        Q_z = 0.5*rho_z*V**2.0*C.S_w
+        Qlon_z = Q_z*C.c_w
+        Qlat_z = Q_z*C.b_w
 
         # state aerodynamic force derivatives
         if self.is_bire:
@@ -649,6 +655,7 @@ class linearization:
             M_v = 2.*v/V/sos
             M_w = 2.*w/V/sos
             M_p = M_q = M_r = 0.
+            M_z = -V/sos/sos*sos_z
 
             # incompressible coefficients
             [aCL, aCS, aCD, aCl, aCm, aCn] = \
@@ -714,6 +721,7 @@ class linearization:
             CL_p = CL_aCL*aCL_p + CL_M*M_p
             CL_q = CL_aCL*aCL_q + CL_M*M_q
             CL_r = CL_aCL*aCL_r + CL_M*M_r
+            CL_z =              + CL_M*M_z
             # side
             CS_u = CS_aCS*aCS_u + CS_M*M_u
             CS_v = CS_aCS*aCS_v + CS_M*M_v
@@ -721,6 +729,7 @@ class linearization:
             CS_p = CS_aCS*aCS_p + CS_M*M_p
             CS_q = CS_aCS*aCS_q + CS_M*M_q
             CS_r = CS_aCS*aCS_r + CS_M*M_r
+            CS_z =              + CS_M*M_z
             # drag
             CD_u = aCD_u
             CD_v = aCD_v
@@ -728,6 +737,7 @@ class linearization:
             CD_p = aCD_p
             CD_q = aCD_q
             CD_r = aCD_r
+            CD_z = 0.0
             # roll
             Cl_u = Cl_aCl*aCl_u + Cl_M*M_u
             Cl_v = Cl_aCl*aCl_v + Cl_M*M_v
@@ -735,6 +745,7 @@ class linearization:
             Cl_p = Cl_aCl*aCl_p + Cl_M*M_p
             Cl_q = Cl_aCl*aCl_q + Cl_M*M_q
             Cl_r = Cl_aCl*aCl_r + Cl_M*M_r
+            Cl_z =              + Cl_M*M_z
             # pitch
             Cm_u = Cm_aCm*aCm_u + Cm_M*M_u
             Cm_v = Cm_aCm*aCm_v + Cm_M*M_v
@@ -742,6 +753,7 @@ class linearization:
             Cm_p = Cm_aCm*aCm_p + Cm_M*M_p
             Cm_q = Cm_aCm*aCm_q + Cm_M*M_q
             Cm_r = Cm_aCm*aCm_r + Cm_M*M_r
+            Cm_z =              + Cm_M*M_z
             # yaw
             Cn_u = Cn_aCn*aCn_u + Cn_M*M_u
             Cn_v = Cn_aCn*aCn_v + Cn_M*M_v
@@ -749,6 +761,7 @@ class linearization:
             Cn_p = Cn_aCn*aCn_p + Cn_M*M_p
             Cn_q = Cn_aCn*aCn_q + Cn_M*M_q
             Cn_r = Cn_aCn*aCn_r + Cn_M*M_r
+            Cn_z =              + Cn_M*M_z
         else:
             # no compressibility
             CL_u,CL_v,CL_w,CL_p,CL_q,CL_r = aCL_u,aCL_v,aCL_w,aCL_p,aCL_q,aCL_r
@@ -757,29 +770,33 @@ class linearization:
             Cl_u,Cl_v,Cl_w,Cl_p,Cl_q,Cl_r = aCl_u,aCl_v,aCl_w,aCl_p,aCl_q,aCl_r
             Cm_u,Cm_v,Cm_w,Cm_p,Cm_q,Cm_r = aCm_u,aCm_v,aCm_w,aCm_p,aCm_q,aCm_r
             Cn_u,Cn_v,Cn_w,Cn_p,Cn_q,Cn_r = aCn_u,aCn_v,aCn_w,aCn_p,aCn_q,aCn_r
+            #
+            CL_z = CS_z = CD_z = Cl_z = Cm_z = Cn_z = 0.0
 
         # thrust state derivatives
-        TM = C.Prop
-        if self.use_simple_thrust:
-            T_V = tau*(rho/TM.rho_0)**TM.a*(TM.T1 + 2.*TM.T2*V)
-            T_z = 0.
-        else:
-            if tau <= 0.77:
-                P1 = 64.94*tau
-            else:
-                P1 = 217.38*tau - 117.38
-            # pull out each setting derivative
-            ia,_,iT1,iT2 = TM.idle_coefs(-z)
-            Tidle_V = (rho/TM.rho_0)**ia*(iT1 + 2.*iT2*V)
-            la,_,lT1,lT2 = TM.mil_coefs(-z)
-            Tmil_V = (rho/TM.rho_0)**la*(lT1 + 2.*lT2*V)
-            ma,_,mT1,mT2 = TM.max_coefs(-z)
-            Tmax_V = (rho/TM.rho_0)**ma*(mT1 + 2.*mT2*V)
-            # get full derivative
-            if P1 < 50.:
-                T_V = Tidle_V + (Tmil_V - Tidle_V)*P1/50.
-            else:
-                T_V = Tmil_V + (Tmax_V - Tmil_V)*(P1-50.)/50.
+        T_V,T_H = C.Prop.T_V_H_ders(tau,-z,V)
+        T_z = -T_H
+        # TM = C.Prop
+        # if self.use_simple_thrust:
+        #     T_V = tau*(rho/TM.rho_0)**TM.a*(TM.T1 + 2.*TM.T2*V)
+        #     T_z = 0.
+        # else:
+        #     if tau <= 0.77:
+        #         P1 = 64.94*tau
+        #     else:
+        #         P1 = 217.38*tau - 117.38
+        #     # pull out each setting derivative
+        #     ia,_,iT1,iT2 = TM.idle_coefs(-z)
+        #     Tidle_V = (rho/TM.rho_0)**ia*(iT1 + 2.*iT2*V)
+        #     la,_,lT1,lT2 = TM.mil_coefs(-z)
+        #     Tmil_V = (rho/TM.rho_0)**la*(lT1 + 2.*lT2*V)
+        #     ma,_,mT1,mT2 = TM.max_coefs(-z)
+        #     Tmax_V = (rho/TM.rho_0)**ma*(mT1 + 2.*mT2*V)
+        #     # get full derivative
+        #     if P1 < 50.:
+        #         T_V = Tidle_V + (Tmil_V - Tidle_V)*P1/50.
+        #     else:
+        #         T_V = Tmil_V + (Tmax_V - Tmil_V)*(P1-50.)/50.
 
         # body-fixed force derivatives wrt state
         CFx0 = CL*Sa - CS*Ca*Sb - CD*Ca*Cb
@@ -797,6 +814,8 @@ class linearization:
         Fx_q = Qdyn*(CL_q*Sa - CS_q*Ca*Sb - CD_q*Ca*Cb)
         Fx_r = Qdyn*(CL_r*Sa - CS_r*Ca*Sb - CD_r*Ca*Cb)
         #
+        Fx_z = Q_z*CFx0 + Qdyn*(CL_z*Sa - CS_z*Ca*Sb - CD_z*Ca*Cb) + T_z
+        #
         #
         CFy0 = CS*Cb - CD*Sb
         Fy_u = Q_u*CFy0 + Qdyn*(CS_u*Cb - CS*Sb*b_u - CD_u*Sb - CD*Cb*b_u)
@@ -806,6 +825,8 @@ class linearization:
         Fy_p = Qdyn*(CS_p*Cb - CD_p*Sb)
         Fy_q = Qdyn*(CS_q*Cb - CD_q*Sb)
         Fy_r = Qdyn*(CS_r*Cb - CD_r*Sb)
+        #
+        Fy_z = Q_z*CFy0 + Qdyn*(CS_z*Cb - CD_z*Sb)
         #
         #
         CFz0 = - CL*Ca - CS*Sa*Sb - CD*Sa*Cb
@@ -822,6 +843,8 @@ class linearization:
         Fz_p = Qdyn*(- CL_p*Ca - CS_p*Sa*Sb - CD_p*Sa*Cb)
         Fz_q = Qdyn*(- CL_q*Ca - CS_q*Sa*Sb - CD_q*Sa*Cb)
         Fz_r = Qdyn*(- CL_r*Ca - CS_r*Sa*Sb - CD_r*Sa*Cb)
+        #
+        Fz_z = Q_z*CFz0 + Qdyn*(- CL_z*Ca - CS_z*Sa*Sb - CD_z*Sa*Cb)
 
         # body-fixed moment derivatives wrt state
         Mx_u = Qlat_u*Cl + Qlat*Cl_u + Fy_u*Dzcg - Fz_u*Dycg
@@ -832,6 +855,8 @@ class linearization:
         Mx_q = Qlat*Cl_q + Fy_q*Dzcg - Fz_q*Dycg
         Mx_r = Qlat*Cl_r + Fy_r*Dzcg - Fz_r*Dycg
         #
+        Mx_z = Qlat_z*Cl + Qlat*Cl_z + Fy_z*Dzcg - Fz_z*Dycg
+        #
         #
         My_u = Qlon_u*Cm + Qlon*Cm_u + Fz_u*Dxcg - Fx_u*Dzcg
         My_v = Qlon_v*Cm + Qlon*Cm_v + Fz_v*Dxcg - Fx_v*Dzcg
@@ -841,6 +866,8 @@ class linearization:
         My_q = Qlon*Cm_q + Fz_q*Dxcg - Fx_q*Dzcg
         My_r = Qlon*Cm_r + Fz_r*Dxcg - Fx_r*Dzcg
         #
+        My_z = Qlon_z*Cm + Qlon*Cm_z + Fz_z*Dxcg - Fx_z*Dzcg
+        #
         #
         Mz_u = Qlat_u*Cn + Qlat*Cn_u + Fx_u*Dycg - Fy_u*Dxcg
         Mz_v = Qlat_v*Cn + Qlat*Cn_v + Fx_v*Dycg - Fy_v*Dxcg
@@ -849,6 +876,14 @@ class linearization:
         Mz_p = Qlat*Cn_p + Fx_p*Dycg - Fy_p*Dxcg
         Mz_q = Qlat*Cn_q + Fx_q*Dycg - Fy_q*Dxcg
         Mz_r = Qlat*Cn_r + Fx_r*Dycg - Fy_r*Dxcg
+        #
+        Mz_z = Qlat_z*Cn + Qlat*Cn_z + Fx_z*Dycg - Fy_z*Dxcg
+
+        # evaluate at condition
+        T = C.Prop.get_thrust(tau,-z,V)
+        Fx = Qdyn*CFx0 + T
+        Fy = Qdyn*CFy0
+        Fz = Qdyn*CFz0
 
         # initialize jacobian
         A = np.zeros((x_eq.shape[0],x_eq.shape[0]))
@@ -876,12 +911,24 @@ class linearization:
         ]
         #
         if self.use_quats:
+            A[0:3,rx] = [
+                [0.0, 0.0, g_z/IM.W*Fx + g/IM.W*Fx_z + g_z*2.0*(exez - e0ey)],
+                [0.0, 0.0, g_z/IM.W*Fy + g/IM.W*Fy_z + g_z*2.0*(eyez - e0ex)],
+                [0.0, 0.0, g_z/IM.W*Fz + g/IM.W*Fz_z + g_z*(ez2 + e02 - ex2 - ey2)]
+            ]
+            #
             A[0:3,rq] = 2.*g*np.array([
                 [-ey,  ez, -e0, ex],
                 [ ex,  e0,  ez, ey],
                 [ e0, -ex, -ey, ez]
             ])
         else:
+            A[0:3,rx] = [
+                [0.0, 0.0, g_z/IM.W*Fx + g/IM.W*Fx_z - g_z*St],
+                [0.0, 0.0, g_z/IM.W*Fy + g/IM.W*Fy_z + g_z*Sp*Ct],
+                [0.0, 0.0, g_z/IM.W*Fz + g/IM.W*Fz_z + g_z*Cp*Ct]
+            ]
+            #
             A[0:3,re] = g*np.array([
                 [    0.,    -Ct, 0.],
                 [ Cp*Ct, -Sp*St, 0.],
@@ -911,6 +958,12 @@ class linearization:
             [(Ixx - Iyy)*q + 2.*Ixy*p + Iyz*r, (Ixx - Iyy)*p - 2.*Ixy*q -Ixz*r,
                                             Iyz*p - Ixz*q]
         ])))
+        #
+        A[3:6,rx] = np.matmul(Iinv,np.array([
+            [0.0, 0.0, Mx_z],
+            [0.0, 0.0, My_z],
+            [0.0, 0.0, Mz_z]
+        ]))
         #
         if self.use_quats:
             A[6:9,rV] = [
@@ -1228,20 +1281,7 @@ class linearization:
                 Cl_dr,Cm_dr,Cn_dr = aCl_dr,aCm_dr,aCn_dr
             
         # thrust state derivatives
-        TM = C.Prop
-        if self.use_simple_thrust:
-            T_tau = (rho/TM.rho_0)**TM.a*(TM.T0 + TM.T1*V + TM.T2*V*V)
-        else:
-            # pull out each setting
-            Tmil = TM._T_mil(rho,V,-z)
-            if tau <= 0.77:
-                P1_tau = 64.94
-                Tidle = TM._T_idle(rho,V,-z)
-                T_tau = (Tmil - Tidle)*P1_tau/50.
-            else:
-                P1_tau = 217.38
-                Tmax = TM._T_max(rho,V,-z)
-                T_tau = (Tmax - Tmil)*P1_tau/50.
+        T_tau = C.Prop.T_der_tau(tau,-z,V)
 
         # body-fixed force derivatives wrt input
         Fx_da = Qdyn*(CL_da*Sa - CS_da*Ca*Sb - CD_da*Ca*Cb)
@@ -1291,7 +1331,7 @@ class linearization:
         Mz_tau = Fx_tau*Dycg
 
         # evaluate at condtion for Mx, My, Mz
-        T = TM.get_thrust(tau,-z,V)
+        T = C.Prop.get_thrust(tau,-z,V)
         #
         Fx = Qdyn*(CL*Sa - CS*Ca*Sb - CD*Ca*Cb) + T
         Fy = Qdyn*(CS*Cb - CD*Sb)
@@ -1865,10 +1905,10 @@ if __name__ == "__main__":
         }
     }
 
-    BASE_euler = linearization(x,u,cg,use_quaternion=False,is_bire=False,**inputs)
-    rep2D(BASE_euler.A[:,:],"  A  ",decimals=16)
-    rng = [0,1,2,3]
-    rep2D(BASE_euler.B[:,rng],"  B  ",decimals=16)
+    # BASE_euler = linearization(x,u,cg,use_quaternion=False,is_bire=False,**inputs)
+    # rep2D(BASE_euler.A[:,:],"  A  ",decimals=16)
+    # rng = [0,1,2,3]
+    # rep2D(BASE_euler.B[:,rng],"  B  ",decimals=16)
 
     # Christian trim result for the BIRE : 20 deg bank, 15000 ft, sct, M=0.6
     x = np.array([
@@ -1893,9 +1933,9 @@ if __name__ == "__main__":
     ])
 
     BIRE_euler = linearization(x,u,cg,use_quaternion=False,is_bire=True,**inputs)
-    rep2D(BIRE_euler.A[:,:],"  A  ",decimals=16)
+    rep2D(BIRE_euler.A[:,:],"  A  ",decimals=4) # 16)
     rng = [0,1,2,3] # [2] # 
-    rep2D(BIRE_euler.B[:,rng],"  B  ",decimals=16)
+    rep2D(BIRE_euler.B[:,rng],"  B  ",decimals=4) # 16)
     quit()
 
     x = np.append(x,1.0)

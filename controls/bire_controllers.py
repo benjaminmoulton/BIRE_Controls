@@ -121,17 +121,20 @@ class ProjectNonlinearDynamicInversionAircraft(Aircraft):
                     V = V_tot
                 elif aero == 2:
                     a = np.arctan2(V_zb_ss,V_xb_ss)
-                    b = sin(V_yb_ss/V_ss)
+                    b = asin(V_yb_ss/V_ss)
                     V     = V_tot
                 elif aero == 3:
                     a = np.arctan2(V_zb_ss,V_xb_ss)
-                    b = sin(V_yb_ss/V_ss)
+                    b = asin(V_yb_ss/V_ss)
                     V = V_xb
                 elif aero == 4:
                     a = np.arctan2(V_zb_ss,V_xb_ss)
-                    b = sin(V_yb_ss/V_ss)
+                    b = asin(V_yb_ss/V_ss)
                     V = V_ss
-                _,g,_,_,rho,sos = self.stdatm(-z_f)
+                if self.constant_density:
+                    _,g,_,_,rho,sos = self.stdatm(self.H0)
+                else:
+                    _,g,_,_,rho,sos = self.stdatm(-z_f)
                 pbar = p*self.bw/2./V
                 qbar = q*self.cw/2./V
                 rbar = r*self.bw/2./V
@@ -857,6 +860,7 @@ class NonlinearDynamicInversionAircraft(Aircraft):
         self.tracking = True
 
         self.use_transformed_controls = False # True # 
+        self.include_stall_in_LM = True # False # 
         
         self.u_til_next_update = self.u_trim*1.0
 
@@ -882,20 +886,22 @@ class NonlinearDynamicInversionAircraft(Aircraft):
         report_latex(K,"K_{lqr}")
         report_latex(K_eigs,r"\lambda_{cl \, lqr}")
 
-        zt = 0.7
-        wn = 10.0
-        pv = 1.0
-        k1 = pv*wn**2. # inte
-        k2 = wn**2. + 2.*wn*zt*pv# e
-        k3 = 2.*wn*zt + pv # edot
-        K1 = np.diag([k1]*3)#; K1[0,2] = k1**2.
-        K2 = np.diag([k2]*3)#; K2[0,2] = k2**2. # self.Lin_Model.KI
-        K3 = np.diag([k3]*3)#; K3[0,2] = k3**2. # self.Lin_Model.K
-        K = np.block([K1,K2,K3])
-        K_eigs,_ = np.linalg.eig(A - np.matmul(B,K))
-        report_latex(K,"K_{3ord}")
-        report_latex(K_eigs,r"\lambda_{cl \, 3ord}")
-        # quit()
+        self.vI = np.zeros((3,))
+
+        # zt = 0.7
+        # wn = 10.0
+        # pv = 1.0
+        # k1 = pv*wn**2. # inte
+        # k2 = wn**2. + 2.*wn*zt*pv# e
+        # k3 = 2.*wn*zt + pv # edot
+        # K1 = np.diag([k1]*3)#; K1[0,2] = k1**2.
+        # K2 = np.diag([k2]*3)#; K2[0,2] = k2**2. # self.Lin_Model.KI
+        # K3 = np.diag([k3]*3)#; K3[0,2] = k3**2. # self.Lin_Model.K
+        # K = np.block([K1,K2,K3])
+        # K_eigs,_ = np.linalg.eig(A - np.matmul(B,K))
+        # report_latex(K,"K_{3ord}")
+        # report_latex(K_eigs,r"\lambda_{cl \, 3ord}")
+        # # quit()
     
     def _get_control(self,t,x,is_controlled=True,given_control=False,u="o",
         force_control_to_inputs=False):
@@ -944,7 +950,7 @@ class NonlinearDynamicInversionAircraft(Aircraft):
                 aero = 0
                 if aero == 0:
                     a   = np.arctan2(V_zb,V_xb)
-                    b   = sin(V_yb/V_tot)
+                    b   = asin(V_yb/V_tot)
                     V = V_tot
                     V_xb_in = V_xb*1.; V_yb_in = V_yb*1.; V_zb_in = V_zb*1.
                 elif aero == 1:
@@ -954,19 +960,19 @@ class NonlinearDynamicInversionAircraft(Aircraft):
                     V_xb_in = V_tot*1.; V_yb_in = 0.0; V_zb_in = 0.0
                 elif aero == 2:
                     a = np.arctan2(V_zb_ss,V_xb_ss)
-                    b = sin(V_yb_ss/V_ss)
+                    b = asin(V_yb_ss/V_ss)
                     V     = V_tot
                     V_xb_in = V*np.cos(a)*np.cos(b)
                     V_yb_in = V          *np.sin(b)
                     V_zb_in = V*np.sin(a)*np.cos(b)
                 elif aero == 3:
                     a = np.arctan2(V_zb_ss,V_xb_ss)
-                    b = sin(V_yb_ss/V_ss)
+                    b = asin(V_yb_ss/V_ss)
                     V = V_xb
                     V_xb_in = V_xb*1.; V_yb_in = V_yb_ss*1.; V_zb_in = V_zb_ss*1.
                 elif aero == 4:
                     a = np.arctan2(V_zb_ss,V_xb_ss)
-                    b = sin(V_yb_ss/V_ss)
+                    b = asin(V_yb_ss/V_ss)
                     V = V_ss
                     V_xb_in = V_xb_ss*1.; V_yb_in = V_yb_ss*1.; V_zb_in = V_zb_ss*1.
                 #
@@ -975,6 +981,7 @@ class NonlinearDynamicInversionAircraft(Aircraft):
                 x_in[0:3] = [V_xb_in,V_yb_in,V_zb_in]
                 u_in = np.array([da,de,dB,tau])
                 self.Lin_Model.report = False
+                self.Lin_Model.include_stall = self.include_stall_in_LM
                 A,B = self.Lin_Model.build_jacobians(x_in, u_in,self.cgshift)
                 # # #
                 if self.use_transformed_controls:
@@ -992,7 +999,10 @@ class NonlinearDynamicInversionAircraft(Aircraft):
                     B[:,1] = Bo[:,1]*dedm + Bo[:,2]*dBdm
                     B[:,2] = Bo[:,1]*dedn + Bo[:,2]*dBdn
                 # # #
-                _,g,_,_,rho,sos = self.stdatm(-z_f)
+                if self.constant_density:
+                    _,g,_,_,rho,sos = self.stdatm(self.H0)
+                else:
+                    _,g,_,_,rho,sos = self.stdatm(-z_f)
                 pbar = p*self.bw/2./V
                 qbar = q*self.cw/2./V
                 rbar = r*self.bw/2./V
@@ -1091,6 +1101,21 @@ class NonlinearDynamicInversionAircraft(Aircraft):
                 K = self.K_FB_2
                 z = np.concatenate((z1,z2,z3))
                 v_cl = - np.matmul(K,z)
+                self.v_cl = v_cl*1.0
+                self.z3_cl = z3*1.0
+                self.v_Fx = Fx
+                self.v_Fy = Fy
+                self.v_Fz = Fz
+                self.v_Mx = Mxyz[0]
+                self.v_My = Mxyz[1]
+                self.v_Mz = Mxyz[2]
+                self.v_CL = CL
+                self.v_CS = CS
+                self.v_CD = CD
+                self.v_Cl = Cl
+                self.v_Cm = Cm
+                self.v_Cn = Cn
+                self.v_params = params
                 rest = - np.matmul(dfdw,z3) + np.matmul(dfddS,delta) \
                     + v_cl - np.matmul(dfdy,dy)
                 v = np.matmul(dfddSinv,rest)
@@ -1178,6 +1203,7 @@ class NonlinearDynamicInversionAircraft(Aircraft):
         # delta_x0[1] = - vy_trim + Vnew*sin(bnew)
         # delta_x0[2] = - vz_trim + Vnew*sin(anew)*cos(bnew)
         return delta_x0
+
 
 class TransformedNonlinearDynamicInversionAircraft(NonlinearDynamicInversionAircraft):
     """A default class for calculating and containing the mass properties of a
@@ -2330,7 +2356,10 @@ class ControlAllocationMomentAssignmentAircraft(Aircraft):
             V = np.sqrt(V_xb**2+V_yb**2+V_zb**2)
             a   = np.arctan2(V_zb,V_xb)
             b   = asin(V_yb/V)
-            _,g,_,_,rho,sos = self.stdatm(-z_f)
+            if self.constant_density:
+                _,g,_,_,rho,sos = self.stdatm(self.H0)
+            else:
+                _,g,_,_,rho,sos = self.stdatm(-z_f)
             M = V/sos
             pbar = p*self.bw/2./V
             qbar = q*self.cw/2./V
@@ -2494,7 +2523,7 @@ class ControlAllocationMomentAssignmentAircraft(Aircraft):
                 aero = 0
                 if aero == 0:
                     a   = np.arctan2(V_zb,V_xb)
-                    b   = sin(V_yb/V_tot)
+                    b   = asin(V_yb/V_tot)
                     V = V_tot
                     V_xb_in = V_xb*1.; V_yb_in = V_yb*1.; V_zb_in = V_zb*1.
                 elif aero == 1:
@@ -2504,23 +2533,26 @@ class ControlAllocationMomentAssignmentAircraft(Aircraft):
                     V_xb_in = V_tot*1.; V_yb_in = 0.0; V_zb_in = 0.0
                 elif aero == 2:
                     a = np.arctan2(V_zb_ss,V_xb_ss)
-                    b = sin(V_yb_ss/V_ss)
+                    b = asin(V_yb_ss/V_ss)
                     V     = V_tot
                     V_xb_in = V*np.cos(a)*np.cos(b)
                     V_yb_in = V          *np.sin(b)
                     V_zb_in = V*np.sin(a)*np.cos(b)
                 elif aero == 3:
                     a = np.arctan2(V_zb_ss,V_xb_ss)
-                    b = sin(V_yb_ss/V_ss)
+                    b = asin(V_yb_ss/V_ss)
                     V = V_xb
                     V_xb_in = V_xb*1.; V_yb_in = V_yb_ss*1.; V_zb_in = V_zb_ss*1.
                 elif aero == 4:
                     a = np.arctan2(V_zb_ss,V_xb_ss)
-                    b = sin(V_yb_ss/V_ss)
+                    b = asin(V_yb_ss/V_ss)
                     V = V_ss
                     V_xb_in = V_xb_ss*1.; V_yb_in = V_yb_ss*1.; V_zb_in = V_zb_ss*1.
                 #
-                _,g,_,_,rho,sos = self.stdatm(-z_f)
+                if self.constant_density:
+                    _,g,_,_,rho,sos = self.stdatm(self.H0)
+                else:
+                    _,g,_,_,rho,sos = self.stdatm(-z_f)
                 M = V/sos
                 pbar = p*self.bw/2./V
                 qbar = q*self.cw/2./V
@@ -3117,7 +3149,7 @@ class ControlAllocationMomentAssignmentActuatorsAircraft(Aircraft):
                 aero = 0
                 if aero == 0:
                     a   = np.arctan2(V_zb,V_xb)
-                    b   = sin(V_yb/V_tot)
+                    b   = asin(V_yb/V_tot)
                     V = V_tot
                     V_xb_in = V_xb*1.; V_yb_in = V_yb*1.; V_zb_in = V_zb*1.
                 elif aero == 1:
@@ -3127,23 +3159,26 @@ class ControlAllocationMomentAssignmentActuatorsAircraft(Aircraft):
                     V_xb_in = V_tot*1.; V_yb_in = 0.0; V_zb_in = 0.0
                 elif aero == 2:
                     a = np.arctan2(V_zb_ss,V_xb_ss)
-                    b = sin(V_yb_ss/V_ss)
+                    b = asin(V_yb_ss/V_ss)
                     V     = V_tot
                     V_xb_in = V*np.cos(a)*np.cos(b)
                     V_yb_in = V          *np.sin(b)
                     V_zb_in = V*np.sin(a)*np.cos(b)
                 elif aero == 3:
                     a = np.arctan2(V_zb_ss,V_xb_ss)
-                    b = sin(V_yb_ss/V_ss)
+                    b = asin(V_yb_ss/V_ss)
                     V = V_xb
                     V_xb_in = V_xb*1.; V_yb_in = V_yb_ss*1.; V_zb_in = V_zb_ss*1.
                 elif aero == 4:
                     a = np.arctan2(V_zb_ss,V_xb_ss)
-                    b = sin(V_yb_ss/V_ss)
+                    b = asin(V_yb_ss/V_ss)
                     V = V_ss
                     V_xb_in = V_xb_ss*1.; V_yb_in = V_yb_ss*1.; V_zb_in = V_zb_ss*1.
                 #
-                _,g,_,_,rho,sos = self.stdatm(-z_f)
+                if self.constant_density:
+                    _,g,_,_,rho,sos = self.stdatm(self.H0)
+                else:
+                    _,g,_,_,rho,sos = self.stdatm(-z_f)
                 M = V/sos
                 pbar = p*self.bw/2./V
                 qbar = q*self.cw/2./V
@@ -6386,9 +6421,9 @@ if __name__ == "__main__":
         run_base_rc["num"] = run_bire_rc["num"] = 1  
     ##
     # # # # # NDI_1
-    # run_bire_fs["aircraft_class"] = NonlinearDynamicInversionAircraft
-    # run_bire_fs["name_end"] = "_" + f1 + "_NDI_1" # nolim" # 
-    # # bire_fs_dict["aircraft"]["CG_shift[ft]"] = [+1.0,+0.0,0.0]
+    run_bire_fs["aircraft_class"] = NonlinearDynamicInversionAircraft
+    run_bire_fs["name_end"] = "_" + f1 + "_NDI_1_wS_nolim" # " # nolim" # 
+    # bire_fs_dict["aircraft"]["CG_shift[ft]"] = [+1.0,+0.0,0.0]
     # zt_p,zt_q,zt_r =  0.6 , 0.6 , 0.6
     # wn_p,wn_q,wn_r =  8.0 , 8.0 , 8.0 
     # #
@@ -6470,9 +6505,9 @@ if __name__ == "__main__":
     # bire_fs_dict["aircraft"]["CG_shift[ft]"] = [+1.0,+0.0,0.0]
     # # # # 
     # # # # 
-    run_bire_fs["aircraft_class"] = ITPIAircraft
-    run_bire_fs["name_end"] = "_" + f1 + "_ITPI_noABup" # 1" # 
-    bire_fs_dict["aircraft"]["CG_shift[ft]"] = [+1.0,+0.0,0.0] # [0.0,0.0,0.0] # 
+    # run_bire_fs["aircraft_class"] = ITPIAircraft
+    # run_bire_fs["name_end"] = "_" + f1 + "_ITPI_noABup" # 1" # 
+    # bire_fs_dict["aircraft"]["CG_shift[ft]"] = [+1.0,+0.0,0.0] # [0.0,0.0,0.0] # 
     # left_roll = True # False # 
     # run_bire_fs["time_step"] = 0.001
     # # run_bire_fs["initial_mach"] = run_bire_fs["final_mach"] = 0.614417991271374
@@ -6560,10 +6595,10 @@ if __name__ == "__main__":
     # q_tr_deg =  0.2007714630167870
     # r_tr_deg =  0.7492893006885849
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-    # # 20 deg bank fullscale BIRE
-    p_tr_deg = -0.0495920266927013
-    q_tr_deg =  0.3603497293338741
-    r_tr_deg =  0.9900527444514043
+    # # # 20 deg bank fullscale BIRE
+    # p_tr_deg = -0.0495920266927013
+    # q_tr_deg =  0.3603497293338741
+    # r_tr_deg =  0.9900527444514043
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
     # # # 25 deg bank fullscale BIRE
     # # (0) tail
@@ -6612,7 +6647,7 @@ if __name__ == "__main__":
     # p_tr_deg = -0.3294739663431505
     # q_tr_deg =  0.5582409457023837
     # r_tr_deg =  3.1659417263281258
-    p_bfcm = 10.0 # 20.0 # 30.0 # 5.0 # 50.0 # 40.0 # 60.0 # 15.0 # 7.5 # 
+    p_bfcm = 5.0 # 20.0 # 30.0 # 5.0 # 50.0 # 40.0 # 60.0 # 15.0 # 7.5 # 
     if "left_roll" in locals():
         p_bfcm = - p_bfcm
         p_tr_deg = - p_tr_deg
@@ -6640,8 +6675,7 @@ if __name__ == "__main__":
     }
     run_bire_fs["track_check_time"] = run_bire_rc["track_check_time"] = \
         run_bire_fs["final_time"] = run_bire_rc["final_time"] = tf # 200.0 # 10.0 # 
-    # bire_fs_dict["simulation"]["include_stall"] = \
-    #     bire_rc_dict["simulation"]["include_stall"] = False
+    # bire_fs_dict["simulation"]["include_stall"] = False
     # bire_fs_dict["simulation"]["include_compressibility"] = False
     bire_fs_dict["simulation"]["integrator"] = "rk4"
     # run_bire_fs["time_step"] = 0.001 # 0.0001 # 
@@ -6671,8 +6705,10 @@ if __name__ == "__main__":
     # elm = 50.0
     # bire_fs_dict["actuators"]["elevator"]["rate_limits[deg/s]"] = [-elm,elm]
     # # # # # # #
-    # bire_fs_dict["simulation"][      "limit_input"] = False # True # 
-    # bire_fs_dict["simulation"]["limit_input_rates"] = False # True # 
+    bire_fs_dict["simulation"][      "limit_input"] = False # True # 
+    bire_fs_dict["simulation"]["limit_input_rates"] = False # True # 
+    # # # # # #
+    # bire_fs_dict["simulation"]["constant_density"] = True # False # 
     # # # # # 
     # run_bire_fs["has_turbulence"] = True # False # 
     # run_bire_fs["has_model_error"] = False # True # 
@@ -6682,15 +6718,16 @@ if __name__ == "__main__":
     #     "deg2rad_states" : [3,4,5],
     #     "3" : [[0.0]*2]*2, "4" : [[0.0]*2]*2, "5" : [[0.0]*2]*2, "sct_on_5" : False
     # }
-    # bire_fs_dict["reference"] = {
-    #     "deg2rad_states" : [3,4,5],
-    #     "3" : [[ 0.0, p_tr_deg],[ 2.0, p_tr_deg]],
-    #     "4" : [[ 0.0, q_tr_deg],[ 2.0, q_tr_deg]],
-    #     "5" : [[ 0.0, r_tr_deg],[ 2.0, r_tr_deg]],
-    #     "sct_on_5" : False
-    # }
-    # run_bire_fs["trim_bank"] = 10.0 # 10.0 # 30.0 # 
+    bire_fs_dict["reference"] = {
+        "deg2rad_states" : [3,4,5],
+        "3" : [[ 0.0, p_tr_deg],[ 2.0, p_tr_deg]],
+        "4" : [[ 0.0, q_tr_deg],[ 2.0, q_tr_deg]],
+        "5" : [[ 0.0, r_tr_deg],[ 2.0, r_tr_deg]],
+        "sct_on_5" : False
+    }
+    run_bire_fs["trim_bank"] = 10.0 # 10.0 # 30.0 # 
     # di = [0.7,0.0,0.0] # [0.7772,0.0,0.0] # [1.0,1.0,1.0] # [0.0,0.0,0.0] # [0.1,0.1,0.1] # [10.0,10.0,10.0] # 
+    di = [0.0, 13.865063993911626, 0.0] # [0.0, 22.885874445692583, 0.0] # 
     # run_bire_fs[ "has_turbulence"] = True # False # 
     # # run_bire_fs["has_model_error"] = run_bire_rc["has_model_error"] = False # True # 
     # run_bire_fs["name_end"] += "_rt"
@@ -6737,33 +6774,33 @@ if __name__ == "__main__":
     # # monte_carlo_perturbations(base_rc_dict,rtdst_1sg=di,**run_base_rc,**plot_vars)
     # quit()
     # #
-    # # single axis pqr dispersions
-    # ###########################################################################
-    # bire_fs_dict["reference"] = {
-    #     "deg2rad_states" : [3,4,5],
-    #     "3" : [[ 0.0, p_tr_deg],[ 2.0, p_tr_deg]],
-    #     "4" : [[ 0.0, q_tr_deg],[ 2.0, q_tr_deg]],
-    #     "5" : [[ 0.0, r_tr_deg],[ 2.0, r_tr_deg]],
-    #     "sct_on_5" : False
-    # }
-    # run_bire_fs["trim_bank"] = 10.0
-    # run_bire_fs["num"] = 1000 # 3 # 10 # 
-    # plot_vars["format"] = "pdf" # "png" # 
-    # run_bire_fs["plot_ul_bounds"] = True
-    # ###########################################################################
-    # # disa = [[ 25.,0.,0.],[0., 10.,0.],[0.,0.,  1.1]] # DI_2
-    # # disa = [[ 25.,0.,0.],[0.,  3.,0.],[0.,0.,  1.1]] # LQT_1
-    # # disa = [[100.,0.,0.],[0., 60.,0.],[0.,0.,  3.0]] # LQRDI_1
+    # single axis pqr dispersions
+    ###########################################################################
+    bire_fs_dict["reference"] = {
+        "deg2rad_states" : [3,4,5],
+        "3" : [[ 0.0, p_tr_deg],[ 2.0, p_tr_deg]],
+        "4" : [[ 0.0, q_tr_deg],[ 2.0, q_tr_deg]],
+        "5" : [[ 0.0, r_tr_deg],[ 2.0, r_tr_deg]],
+        "sct_on_5" : False
+    }
+    run_bire_fs["trim_bank"] = 10.0
+    run_bire_fs["num"] = 1000 # 3 # 10 # 
+    plot_vars["format"] = "pdf" # "png" # 
+    run_bire_fs["plot_ul_bounds"] = True
+    ###########################################################################
+    # disa = [[ 25.,0.,0.],[0., 10.,0.],[0.,0.,  1.1]] # DI_2
+    # disa = [[ 25.,0.,0.],[0.,  3.,0.],[0.,0.,  1.1]] # LQT_1
+    # disa = [[100.,0.,0.],[0., 60.,0.],[0.,0.,  3.0]] # LQRDI_1
     # disa = [[ 10.,0.,0.],[0., 10.,0.],[0.,0.,  0.4]] # TPI_1
-    # # disa = [[  5.,0.,0.],[0., 20.,0.],[0.,0.,  0.2]] # MFBL_1
-    # # disa = [[ 15.,0.,0.],[0., 20.,0.],[0.,0.,  1.1]] # NDI_1
-    # for i in [1]: # [2]: # [0]: # range(3): # 
-    #     ds = disa[i]
-    #     monte_carlo_perturbations(bire_fs_dict,rtdst_1sg=ds,**run_bire_fs,**plot_vars)
-    #     # monte_carlo_perturbations(base_fs_dict,rtdst_1sg=ds,**run_base_fs,**plot_vars)
-    #     # monte_carlo_perturbations(bire_rc_dict,rtdst_1sg=ds,**run_bire_rc,**plot_vars)
-    #     # monte_carlo_perturbations(base_rc_dict,rtdst_1sg=ds,**run_base_rc,**plot_vars)
-    # quit()
+    # disa = [[  5.,0.,0.],[0., 20.,0.],[0.,0.,  0.2]] # MFBL_1
+    disa = [[ 15.,0.,0.],[0., 20.,0.],[0.,0.,  1.1]] # NDI_1
+    for i in [1]: # [2]: # [0]: # range(3): # 
+        ds = disa[i]
+        monte_carlo_perturbations(bire_fs_dict,rtdst_1sg=ds,**run_bire_fs,**plot_vars)
+        # monte_carlo_perturbations(base_fs_dict,rtdst_1sg=ds,**run_base_fs,**plot_vars)
+        # monte_carlo_perturbations(bire_rc_dict,rtdst_1sg=ds,**run_bire_rc,**plot_vars)
+        # monte_carlo_perturbations(base_rc_dict,rtdst_1sg=ds,**run_base_rc,**plot_vars)
+    quit()
     # #
     # # single FM error dispersions
     # names = ["CL","CS","CD","Cell","Cm","Cn"]
@@ -6877,3 +6914,5 @@ if __name__ == "__main__":
     #     # ],
     #     "sct_on_5" : False
     # }
+
+

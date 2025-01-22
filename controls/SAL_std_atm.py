@@ -58,6 +58,11 @@ def SAL_stdatm_english(ALT):
     quit()
     return Z,G,T,P,R,A
 
+def SAL_stdatm_derivative_english(ALT):
+    raise RuntimeError("This function is not written -- " + 
+                       "SAL_stdatm_derivative_english.")
+    return
+
 if __name__ == "__main__":
     # check values
     print(SAL_stdatm_english(15000.0))

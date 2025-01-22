@@ -31,6 +31,7 @@
     },
     "Cell": {
         "Cl_beta": -0.0786,
+        "Cl_beta_troycheckx1.5": -0.1179,
         "Cl_pbar": -0.3182,
         "Cl_rbar": 0.0469,
         "Cl_Lrbar": 0.1067,
