@@ -860,7 +860,8 @@ class NonlinearDynamicInversionAircraft(Aircraft):
         self.tracking = True
 
         self.use_transformed_controls = False # True # 
-        self.include_stall_in_LM = True # False # 
+        self.include_stall_ders_in_LM = True # False # 
+        self.include_alt_ders_in_LM = True # False # 
         
         self.u_til_next_update = self.u_trim*1.0
 
@@ -981,7 +982,8 @@ class NonlinearDynamicInversionAircraft(Aircraft):
                 x_in[0:3] = [V_xb_in,V_yb_in,V_zb_in]
                 u_in = np.array([da,de,dB,tau])
                 self.Lin_Model.report = False
-                self.Lin_Model.include_stall = self.include_stall_in_LM
+                self.Lin_Model.include_stall_ders = self.include_stall_ders_in_LM
+                self.Lin_Model.include_alt_ders = self.include_alt_ders_in_LM
                 A,B = self.Lin_Model.build_jacobians(x_in, u_in,self.cgshift)
                 # # #
                 if self.use_transformed_controls:
@@ -1043,6 +1045,8 @@ class NonlinearDynamicInversionAircraft(Aircraft):
                 # # thrust state derivatives
                 dfdw = A[3:6,3:6]
                 #
+                dfdzf = A[3:6,8:9]
+                #
                 dfdy = A[3:6,0:3]
                 #
                 # evaluate at condition for Mx, My, Mz
@@ -1072,10 +1076,14 @@ class NonlinearDynamicInversionAircraft(Aircraft):
                     -  N[0,1]*(N[1,0]*N[2,2] - N[1,2]*N[2,0]) \
                     +  N[0,2]*(N[1,0]*N[2,1] - N[1,1]*N[2,0])
                 dfddSinv = Nadj/Ndet
+                print()
+                print("t = {:>+8.3f}, Ndet = {:>+12.3e}".format(t,Ndet))
+                print(x)
                 #
                 ph,th,ps = x_euler[9],x_euler[10],x_euler[11]
                 cp = cos(ph); sp = sin(ph)
                 ct = cos(th); st = sin(th)
+                # cs = cos(ps); ss = sin(ps)
                 # u,v,w
                 ## INTSTATE
                 W = self.inertia_model.W
@@ -1084,6 +1092,7 @@ class NonlinearDynamicInversionAircraft(Aircraft):
                     g/W*Fy + g*sp*ct + p*V_zb - r*V_xb,
                     g/W*Fz + g*cp*ct + q*V_xb - p*V_yb
                 ])
+                dzf = np.matmul([[-st, sp*ct, cp*ct]],[V_xb,V_yb,V_zb])
                 # vectors
                 Mxyz = np.matmul(G,[ Cl, Cm, Cn ]) + np.array([
                     Fy * self.cgshift[2] - Fz * self.cgshift[1],
@@ -1117,7 +1126,7 @@ class NonlinearDynamicInversionAircraft(Aircraft):
                 self.v_Cn = Cn
                 self.v_params = params
                 rest = - np.matmul(dfdw,z3) + np.matmul(dfddS,delta) \
-                    + v_cl - np.matmul(dfdy,dy)
+                    + v_cl - np.matmul(dfdy,dy) - np.matmul(dfdzf,dzf)
                 v = np.matmul(dfddSinv,rest)
                 # # # #
                 if self.use_transformed_controls:
@@ -1141,6 +1150,7 @@ class NonlinearDynamicInversionAircraft(Aircraft):
                 # # # #
                 #
                 u = np.concatenate((v,[self.u_trim[3]]))
+                print(u)
 
 
                 # # integral states
@@ -6422,7 +6432,7 @@ if __name__ == "__main__":
     ##
     # # # # # NDI_1
     run_bire_fs["aircraft_class"] = NonlinearDynamicInversionAircraft
-    run_bire_fs["name_end"] = "_" + f1 + "_NDI_1_wS_nolim" # " # nolim" # 
+    run_bire_fs["name_end"] = "_" + f1 + "_NDI_1_wS_wA_nolim_2" # " # nolim" # 
     # bire_fs_dict["aircraft"]["CG_shift[ft]"] = [+1.0,+0.0,0.0]
     # zt_p,zt_q,zt_r =  0.6 , 0.6 , 0.6
     # wn_p,wn_q,wn_r =  8.0 , 8.0 , 8.0 
@@ -6590,7 +6600,7 @@ if __name__ == "__main__":
     q_tr_deg =  0.0886486340380570
     r_tr_deg =  0.5027513865539764
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-    # # 15 deg bank fullscale BIRE
+    # # # 15 deg bank fullscale BIRE
     # p_tr_deg = -0.0361891562749016
     # q_tr_deg =  0.2007714630167870
     # r_tr_deg =  0.7492893006885849
@@ -6647,7 +6657,7 @@ if __name__ == "__main__":
     # p_tr_deg = -0.3294739663431505
     # q_tr_deg =  0.5582409457023837
     # r_tr_deg =  3.1659417263281258
-    p_bfcm = 5.0 # 20.0 # 30.0 # 5.0 # 50.0 # 40.0 # 60.0 # 15.0 # 7.5 # 
+    p_bfcm = 5.0 # 15.0 # 20.0 # 10.0 # 30.0 # 50.0 # 40.0 # 60.0 # 7.5 # 
     if "left_roll" in locals():
         p_bfcm = - p_bfcm
         p_tr_deg = - p_tr_deg
@@ -6665,7 +6675,7 @@ if __name__ == "__main__":
     # p_time2 = p_time  + recover_time
     # p_time3 = p_time2 + transition_time
     t_end = 0.0 # 25.0 # 
-    tf = 10.0 # 5.0 # 6.9 # 3.0 # 10.0 # t_end + p_time + 8.0 #+ 10.0 # # + 20.0 # 
+    tf = 10.0 # 9.6 # 5.0 # 6.9 # 3.0 # 10.0 # t_end + p_time + 8.0 #+ 10.0 # # + 20.0 # 
     bire_fs_dict["reference"] = bire_rc_dict["reference"] = {
         "deg2rad_states" : [3,4,5],
         "3" : [ [0.0, 0.0], [t_zero, 0.0], [t_zero, p_comm], [p_time, p_comm], [p_time, p_tr_deg], ], # [p_time2, p_tr_deg ], [p_time2, p_comm], [p_time3, p_comm], [p_time3, p_tr_deg2] ], # [p_time + recover_time, p_tr_deg], [p_time + recover_time, -p_comm], [p_time + recover_time + transition_time, -p_comm], [p_time + recover_time + transition_time, 0.0], ], # 
@@ -6673,8 +6683,7 @@ if __name__ == "__main__":
         "5" : [ [0.0, 0.0], [t_zero, 0.0], [t_zero, r_comm], [p_time, r_comm], [p_time, r_tr_deg], ], # [p_time2, r_tr_deg ], [p_time2, r_comm], [p_time3, r_comm], [p_time3, r_tr_deg2] ], # [p_time + recover_time, r_tr_deg], [p_time + recover_time, -r_comm], [p_time + recover_time + transition_time, -r_comm], [p_time + recover_time + transition_time, 0.0], ], # 
         "sct_on_5" : False
     }
-    run_bire_fs["track_check_time"] = run_bire_rc["track_check_time"] = \
-        run_bire_fs["final_time"] = run_bire_rc["final_time"] = tf # 200.0 # 10.0 # 
+    run_bire_fs["track_check_time"] = run_bire_fs["final_time"] = tf # 200.0 # 10.0 # 
     # bire_fs_dict["simulation"]["include_stall"] = False
     # bire_fs_dict["simulation"]["include_compressibility"] = False
     bire_fs_dict["simulation"]["integrator"] = "rk4"
@@ -6726,11 +6735,11 @@ if __name__ == "__main__":
         "sct_on_5" : False
     }
     run_bire_fs["trim_bank"] = 10.0 # 10.0 # 30.0 # 
-    # di = [0.7,0.0,0.0] # [0.7772,0.0,0.0] # [1.0,1.0,1.0] # [0.0,0.0,0.0] # [0.1,0.1,0.1] # [10.0,10.0,10.0] # 
-    di = [0.0, 13.865063993911626, 0.0] # [0.0, 22.885874445692583, 0.0] # 
-    # run_bire_fs[ "has_turbulence"] = True # False # 
-    # # run_bire_fs["has_model_error"] = run_bire_rc["has_model_error"] = False # True # 
-    # run_bire_fs["name_end"] += "_rt"
+    # # di = [0.7,0.0,0.0] # [0.7772,0.0,0.0] # [1.0,1.0,1.0] # [0.0,0.0,0.0] # [0.1,0.1,0.1] # [10.0,10.0,10.0] # 
+    di = [0.0, 35.0994612584134487, 0.0] # 
+    # # run_bire_fs[ "has_turbulence"] = True # False # 
+    # # # run_bire_fs["has_model_error"] = run_bire_rc["has_model_error"] = False # True # 
+    # # run_bire_fs["name_end"] += "_rt"
     run_single_simulation(bire_fs_dict,rtdst_1sg=di,**run_bire_fs,**plot_vars)
     # run_single_simulation(base_fs_dict,rtdst_1sg=di,**run_base_fs,**plot_vars)
     # run_single_simulation(bire_rc_dict,rtdst_1sg=di,**run_bire_rc,**plot_vars)

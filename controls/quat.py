@@ -119,6 +119,7 @@ def quat_2_euler(e):
 
     # determine measurement comparison
     compare = e0*e2 - e1*e3
+    # print("compare =",compare)
 
     # if nose up
     if abs(compare) != 0.5: # not gimbal-locked

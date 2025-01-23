@@ -61,7 +61,8 @@ class linearization:
         self.compressible = kwargs.get("compressible", True)
         self.use_Anderson = kwargs.get("use_Anderson", True)
         self.enforce_stall = kwargs.get("enforce_stall", True)
-        self.include_stall = kwargs.get("include_stall",False)
+        self.include_stall_ders = kwargs.get("include_stall",False)
+        self.include_alt_ders = kwargs.get("include_altitude_derivatives",False)
         self.use_simple_thrust = kwargs.get("use_simple_thrust_model", False)
         self.given_aero_model = kwargs.get("aero_model","None")
         self.aero_dict = {
@@ -386,7 +387,10 @@ class linearization:
         #
         _,g,_,_, rho,sos = stdatm_english( -z)
         _,_,_,_,rho0,_   = stdatm_english(0.0)
-        _,g_H,_,_,R_H,S_H = stdatm_derivative_english( -z)
+        if self.include_alt_ders:
+            _,g_H,_,_,R_H,S_H = stdatm_derivative_english( -z)
+        else:
+            g_H = R_H = S_H = 0.0
         g_z = -g_H; rho_z = -R_H; sos_z = -S_H
         # #####################
         # g = 32.12780074195162
@@ -589,7 +593,7 @@ class linearization:
         [CL, CS, CD, Cl, Cm, Cn] = C.aero_results(*params,M=M,**self.aero_dict)
 
         # Stall corrections
-        if self.include_stall and self.enforce_stall: # False: # 
+        if self.include_stall_ders and self.enforce_stall: # False: # 
 
             # unstallable incompressible coefficients
             [oCL, _, oCD, _, oCm, _] = \
@@ -775,7 +779,10 @@ class linearization:
 
         # thrust state derivatives
         T_V,T_H = C.Prop.T_V_H_ders(tau,-z,V)
-        T_z = -T_H
+        if self.include_alt_ders:
+            T_z = -T_H
+        else:
+            T_z = 0.0
         # TM = C.Prop
         # if self.use_simple_thrust:
         #     T_V = tau*(rho/TM.rho_0)**TM.a*(TM.T1 + 2.*TM.T2*V)
@@ -1147,7 +1154,7 @@ class linearization:
         [CL, CS, CD, Cl, Cm, Cn] = C.aero_results(*params,M=M,**self.aero_dict)
 
         # Stall corrections
-        if self.include_stall and self.enforce_stall: # False: # 
+        if self.include_stall_ders and self.enforce_stall: # False: # 
 
             # pull out stall model coeff
             _,_,_,S,_,_,_,_ = \

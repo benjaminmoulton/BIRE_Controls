@@ -1094,10 +1094,10 @@ class Aircraft:
         # add in errors
         [CL, CS, CD, Cl, Cm, Cn] = [aero_results[i]*(1. + self.FM_errors[i]) \
             for i in range(len(aero_results))]
-        # # # # # # CHECKING NDI # # # # #
-        self.CFM = [CL, CS, CD, Cl, Cm, Cn]
-        self.Cparams = [a,b,pbar,qbar,rbar,ail,ele,rud]
-        # # # # # # CHECKING NDI # # # # #
+        # # # # # # # CHECKING NDI # # # # #
+        # self.CFM = [CL, CS, CD, Cl, Cm, Cn]
+        # self.Cparams = [a,b,pbar,qbar,rbar,ail,ele,rud]
+        # # # # # # # CHECKING NDI # # # # #
 
         # thrust forces
         ## INTSTATE
@@ -1502,38 +1502,39 @@ class Aircraft:
         dx[3] = Im1[0][0]*rhs0 + Im1[0][1]*rhs1 + Im1[0][2]*rhs2
         dx[4] = Im1[1][0]*rhs0 + Im1[1][1]*rhs1 + Im1[1][2]*rhs2
         dx[5] = Im1[2][0]*rhs0 + Im1[2][1]*rhs1 + Im1[2][2]*rhs2
+        # # # # # # # # # CHECKING NDI # # # # # #
+        # if t < 2.0:
+        #     print("t =",t)
+        #     vI = self.vI + self.v_cl*(t-self.v_t0)
+        #     # pd_Fx = (Fx - self.v_Fx)/Fx; print(pd_Fx, "" if abs(pd_Fx) < 1.0e-8 else Fx ) # Fx, self.v_Fx)
+        #     # pd_Fy = (Fy - self.v_Fy)/Fy; print(pd_Fy, "" if abs(pd_Fy) < 1.0e-8 else Fy ) # Fy, self.v_Fy)
+        #     # pd_Fz = (Fz - self.v_Fz)/Fz; print(pd_Fz, "" if abs(pd_Fz) < 1.0e-8 else Fz ) # Fz, self.v_Fz)
+        #     # pd_Mx = (Mx - self.v_Mx)/Mx; print(pd_Mx, "" if abs(pd_Mx) < 1.0e-8 else Mx ) # Mx, self.v_Mx)
+        #     # pd_My = (My - self.v_My)/My; print(pd_My, "" if abs(pd_My) < 1.0e-8 else My ) # My, self.v_My)
+        #     # pd_Mz = (Mz - self.v_Mz)/Mz; print(pd_Mz, "" if abs(pd_Mz) < 1.0e-8 else Mz ) # Mz, self.v_Mz)
+        #     # CL,CS,CD,Cl,Cm,Cn = self.CFM
+        #     # pd_CL = (CL - self.v_CL)/CL; print(pd_CL, "" if abs(pd_CL) < 1.0e-8 else CL ) # CL, self.v_CL)
+        #     # pd_CS = (CS - self.v_CS)/CS; print(pd_CS, "" if abs(pd_CS) < 1.0e-8 else CS ) # CS, self.v_CS)
+        #     # pd_CD = (CD - self.v_CD)/CD; print(pd_CD, "" if abs(pd_CD) < 1.0e-8 else CD ) # CD, self.v_CD)
+        #     # pd_Cl = (Cl - self.v_Cl)/Cl; print(pd_Cl, "" if abs(pd_Cl) < 1.0e-8 else Cl ) # Cl, self.v_Cl)
+        #     # pd_Cm = (Cm - self.v_Cm)/Cm; print(pd_Cm, "" if abs(pd_Cm) < 1.0e-8 else Cm ) # Cm, self.v_Cm)
+        #     # pd_Cn = (Cn - self.v_Cn)/Cn; print(pd_Cn, "" if abs(pd_Cn) < 1.0e-8 else Cn ) # Cn, self.v_Cn)
+        #     # aa,bb,pp,qq,rr,da,de,dB = self.Cparams
+        #     # v_aa,v_bb,v_pp,v_qq,v_rr,v_da,v_de,v_dB = self.v_params
+        #     # pd_aa = (aa - v_aa)/aa; print(pd_aa, "" if abs(pd_aa) < 1.0e-8 else aa ) # aa, v_aa)
+        #     # pd_bb = (bb - v_bb)/bb; print(pd_bb, "" if abs(pd_bb) < 1.0e-8 else bb ) # bb, v_bb)
+        #     # pd_pp = (pp - v_pp)/pp; print(pd_pp, "" if abs(pd_pp) < 1.0e-8 else pp ) # pp, v_pp)
+        #     # pd_qq = (qq - v_qq)/qq; print(pd_qq, "" if abs(pd_qq) < 1.0e-8 else qq ) # qq, v_qq)
+        #     # pd_rr = (rr - v_rr)/rr; print(pd_rr, "" if abs(pd_rr) < 1.0e-8 else rr ) # rr, v_rr)
+        #     # pd_da = (da - v_da)/da; print(pd_da, "" if abs(pd_da) < 1.0e-8 else da ) # da, v_da)
+        #     # pd_de = (de - v_de)/de; print(pd_de, "" if abs(pd_de) < 1.0e-8 else de ) # de, v_de)
+        #     # pd_dB = (dB - v_dB)/dB; print(pd_dB, "" if abs(pd_dB) < 1.0e-8 else dB ) # dB, v_dB)
+        #     # print("--------")
+        #     print(dx[3], self.z3_cl[0]) # vI[0]) # self.v_cl[0]) # 
+        #     print(dx[4], self.z3_cl[1]) # vI[1]) # self.v_cl[1]) # 
+        #     print(dx[5], self.z3_cl[2]) # vI[2]) # self.v_cl[2]) # 
+        #     print()
         # # # # # # # # CHECKING NDI # # # # # #
-        # print("t =",t)
-        # vI = self.vI + self.v_cl*(t-self.v_t0)
-        # pd_Fx = (Fx - self.v_Fx)/Fx; print(pd_Fx, "" if abs(pd_Fx) < 1.0e-8 else Fx ) # Fx, self.v_Fx)
-        # pd_Fy = (Fy - self.v_Fy)/Fy; print(pd_Fy, "" if abs(pd_Fy) < 1.0e-8 else Fy ) # Fy, self.v_Fy)
-        # pd_Fz = (Fz - self.v_Fz)/Fz; print(pd_Fz, "" if abs(pd_Fz) < 1.0e-8 else Fz ) # Fz, self.v_Fz)
-        # pd_Mx = (Mx - self.v_Mx)/Mx; print(pd_Mx, "" if abs(pd_Mx) < 1.0e-8 else Mx ) # Mx, self.v_Mx)
-        # pd_My = (My - self.v_My)/My; print(pd_My, "" if abs(pd_My) < 1.0e-8 else My ) # My, self.v_My)
-        # pd_Mz = (Mz - self.v_Mz)/Mz; print(pd_Mz, "" if abs(pd_Mz) < 1.0e-8 else Mz ) # Mz, self.v_Mz)
-        # CL,CS,CD,Cl,Cm,Cn = self.CFM
-        # pd_CL = (CL - self.v_CL)/CL; print(pd_CL, "" if abs(pd_CL) < 1.0e-8 else CL ) # CL, self.v_CL)
-        # pd_CS = (CS - self.v_CS)/CS; print(pd_CS, "" if abs(pd_CS) < 1.0e-8 else CS ) # CS, self.v_CS)
-        # pd_CD = (CD - self.v_CD)/CD; print(pd_CD, "" if abs(pd_CD) < 1.0e-8 else CD ) # CD, self.v_CD)
-        # pd_Cl = (Cl - self.v_Cl)/Cl; print(pd_Cl, "" if abs(pd_Cl) < 1.0e-8 else Cl ) # Cl, self.v_Cl)
-        # pd_Cm = (Cm - self.v_Cm)/Cm; print(pd_Cm, "" if abs(pd_Cm) < 1.0e-8 else Cm ) # Cm, self.v_Cm)
-        # pd_Cn = (Cn - self.v_Cn)/Cn; print(pd_Cn, "" if abs(pd_Cn) < 1.0e-8 else Cn ) # Cn, self.v_Cn)
-        # aa,bb,pp,qq,rr,da,de,dB = self.Cparams
-        # v_aa,v_bb,v_pp,v_qq,v_rr,v_da,v_de,v_dB = self.v_params
-        # pd_aa = (aa - v_aa)/aa; print(pd_aa, "" if abs(pd_aa) < 1.0e-8 else aa ) # aa, v_aa)
-        # pd_bb = (bb - v_bb)/bb; print(pd_bb, "" if abs(pd_bb) < 1.0e-8 else bb ) # bb, v_bb)
-        # pd_pp = (pp - v_pp)/pp; print(pd_pp, "" if abs(pd_pp) < 1.0e-8 else pp ) # pp, v_pp)
-        # pd_qq = (qq - v_qq)/qq; print(pd_qq, "" if abs(pd_qq) < 1.0e-8 else qq ) # qq, v_qq)
-        # pd_rr = (rr - v_rr)/rr; print(pd_rr, "" if abs(pd_rr) < 1.0e-8 else rr ) # rr, v_rr)
-        # pd_da = (da - v_da)/da; print(pd_da, "" if abs(pd_da) < 1.0e-8 else da ) # da, v_da)
-        # pd_de = (de - v_de)/de; print(pd_de, "" if abs(pd_de) < 1.0e-8 else de ) # de, v_de)
-        # pd_dB = (dB - v_dB)/dB; print(pd_dB, "" if abs(pd_dB) < 1.0e-8 else dB ) # dB, v_dB)
-        # print("--------")
-        # print(dx[3], vI[0]) # self.z3_cl[0]) # self.v_cl[0]) # 
-        # print(dx[4], vI[1]) # self.z3_cl[1]) # self.v_cl[1]) # 
-        # print(dx[5], vI[2]) # self.z3_cl[2]) # self.v_cl[2]) # 
-        # print()
-        # # # # # # # CHECKING NDI # # # # # #
         
         ud = Vu
         vd = Vv
@@ -1780,7 +1781,13 @@ class Aircraft:
 
         # check that we have not hit gimbal lock
         if self.use_quaternions:
-            euler = self._euler_angles(x)
+            try:
+                euler = self._euler_angles(x)
+            except:
+                print("t =",t)
+                print("quat =",x[9:13])
+                print("x =",x)
+                quit()
             if euler[1] > 1.3962634015954636: # 80dg # gimbal lock, raise error
                 self.t_gimbal = t
                 raise ValueError("Hit gimbal lock t = {:> 8.4f}".format(t))
@@ -1800,23 +1807,23 @@ class Aircraft:
 
     def _rk4(self,t0,x0,dt):
 
-        # # # # # # # CHECKING NDI # # # # # #
-        self.v_t0 = t0*1.0
-        # # # # # # # CHECKING NDI # # # # # #
+        # # # # # # # # CHECKING NDI # # # # # #
+        # self.v_t0 = t0*1.0
+        # # # # # # # # CHECKING NDI # # # # # #
 
         # calculate k values
         ht = 0.5 * dt
-        k1 = self._dynamics(t0   ,x0        ); v1 = self.v_cl*1.0 # CHECKING NDI
-        k2 = self._dynamics(t0+ht,x0 + ht*k1); v2 = self.v_cl*1.0 # CHECKING NDI
-        k3 = self._dynamics(t0+ht,x0 + ht*k2); v3 = self.v_cl*1.0 # CHECKING NDI
+        k1 = self._dynamics(t0   ,x0        )#; v1 = self.v_cl*1.0 # CHECKING NDI
+        k2 = self._dynamics(t0+ht,x0 + ht*k1)#; v2 = self.v_cl*1.0 # CHECKING NDI
+        k3 = self._dynamics(t0+ht,x0 + ht*k2)#; v3 = self.v_cl*1.0 # CHECKING NDI
 
         # calculate derivatives
         ks = (k1 + 2.*(k2 + k3) + self._dynamics(t0+dt,x0 + dt*k3)) / 6.
-        # # # # # # # CHECKING NDI # # # # # #
-        v4 = self.v_cl*1.0
-        vf = (v1 + 2.*(v2 + v3) + v4) / 6.
-        self.vI = self.vI + vf*dt
-        # # # # # # # CHECKING NDI # # # # # #
+        # # # # # # # # CHECKING NDI # # # # # #
+        # v4 = self.v_cl*1.0
+        # vf = (v1 + 2.*(v2 + v3) + v4) / 6.
+        # self.vI = self.vI + vf*dt
+        # # # # # # # # CHECKING NDI # # # # # #
 
         # update x1
         x1 = x0 + dt*ks
@@ -1881,6 +1888,7 @@ class Aircraft:
     def _build_controller(self,x_tr="o",u_tr="o",report=True,
         save_matrices=True,mrrr=None,mrrc=None,drop_actrs=True,run_freq=True,
         include_stall_derivatives=False,
+        include_altitude_derivatives=False,
         use_numerical_linearization=False,numerical_dynamics=None,
         use_VAB_format=False, turn_off_warnings=False,
         run2=False,
@@ -1926,6 +1934,7 @@ class Aircraft:
             use_Anderson = self.use_anderson,
             enforce_stall = self.has_stall,
             include_stall = include_stall_derivatives,
+            include_altitude_derivatives = include_altitude_derivatives,
             controller_type = self.controller_type,
             integral_states = self.xIi_eul,
             principal_states = self.xPi_eul,
@@ -2765,6 +2774,7 @@ class Aircraft:
     def run_simulation(self,report_controller=False,report_trim=True,
         save_matrices=True,mrrr=None,mrrc=None,delta_x0=None,
         include_stall_derivatives=False,
+        include_altitude_derivatives=False,
         actr_warm_start=False,report_simulation=True,
         report_simulation_deltas=False):
 
@@ -2775,6 +2785,7 @@ class Aircraft:
             self._build_controller(report=report_controller,
                 save_matrices=save_matrices,mrrr=mrrr,mrrc=mrrc,
                 include_stall_derivatives=include_stall_derivatives,
+                include_altitude_derivatives = include_altitude_derivatives,
                 run_freq=False)
         
         if report_trim:
@@ -2865,9 +2876,10 @@ class Aircraft:
         # get time
         start = current_time()
 
+        # ts = np.linspace(0.0,self.tf,num=self.n_steps,endpoint=False)
+        ts = np.arange(self.n_steps)*self.dt
+        self.tarr = ts*1.
         if self.integrator == "odeint":
-            ts = np.linspace(0.,self.tf,num=self.n_steps,endpoint=False)
-            self.tarr = ts*1.
             try:
                 xs = odeint(self._dynamics,x0,ts,tfirst=True,
                     atol=1e-10,rtol=1e-10
@@ -2900,12 +2912,6 @@ class Aircraft:
             else:
                 self.xarr[12:,1:] = xs[12:,:]
         else:
-            ts = np.linspace(0.,self.tf,num=self.n_steps,endpoint=False)
-            # ###########################
-            # # print("true!!!!!")
-            # ts = ts_sim*1.
-            # ###########################
-            self.tarr = ts*1.
             for i in range(self.n_steps-1):
                 # for plots
                 
@@ -2990,473 +2996,6 @@ class Aircraft:
         # ####################################
 
         return self.xarr,self.uarr
-
-
-    def run_uncontrolled_comparison_simulation(self):
-
-        # build controller
-        self._build_controller()#mrrr=[0,1,2,6,7,8,9,10,11,12])
-
-        # print("wn da", self.w_da, self.s_da / self.z_da)
-        # print("wn de", self.w_de, self.s_de / self.z_de)
-        # print("wn dr", self.w_dr, self.s_dr / self.z_dr)
-        # print("wn tau", self.w_tau, 1.0 / self.z_tau)
-
-        # print("zt da", self.z_da, self.s_da / self.w_da)
-        # print("zt de", self.z_de, self.s_de / self.w_de)
-        # print("zt dr", self.z_dr, self.s_dr / self.w_dr)
-        # print("zt tau", self.z_tau, 1.0 / self.w_tau)
-
-        self._report_trim_solution(self.x_trim,self.u_trim,self.trim_iter)
-
-        # report
-        print("running simulation...")
-
-        # set state control vars as equilibrium control vars
-        u_eq = self.u_trim[:4] * 1.0
-
-        # create equilibrium truncated state for controller
-        regind = [6,7,8,11,12,16,20]
-        if self.order == 0:
-            ordind = [13,14,15,17,18,19]
-        if self.order == 1:
-            ordind = [17,18,19]
-        elif self.order == 2:
-            ordind = []
-        index = [i for i in range(len(self.x)) if i not in (regind + ordind)]
-        xhat_eq = self.x_trim[index] * 1.0
-        if self.use_quaternions:
-            xhat_eq[6:8] = self._euler_angles(self.x_trim)[:2]
-        u = self.u[0:4] * 1.0
-        v = u * 1.0
-        self.z = self.x
-
-        self.u_eq = u_eq * 1.0
-
-        # initialize lists, form of file writing
-        self.n_steps = int( self.tf / self.dt) + 1
-        self.xarr = np.zeros((self.x.shape[0]-1*self.use_quaternions,\
-            self.n_steps))
-        ind2kp = [i for i in range(len(self.x)) if i != 12]
-        x0_euler = self.x[ind2kp] * 1.0
-        if self.use_quaternions:
-            x0_euler[9:12] = self._euler_angles(self.x)
-
-
-        # # self.z = np.append(x0_euler,0.0) * 1.0
-        # # self.z[9:12] = [self.phi0,self.theta0,self.psi0]
-        # jim = self.z * 1.0
-        # if self.use_quaternions:
-        #     jim[9:12] = self._euler_angles(self.z * 1.0)
-        # self.z,self.t = self.initialize_sim(self.z,\
-        #     nonlinear=self.use_nonlinear,quat=self.use_quaternions)
-        # # frint("t =",0.0)
-        # # rep2D(jim[:12,np.newaxis].reshape((3,4)),"x",predecimals=7,decimals=16)
-        # # print()
-
-        x0_euler[9:12] = np.rad2deg(x0_euler[9:12])
-        self.xarr[:,0] = x0_euler * 1.0
-        self.zarr = np.zeros((self.x.shape[0]-1*self.use_quaternions,\
-            self.n_steps))
-        self.zarr[:,0] = x0_euler * 1.0
-        self.uarr = np.zeros((4,self.n_steps))
-        self.uarr[:,0] = u * 1.0
-        self.varr = np.zeros((4,self.n_steps))
-        self.varr[:,0] = v * 1.0
-        self.tarr = np.zeros((self.n_steps,))
-        self.tarr[0] = self.t * 1.0
-
-        # # begin simulation of uncontrolled
-        # if self.run_unctrl:
-        #     counter = 1
-        #     for vee in range(self.n_steps-1):
-        #         # run a step
-        #         self.z = self.sim_step(self.dt,self.z,v)
-
-        #         # save state
-        #         z_euler = self.z[ind2kp] * 1.0
-        #         if self.use_quaternions:
-        #             z_euler[9:12] = self._euler_angles(self.z * 1.0)
-
-        #         # frint("t =",self.t)
-        #         # rep2D(z_euler[:12,np.newaxis].reshape((3,4)),"x",predecimals=7,decimals=16)
-        #         # print()
-
-        #         z_euler[9:12] = np.rad2deg(z_euler[9:12])
-
-        #         # if counter >= 78000:# 72: # 11
-        #         #     quit()
-        #         self.zarr[:,counter] = z_euler * 1.0
-        #         self.varr[:,counter] = v * 1.0
-        #         counter = counter + 1
-
-        #     frint("t =",self.t)
-        #     rep2D(z_euler[:12,np.newaxis].reshape((3,4)),"x",predecimals=7,decimals=16)
-        #     print()
-
-        # self.uncontrolled_theta_max = np.max(self.zarr[10,:])
-        # self.uncontrolled_theta_min = np.min(self.zarr[10,:])
-                
-        # begin simulation
-        counter = 1
-        self.x,self.t = self.initialize_sim(self.x0,\
-            atol=1e-10,rtol=1e-10,
-            nonlinear=self.use_nonlinear,quat=self.use_quaternions)
-        for vee in range(self.n_steps-1):
-            # for plots
-            
-            # run a step
-            dxhat = np.matmul(self.Lin_Model.C,self.x) - self.Lin_Model.xhat_eq
-            u = self.u_eq - np.matmul(self.Lin_Model.K,dxhat)
-            self.x = self.sim_step(self.dt,self.x)
-
-            # save state
-            x_euler = self.x[ind2kp]*1.
-            x_euler[9:12] = np.rad2deg(self._euler_angles(self.x))
-            self.xarr[:,counter] = x_euler*1.
-            self.uarr[:,counter] = u*1.
-            self.tarr[counter] = self.t*1.
-            counter = counter + 1
-        
-        print("finished simulating...")
-
-        # calculate total velocity and aero angles
-        Vxarr = (self.xarr[0]**2. + self.xarr[1]**2. + self.xarr[2]**2.)**0.5
-        axarr = np.rad2deg(np.arctan2(self.xarr[2],self.xarr[0]))
-        bxarr = np.rad2deg(np.arcsin(self.xarr[1]/Vxarr)) # experimental beta
-        if self.constant_density:
-            Mxarr = np.array([Vxarr[i]/self.stdatm(self.H0)[5] \
-                for i in range(len(self.tarr))])
-        else:
-            Mxarr = np.array([Vxarr[i]/self.stdatm(-self.xarr[8,i])[5] \
-                for i in range(len(self.tarr))])
-        self.aerox = np.array([Vxarr,Mxarr,axarr,bxarr])
-        Vzarr = (self.zarr[0]**2. + self.zarr[1]**2. + self.zarr[2]**2.)**0.5
-        azarr = np.rad2deg(np.arctan2(self.zarr[2],self.zarr[0]))
-        if self.run_unctrl:
-            bzarr = np.rad2deg(np.arcsin(self.zarr[1]/Vzarr)) # experimental beta
-        else:
-            bzarr = azarr * 0.0
-        self.aeroz = np.array([Vzarr,azarr,bzarr])
-
-        # convert to degrees
-        xicnv = [3,4,5] + [12,13,14]*(self.order >=1)
-        uicnv = [0,1,2]
-        self.xarr[xicnv,:] = np.rad2deg(self.xarr[xicnv,:])
-        self.zarr[xicnv,:] = np.rad2deg(self.zarr[xicnv,:])
-        self.uarr[uicnv,:] = np.rad2deg(self.uarr[uicnv,:])
-        self.varr[uicnv,:] = np.rad2deg(self.varr[uicnv,:])
-
-        return
-
-
-    def integration_analysis_simulation(self,tf=60.0):
-
-        # report
-        print("running integration analysis simulation...")
-
-        # initialize state and input
-        v = self.u_trim[0:4] * 1.0
-        x0_quat = self.x_trim * 1.0
-        x0_euler = self.x_trim * 1.0
-        x0_euler[9:12] = self._euler_angles(self.x_trim)
-
-        # set timesteps / tols
-        dts = [0.1,0.01,0.001,0.0001]
-        tols = [1.e-6,1.e-8,1.e-10]
-        # dts = [0.1,0.05,0.01]
-        # tols = [1.e-4,5.e-5]
-
-        # initialize arrays
-        quats_fix_dt = np.zeros((len(dts),12))
-        eulrs_fix_dt = np.zeros((len(dts),12))
-        quats_var_dt = np.zeros((len(tols),12))
-        eulrs_var_dt = np.zeros((len(tols),12))
-
-        use_nonlinear = True # force nonlinear till I can fix linear
-
-        for use_quats in [True,False]:
-            if use_quats:
-                print("  quaternions...");  x0 = x0_quat  * 1.0
-            else:
-                print("  euler angles..."); x0 = x0_euler * 1.0
-            self._set_dynamics_function(True,use_quats)
-            
-
-            for use_fixed_dt in [True,False]:
-                if use_fixed_dt:
-                    self._set_integration_method("rk4"); tvals = dts
-                    print("    rk4...")
-                else:
-                    self._set_integration_method("ode"); tvals = tols
-                    print("    ode...")
-                
-                for i,val in enumerate(tvals):
-                    if use_fixed_dt:
-                        dt = dts[i]
-                    else:
-                        dt = dts[0]
-                    num = int(tf / dt)
-                    ts = np.linspace(0.0,self.tf,num=num)
-                    if use_fixed_dt:
-                        x,t0 = self.initialize_sim(x0,\
-                            nonlinear=use_nonlinear,\
-                            quat=use_quats)
-                        print("      dt  = ",end="")
-                    else:
-                        x,t0 = self.initialize_sim(x0,atol=val,rtol=val,\
-                            nonlinear=use_nonlinear,\
-                            quat=use_quats)
-                        print("      tol = ",end="")
-                    print(val)
-
-                    # integrate through simulation
-                    for ti in ts:
-                        x = self.sim_step(dt,x,v)
-                    
-                    # save as euler for final state, in degrees
-                    xf = x[:12] * 1.0
-                    if use_quats:
-                        xf[9:12] = self._euler_angles(x)
-                    xf[3: 6] = np.rad2deg(xf[3: 6])
-                    xf[9:12] = np.rad2deg(xf[9:12])
-                    
-                    # save
-                    if use_quats:
-                        if use_fixed_dt:
-                            quats_fix_dt[i] = xf*1.
-                        else:
-                            quats_var_dt[i] = xf*1.
-                    else:
-                        if use_fixed_dt:
-                            eulrs_fix_dt[i] = xf*1.
-                        else:
-                            eulrs_var_dt[i] = xf*1.
-        
-        ## create plots
-        predir = self.fldr_prfx + "_" + "plots/integration_analysis/" + \
-            self.is_BIRE*"bire_" + (not self.is_BIRE)*"base_"
-        show_plots = False
-        transparent = False # True # 
-        pltform = "pdf" # "pdf" # 
-        savedict = dict(transparent=transparent,format=pltform,dpi=300.0)
-
-
-        cs = ["#F5793A","#A95AA1","#85C0F9","#0F2080"]
-        ms = ["o","^","s"]
-        ls = ["-","--","-."]
-        lbl = [
-            r"$u$",r"$v$",r"$w$",
-            r"$p$",r"$q$",r"$r$",
-            r"$x_f$",r"$y_f$",r"$z_f$",
-            r"$\phi$",r"$\theta$",r"$\psi$"
-        ]
-        
-        # change plot text parameters
-        plt.rcParams["font.family"] = "Serif"
-        plt.rcParams["font.size"] = 8.0
-        plt.rcParams["axes.labelsize"] = 8.0
-        plt.rcParams['lines.linewidth'] = 1.0
-        plt.rcParams["xtick.minor.visible"] = True
-        plt.rcParams["ytick.minor.visible"] = True
-        plt.rcParams["xtick.direction"] = plt.rcParams["ytick.direction"] = "in"
-        plt.rcParams["xtick.bottom"] = plt.rcParams["xtick.top"] = True
-        plt.rcParams["ytick.left"] = plt.rcParams["ytick.right"] = True
-        plt.rcParams["xtick.major.width"] = plt.rcParams["ytick.major.width"] = 1.0
-        plt.rcParams["xtick.minor.width"] = plt.rcParams["ytick.minor.width"] = 1.0
-        plt.rcParams["xtick.major.size"] = plt.rcParams["ytick.major.size"] = 5.0
-        plt.rcParams["xtick.minor.size"] = plt.rcParams["ytick.minor.size"] = 2.5
-        # plt.rcParams["axes.labelpad"] = "10"
-        # plt.rcParams["font.weight"] = "bold"
-        plt.rcParams["mathtext.fontset"] = "dejavuserif"
-        plt.rcParams['figure.dpi'] = 200.0
-
-        # get percent differences
-        ff = len(dts) - 1
-        vf = len(tols) - 1
-        pd_quats_fix = (quats_fix_dt[ff,:] - quats_fix_dt) / quats_fix_dt[ff,:]
-        pd_eulrs_fix = (eulrs_fix_dt[ff,:] - eulrs_fix_dt) / eulrs_fix_dt[ff,:]
-        pd_quats_var = (quats_var_dt[vf,:] - quats_var_dt) / quats_var_dt[vf,:]
-        pd_eulrs_var = (eulrs_var_dt[vf,:] - eulrs_var_dt) / eulrs_var_dt[vf,:]
-        pd_meths_fix = (quats_fix_dt - eulrs_fix_dt) / quats_fix_dt
-        pd_meths_var = (quats_var_dt - eulrs_var_dt) / quats_var_dt
-        
-        fixdt_fig, fixdt_axs = plt.subplots(4,1,tight_layout=True,sharex=True)
-        vardt_fig, vardt_axs = plt.subplots(4,1,tight_layout=True,sharex=True)
-        fixmh_fig, fixmh_axs = plt.subplots(4,1,tight_layout=True,sharex=True)
-        varmh_fig, varmh_axs = plt.subplots(4,1,tight_layout=True,sharex=True)
-
-        sets = {"ls" : "none","mfc" : "none","mew" : 0.7,"ms" : 3.0}
-
-        # fixed dt plot
-        for i in range(12):
-            c_i = i // 3
-            l_i = i % 3
-            fixdt_axs[c_i].plot(dts,pd_quats_fix[:,i],c="k",marker=ms[l_i],\
-                label=lbl[i],**sets)
-            fixdt_axs[c_i].plot(dts,pd_eulrs_fix[:,i],c="0.4",marker=ms[l_i],**sets)
-        fixdt_fig.supylabel("Percent Difference")
-        fixdt_fig.supxlabel("Timestep, s")
-        fixdt_axs[0].invert_xaxis()
-        for i in range(4):
-            fixdt_axs[i].set_xscale("log")
-            # fixdt_axs[i].set_yscale("symlog")
-            fixdt_axs[i].legend()
-        fixdt_fig.savefig(predir+"fix_dt_tmsteps."+pltform,**savedict)
-
-        # variable dt plot
-        for i in range(12):
-            c_i = i // 3
-            l_i = i % 3
-            vardt_axs[c_i].plot(tols,pd_quats_var[:,i],c="k",marker=ms[l_i],\
-                label=lbl[i],**sets)
-            vardt_axs[c_i].plot(tols,pd_eulrs_var[:,i],c="0.4",marker=ms[l_i],**sets)
-        vardt_fig.supylabel("Percent Difference")
-        vardt_fig.supxlabel("Timestep, s")
-        vardt_axs[0].invert_xaxis()
-        for i in range(4):
-            vardt_axs[i].set_xscale("log")
-            # vardt_axs[i].set_yscale("symlog")
-            vardt_axs[i].legend()
-        vardt_fig.savefig(predir+"var_dt_tmsteps."+pltform,**savedict)
-
-        # fixed dt method plot
-        for i in range(12):
-            c_i = i // 3
-            l_i = i % 3
-            fixmh_axs[c_i].plot(dts,pd_meths_fix[:,i],c="k",marker=ms[l_i],\
-                label=lbl[i],**sets)
-        fixmh_fig.supylabel("Percent Difference")
-        fixmh_fig.supxlabel("Timestep, s")
-        fixmh_axs[0].invert_xaxis()
-        for i in range(4):
-            fixmh_axs[i].set_xscale("log")
-            # fixmh_axs[i].set_yscale("symlog")
-            fixmh_axs[i].legend()
-        fixmh_fig.savefig(predir+"fix_dt_methods."+pltform,**savedict)
-
-        # variable dt method plot
-        for i in range(12):
-            c_i = i // 3
-            l_i = i % 3
-            varmh_axs[c_i].plot(tols,pd_meths_var[:,i],c="k",marker=ms[l_i],\
-                label=lbl[i],**sets)
-        varmh_fig.supylabel("Percent Difference")
-        varmh_fig.supxlabel("Timestep, s")
-        varmh_axs[0].invert_xaxis()
-        for i in range(4):
-            varmh_axs[i].set_xscale("log")
-            # varmh_axs[i].set_yscale("symlog")
-            varmh_axs[i].legend()
-        varmh_fig.savefig(predir+"var_dt_methods."+pltform,**savedict)
-
-
-        if show_plots:
-            plt.show()
-        else:
-            plt.close()
-
-
-    def check_partials(self,report=True,save_matrices=True,mrrr=[6,7,11],
-            mrrc=None,run_freq=True,save_name_end="",
-            include_stall_derivatives=False,
-            drop_actrs=True):
-
-        # report
-        print("checking partial derivatives...")
-
-        self._report_trim_solution(self.x_trim,self.u_trim,0)
-
-        # determine dynamics jacobians
-        use_quats_old = self.use_quaternions
-        del self.use_quaternions
-        self.use_quaternions = False
-        x_euler = self.x_trim_euler*1.
-        x_full = self.x_trim*1.
-        u = self.u_trim*1.
-        # randomize
-        xrnd = x_euler * 1.0
-        xrnd[1] = 10.0; xrnd[3] = xrnd[4] = xrnd[5] = 0.1
-        xrnd[8] = 0.0; xrnd[9] = xrnd[10] = xrnd[11] = 0.15
-        x = x_euler #+ xrnd * self.rng.normal(scale=1./3.,size=xrnd.size)
-        x_full[:6] = x[:6] * 1.0
-        x_full[9:13] = euler_2_quat(x[9:12])
-        uxrnd = u * 1.0
-        uxrnd[0] = uxrnd[2] = 0.15
-        u = u #+ uxrnd * self.rng.normal(scale=1./3.,size=uxrnd.size)
-
-        inputs = [0.0,x,True,True,u]
-        r = [0,1,2,3,4,5,8,9,10]
-        df_dx = (make_jacobian(self._nonlinear_euler_dynamics,inputs,1)[r])[:,r]
-        df_du = make_jacobian(self._nonlinear_euler_dynamics,inputs,4)[r]
-        Ln = lin(x,u,[0.,0.,0.],is_bire=self.is_BIRE,use_quaternion=False,
-            compressible = self.is_compressible,
-            use_Anderson = self.use_anderson,
-            enforce_stall = self.has_stall,
-            include_stall = include_stall_derivatives,
-            controller_type = self.controller_type,
-            controller_properties = self.control_dict,
-            actuators_properties = self.actuators_dict,
-            aero_model = self.aero_model,
-            use_simple_thrust_model = not self.use_fitted_thrust,
-            min_realization_removal_rows = mrrr,
-            min_realization_removal_cols = mrrc,
-            drop_actuators = drop_actrs,
-            run_frequency_analysis = run_freq,
-            freq_plots_name_end = save_name_end,
-            folder_prefix = self.fldr_prfx)
-        A = Ln.A_min; B = Ln.B_min
-        # rep2D(  A  ,"  A  ",print_format="f",decimals=12)
-        # rep2D(df_dx,"df/dx",print_format="f",decimals=12)
-
-        rows = [0,1,2,3,4,5,6,7,8] # ,9,10,11
-        cols = [0,1,2,3,4,5,6,7,8] # ,9,10,11
-        rep2D((df_dx[rows])[:,cols],"df_dx",print_format="f",decimals=12)
-        rep2D((A[rows])[:,cols],"  A  ",print_format="f",decimals=12)
-        diff = df_dx - A
-        rep2D((diff[rows])[:,cols],"diff", decimals=9)
-        # diff = np.abs(A) * 0.0; diff[abs(A - df_dx) >=1e-4] = 505.0 #*#*#*#*#*#
-        # rep2D((diff[rows])[:,cols],"diff",predecimals=3, decimals=0)#*#*#*#*#*#
-        # df/dx 'fro' error = 0.00026519179043434256
-        # df/du 'fro' error = 2.1589525357787776e-13
-        print("df/dx eulr 'fro' error =", np.linalg.norm(A-df_dx,ord="fro"))
-        print()
-        
-        rows = [0,1,2,3,4,5,6,7,8] # ,9,10,11
-        cols = [0,1,2,3] # 
-        rep2D((df_du[rows])[:,cols],"df_du",predecimals=8,decimals=12)
-        rep2D((B[rows])[:,cols],"  B  ",predecimals=8,decimals=12)
-        diff = df_du - B
-        rep2D((diff[rows])[:,cols],"diff", decimals=9)
-        print("df/du eulr 'fro' error =", np.linalg.norm(B-df_du,ord="fro"))
-        print()
-
-        # x = x_full
-        # inputs = [0.0,x,True,True,u]
-        # df_dx = ord2_jacobian(self._nonlinear_quaternion_dynamics,inputs,1)[:13,:13]
-        # df_du = ord2_jacobian(self._nonlinear_quaternion_dynamics,inputs,4)[:13]
-        # Ln = lin(x[:13],u,[0.,0.,0.],is_bire=self.is_BIRE,use_quaternion=True,\
-        #     folder_prefix = self.fldr_prfx)
-        # A = Ln.A; B = Ln.B
-
-        # rows = [0,1,2,3,4,5,6,7,8] # ,9,10,11
-        # cols = [0,1,2,3,4,5,6,7,8,9,10,11] # 
-        # # rep2D((df_dx[rows])[:,cols],"df_dx",decimals=9)
-        # # rep2D((A[rows])[:,cols],"  A  ",print_format="f",decimals=9)
-        # diff = df_dx - A
-        # # rep2D((diff[rows])[:,cols],"diff", decimals=9)
-        # print("df/dx quat 'fro' error =", np.linalg.norm(A-df_dx,ord="fro"))
-
-        # rows = [0,1,2,3,4,5,6,7,8,9,10,11] # 
-        # cols = [0,1,2,3] # 
-        # # rep2D(df_du,"df_du",predecimals=8,decimals=12)
-        # # rep2D(B,"  B  ",predecimals=8,decimals=12)
-        # diff = df_du - B
-        # # rep2D((diff[rows])[:,cols],"diff", decimals=9)
-        # print("df/du quat 'fro' error =", np.linalg.norm(B-df_du,ord="fro"))
-
-        self.use_quaternions = use_quats_old
-        return
 
 
     def returns_zero(self,tarr,xarr,uarr,subdict,xticks,perc_zoom,
@@ -4993,6 +4532,7 @@ def run_single_simulation(filename,rtdst_1sg=[20.,10.,5.],
     t_gain_schedule=8.,gain_steps=10,trim_steps=2,
     interpolation_type="linear",
     include_stall_derivatives=False,
+    include_altitude_derivatives=False,
     random_seed=None,
     turbulence_random_seed=None,
     error_random_seed=None,
@@ -5274,6 +4814,7 @@ def run_single_simulation(filename,rtdst_1sg=[20.,10.,5.],
         filename="matrices",mrrr=mrrr,
         mrrc=mrrc,run_freq=save_data,save_name_end=name_end,
         include_stall_derivatives=include_stall_derivatives,
+        include_altitude_derivatives=include_altitude_derivatives,
         drop_actrs=cut_mine,save_folder=file_folder[6:]+"/")
     CTC = np.matmul(aircraft.Lin_Model.C.T,aircraft.Lin_Model.C)
     CEC = np.matmul(CTC,np.matmul(E,CTC))
@@ -5300,7 +4841,9 @@ def run_single_simulation(filename,rtdst_1sg=[20.,10.,5.],
             aircraft.x_tr_euler[i],aircraft.u_tr[i],
             report=False,save_matrices=False,
             mrrr=mrrr,mrrc=mrrc,drop_actrs=True,
-            include_stall_derivatives=False,skip_reporting=True,run_freq=False)
+            include_stall_derivatives=include_stall_derivatives,
+            include_altitude_derivatives=include_altitude_derivatives,
+            skip_reporting=True,run_freq=False)
         K_trs[i] = Lin_Model.K*1.
     aircraft.K_tr = K_trs*1.
     aircraft.t_tr = z21*t_gain_schedule
@@ -5308,7 +4851,9 @@ def run_single_simulation(filename,rtdst_1sg=[20.,10.,5.],
         aircraft.x_trim2_euler_slf,aircraft.u_trim2_slf,
         report=False,save_matrices=False,
         mrrr=mrrr,mrrc=mrrc,drop_actrs=True,
-        include_stall_derivatives=False,skip_reporting=True,run_freq=False)
+        include_stall_derivatives=include_stall_derivatives,
+        include_altitude_derivatives=include_altitude_derivatives,
+        skip_reporting=True,run_freq=False)
     aircraft.K_slf = Lin_Model.K*1.
 
     # create interpolation functions
@@ -5341,14 +4886,7 @@ def run_single_simulation(filename,rtdst_1sg=[20.,10.,5.],
     aircraft.K_tr_itp = interp1d(aircraft.t_tr,aircraft.K_tr,kind=typ,\
         axis=0,bounds_error=False,fill_value=(nan,aircraft.K_slf))
 
-    # aircraft.climb_trim = 0.
-    
-    
-    # # check linearization
-    # aircraft.check_partials(report=False,save_matrices=False,mrrr=mrrr,
-    #     mrrc=mrrc,run_freq=True,save_name_end=name_end,
-    #     include_stall_derivatives=include_stall_derivatives,
-    #     drop_actrs=cut_mine)
+    # aircraft.climb_trim = 0
     
     # skip sim
     print("running case:",run_name)
@@ -5412,12 +4950,14 @@ def run_single_simulation(filename,rtdst_1sg=[20.,10.,5.],
                     save_matrices=False,report_simulation=save_data)
             
             x_zero = xr[:,-1]*1.
-            dx = x_zero - (aircraft.x_trim2_euler_deg + r_track)
+            dx = x_zero - aircraft.x_trim2_euler_deg
             Dx_norm = np.matmul(dx.T,np.matmul(CEC,dx))
             if aircraft.tracking:
-                dx_track = xr[:,t_track_i] -(aircraft.x_trim_euler_deg+r_track)
-                Dx_norm_track = np.matmul(dx_track.T,np.matmul(CEC,dx_track))
-                Dx_norm = max(Dx_norm_track,Dx_norm)
+
+                dx_track = xr[:,t_track_i] - aircraft.x_trim2_euler_deg \
+                    - (r_track - aircraft.x_trim2_euler_deg)
+                Dx_norm = np.matmul(dx_track.T,np.matmul(CEC,dx_track))
+                # Dx_norm = max(Dx_norm_track,Dx_norm)
             case_run_text = "{:>4d} -- ".format(i+1)
             for j in range(6):
                 case_run_text += " {:> 5.3f}".format(aircraft.FM_errors[j])
@@ -5465,6 +5005,7 @@ def monte_carlo_perturbations(filename,rtdst_1sg=[5.,5.,5.],
     final_time=15.0,track_check_time="o",time_step=0.01,
     initial_velocity=634.,initial_mach="o",initial_altitude=15000.0,trim_bank=0.0,
     include_stall_derivatives=False,
+    include_altitude_derivatives=False,
     aircraft_class=Aircraft,
     skip_video=False,
     plot_ul_bounds=False,
@@ -5761,6 +5302,7 @@ def monte_carlo_perturbations(filename,rtdst_1sg=[5.,5.,5.],
     repstr += aircraft._build_controller(report=False,save_matrices=False,
         drop_actrs=cut_mine,mrrr=mrrr,mrrc=mrrc,run_freq=True,
         include_stall_derivatives=include_stall_derivatives,
+        include_altitude_derivatives=include_altitude_derivatives,
         save_name_end=name_end,save_folder=file_folder[6:]+"/")
     CTC = np.matmul(aircraft.Lin_Model.C.T,aircraft.Lin_Model.C)
     CEC = np.matmul(CTC,np.matmul(E,CTC))
@@ -5940,11 +5482,10 @@ def monte_carlo_perturbations(filename,rtdst_1sg=[5.,5.,5.],
     ###################################
     start_time = current_time()
     ###################################
-    for i in range(num): # [42,44,228]: # 
+    for i in range(num): # [39,98,171,245,444]: # 
         # create shift
         pshift = p_vals[i]
         qshift = q_vals[i]
-        print(np.rad2deg(qshift))
         rshift = r_vals[i]
         # add to shifting array
         dx0[3:6] = [pshift,qshift,rshift]
@@ -5953,8 +5494,8 @@ def monte_carlo_perturbations(filename,rtdst_1sg=[5.,5.,5.],
         aircraft.refresh_FM_error(FM_error_percs=FM_error)
 
         # report
-        pdeg,qdeg,rdeg = np.rad2deg([pshift,qshift,rshift])
-        case_run_text = ("{:>4d} Dp = {:> 9.3f} Dq = {:> 9.3f} " + \
+        pdeg,qdeg,rdeg = np.rad2deg([pshift,qshift,rshift]) # Dq = {:> 9.3f}
+        case_run_text = ("{:>4d} Dp = {:> 9.3f} Dq = {:> 22.16f} " + \
             "Dr = {:> 9.3f}").format(i+1,pdeg,qdeg,rdeg)
 
         # call run sim
@@ -6492,6 +6033,7 @@ def compare_aero_forces(filename,rtdst_1sg=[5.,5.,5.],
     statistical=True,turbulence_setting="light",
     final_time=15.0,time_step=0.01,
     include_stall_derivatives=False,
+    include_altitude_derivatives=False,
     aircraft_class=Aircraft,
     **plot_dict):
     # pull in json file
@@ -6584,6 +6126,7 @@ def compare_aero_forces(filename,rtdst_1sg=[5.,5.,5.],
     aircraft._build_controller(report=False,save_matrices=False,
         drop_actrs=cut_mine,mrrr=mrrr,mrrc=mrrc,
         include_stall_derivatives=include_stall_derivatives,
+        include_altitude_derivatives=include_altitude_derivatives,
         run_freq=False)
 
     # create errored FM
@@ -7270,35 +6813,38 @@ if __name__ == "__main__":
     base_dict = json.loads( open(base_file).read() )
     bire_dict = json.loads( open(bire_file).read() )
 
-    # # # # # # #
-    bire_dict["actuators"]["order"] = 0
-    bire = Aircraft(bire_dict)
-    cg = bire.cgshift
-    x = bire.x_trim_euler#[:-4]
-    # print(x)
-    u = bire.u_trim
-    np.set_printoptions(precision=16)
-    # test linearization
+    # # # # # # # # # # # # # # # # # # # # # # # # # #
+    # bire_dict["actuators"]["order"] = 0
+    # bire = Aircraft(bire_dict)
+    # cg = bire.cgshift
+    # x = bire.x_trim_euler#[:-4]
+    # x = x + np.array([5.0]*3 + [-5.0*np.pi/180.0]*3 + [500.0]*3 + [-5.0*np.pi/180.0]*3)
+    # # print(x)
+    # u = bire.u_trim
+    # u = u + np.array([-5.0*np.pi/180.0]*3 + [0.1])
+    # np.set_printoptions(precision=16)
+    # # test linearization
 
-    # dict of other vals
-    inputs = {
-        "compressible" : True,
-        "use_Anderson" : True,
-        "enforce_stall" : True,
-        "actuators_properties" : {
-            "order" : 0
-        },
-        "aero_model" : bire.aero_model,
-    }
-    rep_dec = 16 # 6 # 4 # 
-    BIRE_euler = lin(x,u,cg,use_quaternion=False,is_bire=True,**inputs)
-    rep2D(BIRE_euler.A[:,:],"  A  ",decimals=rep_dec)
-    rng = [0,1,2,3] # [2] # 
-    rep2D(BIRE_euler.B[:,rng],"  B  ",decimals=rep_dec)
-    A,B = BIRE_euler.build_jacobians(x,u,cg,True,bire._nonlinear_euler_dynamics)
-    rep2D(A[:,:],"  An ",decimals=rep_dec)
-    rep2D(B[:,rng],"  Bn ",decimals=rep_dec)
-    quit()
+    # # dict of other vals
+    # inputs = {
+    #     "compressible" : True,
+    #     "use_Anderson" : True,
+    #     "enforce_stall" : True,
+    #     "actuators_properties" : {
+    #         "order" : 0
+    #     },
+    #     "aero_model" : bire.aero_model,
+    # }
+    # rep_dec = 6 # 16 # 4 # 
+    # BIRE_euler = lin(x,u,cg,use_quaternion=False,is_bire=True,**inputs)
+    # rep2D(BIRE_euler.A[:,:],"  A  ",decimals=rep_dec)
+    # rng = [0,1,2,3] # [2] # 
+    # rep2D(BIRE_euler.B[:,rng],"  B  ",decimals=rep_dec)
+    # A,B = BIRE_euler.build_jacobians(x,u,cg,True,bire._nonlinear_euler_dynamics)
+    # rep2D(A[:,:],"  An ",decimals=rep_dec)
+    # rep2D(B[:,rng],"  Bn ",decimals=rep_dec)
+    # quit()
+    # # # # # # # # # # # # # # # # # # # # # # # # # #
 
     plot_vars = {
         "show" : False,
@@ -8467,414 +8013,3 @@ if __name__ == "__main__":
     # run_single_simulation(bire_dict,rtdst_1sg=di,**run_bire,**plot_vars)
     # quit()
     quit()
-    # #
-    # # test various trim conditions
-    # for fc in ["T1","T2","C1","C2","C3"]:
-    #     run_bire["initial_mach"] = flight_conditions[fc]["m"]*1.
-    #     run_bire["initial_altitude"] = flight_conditions[fc]["h"]*1.
-    #     run_bire["name_end"] = (fc != "C2")*("_" + fc) + "_BK_3"
-    #     monte_carlo_perturbations(bire_dict,rtdst_1sg=di,**run_bire,**plot_vars)
-    # quit()
-
-
-
-    # # # test trim with cg forward
-    # # bire_dict["aircraft"]["CG_shift[ft]"] = [1.0,0.0,0.0]
-    # bire_dict["initial"]["trim_guess"] = {}
-    # bire_dict["initial"]["trim_guess"]["BIRE[deg]"] = 0.0
-    # bire_dict["initial"]["trim"]["bank_angle[deg]"] = 30.0
-    # bire = Aircraft(bire_dict)
-    # # bire.run_trim()
-    # x0 = bire.x_trim*1.
-    # u0 = bire.u_trim*1.
-    # bire._report_trim_solution(x0,u0)
-    # print()
-    # print("running with initial guess of +45 deg")
-    # u_guess = np.zeros((4,))
-    # u_guess[2] = np.deg2rad(+45.0)
-    # bire.verbose_trim = True # False # 
-    # bire._initialize_state(u_guess=u_guess,no_report=False)
-    # bire._report_trim_solution(bire.x_trim,bire.u_trim)
-    # bire._report_trim_solution(x0,u0)
-    # quit()
-    # dB_max = 60.
-    # num = 2*int(dB_max)+1 # 5 # 
-    # bire.verbose_trim = False # True # 
-    # dB_guesses_deg = np.linspace(-dB_max,dB_max,num=num)
-    # dB_guesses = np.deg2rad(dB_guesses_deg)
-    # fig,ax1 = plt.subplots()
-    # ax2 = ax1.twinx()
-    # dBs = np.zeros((num,))
-    # des = np.zeros((num,))
-    # for i in range(num):
-    #     print("running {:>03d}, dB = {:> 6.1f} deg".format(i+1,
-    #         dB_guesses_deg[i]))
-    #     u_guess[2] = dB_guesses[i]
-    #     bire._initialize_state(u_guess=u_guess,no_report=True)
-    #     des[i],dBs[i] = np.rad2deg(bire.u_trim[1:3])
-    # lns2 = ax2.plot(dB_guesses_deg,des,"b",label="de")
-    # lns1 = ax1.plot( dB_guesses_deg,dBs,"r",label="dB")
-    # lns1 = ax1.lines; lns2 = ax2.lines
-    # lns = lns1 + lns2
-    # labs = [lns1[0].get_label(),lns2[0].get_label()]
-    # ax1.legend(lns,labs)#loc=0)
-    
-    # ax1.set_xlabel( "BIRE initial guess [deg]")
-    # ax1.set_ylabel( "BIRE trim solution [deg]")
-    # ax2.set_ylabel("elevator trim solution [deg]")
-    # plt.show()
-    # quit()
-
-    # test 'linearity' of K wrt gain scheduling
-    n = 10
-    gamma = 15.
-    x1H = 15000.
-    x2H = 20000.
-    x1M = 0.6
-    x2M = 0.67
-    x1P = 0.
-    x2P = 30.
-    V = (x1M + x2M)/2.*stdatm_english((x1H + x2H)/2.)[5]
-    t = (x2H - x1H)*(1. + np.tan(np.deg2rad(gamma))**2. )**0.5/V
-    print(t)
-    
-    # initialize steps
-    Hs = np.linspace(x1H,x2H,n)
-    Ms = np.linspace(x1M,x2M,n)
-    ps = np.linspace( 0., 1.,n)
-    # initialize aircraft
-    craft = Aircraft(bire_dict)
-    # initialize arrays for trim points and gains
-    x_trs = np.zeros((n,16))
-    u_trs = np.zeros((n, 4))
-    K_trs = np.zeros((n, 4, 9))
-    K_lns = np.zeros((n, 4, 9))
-    # calculate trim at each point
-    for i in range(n):
-        print(" H0 =",Hs[i],", M0 =",Ms[i])
-        craft.H0 = Hs[i]
-        craft.M0 = Ms[i]
-        craft._initialize_state()
-        x_trs[i] = craft.x_trim_euler*1.
-        u_trs[i] = craft.u_trim*1.
-    # get 'linear' trim terms
-    x_lns = np.array([(1. - psi)*x_trs[0] + psi*x_trs[-1] for psi in ps])
-    u_lns = np.array([(1. - psi)*u_trs[0] + psi*u_trs[-1] for psi in ps])
-    # determine true trim gains
-    for i in range(n):
-        # store trim condition
-        craft.x_trim_euler = x_trs[i]*1.
-        craft.u_trim       = u_trs[i]*1.
-        craft._build_controller(report=False,save_matrices=False,
-            mrrr=[6,7,11],mrrc=None,drop_actrs=True,
-            include_stall_derivatives=False,skip_reporting=True,run_freq=False)
-        K_trs[i] = craft.Lin_Model.K*1.
-    # determine lin trim gains
-    for i in range(n):
-        # store trim condition
-        craft.x_trim_euler = x_lns[i]*1.
-        craft.u_trim       = u_lns[i]*1.
-        craft._build_controller(report=False,save_matrices=False,
-            mrrr=[6,7,11],mrrc=None,drop_actrs=True,
-            include_stall_derivatives=False,skip_reporting=True,run_freq=False)
-        K_lns[i] = craft.Lin_Model.K*1.
-    # get 'linear' gains
-    K_LNs = np.array([(1. - psi)*K_trs[0] + psi*K_trs[-1] for psi in ps])
-
-    # plots
-    subdict = {
-        # "figsize" : (8.,8.),
-        "constrained_layout" : True,
-        "sharex" : True
-    }
-    xsf, xsa = plt.subplots(4,3,figsize=(8.,8.),**subdict)
-    usf, usa = plt.subplots(2,2,figsize=(8.,8.),**subdict)
-    Ksf, Ksa = plt.subplots(4,9,figsize=(18.,8.),**subdict)
-    states = ["V_{x_b}","V_{y_b}","V_{z_b}",
-    "p","q","r",
-    "x_f","y_f","z_f",
-    r"\phi",r"\theta",r"\psi"]
-    state_units = ["ft/s","ft/s","ft/s",
-    "deg/s","deg/s","deg/s",
-    "ft","ft","ft",
-    "deg","deg","deg"]
-    controls = [r"\delta_a",r"\delta_e^B",r"\delta_B",r"\tau"]
-    control_units = ["deg","deg","deg","percent"]
-    r2dconv = lambda x : np.rad2deg(x)
-    d2rconv = lambda x : np.deg2rad(x)
-    nullconv = lambda x : x
-    prcconv = lambda x : x*100.
-    for i in range(4):
-        for j in range(3):
-            k = j + i*3
-            if k in [3,4,5,9,10,11]:
-                stconv = r2dconv
-            else:
-                stconv = nullconv
-            xsa[i,j].plot(stconv(x_trs[:,k]),"b-")
-            xsa[i,j].plot(stconv(x_lns[:,k]),"r--")
-            xsa[i,j].set_ylabel("$" + states[k] + "$" + " [" + state_units[k] + "]")
-    for i in range(2):
-        for j in range(2):
-            k = j + i*2
-            if k in [0,1,2]:
-                ctconv = r2dconv
-            else:
-                ctconv = prcconv
-            usa[i,j].plot(ctconv(u_trs[:,k]),"b-")
-            usa[i,j].plot(ctconv(u_lns[:,k]),"r--")
-            usa[i,j].set_ylabel("$" + controls[k] + "$" + " [" + control_units[k] + "]")
-    state_units.pop(11)
-    state_units.pop( 7)
-    state_units.pop( 6)
-    for i in range(4):
-        for j in range(9):
-            if j in [3,4,5,7,8]:
-                stconv = d2rconv
-            else:
-                stconv = nullconv
-            if i in [0,1,2]:
-                ctconv = r2dconv
-            else:
-                ctconv = prcconv
-            # Ksa[i,j].plot(ctconv(stconv(K_trs[:,i,j])),"b-")
-            # Ksa[i,j].plot(ctconv(stconv(K_lns[:,i,j])),"r--")
-            # Ksa[i,j].plot(ctconv(stconv(K_LNs[:,i,j])),"g.-")
-            Ksa[i,j].plot(K_trs[:,i,j],"b-")
-            Ksa[i,j].plot(K_lns[:,i,j],"r--")
-            Ksa[i,j].plot(K_LNs[:,i,j],"g:")
-            Ksa[i,j].set_ylabel("$K_{" + str(i+1) + "," + str(j+1) + "}$" 
-                # + " [" + control_units[k] + "/" + state_units[k] + "]"
-                )
-    plt.show()
-    
-    quit()
-
-    # report A and B at various bank angles
-    banks = np.deg2rad(np.linspace(0.,30.,num=2))
-    run_bire_trim = False
-    if run_bire_trim:
-        craft = Aircraft(bire_dict)
-        wrd = r"\delta_B = "
-    else:
-        craft = Aircraft(base_dict)
-        wrd = r"\delta_r = "
-    rows = [0,2,4,6,8,1,3,5,7]
-    cols = [1,3,0,2]
-    mrrc = None # [2,3] # 
-    # vars = ["u","v","w","p","q","r","z","phi","theta"]
-    # print([vars[row] for row in rows])
-    for phi in banks:
-        craft.phi_trim = phi
-        craft._initialize_state()
-        craft._build_controller(report=False,save_matrices=False,
-        mrrr=[6,7,11],mrrc=mrrc,drop_actrs=True,
-            include_stall_derivatives=False,run_freq=False)
-        # print(craft.Lin_Model.A_min.shape,craft.Lin_Model.B_min.shape)
-        A,B = craft.Lin_Model.A_min,craft.Lin_Model.B_min
-        print(r"\begin{matrix}")
-        print(r"\phi = {:> 3.0f}, \quad".format(np.rad2deg(phi)))
-        print(wrd + "{:> 6.2f}, \\\\".format(np.rad2deg(craft.u_trim[2])))
-        # report_latex((A[rows,:])[:,rows],"A",add_tab=False,endln=True) # comquad=True,
-        report_latex((B[rows,:])[:,cols],"B",add_tab=False,endln=True)
-        print(r"\end{matrix}")
-    quit()
-
-    BASE = Aircraft(base_dict)
-    # BASE._report_trim_solution(BASE.x_trim,BASE.u_trim,BASE.trim_iter)
-    # # # BASE.check_partials() # need to fix 
-    # # BASE._build_controller(report=False,save_matrices=False,
-    # # include_stall_derivatives=False,run_freq=False)
-    # # rep2D(BASE.x_trim[:,np.newaxis].T,"x_trim")
-    # # rep2D(BASE.u_trim[:,np.newaxis].T,"u_trim")
-    # # rep2D(BASE.Lin_Model.A,"A_base")
-    # # A_num = make_jacobian(BASE._nonlinear_euler_dynamics,[0.0,BASE.x_trim],1)
-    # # B_num = make_jacobian(BASE._nonlinear_euler_dynamics,\
-    # #     [0.0,BASE.x_trim,True,True,BASE.u_trim],4)
-    # # rep2D(A_num,"A_bsnm")
-    # # rep2D(A_num - BASE.Lin_Model.A,"A_diff")
-    # # rep2D(BASE.Lin_Model.B,"B_base")
-    # # rep2D(B_num,"B_bsnm")
-    # # rep2D(B_num - BASE.Lin_Model.B,"B_diff")
-    # # rep2D(BASE.Lin_Model.K,"K_base")
-
-    # # BASE.run_uncontrolled_comparison_simulation()
-    # # BASE.plot_results(**plot_vars)
-    # # # # BASE.integration_analysis_simulation()
-
-    BIRE = Aircraft(bire_dict)
-    # BIRE._report_trim_solution(BIRE.x_trim,BIRE.u_trim,BIRE.trim_iter)
-    # # # BIRE.check_partials()
-    # # BIRE._build_controller(report=False,save_matrices=False,
-    # # include_stall_derivatives=False,run_freq=False)
-    # # rep2D(BIRE.x_trim[:,np.newaxis].T,"x_trim")
-    # # rep2D(BIRE.u_trim[:,np.newaxis].T,"u_trim")
-    # # rep2D(BIRE.Lin_Model.A,"A_bire")
-    # # A_num = make_jacobian(BIRE._nonlinear_euler_dynamics,[0.0,BIRE.x_trim],1)
-    # # B_num = make_jacobian(BIRE._nonlinear_euler_dynamics,\
-    # #     [0.0,BASE.x_trim,True,True,BASE.u_trim],4)
-    # # rep2D(A_num,"A_brnm")
-    # # rep2D(A_num - BIRE.Lin_Model.A,"A_diff")
-    # # rep2D(BIRE.Lin_Model.B,"B_bire")
-    # # rep2D(B_num,"B_brnm")
-    # # rep2D(B_num - BIRE.Lin_Model.B,"B_diff")
-    # # rep2D(BIRE.Lin_Model.K,"K_bire")
-    # # BIRE.run_uncontrolled_comparison_simulation()
-    # # BIRE.plot_results(**plot_vars)
-    # # # BIRE.integration_analysis_simulation()
-
-    # # di = loadmat(BIRE.fldr_prfx + "_" + "data/monte_carlo/" + 
-    # #     "bire_p60_q30_r10_n500_wul_wrl_wc_ws_HK4_sct.mat")
-    # # print(di.keys())
-    # # print(di["note"])
-    # # print(di["system notes"])
-    # # print(di["x_eq"])
-    # # print(di["u_eq"])
-
-
-    ftb, atb = plt.subplots()
-    # plot grid
-    atb.grid(which="major",lw=0.6,ls="-",c="0.5")
-    atb.grid(which="minor",lw=0.5,ls="dotted",c="0.5")
-    
-    # plot
-    atb_y2 = atb.twinx()
-
-    BIR2 = Aircraft(bire_dict)
-    banks = np.concatenate((
-        np.linspace(0.,55.,num=56),
-        np.linspace(55.01,60.,num=500),
-        np.linspace(61.,77.,num=17)
-    ))
-    # print(banks)
-    for i in range(len(banks)):
-        bank_deg = banks[i]
-        BASE.phi_trim = np.deg2rad(bank_deg)
-        # BASE._initialize_state(no_report=True)
-        # rep2D(BASE.x_trim[:,np.newaxis].T,"x_bs_trim",final_endline=False)
-        # rep2D(BASE.u_trim[:,np.newaxis].T,"u_bs_trim",final_endline=False)
-        BIRE.phi_trim = np.deg2rad(bank_deg)
-        BIRE._initialize_state(
-            x_guess=BIRE.x_trim*1,u_guess=BIRE.u_trim*1,
-            no_report=True)
-        # rep2D(BIRE.x_trim[:,np.newaxis].T,"x_br_trim",final_endline=False)
-        # rep2D(BIRE.u_trim[:,np.newaxis].T,"u_br_trim",final_endline=False)
-        # print()
-        BIR2.phi_trim = np.deg2rad(bank_deg)
-        BIR2._initialize_state(
-            # x_guess=BIR2.x_trim*1,u_guess=BIR2.u_trim*1,
-            no_report=True)
-        # aero conditions
-        Vu,Vv,Vw = BIRE.x_trim[0], BIRE.x_trim[1], BIRE.x_trim[2]
-        a = atan2(Vw,Vu)
-        V = (Vu * Vu + Vv * Vv + Vw * Vw)**0.5
-        b = asin(Vv/V)
-        _,g,_,_,_,_ = BIRE.stdatm(BIRE.H0)
-        ph = BIRE.x_trim[ 9]
-        th = BIRE.x_trim[10]
-        n_BASE = BASE._load_factors(BASE.x_trim,BASE.u_trim)[2]
-        print(("SCT trim bank angle = {:> 6.2f}, n = {:> 6.3f}," 
-            + " 0 = {:> 6.3f}").format(bank_deg,n_BASE,
-            np.max(BIRE._trim_forces(
-                a,b,ph,th,g,BIRE.x_trim,BIRE.u_trim
-            )),
-            ))
-        # plot
-        while np.rad2deg(BIRE.u_trim[2]) > 90.:
-            BIRE.u_trim[2] -= np.deg2rad(180.)
-            BIRE.u_trim[1] = - BIRE.u_trim[1]
-        while np.rad2deg(BIRE.u_trim[2]) < -90.:
-            BIRE.u_trim[2] += np.deg2rad(180.)
-            BIRE.u_trim[1] = - BIRE.u_trim[1]
-        while np.rad2deg(BIR2.u_trim[2]) > 90.:
-            BIR2.u_trim[2] -= np.deg2rad(180.)
-            BIR2.u_trim[1] = - BIR2.u_trim[1]
-        while np.rad2deg(BIR2.u_trim[2]) < -90.:
-            BIR2.u_trim[2] += np.deg2rad(180.)
-            BIR2.u_trim[1] = - BIR2.u_trim[1]
-        if BIRE.u_trim[1] >= 0.:
-            cbr = "r"
-            lbl_add = " deB < 0"
-        else:
-            cbr = "b" 
-            lbl_add = " deB >= 0"
-        if BIR2.u_trim[1] >= 0.:
-            c2r = "r"
-            l2l_add = " deB < 0"
-        else:
-            c2r = "b" 
-            l2l_add = " deB >= 0"
-        if i == 0:
-            lbl_base = "base"
-            lbl_bire = "bire"
-            lbl_da = "bire da"
-            lbl_de = "bire de"
-            lbl_ta = "bire ta"
-        else:
-            lbl_base = ""
-            lbl_bire = ""
-            lbl_add = ""
-            l2l_add = ""
-            lbl_da = ""
-            lbl_de = ""
-            lbl_ta = ""
-        # plt.plot(bank_deg,np.rad2deg(BASE.u_trim[2]),"o",ls="none",c="k",
-        #     label=lbl_base)
-        atb.plot(bank_deg,np.rad2deg(BIRE.u_trim[2]),"o",ls="none",c=cbr,
-            label=lbl_bire+lbl_add)
-        atb_y2.plot(bank_deg,np.rad2deg(BIRE.u_trim[0]),"o",ls="none",c="k",
-            label=lbl_da)
-        atb_y2.plot(bank_deg,np.rad2deg(BIRE.u_trim[1]),"o",ls="none",c="m",
-            label=lbl_de)
-        atb_y2.plot(bank_deg,BIRE.u_trim[3]*10.,"o",ls="none",c="k",
-            label=lbl_ta)
-        atb.plot(bank_deg,np.rad2deg(BIR2.u_trim[2]),"o",ls="none",c=c2r,
-            mfc="None")#,label=lbl_bire+l2l_add)
-        atb_y2.plot(bank_deg,np.rad2deg(BIR2.u_trim[0]),"o",ls="none",c="k",
-            mfc="None")#,label=lbl_da)
-        atb_y2.plot(bank_deg,np.rad2deg(BIR2.u_trim[1]),"o",ls="none",c="m",
-            mfc="None")#,label=lbl_de)
-        atb_y2.plot(bank_deg,BIR2.u_trim[3]*10.,"o",ls="none",c="k",
-            mfc="None")#,label=lbl_ta)
-    
-    atb_y2.set_ylim((-5.,11.))
-    atb.set_xlabel("Bank angle [deg]")
-    atb.set_ylabel("BIRE Deflection angle [deg]")
-    atb_y2.set_ylabel("non-BIRE control [deg,%/5]")
-    h0,_ = atb.get_legend_handles_labels()
-    h1,_ = atb_y2.get_legend_handles_labels()
-    atb.legend(handles=h0 + h1,loc="center left")
-    plt.show()
-
-
-
-    # plot eigvals at various bank angles
-    numbanks = 60
-    banks = np.deg2rad(np.linspace(0.,30.,num=numbanks))
-    run_bire_trim = True
-    if run_bire_trim:
-        craft = Aircraft(bire_dict)
-    else:
-        craft = Aircraft(base_dict)
-    mrrc = None # [2,3] #
-    eigs = np.zeros((9,numbanks),dtype=complex)
-    for i,phi in enumerate(banks):
-        craft.phi_trim = phi
-        craft._initialize_state()
-        craft._build_controller(report=False,save_matrices=False,
-        mrrr=[6,7,11],mrrc=mrrc,drop_actrs=True,
-            include_stall_derivatives=False,run_freq=False,skip_reporting=True)
-        # print(craft.Lin_Model.A_min.shape,craft.Lin_Model.B_min.shape)
-        print(craft.Lin_Model.A_min_eigs)
-        eigs[:,i] = np.sort(craft.Lin_Model.A_min_eigs)
-    print();print()
-    print(eigs)
-    cs = ["r","k","g","b","0.5","m","lightblue","pink","teal"]
-    for j in range(9):
-        # print(j,np.real(eigs[j,:]),np.imag(eigs[j,:]))
-        for k in range(numbanks):
-            plt.plot(np.real(eigs[j,k]),np.imag(eigs[j,k]),"o",c=cs[j],ms=(k/numbanks)*8.0+2.0)
-    plt.show()
-    quit()
-        
-
