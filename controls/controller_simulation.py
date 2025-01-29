@@ -136,15 +136,17 @@ class Aircraft:
         self.is_stevens_and_lewis = simulation.get("stevens_and_lewis",False)
         self._set_dynamics_function(self.use_nonlinear,self.use_quaternions)
         self.bool_limit_inputs = simulation.get("limit_input",True)
+        self.bool_limit_input_rates = simulation.get("limit_input_rates",True)
+        self.bool_limit_input_accels = simulation.get("limit_input_accelerations",True)
         if self.bool_limit_inputs:
             self._limit_input = self._hit_limit_input
         else:
             self._limit_input = self._skip_limit_input
-        if simulation.get("limit_input_rates",True):
+        if self.bool_limit_input_rates:
             self._limit_input_rates = self._hit_limit_input_rates
         else:
             self._limit_input_rates = self._skip_limit_input_rates
-        if simulation.get("limit_input_accelerations",True):
+        if self.bool_limit_input_accels:
             self._limit_input_accelerations = \
                 self._hit_limit_input_accelerations
         else:
@@ -1809,6 +1811,7 @@ class Aircraft:
 
         # # # # # # # # CHECKING NDI # # # # # #
         # self.v_t0 = t0*1.0
+        # print()
         # # # # # # # # CHECKING NDI # # # # # #
 
         # calculate k values
@@ -1827,6 +1830,14 @@ class Aircraft:
 
         # update x1
         x1 = x0 + dt*ks
+        # # # # # # # # # CHECKING NDI # # # # # #
+        # #
+        # if x1[15] > np.pi:
+        #     x1[15] -= 2.0*np.pi
+        # elif x1[15] < -np.pi:
+        #     x1[15] += 2.0*np.pi
+        # #
+        # # # # # # # # # CHECKING NDI # # # # # #
 
         return x1
 
@@ -2920,6 +2931,7 @@ class Aircraft:
                 dt = ts[i+1] - ts[i]
                 self.x = self.sim_step(dt,self.x)
                 u,_ = self._get_control(self.tarr[i],self.x)# _old)
+                self._empty_call_after_get_control()
                 # Dx = self.x[self.Lin_Model.Cslice]-self.Lin_Model.xhat_eq
                 # Dxn = np.linalg.norm(Dx)
                 # if self.t > 2.0 and Dxn <= 1.99:
@@ -2997,6 +3009,9 @@ class Aircraft:
 
         return self.xarr,self.uarr
 
+
+    def _empty_call_after_get_control(self):
+        return
 
     def returns_zero(self,tarr,xarr,uarr,subdict,xticks,perc_zoom,
         predir,format,savedict,save_plot):
@@ -3816,24 +3831,26 @@ class Aircraft:
         # da_to_de = np.abs(ctrl[0])*0.25
         max_de = max_de_opt # - da_to_de
         min_de = min_de_opt # + da_to_de
-        if is_zoomed and not(plot_input_limits_zoomed):
-            # lylim,uylim = ctrl_axs[3].get_ylim()
-            # ctrl_axs[3].set_ylim((min(lylim,-0.05),max(uylim,0.05)))
-            ctrl_axs[2].set_ylim((min_dr*0.1,max_dr*0.1))
-            ctrl_axs[3].set_ylim((min_tau*0.1,max_tau*0.1))
-        else:
-            ctrl_axs[0].plot(tarr, zrs + min_da ,c="0.25",ls="--")
-            ctrl_axs[0].plot(tarr, zrs + max_da ,c="0.25",ls="--")
-            ctrl_axs[1].plot(tarr, zrs + min_de ,c="0.25",ls="--")
-            ctrl_axs[1].plot(tarr, zrs + max_de ,c="0.25",ls="--")
-            ctrl_axs[2].plot(tarr, zrs + min_dr ,c="0.25",ls="--")
-            ctrl_axs[2].plot(tarr, zrs + max_dr ,c="0.25",ls="--")
-            ctrl_axs[3].plot(tarr, zrs + min_tau,c="0.25",ls="--")
-            ctrl_axs[3].plot(tarr, zrs + max_tau,c="0.25",ls="--")
-            ctrl_axs[0].set_ylim((min_da-5.,max_da+5.))
-            ctrl_axs[1].set_ylim((min_de_opt-5.,max_de_opt+5.))
-            ctrl_axs[2].set_ylim((min_dr-5.,max_dr+5.))
-            ctrl_axs[3].set_ylim((min_tau-0.05,max_tau+0.05))
+        if self.bool_limit_inputs:
+            if is_zoomed and not(plot_input_limits_zoomed):
+                # lylim,uylim = ctrl_axs[3].get_ylim()
+                # ctrl_axs[3].set_ylim((min(lylim,-0.05),max(uylim,0.05)))
+                ctrl_axs[2].set_ylim((min_dr*0.1,max_dr*0.1))
+                ctrl_axs[3].set_ylim((min_tau*0.1,max_tau*0.1))
+            else:
+                ctrl_axs[0].plot(tarr, zrs + min_da ,c="0.25",ls="--")
+                ctrl_axs[0].plot(tarr, zrs + max_da ,c="0.25",ls="--")
+                ctrl_axs[1].plot(tarr, zrs + min_de ,c="0.25",ls="--")
+                ctrl_axs[1].plot(tarr, zrs + max_de ,c="0.25",ls="--")
+                ctrl_axs[2].plot(tarr, zrs + min_dr ,c="0.25",ls="--")
+                ctrl_axs[2].plot(tarr, zrs + max_dr ,c="0.25",ls="--")
+                ctrl_axs[3].plot(tarr, zrs + min_tau,c="0.25",ls="--")
+                ctrl_axs[3].plot(tarr, zrs + max_tau,c="0.25",ls="--")
+                #
+                ctrl_axs[0].set_ylim((min_da-5.,max_da+5.))
+                ctrl_axs[1].set_ylim((min_de_opt-5.,max_de_opt+5.))
+                ctrl_axs[2].set_ylim((min_dr-5.,max_dr+5.))
+                ctrl_axs[3].set_ylim((min_tau-0.05,max_tau+0.05))
         # surf maxes
         # determine maxes and mins
         if plot_ul_bounds:
@@ -3842,11 +3859,14 @@ class Aircraft:
         else:
             max_delta =  ( (np.max(ctrl_i1[:3])+0.1) // 5. + 1.)*5. #,axis=0)
             min_delta =  ( (np.min(ctrl_i1[:3])+0.1) // 5. - 1)*5. #,axis=0)
-        max_max = np.max([max_da + 5.,max_de + 5.,max_dr + 5.])
-        min_max = np.min([min_da - 5.,min_de - 5.,min_dr - 5.])
-        max_lim = min(max_delta,max_max)
-        min_lim = max(min_delta,min_max)
-        surf_axs.set_ylim((min_lim,max_lim))
+        #
+        if self.bool_limit_inputs:
+            max_max = np.max([max_da + 5.,max_de + 5.,max_dr + 5.])
+            min_max = np.min([min_da - 5.,min_de - 5.,min_dr - 5.])
+            max_lim = min(max_delta,max_max)
+            min_lim = max(min_delta,min_max)
+            surf_axs.set_ylim((min_lim,max_lim))
+        # surf_axs.set_yscale("symlog")
 
         # # elevator only plot
         # de_fig, de_axs = plt.subplots(1,1,**subdict)
@@ -3938,7 +3958,7 @@ class Aircraft:
         udot_axs[2].plot(tarr, udot[2],c=c,ls="-")
         udot_axs[3].plot(tarr, udot[3],c=c,ls="-")
         ## limits ##
-        if self.order >= 1 and self._limit_input_rates:
+        if self.order >= 1 and self.bool_limit_input_rates:
             udot_axs[0].plot(tarr,zrs+np.rad2deg(self.min_dadot),c="0.25",ls="--")
             udot_axs[0].plot(tarr,zrs+np.rad2deg(self.max_dadot),c="0.25",ls="--")
             udot_axs[1].plot(tarr,zrs+np.rad2deg(self.min_dedot),c="0.25",ls="--")
@@ -5482,7 +5502,8 @@ def monte_carlo_perturbations(filename,rtdst_1sg=[5.,5.,5.],
     ###################################
     start_time = current_time()
     ###################################
-    for i in range(num): # [39,98,171,245,444]: # 
+    for i in range(num): # [62,229,233,252,284,303,305,356,406,414,465,487,526,530,555,577,645,690,741,797,828]: # 
+        # [39,98,171,245,444]: # 
         # create shift
         pshift = p_vals[i]
         qshift = q_vals[i]

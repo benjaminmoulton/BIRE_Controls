@@ -862,6 +862,8 @@ class NonlinearDynamicInversionAircraft(Aircraft):
         self.use_transformed_controls = False # True # 
         self.include_stall_ders_in_LM = True # False # 
         self.include_alt_ders_in_LM = True # False # 
+        self.LDI_on_det_sign_flip = True # False # 
+        self.first_LQDI_step = True
         
         self.u_til_next_update = self.u_trim*1.0
 
@@ -886,6 +888,11 @@ class NonlinearDynamicInversionAircraft(Aircraft):
         report_latex(R,"R")
         report_latex(K,"K_{lqr}")
         report_latex(K_eigs,r"\lambda_{cl \, lqr}")
+
+        self.Ndets = []
+        self.Ndet = 1.0
+        self.mindet = 1.0e100
+
 
         self.vI = np.zeros((3,))
 
@@ -1076,9 +1083,9 @@ class NonlinearDynamicInversionAircraft(Aircraft):
                     -  N[0,1]*(N[1,0]*N[2,2] - N[1,2]*N[2,0]) \
                     +  N[0,2]*(N[1,0]*N[2,1] - N[1,1]*N[2,0])
                 dfddSinv = Nadj/Ndet
-                print()
-                print("t = {:>+8.3f}, Ndet = {:>+12.3e}".format(t,Ndet))
-                print(x)
+                # print()
+                # print("x =",x)
+                # print("t = {:>+8.3f}, Ndet = {:>+12.3e}".format(t,Ndet))
                 #
                 ph,th,ps = x_euler[9],x_euler[10],x_euler[11]
                 cp = cos(ph); sp = sin(ph)
@@ -1147,10 +1154,87 @@ class NonlinearDynamicInversionAircraft(Aircraft):
                     dB += mult*(e2s + 1)*np.pi
                     de = (-1.0)**(e1s + 1)*(dm**2. + dn**2.)**0.5 # 
                     v[1] = de; v[2] = dB
-                # # # #
+                # # # # #
+                # #
+                # if v[2] > np.pi:
+                #     v[2] -= 2.0*np.pi
+                # elif v[2] < -np.pi:
+                #     v[2] += 2.0*np.pi
+                # #
+                # ##  ##  ##  ##  ##  ##  ##  ##
+                # de = v[1]
+                # dB = v[2]
+                # if np.isnan(dB) or abs(dB) > 1.0e5:
+                #     dB = self.u_trim[2]
+                #     de = self.u_trim[1]
+                # while dB >  np.pi/2.0:
+                #     dB -= np.pi
+                #     de *= -1.0
+                # while dB < -np.pi/2.0:
+                #     dB += np.pi
+                #     de *= -1.0
+                # #
+                # v[1] = de
+                # v[2] = dB
+                # ##  ##  ##  ##  ##  ##  ##  ##
+
+                # dynamic inversion!!!
+                if self.LDI_on_det_sign_flip and self.first_LQDI_step:
+                    # build system, solve LQR problem
+                    A_tr = self.Lin_Model.A_min
+                    B_tr = self.Lin_Model.B_min
+                    Z = np.zeros((3,3))
+                    I = np.eye(3)
+                    A = np.block([[Z,I],[Z,A_tr]])
+                    B = np.block([[Z],[B_tr]])
+                    # Q = np.diag([1.0e+0,1.0e+0,1.0e+0]+[1.0e+0,1.0e+0,1.0e+0])
+                    Q = np.diag([2.0e+1,2.0e+2,2.0e+2]+[2.0e+3,2.0e+4,2.0e+4])
+                    Q[0,2] = Q[2,0] = 1.0e+1
+                    Q[1,2] = Q[2,1] = 1.0e+2
+                    # Q[3,5] = Q[5,3] = 1.0e+2
+                    # Q[4,5] = Q[5,4] = 1.0e+3
+                    N = np.array([
+                        [ 0.0e+0, 0.0e+0, 2.0e+0],
+                        [ 0.0e+0, 0.0e+0, 2.0e+0],
+                        [ 0.0e+0, 0.0e+0, 1.0e+0],
+                        [ 0.0e+0, 0.0e+0, 2.0e+1],
+                        [ 0.0e+0, 0.0e+0, 2.0e+1],
+                        [ 0.0e+0, 0.0e+0, 1.0e+1]
+                    ])
+                    R = np.diag([1.0e+0,1.0e+0,1.0e+0])
+                    K,_,K_eigs = co.lqr(A,B,Q,R,N)
+                    self.KI_DI,self.KP_DI = K[:,0:3],K[:,3:6]
+                    # print(K)
+                    print(self.KI_DI)
+                    print(self.KP_DI)
+                    print(K_eigs)
+                    self.first_LQDI_step = False
+                    self.Ndet = Ndet*1.0
                 #
-                u = np.concatenate((v,[self.u_trim[3]]))
-                print(u)
+                use_linear = self.Ndet*Ndet <= 0.0
+                self.Ndet = Ndet*1.0
+                if abs(self.Ndet) < self.mindet:
+                    self.mindet = abs(self.Ndet)
+                ## # ## # ## # ## # ## # ## # ## # ## # ## #
+                if self.LDI_on_det_sign_flip and use_linear:
+                    w  = np.array([  p,  q,  r])
+                    eI = np.array([epI,eqI,erI])
+                    x_trim = self.x_trim
+                    dref = ref - x_trim[3:6]
+                    e = w - ref
+                    A = self.Lin_Model.A_min
+                    Binv = self.Lin_Model.Binv_min
+                    
+                    v = - np.matmul(self.Lin_Model.K,e) \
+                        - np.matmul(self.Lin_Model.KI,eI)
+                    
+                    delta = np.matmul(Binv,
+                                      - np.matmul(A,e) - np.matmul(A,dref) + v)
+                    u = np.concatenate((delta + self.u_trim[0:3],[self.u_trim[3]]))
+                    ## # ## # ## # ## # ## # ## # ## # ## # ## #
+                else:
+                    u = np.concatenate((v,[self.u_trim[3]]))
+                # print("u =",u)
 
 
                 # # integral states
@@ -1213,6 +1297,40 @@ class NonlinearDynamicInversionAircraft(Aircraft):
         # delta_x0[1] = - vy_trim + Vnew*sin(bnew)
         # delta_x0[2] = - vz_trim + Vnew*sin(anew)*cos(bnew)
         return delta_x0
+
+    def _empty_call_after_get_control(self):
+        self.Ndets.append(self.Ndet*1.0)
+        return
+
+    def returns_zero(self,tarr,xarr,uarr,subdict,xticks,perc_zoom,predir,
+        format,savedict,save_plot):
+        # plot Ndets over time
+        print("Min det(N) =",self.mindet)
+        Ndets = np.array([self.Ndets[0]] + self.Ndets)
+        #
+        # # Det plot
+        Ndet_fig, Ndet_axs = plt.subplots(1,1,**subdict)
+        # axis labels, legends
+        altcol = "0.5"
+        Ndet_fig.supxlabel(r"Time, s")
+        Ndet_fig.supylabel(r"det($N$)")
+        # xticks
+        Ndet_axs.set_xticks(ticks=xticks)
+        # grid, axis labels, legends
+        Ndet_axs.grid(which="major",lw=0.6,ls="-",c="0.75")
+        #
+        Ndet_axs.plot(tarr,Ndets,c="k",ls="-" )
+        #
+        Ndet_axs.set_yscale("symlog")
+        #
+        Ndet_axs.set_xlim((0.,perc_zoom*self.tf))
+        # Ndet_axs.set_ylim((1.0e-3,))
+        if save_plot:
+            Ndet_fig.savefig(predir+"determinant."+format,**savedict)
+        plt.close(Ndet_fig)
+        #
+        return 0
+  
 
 
 class TransformedNonlinearDynamicInversionAircraft(NonlinearDynamicInversionAircraft):
@@ -6432,7 +6550,7 @@ if __name__ == "__main__":
     ##
     # # # # # NDI_1
     run_bire_fs["aircraft_class"] = NonlinearDynamicInversionAircraft
-    run_bire_fs["name_end"] = "_" + f1 + "_NDI_1_wS_wA_nolim_2" # " # nolim" # 
+    run_bire_fs["name_end"] = "_" + f1 + "_NDI_1_wS_wA_nolim_4" # " # nolim" # 
     # bire_fs_dict["aircraft"]["CG_shift[ft]"] = [+1.0,+0.0,0.0]
     # zt_p,zt_q,zt_r =  0.6 , 0.6 , 0.6
     # wn_p,wn_q,wn_r =  8.0 , 8.0 , 8.0 
@@ -6675,7 +6793,7 @@ if __name__ == "__main__":
     # p_time2 = p_time  + recover_time
     # p_time3 = p_time2 + transition_time
     t_end = 0.0 # 25.0 # 
-    tf = 10.0 # 9.6 # 5.0 # 6.9 # 3.0 # 10.0 # t_end + p_time + 8.0 #+ 10.0 # # + 20.0 # 
+    tf = 10.0 # 9.6 # 5.0 # 6.9 # 3.0 # t_end + p_time + 8.0 # 
     bire_fs_dict["reference"] = bire_rc_dict["reference"] = {
         "deg2rad_states" : [3,4,5],
         "3" : [ [0.0, 0.0], [t_zero, 0.0], [t_zero, p_comm], [p_time, p_comm], [p_time, p_tr_deg], ], # [p_time2, p_tr_deg ], [p_time2, p_comm], [p_time3, p_comm], [p_time3, p_tr_deg2] ], # [p_time + recover_time, p_tr_deg], [p_time + recover_time, -p_comm], [p_time + recover_time + transition_time, -p_comm], [p_time + recover_time + transition_time, 0.0], ], # 
@@ -6736,7 +6854,7 @@ if __name__ == "__main__":
     }
     run_bire_fs["trim_bank"] = 10.0 # 10.0 # 30.0 # 
     # # di = [0.7,0.0,0.0] # [0.7772,0.0,0.0] # [1.0,1.0,1.0] # [0.0,0.0,0.0] # [0.1,0.1,0.1] # [10.0,10.0,10.0] # 
-    di = [0.0, 35.0994612584134487, 0.0] # 
+    di = [0.0, 35.0994612584134487, 0.0] # [0.0, 28.1437298697430229, 0.0] # 
     # # run_bire_fs[ "has_turbulence"] = True # False # 
     # # # run_bire_fs["has_model_error"] = run_bire_rc["has_model_error"] = False # True # 
     # # run_bire_fs["name_end"] += "_rt"

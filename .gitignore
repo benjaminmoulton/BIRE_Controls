@@ -171,4 +171,5 @@ controls/stblz_plots/monte_carlo/**/fail_plots/
 controls/track_plots/monte_carlo/**/**/*.png
 controls/stblz_plots/monte_carlo/**/**/*.png
 # ignore determinant_data
-controls/determinant_data.csv
+controls/determinant_data/*.csv
+controls/determinant_data/**/*.csv
