@@ -53,7 +53,10 @@ if __name__ == "__main__":
     folder = folder + subfolder_end + "/"
     overwrite_data = True # False # 
     print_data_after_run = False # True # 
-    show_plots = True # False # 
+    show_plots = False # True # 
+    save_plots = True # False # 
+    plot_type = "png" # "pdf" # 
+    plot_transparent = True if plot_type == "pdf" else False
     plot_after_run = False # True # 
 
     #
@@ -558,6 +561,11 @@ if __name__ == "__main__":
         # axis labels
         ax.set_xlabel(lbls[xi])
         ax.set_ylabel(lbls[yi])
-        # fig.savefig("p01_contour.pdf",dpi=300.0)
+
+        if save_plots:
+            plot_file = "det_" + casenums + "_" + casevars + "." + plot_type
+            plot_name = folder + plot_file
+            fig.savefig(plot_name,transparent=plot_transparent,dpi=300.0)
+
         if show_plots:
             plt.show()

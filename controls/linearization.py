@@ -1528,8 +1528,9 @@ class linearization:
 
         # get A eigenvalues
         if is_minimal and len(self.xIi):
-            In = len(self.xIi)
+            In = 3 # len(self.xIi)
             Pn = A.shape[0]
+            # print(self.xIi,In,Pn)
             M = np.block([[np.zeros((In,In)),np.eye(In)],[np.zeros((Pn,In)),-A]])
         else:
             M = A
@@ -1569,7 +1570,7 @@ class linearization:
             P = 1.
         
         if len(self.xIi):
-            In = len(self.xIi)
+            In = 3 # len(self.xIi)
             Pn = A.shape[0]
             Acl = np.block([[np.zeros((In,In)),np.eye(Pn)],
                 [np.matmul(B,KI), A + np.matmul(B,K)]])

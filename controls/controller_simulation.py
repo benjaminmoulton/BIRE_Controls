@@ -1416,7 +1416,11 @@ class Aircraft:
         
         # integral states
         r = self._get_reference(t)[self.xPi]
-        dx[self.xIi] = x[self.xPi]*1. - r
+        xVab = x*1.0
+        xVab[0] = (x[0]**2. + x[1]**2. + x[2]**2.)**0.5
+        xVab[1] = atan2(x[2],x[0])
+        xVab[2] = asin (x[1]/xVab[0])
+        dx[self.xIi] = xVab[self.xPi]*1. - r
 
         return dx
 
@@ -1446,7 +1450,11 @@ class Aircraft:
         
         # integral states
         r = self._get_reference(t)[self.xPi_eul]
-        dx[self.xIi_eul] = x[self.xPi_eul]*1. - r
+        xVab = x*1.0
+        xVab[0] = (x[0]**2. + x[1]**2. + x[2]**2.)**0.5
+        xVab[1] = atan2(x[2],x[0])
+        xVab[2] = asin (x[1]/xVab[0])
+        dx[self.xIi_eul] = xVab[self.xPi_eul]*1. - r
 
         return dx
 
@@ -1573,7 +1581,11 @@ class Aircraft:
         
         # integral states
         r = self._get_reference(t)[self.xPi]
-        dx[self.xIi] = x[self.xPi]*1. - r
+        xVab = x*1.0
+        xVab[0] = V*1.0
+        xVab[1] = atan2(Vw,Vu)
+        xVab[2] = asin (Vv/V)
+        dx[self.xIi] = xVab[self.xPi]*1. - r
 
         return dx
 
@@ -1667,7 +1679,11 @@ class Aircraft:
         
         # integral states
         r = self._get_reference(t)[self.xPi_eul]
-        dx[self.xIi_eul] = x[self.xPi_eul]*1. - r
+        xVab = x*1.0
+        xVab[0] = V*1.0
+        xVab[1] = atan2(Vw,Vu)
+        xVab[2] = asin (Vv/V)
+        dx[self.xIi_eul] = xVab[self.xPi_eul]*1. - r
 
         return dx
 
@@ -1768,7 +1784,11 @@ class Aircraft:
         
         # integral states
         r = self._get_reference(t)[self.xPi]
-        dx[self.xIi] = x[self.xPi]*1. - r
+        xVab = x*1.0
+        xVab[0] = V*1.0
+        xVab[1] = atan2(Vw,Vu)
+        xVab[2] = asin (Vv/V)
+        dx[self.xIi_eul] = xVab[self.xPi_eul]*1. - r
 
         return dx
 
@@ -1783,13 +1803,16 @@ class Aircraft:
 
         # check that we have not hit gimbal lock
         if self.use_quaternions:
-            try:
-                euler = self._euler_angles(x)
-            except:
-                print("t =",t)
-                print("quat =",x[9:13])
-                print("x =",x)
-                quit()
+            euler = self._euler_angles(x)
+            # # # # # # # CHECKING NDI # # # # # # 
+            # try:
+            #     euler = self._euler_angles(x)
+            # except:
+            #     print("t =",t)
+            #     print("quat =",x[9:13])
+            #     print("x =",x)
+            #     quit()
+            # # # # # # # CHECKING NDI # # # # # # 
             if euler[1] > 1.3962634015954636: # 80dg # gimbal lock, raise error
                 self.t_gimbal = t
                 raise ValueError("Hit gimbal lock t = {:> 8.4f}".format(t))
@@ -2649,6 +2672,10 @@ class Aircraft:
             # "da dot","de"+"B"*self.is_BIRE+" dot",
             # "dB"*self.is_BIRE+"dr"*(not(self.is_BIRE))+" dot","tau dot"
         ]
+        int_names = state_names*1
+        int_names[0] = "V"
+        int_names[1] = r"\alpha"
+        int_names[2] = r"\beta"
         state_units = ["ft/s"]*3 + ["deg/s"]*3 + ["ft"]*3 + \
             ["deg"]*6 + ["p-u"] + ["deg/s"]*3 + ["p-u/s"]
         control_names = [
@@ -2762,10 +2789,10 @@ class Aircraft:
                     posh = (np.max(np.abs(xerr[i,iT:] - xe0)))/abs(xe0) - 1.0
                 except:
                     posh = np.inf
-                info_txt+=("$e_{{{:<5s}}}$ & {:> 7.2f} & {:> 7.2f}" + \
-                    r" & {:> 7.1f} \% \\\\ \n").format(
-                    state_names[self.xPi_eul[i]],tris,tstl,posh*100.0
-                    )
+                info_txt+=("$e_{{{:<6s}}}$ & {:> 7.2f} & {:> 7.2f}" + \
+                    " & {:> 7.1f}").format(
+                    int_names[self.xPi_eul[i]],tris,tstl,posh*100.0
+                    ) + r" \%" + " \\\\ \n"
             print(info_txt,end="")
             # save to file
             with open(file_folder+"/signal_info.txt","w") as f:

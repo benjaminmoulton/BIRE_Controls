@@ -170,6 +170,7 @@ controls/stblz_plots/monte_carlo/**/fail_plots/
 # ignore png in monte_carlo runs
 controls/track_plots/monte_carlo/**/**/*.png
 controls/stblz_plots/monte_carlo/**/**/*.png
-# ignore determinant_data
+# ignore determinant_data, png plots
 controls/determinant_data/*.csv
 controls/determinant_data/**/*.csv
+controls/determinant_data/**/*.png
