@@ -43,7 +43,6 @@ class NonlinearDynamicInversionAircraft(Aircraft):
         self.include_alt_ders_in_LM = True # False # 
         self.LDI_on_det_sign_flip = False # True # 
         self.first_LQDI_step = True
-        self.first_Vtau_step = True
         
         self.u_til_next_update = self.u_trim*1.0
 
@@ -415,36 +414,9 @@ class NonlinearDynamicInversionAircraft(Aircraft):
                 else:
                     vcom = v*1.0
                 # # # 
+                #
                 # tcom = self.u_trim[3]
-                #
-                if self.first_Vtau_step:
-                    AM = self.aero_model
-                    TM = AM.Prop
-                    expMmin = exp(-AM.S_M*(a - AM.S_ab))
-                    expMplu = exp(AM.S_M*(a + AM.S_ab))
-                    sig = (1. + expMmin + expMplu) / (1. + expMmin) / (1. + expMplu)
-                    CL1 = AM._CL0(dB) + AM._CL_alpha(dB)*a
-                    CS1 = AM._CS0(dB) + AM._CS_beta(dB)*b
-                    oCD_V = (AM._CD_Spbar(dB)*CS1 + AM._CD_pbar(dB))*bw*p/2/V**2.0 \
-                            + (AM._CD_L2qbar(dB)*CL1*CL1 + AM._CD_Lqbar(dB)*CL1 
-                            + AM._CD_qbar(dB))*cw*q/2/V**2.0 \
-                            + (AM._CD_Srbar(dB)*CS1 + AM._CD_rbar(dB))*bw*r/2/V**2.0
-                    CD_V = (1.0 - sig)*oCD_V
-                    T_V   =  TM.T_der_V  (tau,-z_f,V)
-                    T_tau =  TM.T_der_tau(tau,-z_f,V)
-                    T_z   = -TM.T_der_H  (tau,-z_f,V)
-                    Qdyn = 0.5*rho*V**2.0*Sw
-                    self.At = g/W*(-Qdyn*CD_V + Ca*Cb*T_V)
-                    self.Bt = g/W*Ca*Cb*T_tau
-                    self.kVp = +1.0e+0
-                    self.kVi = +1.0e-1
-                    self.first_Vtau_step = False
-                #
-                Vref = self._get_reference(t)[0]
-                dV = V - Vref
-                VI     = x_euler[self.xIi_eul[0]]
-                PIc = - self.kVp*dV - self.kVi*VI
-                tcom = self.u_trim[3] + 1./self.Bt*(-self.At*dV + PIc)
+                tcom = self._get_V_tau_control(t,x_euler)
                 #
                 u = np.concatenate((vcom,[tcom]))
                 # print("u =",u)
@@ -668,7 +640,11 @@ class DynamicInversionAircraft(Aircraft):
                     delta = np.matmul(self.Lin_Model.nBiA_min,dref) + v
                 else:
                     delta = np.matmul(Binv, - np.matmul(A,e) - np.matmul(A,dref) + v)
-                u = np.concatenate((delta + self.u_trim[0:3],[self.u_trim[3]]))
+                #
+                # tcom = self.u_trim[3]
+                tcom = self._get_V_tau_control(t,x_euler)
+                #
+                u = np.concatenate((delta + self.u_trim[0:3],[tcom]))
 
 
                 if self.order > 0:
@@ -1078,14 +1054,25 @@ class ControlAllocationMomentAssignmentAircraft(Aircraft):
         self.delta_E_dE_fun_sq = delta_E_dE_fun_sq
         self.delta_E_dE_wE_fun_sq = delta_E_dE_wE_fun_sq
         ###
-        self.time_check = 20.0 # 20.0 # 0.0 # 
+        self.time_check = 20.0 # 0.0 # 0.0 # 
         self.dt_check = 0.05 # 0.000001 # 0.05 # 0.01 # 
-        self._err_plot_pause_time = 0.000001 # 1.0 # 
-        self._end_plot_time = 2.7 # 4.9 # 9.9 # 0.325 # 0.1 # 
+        self._err_plot_pause_time = 0.05 # 0.000001 # 1.0 # 
+        self._end_plot_time = 4.9 # 2.7 # 9.9 # 0.325 # 0.1 # 
         self.have_saved = False
         self.log_scale = True # False # 
         self.first_plot = True # False # 
         self.feval = 0
+
+        self.plot_alternate_solns = True
+        self.poss_ts     = []
+        self.poss_dadegs = []
+        self.poss_dedegs = []
+        self.poss_dBdegs = []
+        self.poss_Es     = []
+        self.poss_check_num = 10000 # 
+        self.save_poss_every = 2
+        self.save_poss_counter = 0
+        self._final_on_rk4 = False
 
     def __del__(self):
         # report gain matrix
@@ -1093,8 +1080,8 @@ class ControlAllocationMomentAssignmentAircraft(Aircraft):
         rep2D(self.KP_DI,"KP",decimals=3)
         pass
 
-    def returns_zero(self,tarr,xarr,uarr,subdict,xticks,perc_zoom,predir,
-        format,savedict,save_plot):
+    def returns_zero(self,tarr,xarr,uarr,ctrl_axs,subdict,xticks,perc_zoom,
+        predir,format,savedict,save_plot):
         # calculate Error
         MErr = []
         MErrnew = []
@@ -1230,6 +1217,28 @@ class ControlAllocationMomentAssignmentAircraft(Aircraft):
         legend = fevl_axs.legend()
         legend.set_zorder(4)
         #
+
+        if self.plot_alternate_solns:
+            for i in range(len(self.poss_ts)):
+                for j in range(len(self.poss_dadegs[i])):
+                    ctrl_axs[0].plot(self.poss_ts[i],self.poss_dadegs[i][j],"b.",ms=0.5)
+                    ctrl_axs[1].plot(self.poss_ts[i],self.poss_dedegs[i][j],"r.",ms=0.5)
+                    ctrl_axs[2].plot(self.poss_ts[i],self.poss_dBdegs[i][j],"g.",ms=0.5)
+                    ErMg_axs   .plot(self.poss_ts[i],self.poss_Es    [i][j],"b.",ms=0.5)
+        # limit control plots
+
+        min_da      = np.rad2deg( self.min_da)
+        max_da      = np.rad2deg( self.max_da)
+        min_de_opt  = np.rad2deg( self.min_de)
+        max_de_opt  = np.rad2deg( self.max_de)
+        min_dr      = np.rad2deg( self.min_dr)
+        max_dr      = np.rad2deg( self.max_dr)
+        ctrl_axs[0].set_ylim((min_da-5.,max_da+5.))
+        ctrl_axs[1].set_ylim((min_de_opt-5.,max_de_opt+5.))
+        ctrl_axs[2].set_ylim((min_dr-5.,max_dr+5.))
+
+
+        ErMg_axs.set_yscale("log")
         ErMg_axs.set_xlim((0.,perc_zoom*self.tf))
         ErMg_ax2.set_xlim((0.,perc_zoom*self.tf))
         ErMn_axs.set_xlim((0.,perc_zoom*self.tf))
@@ -1245,6 +1254,16 @@ class ControlAllocationMomentAssignmentAircraft(Aircraft):
         plt.close(fevl_fig)
         #
         return 0
+    
+    def _empty_call_after_rk4(self,t):
+        # save values
+        if self.plot_alternate_solns:
+            self.poss_ts    .append(t)
+            self.poss_dadegs.append(self.poss_dadeg)
+            self.poss_dedegs.append(self.poss_dedeg)
+            self.poss_dBdegs.append(self.poss_dBdeg)
+            self.poss_Es    .append(self.poss_E    )
+        return
     
     def _get_control(self,t,x,is_controlled=True,given_control=False,u="o",
         force_control_to_inputs=False):
@@ -1490,6 +1509,27 @@ class ControlAllocationMomentAssignmentAircraft(Aircraft):
                             plt.pause(self._err_plot_pause_time)
                         self.time_check += self.dt_check
                     # quit()
+
+                    if self._final_on_rk4 and self.plot_alternate_solns:
+                        if self.save_poss_counter % self.save_poss_every == 0:
+                            # determine all "zero" controls
+                            da_de_Eall = lambda dBj : self.delta_E_fun_sq(\
+                                rho,V,dBj,a,b,pbar,qbar,rbar,Md)
+                            dBvals_deg = np.linspace(-90.0,90.0,self.poss_check_num)
+                            dBvals = np.deg2rad(dBvals_deg)
+                            Evals = [da_de_Eall(dBvals[i]) for i in range(len(dBvals))]
+                            Evals = np.array(Evals)
+                            Evals_threshold = 5e2
+                            poss_inds = np.argwhere(Evals[:,2] < Evals_threshold)[:,0]
+                            poss_Evals = Evals[poss_inds]
+                            self.poss_dadeg = np.rad2deg(poss_Evals[:,0])
+                            self.poss_dedeg = np.rad2deg(poss_Evals[:,1])
+                            self.poss_dBdeg = dBvals_deg[poss_inds]
+                            self.poss_E     = poss_Evals[:,2]
+                            print(t,self.poss_E)
+                            self.save_poss_counter += 1
+                        else:
+                            self.save_poss_counter += 1
                     
                     if self.line_method == "Newton":
                         E = lambda dBj : self.delta_E_fun_sq(\
@@ -1506,9 +1546,9 @@ class ControlAllocationMomentAssignmentAircraft(Aircraft):
                                 disp=False,
                                 full_output=True)
                             if dB_1 >= np.pi/2.0:
-                                dB_1 = np.pi/2.0 # dB_1 -= np.pi # 
+                                dB_1 -= np.pi # dB_1 = np.pi/2.0 # 
                             elif dB_1 <= -np.pi/2.0:
-                                dB_1 = -np.pi/2.0 # dB_1 += np.pi # 
+                                dB_1 += np.pi # dB_1 = -np.pi/2.0 # 
                             res_1.fun = self.delta_E_fun_sq(\
                                 rho,V,dB_1,a,b,pbar,qbar,rbar,Md)[2]
                             fail_1 = False
@@ -1520,10 +1560,10 @@ class ControlAllocationMomentAssignmentAircraft(Aircraft):
                                 maxiter=self.opt_max_iter,tol=self.opt_tol,
                                 disp=False,
                                 full_output=True)
-                            if dB_2 >= np.pi/2.0:
-                                dB_2 = np.pi/2.0 # dB_2 -= np.pi # 
-                            elif dB_2 <= -np.pi/2.0:
-                                dB_2 = -np.pi/2.0 # dB_2 += np.pi # 
+                            # if dB_2 >= np.pi/2.0:
+                            #     dB_2 -= np.pi # dB_2 = np.pi/2.0 # 
+                            # elif dB_2 <= -np.pi/2.0:
+                            #     dB_2 += np.pi # dB_2 = -np.pi/2.0 # 
                             res_2.fun = self.delta_E_fun_sq(\
                                 rho,V,dB_2,a,b,pbar,qbar,rbar,Md)[2]
                             fail_2 = False
@@ -1665,7 +1705,10 @@ class ControlAllocationMomentAssignmentAircraft(Aircraft):
                 #     .format(t,np.rad2deg(delta[0]),np.rad2deg(delta[1]),\
                 #     np.rad2deg(delta[2])))
                 #
-                u = np.concatenate((delta,[self.u_trim[3]]))
+                # tcom = self.u_trim[3]
+                tcom = self._get_V_tau_control(t,x_euler)
+                #
+                u = np.concatenate((delta,[tcom]))
 
 
                 if self.order > 0:
@@ -2019,7 +2062,11 @@ class ITPIAircraft(Aircraft):
                 # print(t,np.rad2deg(de - self.u_trim[1]),np.rad2deg(dB - self.u_trim[2]))
 
                 v = np.array([da,de,dB])
-                u = np.concatenate((v,[self.u_trim[3]]))# #
+                #
+                # tcom = self.u_trim[3]
+                tcom = self._get_V_tau_control(t,x_euler)
+                #
+                u = np.concatenate((v,[tcom]))# #
 
 
                 if self.order > 0:
@@ -2354,7 +2401,11 @@ class LinearQuadraticTrackingAircraft(Aircraft):
 
                     delta = np.array([delta[0],de,dB])
                 
-                u = np.concatenate((delta + self.u_trim[0:3],[self.u_trim[3]]))
+                #
+                # tcom = self.u_trim[3]
+                tcom = self._get_V_tau_control(t,x_euler)
+                #
+                u = np.concatenate((delta + self.u_trim[0:3],[tcom]))
 
 
                 if self.order > 0:
@@ -2536,7 +2587,11 @@ class LinearQuadraticRegulatorDynamicInversionAircraft(Aircraft):
                 ff = np.matmul(self.Binv_LQRDI,-(np.matmul(self.A_tr,dref) + refdot))
                 nu += ff
                 
-                u = np.concatenate((nu + self.u_trim[0:3],[self.u_trim[3]]))# # 
+                #
+                # tcom = self.u_trim[3]
+                tcom = self._get_V_tau_control(t,x_euler)
+                #
+                u = np.concatenate((nu + self.u_trim[0:3],[tcom]))# # 
 
 
                 if self.order > 0:
@@ -3170,9 +3225,9 @@ if __name__ == "__main__":
     run_base_fs["num"] = run_bire_fs["num"] = 1
     ##
     # # # # # # NDI_1
-    run_bire_fs["aircraft_class"] = NonlinearDynamicInversionAircraft
-    run_bire_fs["name_end"] = "_" + f1 + "_NDI_1_wS_wA_nolim_Vcon" # " # nolim" # 
-    # bire_fs_dict["aircraft"]["CG_shift[ft]"] = [+1.0,+0.0,0.0]
+    # run_bire_fs["aircraft_class"] = NonlinearDynamicInversionAircraft
+    # run_bire_fs["name_end"] = "_" + f1 + "_NDI_1_wS_wA" # " # nolim" # 
+    # # bire_fs_dict["aircraft"]["CG_shift[ft]"] = [+1.0,+0.0,0.0]
     # zt_p,zt_q,zt_r =  0.6 , 0.6 , 0.6
     # wn_p,wn_q,wn_r =  8.0 , 8.0 , 8.0
     # #
@@ -3207,8 +3262,8 @@ if __name__ == "__main__":
     # run_bire_fs["aircraft_class"] = DynamicInversionGainScheduledAircraft
     # run_bire_fs["name_end"] = "_" + f1 + "_DIGS_1"
     # # # 
-    # run_bire_fs["aircraft_class"] = ControlAllocationMomentAssignmentAircraft
-    # run_bire_fs["name_end"] = "_" + f1 + "_CAMA_1" # 2" # 
+    run_bire_fs["aircraft_class"] = ControlAllocationMomentAssignmentAircraft
+    run_bire_fs["name_end"] = "_" + f1 + "_CAMA_1" # 2" # 
     # # bire_fs_dict["aircraft"]["CG_shift[ft]"] = [+1.0,+0.0,0.0]
     # # # # # # 
     # # # run_bire_fs["aircraft_class"] = ControlAllocationMomentAssignmentActuatorsAircraft
@@ -3367,7 +3422,7 @@ if __name__ == "__main__":
     # p_tr_deg = -0.3294739663431505
     # q_tr_deg =  0.5582409457023837
     # r_tr_deg =  3.1659417263281258
-    p_bfcm = 5.0 # 15.0 # 20.0 # 10.0 # 30.0 # 50.0 # 40.0 # 60.0 # 7.5 # 
+    p_bfcm = 15.0 # 30.0 # 5.0 # 20.0 # 10.0 # 50.0 # 40.0 # 60.0 # 7.5 # 
     if "left_roll" in locals():
         p_bfcm = - p_bfcm
         p_tr_deg = - p_tr_deg
@@ -3400,8 +3455,11 @@ if __name__ == "__main__":
     # bire_fs_dict["simulation"]["include_compressibility"] = False
     bire_fs_dict["simulation"]["integrator"] = "rk4"
     # run_bire_fs["time_step"] = 0.001 # 0.0001 # 
+    # #
     # bire_fs_dict["actuators"]["order"] = 0
     # run_bire_fs["state_threshold"] = run_bire_fs["state_threshold"][:-4]
+    # run_bire_fs["name_end"] += "_noact"
+    # #
     # bire_fs_dict["aircraft"]["CG_shift[ft]"] = [0.0, 0.0, 0.0] # [1.0, 2.0, -1.0] # 
     # #
     # # # # run_bire_fs["initial_mach"] = 0.2
@@ -3420,7 +3478,7 @@ if __name__ == "__main__":
     # bire_fs_dict["actuators"]["elevator"]["lag[s]"] = new_lag
     # bire_fs_dict["actuators"][    "BIRE"]["lag[s]"] = new_lag
     # # # # # # 
-    # blm = 100.0 # 150.0 # 300.0 # 500.0 # 1000.0 # 500.0 # 50.0
+    # blm = 300.0 # 100.0 # 150.0 # 500.0 # 1000.0 # 500.0 # 50.0
     # bire_fs_dict["actuators"][    "BIRE"]["rate_limits[deg/s]"] = [-blm,blm]
     # # # # # # 
     # elm = 50.0
@@ -3428,6 +3486,7 @@ if __name__ == "__main__":
     # # # # # # #
     bire_fs_dict["simulation"][      "limit_input"] = False # True # 
     bire_fs_dict["simulation"]["limit_input_rates"] = False # True # 
+    run_bire_fs["name_end"] += "_nolim"
     # # # # # #
     # bire_fs_dict["simulation"]["constant_density"] = True # False # 
     # # # # # 

@@ -79,6 +79,11 @@ class Aircraft:
         self.tracking = False
         self.additional_states = 0
 
+        # V tau controller initialize terms, only used with tracking contrls
+        self.first_Vtau_step = True
+        self.V_zeta =  1.0 # 0.7 # 
+        self.V_wn   =  0.5
+
         # get input variables
         self._get_input_vars(input_dictionary)
 
@@ -1383,6 +1388,84 @@ class Aircraft:
         return u,inputs
 
 
+    def _get_V_tau_control(self,t,x_euler):
+        # pull out vars
+        V_xb    = x_euler[ 0]
+        V_yb    = x_euler[ 1]
+        V_zb    = x_euler[ 2]
+        # calcs
+        V       = np.sqrt(V_xb**2+V_yb**2+V_zb**2)
+
+        if self.first_Vtau_step:
+            # vars that only need to be pulled out on first step
+            p       = x_euler[ 3]
+            q       = x_euler[ 4]
+            r       = x_euler[ 5]
+            z_f     = x_euler[ 8]
+            da      = x_euler[12]
+            de      = x_euler[13]
+            dB      = x_euler[14]
+            tau     = x_euler[15]
+            W = self.inertia_model.W
+            _,g,_,_,rho,_ = self.stdatm(-z_f)
+            _,g_h,_,_,rho_h,_ = self.stdatm_der(-z_f)
+            g_z,rho_z = -g_h, -rho_h
+            # calcs that only need to be done first step
+            a       = np.arctan2(V_zb,V_xb)
+            b       = asin(V_yb/V)
+            Ca = cos(a)#; Sa = sin(a)
+            Cb = cos(b)#; Sb = sin(b)
+            pbar = self.bw*p/2.0/V
+            qbar = self.cw*q/2.0/V
+            rbar = self.bw*r/2.0/V
+            #
+            AM = self.aero_model
+            TM = AM.Prop
+            expMmin = exp(-AM.S_M*(a - AM.S_ab))
+            expMplu = exp(AM.S_M*(a + AM.S_ab))
+            sig = (1. + expMmin + expMplu) / (1. + expMmin) / (1. + expMplu)
+            CL1 = AM._CL0(dB) + AM._CL_alpha(dB)*a
+            CS1 = AM._CS0(dB) + AM._CS_beta(dB)*b
+            oCD_V = (AM._CD_Spbar(dB)*CS1 + AM._CD_pbar(dB))*self.bw*p/2/V**2.0 \
+                    + (AM._CD_L2qbar(dB)*CL1*CL1 + AM._CD_Lqbar(dB)*CL1 
+                    + AM._CD_qbar(dB))*self.cw*q/2/V**2.0 \
+                    + (AM._CD_Srbar(dB)*CS1 + AM._CD_rbar(dB))*self.bw*r/2/V**2.0
+            CD_V = (1.0 - sig)*oCD_V
+            T_V   =  TM.T_der_V  (tau,-z_f,V)
+            T_tau =  TM.T_der_tau(tau,-z_f,V)
+            Qdyn  = 0.5*rho  *V**2.0*self.Sw
+            self.A_Vdot = g/W*(-Qdyn*CD_V + Ca*Cb*T_V)
+            self.B_Vdot = g/W*Ca*Cb*T_tau
+            # #
+            # CD = (1.0 - sig)*AM._CD(a,b,pbar,qbar,rbar,da,de,dB)
+            # T = TM.get_thrust(tau,-z_f,V)
+            # T_z = -TM.T_der_H  (tau,-z_f,V)
+            # Qdyn_z = 0.5*rho_z*V**2.0*self.Sw
+            # self.A_Vdot_z = g/W*(-Qdyn_z*CD + Ca*Cb*T_z) + g_z/W*(-Qdyn*CD + Ca*Cb*T)
+            # #
+            self.kVp = 2.0*self.V_zeta*self.V_wn
+            self.kVi = self.V_wn*self.V_wn
+            self.first_Vtau_step = False
+        
+        # other vars
+        # z_f     = x_euler[ 8]
+        V_xb_ss = self.x_trim[0]
+        V_yb_ss = self.x_trim[1]
+        V_zb_ss = self.x_trim[2]
+        # z_ss    = self.x_trim[8]
+        # other calcs
+        V_ss    = np.sqrt(V_xb_ss**2+V_yb_ss**2+V_zb_ss**2)
+        #
+        Vref = self._get_reference(t)[0] - V_ss
+        eV = (V - V_ss) - Vref
+        VI     = x_euler[self.xIi_eul[0]]
+        # zcon = - self.A_Vdot_z*(z_f - z_ss)
+        PIc = - self.kVp*eV - self.kVi*VI
+        tcom = self.u_trim[3] \
+            + 1./self.B_Vdot*(- self.A_Vdot*eV - self.A_Vdot*Vref + PIc) # + zcon
+        return tcom
+
+
     def _linear_quaternion_dynamics(self,t,x,
         is_controlled=True,given_control=False,u="o",
         force_control_to_inputs=False):
@@ -1844,7 +1927,9 @@ class Aircraft:
         k3 = self._dynamics(t0+ht,x0 + ht*k2)#; v3 = self.v_cl*1.0 # CHECKING NDI
 
         # calculate derivatives
+        self._final_on_rk4 = True
         ks = (k1 + 2.*(k2 + k3) + self._dynamics(t0+dt,x0 + dt*k3)) / 6.
+        self._final_on_rk4 = False
         # # # # # # # # CHECKING NDI # # # # # #
         # v4 = self.v_cl*1.0
         # vf = (v1 + 2.*(v2 + v3) + v4) / 6.
@@ -1861,8 +1946,13 @@ class Aircraft:
         #     x1[15] += 2.0*np.pi
         # #
         # # # # # # # # # CHECKING NDI # # # # # #
+        self._empty_call_after_rk4(t0)
 
         return x1
+
+    
+    def _empty_call_after_rk4(self,t):
+        return
 
 
     def _odeint(self,t0,x0,dt):
@@ -3040,7 +3130,8 @@ class Aircraft:
     def _empty_call_after_get_control(self):
         return
 
-    def returns_zero(self,tarr,xarr,uarr,subdict,xticks,perc_zoom,
+
+    def returns_zero(self,tarr,xarr,uarr,ctrl_axs,subdict,xticks,perc_zoom,
         predir,format,savedict,save_plot):
         return 0
 
@@ -3173,6 +3264,9 @@ class Aircraft:
             
             # determine error for all proportional states
             xerr = xarr[self.xPi_eul,:] - ref[self.xPi_eul,:]
+            if 0 in self.xPi_eul: xerr[0] = aerox[0,:] - ref[0,:]
+            if 1 in self.xPi_eul: xerr[1] = aerox[2,:] - ref[1,:]
+            if 2 in self.xPi_eul: xerr[2] = aerox[3,:] - ref[2,:]
             
             # determine integral state for all integral states
             xigr = xarr[self.xIi_eul,:]
@@ -3274,7 +3368,7 @@ class Aircraft:
         zrs = 0.*tarr
 
         # states for error plots
-        names = [r"$V_{x_b}$",r"$V_{y_b}$",r"$V_{z_b}$",
+        names = [r"$V$",r"$\alpha$",r"$\beta$",
             r"$p$",r"$q$",r"$r$",
             r"$x_f$",r"$y_f$",r"$z_f$",
             r"$\phi$",r"$\theta$",r"$\psi$",
@@ -3528,12 +3622,12 @@ class Aircraft:
                 rate_axs[0].legend()
             
             # # error plots
-            lsy = ["-","--","-.",":"]
+            lsy = [":","-","--","-.",]
             sfl = dict(color="k",alpha=0.1)
             if self.tracking:
                 # axis labels, legends
                 errs_fig.supxlabel(r"Time, s")
-                errs_fig.supylabel(r"Error, deg/s")
+                errs_fig.supylabel(r"Error, ft/s or deg/s")
                 # xticks
                 errs_axs.set_xticks(ticks=xticks)
                 # grid, axis labels, legends
@@ -3556,7 +3650,7 @@ class Aircraft:
             if self.tracking:
                 # axis labels, legends
                 igrs_fig.supxlabel(r"Time, s")
-                igrs_fig.supylabel(r"Integrator State, deg")
+                igrs_fig.supylabel(r"Integrator State, ft or deg")
                 # xticks
                 igrs_axs.set_xticks(ticks=xticks)
                 # grid, axis labels, legends
@@ -3736,7 +3830,7 @@ class Aircraft:
         path_axs.view_init(22.5,-135.0)
 
         # MFBL error plot
-        self.returns_zero(tarr,xarr,uarr,subdict,xticks,perc_zoom,
+        self.returns_zero(tarr,xarr,uarr,ctrl_axs,subdict,xticks,perc_zoom,
             predir,format,savedict,not(save_states and not(plot_full)))
         
         svuc = uarr*0.0
