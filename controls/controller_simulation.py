@@ -1430,14 +1430,15 @@ class Aircraft:
                     + (AM._CD_L2qbar(dB)*CL1*CL1 + AM._CD_Lqbar(dB)*CL1 
                     + AM._CD_qbar(dB))*self.cw*q/2/V**2.0 \
                     + (AM._CD_Srbar(dB)*CS1 + AM._CD_rbar(dB))*self.bw*r/2/V**2.0
-            CD_V = (1.0 - sig)*oCD_V
-            T_V   =  TM.T_der_V  (tau,-z_f,V)
-            T_tau =  TM.T_der_tau(tau,-z_f,V)
-            Qdyn  = 0.5*rho  *V**2.0*self.Sw
-            self.A_Vdot = g/W*(-Qdyn*CD_V + Ca*Cb*T_V)
+            CD_V   = (1.0 - sig)*oCD_V
+            CD     = (1.0 - sig)*AM._CD(a,b,pbar,qbar,rbar,da,de,dB)
+            T_V    =  TM.T_der_V  (tau,-z_f,V)
+            T_tau  =  TM.T_der_tau(tau,-z_f,V)
+            Qdyn   = 0.5*rho  *V**2.0*self.Sw
+            Qdyn_V =     rho  *V     *self.Sw
+            self.A_Vdot = g/W*(- Qdyn_V*CD - Qdyn*CD_V + Ca*Cb*T_V)
             self.B_Vdot = g/W*Ca*Cb*T_tau
             # #
-            # CD = (1.0 - sig)*AM._CD(a,b,pbar,qbar,rbar,da,de,dB)
             # T = TM.get_thrust(tau,-z_f,V)
             # T_z = -TM.T_der_H  (tau,-z_f,V)
             # Qdyn_z = 0.5*rho_z*V**2.0*self.Sw

@@ -710,13 +710,14 @@ class ControlAllocationMomentAssignmentAircraft(Aircraft):
         self.ls_dB_lim = 45.0 # 30.0 # 
         self.ls_num = 21 # 11 # 
         self.opt_tol = 1.0e-12
-        self.opt_max_iter = 10 # 1000 # 
+        self.opt_max_iter = 50 # 10 # 1000 # 
         self.report_error_threshold = 1.0e10 # 1.0e-2 # 
         #
         self.scalar_options = ["Golden","Brent"]
         self.scipy_options = ["SLSQP","Nelder-Mead","trust-exact","BFGS"]
         line_search_options = ["Newton"] + self.scalar_options + self.scipy_options
         self.line_method = line_search_options[0] # "None" # [1] # [0] # 
+        self.line_method = "Newton_Root"
         # self.add_tail_lag_eq = False # True # 
         # bire aero model for derivs
         self.dBAM = BIREAero(**self.aero_dict)
@@ -752,12 +753,33 @@ class ControlAllocationMomentAssignmentAircraft(Aircraft):
         A = np.block([[Z,I],[Z,Z]])
         B = np.block([[Z],[I]])
         C = np.eye(6)
-        Q = np.diag([8.4e+2] + [4.2e+3]*2 + [4.0e+0] + [4.0e+1]*2)
-        Q[0,2] = Q[2,0] = 1.0e2 # 5.0e2
-        Q[1,2] = Q[2,1] = 5.0e2
-        Q[3,5] = Q[5,3] = 1.0e+0 # 1.0e+1
-        Q[4,5] = Q[5,4] = 1.0e+1
-        R = np.diag([1.0e+0,1.0e+0,2.0e+3])
+        Q = np.diag([5.0e+1,5.0e+2,5.0e+2] + [2.0e+0,5.0e+1,5.0e+1])
+        Q[0,2] = Q[2,0] = 1.0e+2
+        Q[1,2] = Q[2,1] = 3.5e+2
+        Q[3,5] = Q[5,3] = 1.0e+0
+        Q[4,5] = Q[5,4] = 5.0e+0
+        R = np.diag([1.0e+0,1.0e+0,2.5e+2])
+        R[0,1] = R[1,0] = 0.0
+        R[0,2] = R[2,0] = 0.0
+        R[1,2] = R[2,1] = 5.0e-2
+        # # ## # # vv ak
+        # Q = np.diag([5.0e+2,1.0e+3,1.0e+3] + [4.0e+0,4.0e+1,4.0e+1])
+        # Q[0,2] = Q[2,0] = 1.0e2
+        # Q[1,2] = Q[2,1] = 7.0e2
+        # Q[3,5] = Q[5,3] = 2.0e+0
+        # Q[4,5] = Q[5,4] = 1.0e+1
+        # R = np.diag([1.0e+0,1.0e+0,5.0e+2])
+        # R[0,1] = R[1,0] = 0.0
+        # R[0,2] = R[2,0] = 0.0
+        # R[1,2] = R[2,1] = 1.0e-1
+        # # # # # # # # # # vvvv OLD QR from optimization setup
+        # Q = np.diag([8.4e+2] + [4.2e+3]*2 + [4.0e+0] + [4.0e+1]*2)
+        # Q[0,2] = Q[2,0] = 1.0e2 # 5.0e2
+        # Q[1,2] = Q[2,1] = 5.0e2
+        # Q[3,5] = Q[5,3] = 1.0e+0 # 1.0e+1
+        # Q[4,5] = Q[5,4] = 1.0e+1
+        # R = np.diag([1.0e+0,1.0e+0,2.0e+3])
+        # # # # # # # # # # ^^^^ OLD QR from optimization setup
         # # similar response to SMD system
         # Q = np.diag([4.2e+3]*3 + [4.0e+1]*3)
         # R = np.diag([1.0e+0,1.0e+0,1.0e+0])
@@ -1044,8 +1066,239 @@ class ControlAllocationMomentAssignmentAircraft(Aircraft):
 
             return dai,dei,Error,dE,wE
         
-        
+        def sine_fun(rho,V,dBj,a,b,pbar,qbar,rbar,Md):
+            # determine desired moment coefficients
+            CMd_lref = Md/0.5/rho/V**2.0/self.Sw
+            Cld = CMd_lref[0]/self.bw
+            Cmd = CMd_lref[1]/self.cw
+            Cnd = CMd_lref[2]/self.bw
 
+            # determine moment constants
+            BAM = self.aero_model
+            CL1 = BAM._CL0(dBj) + BAM._CL_alpha(dBj)*a
+            Cls = (BAM._Cl0(dBj) + BAM._Cl_alpha(dBj)*a +
+                BAM._Cl_beta(dBj)*b + BAM._Cl_pbar(dBj)*pbar +
+                BAM._Cl_qbar(dBj)*qbar +
+                (BAM._Cl_rbar(dBj) + BAM._Cl_Lrbar(dBj)*CL1)*rbar)
+            Clda = BAM._Cl_da(dBj)
+            # Clde = BAM._Cl_de(dBj)
+            Cms = (BAM._Cm0(dBj) + BAM._Cm_alpha(dBj)*a +
+                BAM._Cm_beta(dBj)*b + BAM._Cm_pbar(dBj)*pbar +
+                BAM._Cm_qbar(dBj)*qbar + BAM._Cm_rbar(dBj)*rbar)
+            # Cmda = BAM._Cm_da(dBj)
+            Cmde = BAM._Cm_de(dBj)
+            Cns = (BAM._Cn0(dBj) + BAM._Cn_alpha(dBj)*a +
+                BAM._Cn_beta(dBj)*b +
+                (BAM._Cn_pbar(dBj) + BAM._Cn_Lpbar(dBj)*CL1)*pbar +
+                BAM._Cn_qbar(dBj)*qbar + BAM._Cn_rbar(dBj)*rbar)
+            Cnda = BAM._Cn_da(dBj) + BAM._Cn_Lda(dBj)*CL1
+            Cnde = BAM._Cn_de(dBj)
+
+            # differences
+            dl = Cld - Cls
+            dm = Cmd - Cms
+            dn = Cnd - Cns
+
+            # da, de calc
+            dai = dl/Clda
+            dei = dm/Cmde
+
+            # determine equation that should be zero
+            zero  =  Cnde* dm* Clda +  Cnda* dl* Cmde -  dn* Cmde* Clda
+
+            return dai,dei,zero
+        
+        def sine_dsine_fun(rho,V,dBj,a,b,pbar,qbar,rbar,Md):
+            # determine desired moment coefficients
+            CMd_lref = Md/0.5/rho/V**2.0/self.Sw
+            Cld = CMd_lref[0]/self.bw
+            Cmd = CMd_lref[1]/self.cw
+            Cnd = CMd_lref[2]/self.bw
+
+            # determine moment constants
+            BAM = self.aero_model
+            CL1 = BAM._CL0(dBj) + BAM._CL_alpha(dBj)*a
+            Cls = (BAM._Cl0(dBj) + BAM._Cl_alpha(dBj)*a +
+                BAM._Cl_beta(dBj)*b + BAM._Cl_pbar(dBj)*pbar +
+                BAM._Cl_qbar(dBj)*qbar +
+                (BAM._Cl_rbar(dBj) + BAM._Cl_Lrbar(dBj)*CL1)*rbar)
+            Clda = BAM._Cl_da(dBj)
+            # Clde = BAM._Cl_de(dBj)
+            Cms = (BAM._Cm0(dBj) + BAM._Cm_alpha(dBj)*a +
+                BAM._Cm_beta(dBj)*b + BAM._Cm_pbar(dBj)*pbar +
+                BAM._Cm_qbar(dBj)*qbar + BAM._Cm_rbar(dBj)*rbar)
+            # Cmda = BAM._Cm_da(dBj)
+            Cmde = BAM._Cm_de(dBj)
+            Cns = (BAM._Cn0(dBj) + BAM._Cn_alpha(dBj)*a +
+                BAM._Cn_beta(dBj)*b +
+                (BAM._Cn_pbar(dBj) + BAM._Cn_Lpbar(dBj)*CL1)*pbar +
+                BAM._Cn_qbar(dBj)*qbar + BAM._Cn_rbar(dBj)*rbar)
+            Cnda = BAM._Cn_da(dBj) + BAM._Cn_Lda(dBj)*CL1
+            Cnde = BAM._Cn_de(dBj)
+            # derivatives
+            DAM = self.dBAM
+            dCL1 = DAM._CL0(dBj) + DAM._CL_alpha(dBj)*a
+            dCls = (DAM._Cl0(dBj) + DAM._Cl_alpha(dBj)*a +
+                DAM._Cl_beta(dBj)*b + DAM._Cl_pbar(dBj)*pbar +
+                DAM._Cl_qbar(dBj)*qbar +
+                (DAM._Cl_rbar(dBj) + DAM._Cl_Lrbar(dBj)*CL1 + 
+                BAM._Cl_Lrbar(dBj)*dCL1)*rbar)
+            dClda = DAM._Cl_da(dBj)
+            # dClde = DAM._Cl_de(dBj)
+            dCms = (DAM._Cm0(dBj) + DAM._Cm_alpha(dBj)*a +
+                DAM._Cm_beta(dBj)*b + DAM._Cm_pbar(dBj)*pbar +
+                DAM._Cm_qbar(dBj)*qbar + DAM._Cm_rbar(dBj)*rbar)
+            # dCmda = DAM._Cm_da(dBj)
+            dCmde = DAM._Cm_de(dBj)
+            dCns = (DAM._Cn0(dBj) + DAM._Cn_alpha(dBj)*a +
+                DAM._Cn_beta(dBj)*b +
+                (DAM._Cn_pbar(dBj) + DAM._Cn_Lpbar(dBj)*CL1 + 
+                BAM._Cn_Lpbar(dBj)*dCL1)*pbar +
+                DAM._Cn_qbar(dBj)*qbar + DAM._Cn_rbar(dBj)*rbar)
+            dCnda = DAM._Cn_da(dBj) + DAM._Cn_Lda(dBj)*CL1 + \
+                BAM._Cn_Lda(dBj)*dCL1
+            dCnde = DAM._Cn_de(dBj)
+
+            # differences
+            dl = Cld - Cls
+            dm = Cmd - Cms
+            dn = Cnd - Cns
+            # derivatives
+            ddl = - dCls
+            ddm = - dCms
+            ddn = - dCns
+
+            # da, de calc
+            dai = dl/Clda
+            dei = dm/Cmde
+
+            # determine equation that should be zero
+            zero  =  Cnde* dm* Clda +  Cnda* dl* Cmde -  dn* Cmde* Clda
+            # derivative
+            dzero = \
+                + dCnde* dm* Clda +  Cnde*ddm* Clda +  Cnde* dm*dClda \
+                + dCnda* dl* Cmde +  Cnda*ddl* Cmde +  Cnda* dl*dCmde \
+                - ddn* Cmde* Clda -  dn*dCmde* Clda -  dn* Cmde*dClda
+
+            return dai,dei,zero,dzero
+        
+        def sine_dsine_wsine_fun(rho,V,dBj,a,b,pbar,qbar,rbar,Md):
+            # determine desired moment coefficients
+            CMd_lref = Md/0.5/rho/V**2.0/self.Sw
+            Cld = CMd_lref[0]/self.bw
+            Cmd = CMd_lref[1]/self.cw
+            Cnd = CMd_lref[2]/self.bw
+
+            # determine moment constants
+            BAM = self.aero_model
+            CL1 = BAM._CL0(dBj) + BAM._CL_alpha(dBj)*a
+            Cls = (BAM._Cl0(dBj) + BAM._Cl_alpha(dBj)*a +
+                BAM._Cl_beta(dBj)*b + BAM._Cl_pbar(dBj)*pbar +
+                BAM._Cl_qbar(dBj)*qbar +
+                (BAM._Cl_rbar(dBj) + BAM._Cl_Lrbar(dBj)*CL1)*rbar)
+            Clda = BAM._Cl_da(dBj)
+            # Clde = BAM._Cl_de(dBj)
+            Cms = (BAM._Cm0(dBj) + BAM._Cm_alpha(dBj)*a +
+                BAM._Cm_beta(dBj)*b + BAM._Cm_pbar(dBj)*pbar +
+                BAM._Cm_qbar(dBj)*qbar + BAM._Cm_rbar(dBj)*rbar)
+            # Cmda = BAM._Cm_da(dBj)
+            Cmde = BAM._Cm_de(dBj)
+            Cns = (BAM._Cn0(dBj) + BAM._Cn_alpha(dBj)*a +
+                BAM._Cn_beta(dBj)*b +
+                (BAM._Cn_pbar(dBj) + BAM._Cn_Lpbar(dBj)*CL1)*pbar +
+                BAM._Cn_qbar(dBj)*qbar + BAM._Cn_rbar(dBj)*rbar)
+            Cnda = BAM._Cn_da(dBj) + BAM._Cn_Lda(dBj)*CL1
+            Cnde = BAM._Cn_de(dBj)
+            # derivatives
+            DAM = self.dBAM
+            dCL1 = DAM._CL0(dBj) + DAM._CL_alpha(dBj)*a
+            dCls = (DAM._Cl0(dBj) + DAM._Cl_alpha(dBj)*a +
+                DAM._Cl_beta(dBj)*b + DAM._Cl_pbar(dBj)*pbar +
+                DAM._Cl_qbar(dBj)*qbar +
+                (DAM._Cl_rbar(dBj) + DAM._Cl_Lrbar(dBj)*CL1 + 
+                BAM._Cl_Lrbar(dBj)*dCL1)*rbar)
+            dClda = DAM._Cl_da(dBj)
+            # dClde = DAM._Cl_de(dBj)
+            dCms = (DAM._Cm0(dBj) + DAM._Cm_alpha(dBj)*a +
+                DAM._Cm_beta(dBj)*b + DAM._Cm_pbar(dBj)*pbar +
+                DAM._Cm_qbar(dBj)*qbar + DAM._Cm_rbar(dBj)*rbar)
+            # dCmda = DAM._Cm_da(dBj)
+            dCmde = DAM._Cm_de(dBj)
+            dCns = (DAM._Cn0(dBj) + DAM._Cn_alpha(dBj)*a +
+                DAM._Cn_beta(dBj)*b +
+                (DAM._Cn_pbar(dBj) + DAM._Cn_Lpbar(dBj)*CL1 + 
+                BAM._Cn_Lpbar(dBj)*dCL1)*pbar +
+                DAM._Cn_qbar(dBj)*qbar + DAM._Cn_rbar(dBj)*rbar)
+            dCnda = DAM._Cn_da(dBj) + DAM._Cn_Lda(dBj)*CL1 + \
+                BAM._Cn_Lda(dBj)*dCL1
+            dCnde = DAM._Cn_de(dBj)
+            # double derivatives
+            WAM = self.ddBAM
+            wCL1 = WAM._CL0(dBj) + WAM._CL_alpha(dBj)*a
+            wCls = (WAM._Cl0(dBj) + WAM._Cl_alpha(dBj)*a +
+                WAM._Cl_beta(dBj)*b + WAM._Cl_pbar(dBj)*pbar +
+                WAM._Cl_qbar(dBj)*qbar +
+                (WAM._Cl_rbar(dBj) + 
+                WAM._Cl_Lrbar(dBj)*CL1 + 2.0*DAM._Cl_Lrbar(dBj)*dCL1 + 
+                BAM._Cl_Lrbar(dBj)*wCL1)*rbar)
+            wClda = WAM._Cl_da(dBj)
+            wClde = WAM._Cl_de(dBj)
+            wCms = (WAM._Cm0(dBj) + WAM._Cm_alpha(dBj)*a +
+                WAM._Cm_beta(dBj)*b + WAM._Cm_pbar(dBj)*pbar +
+                WAM._Cm_qbar(dBj)*qbar + WAM._Cm_rbar(dBj)*rbar)
+            wCmda = WAM._Cm_da(dBj)
+            wCmde = WAM._Cm_de(dBj)
+            wCns = (WAM._Cn0(dBj) + WAM._Cn_alpha(dBj)*a +
+                WAM._Cn_beta(dBj)*b +
+                (WAM._Cn_pbar(dBj) + 
+                WAM._Cn_Lpbar(dBj)*CL1 + 2.0*DAM._Cn_Lpbar(dBj)*dCL1 + 
+                BAM._Cn_Lpbar(dBj)*wCL1)*pbar +
+                WAM._Cn_qbar(dBj)*qbar + WAM._Cn_rbar(dBj)*rbar)
+            wCnda = WAM._Cn_da(dBj) + \
+                WAM._Cn_Lda(dBj)*CL1 + 2.0*DAM._Cn_Lda(dBj)*dCL1 + \
+                BAM._Cn_Lda(dBj)*wCL1
+            wCnde = WAM._Cn_de(dBj)
+
+            # differences
+            dl = Cld - Cls
+            dm = Cmd - Cms
+            dn = Cnd - Cns
+            # derivatives
+            ddl = - dCls
+            ddm = - dCms
+            ddn = - dCns
+            # double derivatives
+            wdl = - wCls
+            wdm = - wCms
+            wdn = - wCns
+
+            # da, de calc
+            dai = dl/Clda
+            dei = dm/Cmde
+
+            # determine equation that should be zero
+            zero  =  Cnde* dm* Clda +  Cnda* dl* Cmde -  dn* Cmde* Clda
+            # derivative
+            dzero = \
+                + dCnde* dm* Clda +  Cnde*ddm* Clda +  Cnde* dm*dClda \
+                + dCnda* dl* Cmde +  Cnda*ddl* Cmde +  Cnda* dl*dCmde \
+                - ddn* Cmde* Clda -  dn*dCmde* Clda -  dn* Cmde*dClda
+            # double derivative
+            wzero = \
+                + wCnde* dm* Clda + dCnde*ddm* Clda + dCnde* dm*dClda \
+                + dCnde*ddm* Clda +  Cnde*wdm* Clda +  Cnde*ddm*dClda \
+                + dCnde* dm*dClda +  Cnde*ddm*dClda +  Cnde* dm*wClda \
+                \
+                + wCnda* dl* Cmde + dCnda*ddl* Cmde + dCnda* dl*dCmde \
+                + dCnda*ddl* Cmde +  Cnda*wdl* Cmde +  Cnda*ddl*dCmde \
+                + dCnda* dl*dCmde +  Cnda*ddl*dCmde +  Cnda* dl*wCmde \
+                \
+                - wdn* Cmde* Clda - ddn*dCmde* Clda - ddn* Cmde*dClda \
+                - ddn*dCmde* Clda -  dn*wCmde* Clda -  dn*dCmde*dClda \
+                - ddn* Cmde*dClda -  dn*dCmde*dClda -  dn* Cmde*wClda
+
+            return dai,dei,zero,dzero,wzero
+      
         ###
         self.delta_E_fun = delta_E_fun
         self.delta_E_fun_sum = delta_E_fun_sum
@@ -1053,17 +1306,21 @@ class ControlAllocationMomentAssignmentAircraft(Aircraft):
         self.delta_E_fun_sq = delta_E_fun_sq
         self.delta_E_dE_fun_sq = delta_E_dE_fun_sq
         self.delta_E_dE_wE_fun_sq = delta_E_dE_wE_fun_sq
+        self.            sine_fun =             sine_fun
+        self.      sine_dsine_fun =       sine_dsine_fun
+        self.sine_dsine_wsine_fun = sine_dsine_wsine_fun
         ###
-        self.time_check = 20.0 # 0.0 # 0.0 # 
-        self.dt_check = 0.05 # 0.000001 # 0.05 # 0.01 # 
-        self._err_plot_pause_time = 0.05 # 0.000001 # 1.0 # 
-        self._end_plot_time = 4.9 # 2.7 # 9.9 # 0.325 # 0.1 # 
+        self.time_check = 100.0 # 0.0 # 
+        self.dt_check = 0.000001 # 0.1 # 0.05 # 0.01 # 
+        self._err_plot_pause_time = 0.5 # 5.0 # 0.000001 # 1.0 # 
+        self._end_plot_time = 0.01 # 9.9 # 4.9 # 2.145 # 2.7 # 9.9 # 0.325 # 0.1 # 0.0 # 
         self.have_saved = False
-        self.log_scale = True # False # 
+        self.log_scale = False # True # 
+        self.symlog_scale = True # False # 
         self.first_plot = True # False # 
         self.feval = 0
 
-        self.plot_alternate_solns = True
+        self.plot_alternate_solns = False # True # 
         self.poss_ts     = []
         self.poss_dadegs = []
         self.poss_dedegs = []
@@ -1075,9 +1332,9 @@ class ControlAllocationMomentAssignmentAircraft(Aircraft):
         self._final_on_rk4 = False
 
     def __del__(self):
-        # report gain matrix
-        rep2D(self.KI_DI,"KI",decimals=3)
-        rep2D(self.KP_DI,"KP",decimals=3)
+        # # report gain matrix
+        # rep2D(self.KI_DI,"KI",decimals=3)
+        # rep2D(self.KP_DI,"KP",decimals=3)
         pass
 
     def returns_zero(self,tarr,xarr,uarr,ctrl_axs,subdict,xticks,perc_zoom,
@@ -1295,10 +1552,13 @@ class ControlAllocationMomentAssignmentAircraft(Aircraft):
                 q       = x_euler[ 4] #  self.x_trim_euler[ 4] # 
                 r       = x_euler[ 5] #  self.x_trim_euler[ 5] # 
                 z_f     = x_euler[ 8] #  self.x_trim_euler[ 8] # 
-                da      = x_euler[12] #  self.x_trim_euler[12] # 
-                de      = x_euler[13] #  self.x_trim_euler[13] # 
-                dB      = x_euler[14] #  self.x_trim_euler[14] # 
-                tau     = x_euler[15] #  self.x_trim_euler[15] # 
+                # da      = x_euler[12] #  self.x_trim_euler[12] # 
+                # de      = x_euler[13] #  self.x_trim_euler[13] # 
+                if self.order > 0:
+                    dB  = x_euler[14] #  self.x_trim_euler[14] # 
+                else:
+                    dB  = self.u_til_next_update[2] # 
+                # tau     = x_euler[15] #  self.x_trim_euler[15] # 
                 epI     = x_euler[self.xIi_eul[1]]
                 eqI     = x_euler[self.xIi_eul[2]]
                 erI     = x_euler[self.xIi_eul[3]]
@@ -1393,6 +1653,27 @@ class ControlAllocationMomentAssignmentAircraft(Aircraft):
                 # print(np.linalg.norm(pd)**2.)
                 # quit()
                 # ######################################
+                # ######################################
+                # # # checking second derivative. works!
+                # E = lambda dBj : self.sine_dsine_wsine_fun(rho,V,dBj,a,b,pbar,qbar,rbar,Md)
+                # dBtest = np.deg2rad(np.linspace(-90.0,90.0,1000))
+                # dME = np.zeros((len(dBtest),))
+                # dCS = np.zeros((len(dBtest),))
+                # pows = np.zeros((len(dBtest),))
+                # h = np.deg2rad(1.0e-6)
+                # # # hessian test
+                # # fi = 3; di = 4
+                # # jacobian test
+                # fi = 2; di = 3
+                # for i in range(len(dBtest)):
+                #     dME[i] = E(dBtest[i])[di] # hessian
+                #     dBtesti = complex(dBtest[i],h)
+                #     dCS[i] = np.imag(E(dBtesti)[fi])/h # hessian
+                # pd = (dME - dCS)/dME
+                # print(pd)
+                # print(np.linalg.norm(pd)**2.)
+                # quit()
+                # ######################################
 
                 if self.pseudo_inverse_method:
                     # if self.add_tail_lag_eq:
@@ -1476,17 +1757,22 @@ class ControlAllocationMomentAssignmentAircraft(Aircraft):
                     
 
                     # print(t) # ,self.integrator) # 
-                    if t >= self.time_check and t <= self._end_plot_time:
+                    if t >= self.time_check and t <= self._end_plot_time and not(self.have_saved):
                         if self.first_plot:
                             plt.xlabel("Tail rotation, deg")
                             plt.ylabel("Error $E = ||M - M_d||$") # ^2$") # 
                             if self.log_scale:
                                 plt.yscale("log")
-                        E = lambda dBj : self.delta_E_fun_sq(\
-                            rho,V,dBj,a,b,pbar,qbar,rbar,Md)[2]
-                        # E = lambda dBj : self.delta_E_fun_sum(\
-                        #     rho,V,dBj,a,b,pbar,qbar,rbar,Md)[2]
-                        dBvals_deg = np.linspace(-90.0,90.0,10000)
+                            if self.symlog_scale:
+                                plt.yscale("symlog")
+                        if self.line_method == "Newton_Root":
+                            E = lambda dBj : self.sine_fun(\
+                                rho,V,dBj,a,b,pbar,qbar,rbar,Md)[2]
+                        else:
+                            E = lambda dBj : self.delta_E_fun_sq(\
+                                rho,V,dBj,a,b,pbar,qbar,rbar,Md)[2]
+                        #
+                        dBvals_deg = np.linspace(-360.0,360.0,20000) # -90.0,90.0,10000) # 
                         dBvals = np.deg2rad(dBvals_deg)
                         Evals = [E(dBvals[i]) for i in range(len(dBvals))]
                         dBcol = plt.plot(dBvals_deg,Evals)[0].get_color()
@@ -1504,11 +1790,34 @@ class ControlAllocationMomentAssignmentAircraft(Aircraft):
                             now = datetime.now()
                             ct = now.strftime("%Y-%m-%d_%H-%M-%S")
                             plt.savefig("/home/ben/Desktop/plotfig_"+ct+".png")
+                            plt.close()
                             self.have_saved = True
                         else:
                             plt.pause(self._err_plot_pause_time)
                         self.time_check += self.dt_check
                     # quit()
+
+                    # if self._final_on_rk4 and self.plot_alternate_solns:
+                    #     if self.save_poss_counter % self.save_poss_every == 0:
+                    #         # determine all "zero" controls
+                    #         da_de_Eall = lambda dBj : self.delta_E_fun_sq(\
+                    #             rho,V,dBj,a,b,pbar,qbar,rbar,Md)
+                    #         dBvals_deg = np.linspace(-90.0,90.0,self.poss_check_num)
+                    #         dBvals = np.deg2rad(dBvals_deg)
+                    #         Evals = [da_de_Eall(dBvals[i]) for i in range(len(dBvals))]
+                    #         Evals = np.array(Evals)
+                    #         Evals_threshold = 5e2
+                    #         poss_inds = np.argwhere(Evals[:,2] < Evals_threshold)[:,0]
+                    #         poss_Evals = Evals[poss_inds]
+                    #         self.poss_dadeg = np.rad2deg(poss_Evals[:,0])
+                    #         self.poss_dedeg = np.rad2deg(poss_Evals[:,1])
+                    #         self.poss_dBdeg = dBvals_deg[poss_inds]
+                    #         self.poss_E     = poss_Evals[:,2]
+                    #         print(t,self.poss_E)
+                    #         self.save_poss_counter += 1
+                    #     else:
+                    #         self.save_poss_counter += 1
+
 
                     if self._final_on_rk4 and self.plot_alternate_solns:
                         if self.save_poss_counter % self.save_poss_every == 0:
@@ -1519,8 +1828,8 @@ class ControlAllocationMomentAssignmentAircraft(Aircraft):
                             dBvals = np.deg2rad(dBvals_deg)
                             Evals = [da_de_Eall(dBvals[i]) for i in range(len(dBvals))]
                             Evals = np.array(Evals)
-                            Evals_threshold = 5e2
-                            poss_inds = np.argwhere(Evals[:,2] < Evals_threshold)[:,0]
+                            Evals_threshold = 1.0e-2
+                            poss_inds = np.argwhere(np.abs(Evals[:,2]) < Evals_threshold)[:,0]
                             poss_Evals = Evals[poss_inds]
                             self.poss_dadeg = np.rad2deg(poss_Evals[:,0])
                             self.poss_dedeg = np.rad2deg(poss_Evals[:,1])
@@ -1530,10 +1839,34 @@ class ControlAllocationMomentAssignmentAircraft(Aircraft):
                             self.save_poss_counter += 1
                         else:
                             self.save_poss_counter += 1
-                    
-                    if self.line_method == "Newton":
-                        E = lambda dBj : self.delta_E_fun_sq(\
+
+                    if self.line_method == "Newton_Root":
+                        zero  = lambda dBj : self.sine_fun(\
                             rho,V,dBj,a,b,pbar,qbar,rbar,Md)[2]
+                        dzero = lambda dBj : self.sine_dsine_fun(\
+                            rho,V,dBj,a,b,pbar,qbar,rbar,Md)[3]
+                        wzero = lambda dBj : self.sine_dsine_wsine_fun(\
+                            rho,V,dBj,a,b,pbar,qbar,rbar,Md)[4]
+                        dB_d,res = newton(zero,dB_d, # res.x, # 0.0, # 
+                            fprime=dzero,
+                            fprime2=wzero,
+                            maxiter=self.opt_max_iter, # 1000, # 
+                            tol=self.opt_tol,
+                            disp=False, # True, # 
+                            full_output=True)
+                        # # rebound
+                        if dB_d != 0.0:
+                            dBsgn = np.sign(dB_d)
+                            dB_d = dBsgn*(abs(dB_d) % np.pi)
+
+                        # # # # # # # #
+                        res.fun = zero(dB_d)
+                        res.nit = res.iterations
+                        self.nit = res.iterations
+                        self.feval = res.function_calls
+                        self.deval = res.function_calls
+                    # other
+                    elif self.line_method == "Newton":
                         E = lambda dBj : self.delta_E_fun_sq(\
                             rho,V,dBj,a,b,pbar,qbar,rbar,Md)[2]
                         dE = lambda dBj : self.delta_E_dE_fun_sq(\
@@ -1654,9 +1987,14 @@ class ControlAllocationMomentAssignmentAircraft(Aircraft):
                         i_d = res.nit
                         # the below is technically not true, but since E is 
                         # not returned, it doesn't matter (some need _sq)
-                        da_d,de_d = self.delta_E_fun(rho,V,dB_d,a,b,pbar,qbar,rbar,Md)[0:2]
-                        if E_d > self.report_error_threshold:
-                            print("t = {:>10.3f}, i = {:>6d}, E = {:>10.3f}".format(t,i_d,E_d))
+                        if self.line_method == "Newton_Root":
+                            da_d,de_d = self.sine_fun(rho,V,dB_d,a,b,pbar,qbar,rbar,Md)[0:2]
+                            if abs(E_d) > 1/self.report_error_threshold:
+                                print("t = {:>10.3f}, i = {:>6d}, Z = {:> 12.3e}".format(t,i_d,E_d))
+                        else:
+                            da_d,de_d = self.delta_E_fun(rho,V,dB_d,a,b,pbar,qbar,rbar,Md)[0:2]
+                            if E_d > self.report_error_threshold:
+                                print("t = {:>10.3f}, i = {:>6d}, E = {:> 10.3f}".format(t,i_d,E_d))
                     else:
                         self.nit = 0.0
                         self.feval = 0.0
@@ -3263,7 +3601,7 @@ if __name__ == "__main__":
     # run_bire_fs["name_end"] = "_" + f1 + "_DIGS_1"
     # # # 
     run_bire_fs["aircraft_class"] = ControlAllocationMomentAssignmentAircraft
-    run_bire_fs["name_end"] = "_" + f1 + "_CAMA_1" # 2" # 
+    run_bire_fs["name_end"] = "_" + f1 + "_CAMA_sine" # 2" # 
     # # bire_fs_dict["aircraft"]["CG_shift[ft]"] = [+1.0,+0.0,0.0]
     # # # # # # 
     # # # run_bire_fs["aircraft_class"] = ControlAllocationMomentAssignmentActuatorsAircraft
@@ -3385,7 +3723,7 @@ if __name__ == "__main__":
     # p_tr_deg = -0.0820880039056245
     # q_tr_deg =  0.8352580178704386
     # r_tr_deg =  1.4467093243808735
-    # # (0) tail
+    # (0) tail
     # p_tr_deg = -0.0800043056586719
     # q_tr_deg =  0.8353731041767737
     # r_tr_deg =  1.4469086597107013
@@ -3407,22 +3745,22 @@ if __name__ == "__main__":
     # r_tr_deg =  1.8589897474721753
     # #######################################################################
     # # 50 deg bank fullscale BIRE
-    # # (0) tail
+    # (0) tail
     # p_tr_deg = -0.1755564353175651
     # q_tr_deg =  2.6372142861590873
     # r_tr_deg =  2.2128855348515439
     # #######################################################################
     # # 60 deg bank fullscale BIRE
     # # (0) tail
-    # p_tr_deg = -0.2654216358834438
-    # q_tr_deg =  4.3218126454667702
-    # r_tr_deg =  2.4951996942473698
+    p_tr_deg = -0.2654216358834438
+    q_tr_deg =  4.3218126454667702
+    r_tr_deg =  2.4951996942473698
     # #######################################################################
     # # 10 deg bank RC scale BIRE w/o stall
     # p_tr_deg = -0.3294739663431505
     # q_tr_deg =  0.5582409457023837
     # r_tr_deg =  3.1659417263281258
-    p_bfcm = 15.0 # 30.0 # 5.0 # 20.0 # 10.0 # 50.0 # 40.0 # 60.0 # 7.5 # 
+    p_bfcm = 60.0 # 50.0 # 40.0 # 30.0 # 15.0 # 5.0 # 20.0 # 10.0 # 7.5 # 
     if "left_roll" in locals():
         p_bfcm = - p_bfcm
         p_tr_deg = - p_tr_deg
@@ -3435,12 +3773,12 @@ if __name__ == "__main__":
     ###########################################################################
     t_zero = 0.0
     recover_time = 10.0
-    transition_time = 2.0 # 1.0 # 
+    transition_time = 1.0 # 2.0 # 
     p_time = t_zero + transition_time
     # p_time2 = p_time  + recover_time
     # p_time3 = p_time2 + transition_time
     t_end = 0.0 # 25.0 # 
-    tf = 10.0 # 9.6 # 5.0 # 6.9 # 3.0 # t_end + p_time + 8.0 # 
+    tf = 20.0 # 10.0 # 4.33 # 60.0 # 
     V_trim = 634.4133153512273111
     bire_fs_dict["reference"] = {
         "deg2rad_states" : [1,2,3,4,5],
@@ -3478,15 +3816,16 @@ if __name__ == "__main__":
     # bire_fs_dict["actuators"]["elevator"]["lag[s]"] = new_lag
     # bire_fs_dict["actuators"][    "BIRE"]["lag[s]"] = new_lag
     # # # # # # 
-    # blm = 300.0 # 100.0 # 150.0 # 500.0 # 1000.0 # 500.0 # 50.0
-    # bire_fs_dict["actuators"][    "BIRE"]["rate_limits[deg/s]"] = [-blm,blm]
+    blm = 125.0 # 150.0 # 200.0 # 250.0 # 500.0 # 600.0 # 750.0 # 1000.0 # 1500.0 # 100.0 # 50.0
+    bire_fs_dict["actuators"][    "BIRE"]["rate_limits[deg/s]"] = [-blm,blm]
     # # # # # # 
     # elm = 50.0
     # bire_fs_dict["actuators"]["elevator"]["rate_limits[deg/s]"] = [-elm,elm]
     # # # # # # #
-    bire_fs_dict["simulation"][      "limit_input"] = False # True # 
-    bire_fs_dict["simulation"]["limit_input_rates"] = False # True # 
-    run_bire_fs["name_end"] += "_nolim"
+
+    # bire_fs_dict["simulation"][      "limit_input"] = False # True # 
+    # bire_fs_dict["simulation"]["limit_input_rates"] = False # True # 
+    # run_bire_fs["name_end"] += "_nolim"
     # # # # # #
     # bire_fs_dict["simulation"]["constant_density"] = True # False # 
     # # # # # 
