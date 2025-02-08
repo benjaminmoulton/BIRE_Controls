@@ -3132,7 +3132,7 @@ class Aircraft:
         return
 
 
-    def returns_zero(self,tarr,xarr,uarr,ctrl_axs,subdict,xticks,perc_zoom,
+    def returns_zero(self,tarr,xarr,uarr,errs_axs,ctrl_axs,subdict,xticks,perc_zoom,
         predir,format,savedict,save_plot):
         return 0
 
@@ -3343,6 +3343,9 @@ class Aircraft:
         if self.tracking:
             errs_fig, errs_axs = plt.subplots(1,1,**subdict)
             igrs_fig, igrs_axs = plt.subplots(1,1,**subdict)
+        else:
+            errs_fig, errs_axs = "fig", "axs"
+            igrs_fig, igrs_axs = "fig", "axs"
         ctrl_fig, ctrl_axs = plt.subplots(4,1,**subdict)
         surf_fig, surf_axs = plt.subplots(1,1,**subdict)
         path_fig, path_axs = plt.subplots(figsize=(3.25,2.4375),
@@ -3831,7 +3834,7 @@ class Aircraft:
         path_axs.view_init(22.5,-135.0)
 
         # MFBL error plot
-        self.returns_zero(tarr,xarr,uarr,ctrl_axs,subdict,xticks,perc_zoom,
+        self.returns_zero(tarr,xarr,uarr,errs_axs,ctrl_axs,subdict,xticks,perc_zoom,
             predir,format,savedict,not(save_states and not(plot_full)))
         
         svuc = uarr*0.0

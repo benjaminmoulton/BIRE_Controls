@@ -725,27 +725,6 @@ class ControlAllocationMomentAssignmentAircraft(Aircraft):
         self.ddBAM = BIREAero(**self.aero_dict)
         self.ddBAM._make_double_derivative_model()
         self.u_til_next_update = self.u_trim*1.0
-
-        # TIMING
-        # # # # 1 case 10 s
-        # Newton Alone ------ 0:23
-        # Newton w/search --- 0:35
-        # Brent ------------- 0:40
-        # Golden ------------ 0:55
-        # SLSQP ------------- 2:04
-        # Nelder-Mead ------- 5:00
-        # # # # slower, 10 s # # ## PG = previous guess
-        # Brent PG 10 iter max --- 0:26
-        # Brent PG --------------- 1:03 # less slow 0:48
-        # Brent w/LS ------------- 1:29
-        # Newton PG -------------- 1:31 # less slow 0:32
-        # SLSQP w/LS ------------- 1:34
-        # Golden PG -------------- 1:46
-        # Golden w/LS ------------ 2:08
-        # Newton from 60 --------- 3:37
-        # BFGS w/LS -------------- 4:02
-        # Nelder-Mead w/LS ------- 7:47
-        # trust-exact w/LS ------- #:##
         
         # use LQR to design v
         I = np.eye(3)
@@ -753,25 +732,31 @@ class ControlAllocationMomentAssignmentAircraft(Aircraft):
         A = np.block([[Z,I],[Z,Z]])
         B = np.block([[Z],[I]])
         C = np.eye(6)
-        Q = np.diag([5.0e+1,5.0e+2,5.0e+2] + [2.0e+0,5.0e+1,5.0e+1])
+        # ## # # vv as
+        Q = np.diag([1.0e+2,5.0e+2,5.0e+2] + [2.0e+0,5.0e+1,5.0e+1])
         Q[0,2] = Q[2,0] = 1.0e+2
         Q[1,2] = Q[2,1] = 3.5e+2
-        Q[3,5] = Q[5,3] = 1.0e+0
+        Q[3,5] = Q[5,3] = 1.0e+0 # potential increase, was 1.0e+0
         Q[4,5] = Q[5,4] = 5.0e+0
+        # I don't think I want correlation here
+        Q[0,1] = Q[1,0] = 0.0e+00
+        Q[3,4] = Q[4,3] = 0.0e+00
+        # seem to have no effect
+        Q[0,3] = Q[3,0] = 0.0e+00
+        Q[1,4] = Q[4,1] = 0.0e+00
+        Q[2,5] = Q[5,2] = 0.0e+00
+        # e and int(e)
+        Q[0,4] = Q[4,0] = 0.0e+0
+        Q[0,5] = Q[5,0] = 0.0e+0 #
+        Q[1,3] = Q[3,1] = 0.0e+0
+        Q[1,5] = Q[5,1] = 0.0e+0 #
+        # Q[2,3] = Q[3,2] = 1.0e+2 # # remove this, from as, now ar
+        Q[2,4] = Q[4,2] = 0.0e+0 #
+        #
         R = np.diag([1.0e+0,1.0e+0,2.5e+2])
         R[0,1] = R[1,0] = 0.0
         R[0,2] = R[2,0] = 0.0
         R[1,2] = R[2,1] = 5.0e-2
-        # # ## # # vv ak
-        # Q = np.diag([5.0e+2,1.0e+3,1.0e+3] + [4.0e+0,4.0e+1,4.0e+1])
-        # Q[0,2] = Q[2,0] = 1.0e2
-        # Q[1,2] = Q[2,1] = 7.0e2
-        # Q[3,5] = Q[5,3] = 2.0e+0
-        # Q[4,5] = Q[5,4] = 1.0e+1
-        # R = np.diag([1.0e+0,1.0e+0,5.0e+2])
-        # R[0,1] = R[1,0] = 0.0
-        # R[0,2] = R[2,0] = 0.0
-        # R[1,2] = R[2,1] = 1.0e-1
         # # # # # # # # # # vvvv OLD QR from optimization setup
         # Q = np.diag([8.4e+2] + [4.2e+3]*2 + [4.0e+0] + [4.0e+1]*2)
         # Q[0,2] = Q[2,0] = 1.0e2 # 5.0e2
@@ -785,18 +770,6 @@ class ControlAllocationMomentAssignmentAircraft(Aircraft):
         # R = np.diag([1.0e+0,1.0e+0,1.0e+0])
         K,_,K_eigs = co.lqr(A,B,Q,R)
         self.KI_DI,self.KP_DI = K[:,0:3],K[:,3:6]
-        # #
-        # self.KP_DI = np.array([
-        #     [ 1.0e+1, 0.0e+0, 1.0e+1],
-        #     [ 0.0e+0, 1.0e+1, 5.0e+0],
-        #     [ 0.0e+0, 5.0e-1, 5.0e-1]
-        # ])
-        # # self.KI_DI = self.KI_DI*0.0
-        # self.KI_DI = self.KP_DI*10.0
-        # #
-        # zt = 0.6; wn = 8.0
-        # self.KP_DI = np.diag([2.*zt*wn]*3)
-        # self.KI_DI = np.diag([wn**2.]*3)
         # #
         K = np.block([self.KI_DI,self.KP_DI])
         # print(K)
@@ -1337,7 +1310,8 @@ class ControlAllocationMomentAssignmentAircraft(Aircraft):
         # rep2D(self.KP_DI,"KP",decimals=3)
         pass
 
-    def returns_zero(self,tarr,xarr,uarr,ctrl_axs,subdict,xticks,perc_zoom,
+    def returns_zero(self,tarr,xarr,uarr,errs_axs,ctrl_axs,
+        subdict,xticks,perc_zoom,
         predir,format,savedict,save_plot):
         # calculate Error
         MErr = []
@@ -1483,17 +1457,21 @@ class ControlAllocationMomentAssignmentAircraft(Aircraft):
                     ctrl_axs[2].plot(self.poss_ts[i],self.poss_dBdegs[i][j],"g.",ms=0.5)
                     ErMg_axs   .plot(self.poss_ts[i],self.poss_Es    [i][j],"b.",ms=0.5)
         # limit control plots
+        if not(self.bool_limit_inputs):
+            min_da      = np.rad2deg( self.min_da)
+            max_da      = np.rad2deg( self.max_da)
+            min_de_opt  = np.rad2deg( self.min_de)
+            max_de_opt  = np.rad2deg( self.max_de)
+            min_dr      = np.rad2deg( self.min_dr)
+            max_dr      = np.rad2deg( self.max_dr)
+            ctrl_axs[0].set_ylim((min_da-5.,max_da+5.))
+            ctrl_axs[1].set_ylim((min_de_opt-5.,max_de_opt+5.))
+            ctrl_axs[2].set_ylim((min_dr-5.,max_dr+5.))
 
-        min_da      = np.rad2deg( self.min_da)
-        max_da      = np.rad2deg( self.max_da)
-        min_de_opt  = np.rad2deg( self.min_de)
-        max_de_opt  = np.rad2deg( self.max_de)
-        min_dr      = np.rad2deg( self.min_dr)
-        max_dr      = np.rad2deg( self.max_dr)
-        ctrl_axs[0].set_ylim((min_da-5.,max_da+5.))
-        ctrl_axs[1].set_ylim((min_de_opt-5.,max_de_opt+5.))
-        ctrl_axs[2].set_ylim((min_dr-5.,max_dr+5.))
-
+        if self.tracking:
+            # TESTING MACA
+            errs_axs.set_ylim((-150.0,150.0))
+            # TESTING MACA
 
         ErMg_axs.set_yscale("log")
         ErMg_axs.set_xlim((0.,perc_zoom*self.tf))
@@ -1822,20 +1800,20 @@ class ControlAllocationMomentAssignmentAircraft(Aircraft):
                     if self._final_on_rk4 and self.plot_alternate_solns:
                         if self.save_poss_counter % self.save_poss_every == 0:
                             # determine all "zero" controls
-                            da_de_Eall = lambda dBj : self.delta_E_fun_sq(\
+                            da_de_Eall = lambda dBj : self.sine_fun(\
                                 rho,V,dBj,a,b,pbar,qbar,rbar,Md)
                             dBvals_deg = np.linspace(-90.0,90.0,self.poss_check_num)
                             dBvals = np.deg2rad(dBvals_deg)
                             Evals = [da_de_Eall(dBvals[i]) for i in range(len(dBvals))]
                             Evals = np.array(Evals)
-                            Evals_threshold = 1.0e-2
+                            Evals_threshold = 1.0e-5
                             poss_inds = np.argwhere(np.abs(Evals[:,2]) < Evals_threshold)[:,0]
                             poss_Evals = Evals[poss_inds]
                             self.poss_dadeg = np.rad2deg(poss_Evals[:,0])
                             self.poss_dedeg = np.rad2deg(poss_Evals[:,1])
                             self.poss_dBdeg = dBvals_deg[poss_inds]
                             self.poss_E     = poss_Evals[:,2]
-                            print(t,self.poss_E)
+                            # print(t,self.poss_E)
                             self.save_poss_counter += 1
                         else:
                             self.save_poss_counter += 1
@@ -1858,6 +1836,12 @@ class ControlAllocationMomentAssignmentAircraft(Aircraft):
                         if dB_d != 0.0:
                             dBsgn = np.sign(dB_d)
                             dB_d = dBsgn*(abs(dB_d) % np.pi)
+
+                            # if self.bool_limit_inputs:
+                            #     if   dB_d >   np.pi/2.0:
+                            #         dB_d -= np.pi
+                            #     elif dB_d < - np.pi/2.0:
+                            #         dB_d += np.pi
 
                         # # # # # # # #
                         res.fun = zero(dB_d)
@@ -3738,11 +3722,11 @@ if __name__ == "__main__":
     # q_tr_deg =  1.1619249236475548
     # r_tr_deg =  1.6594007636912391
     # #######################################################################
-    # # 40 deg bank fullscale BIRE
-    # # (0) tail
-    # p_tr_deg = -0.1195200902391827
-    # q_tr_deg =  1.5598776114662467
-    # r_tr_deg =  1.8589897474721753
+    # # # 40 deg bank fullscale BIRE
+    # (0) tail
+    p_tr_deg = -0.1195200902391827
+    q_tr_deg =  1.5598776114662467
+    r_tr_deg =  1.8589897474721753
     # #######################################################################
     # # 50 deg bank fullscale BIRE
     # (0) tail
@@ -3750,17 +3734,17 @@ if __name__ == "__main__":
     # q_tr_deg =  2.6372142861590873
     # r_tr_deg =  2.2128855348515439
     # #######################################################################
-    # # 60 deg bank fullscale BIRE
-    # # (0) tail
-    p_tr_deg = -0.2654216358834438
-    q_tr_deg =  4.3218126454667702
-    r_tr_deg =  2.4951996942473698
+    # 60 deg bank fullscale BIRE
+    # # # (0) tail
+    # p_tr_deg = -0.2654216358834438
+    # q_tr_deg =  4.3218126454667702
+    # r_tr_deg =  2.4951996942473698
     # #######################################################################
     # # 10 deg bank RC scale BIRE w/o stall
     # p_tr_deg = -0.3294739663431505
     # q_tr_deg =  0.5582409457023837
     # r_tr_deg =  3.1659417263281258
-    p_bfcm = 60.0 # 50.0 # 40.0 # 30.0 # 15.0 # 5.0 # 20.0 # 10.0 # 7.5 # 
+    p_bfcm = 40.0 # 60.0 # 50.0 # 30.0 # 15.0 # 5.0 # 20.0 # 10.0 # 7.5 # 
     if "left_roll" in locals():
         p_bfcm = - p_bfcm
         p_tr_deg = - p_tr_deg
@@ -3778,7 +3762,7 @@ if __name__ == "__main__":
     # p_time2 = p_time  + recover_time
     # p_time3 = p_time2 + transition_time
     t_end = 0.0 # 25.0 # 
-    tf = 20.0 # 10.0 # 4.33 # 60.0 # 
+    tf = 10.0 # 4.90 # 60.0 # 20.0 # 
     V_trim = 634.4133153512273111
     bire_fs_dict["reference"] = {
         "deg2rad_states" : [1,2,3,4,5],
@@ -3816,7 +3800,7 @@ if __name__ == "__main__":
     # bire_fs_dict["actuators"]["elevator"]["lag[s]"] = new_lag
     # bire_fs_dict["actuators"][    "BIRE"]["lag[s]"] = new_lag
     # # # # # # 
-    blm = 125.0 # 150.0 # 200.0 # 250.0 # 500.0 # 600.0 # 750.0 # 1000.0 # 1500.0 # 100.0 # 50.0
+    blm = 200.0 # 125.0 # 150.0 # 100.0 # 250.0 # 500.0 # 600.0 # 750.0 # 1000.0 # 1500.0 # 50.0
     bire_fs_dict["actuators"][    "BIRE"]["rate_limits[deg/s]"] = [-blm,blm]
     # # # # # # 
     # elm = 50.0
