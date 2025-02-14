@@ -1100,10 +1100,16 @@ class BIREAero:
                  self._dCnde_dB(dB)*de)
         return dCndB
 
-    def _inc_aero_results(self, alpha, beta, pbar, qbar, rbar, da, de, dB):
+    def _inc_aero_results(self, alpha, beta, pbar, qbar, rbar, da, de, dB, simplified):
         params = alpha, beta, pbar, qbar, rbar, da, de, dB
+        if simplified:
+            lparams = alpha, beta, pbar, qbar, rbar, da, 0.0, dB
+            mparams = alpha, beta, pbar, qbar, rbar, 0.0, de, dB
+        else:
+            lparams = params
+            mparams = params
         return [self._CL(*params), self._CS(*params), self._CD(*params),
-                self._Cl(*params), self._Cm(*params), self._Cn(*params)]
+                self._Cl(*lparams), self._Cm(*mparams), self._Cn(*params)]
 
     def _stall_correction(self,a,CL,CD,Cm):
         # determine flat plate forces and moment
@@ -1161,8 +1167,9 @@ class BIREAero:
         return coeff / (M**2. - 1.)**0.5
 
     def aero_results(self, alpha, beta, pbar, qbar, rbar, da, de, dB, 
-    compressible=True, M=113.0, use_Anderson=True, enforce_stall=True):
-        params = alpha, beta, pbar, qbar, rbar, da, de, dB
+    compressible=True, M=113.0, use_Anderson=True, enforce_stall=True,
+    simplified=False):
+        params = alpha, beta, pbar, qbar, rbar, da, de, dB, simplified
 
         # run incompressible
         [CL, CS, CD, Cl, Cm, Cn] = self._inc_aero_results(*params)
@@ -1202,8 +1209,8 @@ class BIREAero:
             return [CL, CS, CD, Cl, Cm, Cn]
 
     def _uncorrect_Anderson(self, coeff, Lambda, RA, M):
-        num = coeff*(1./cos(Lambda)**2. - M**2.)**0.5
-        denom = (1. - 2.*coeff/pi/RA)**0.5
+        num = coeff*(1. - M**2.*cos(Lambda)**2)**0.5
+        denom = cos(Lambda)*(1. - 2.*coeff/pi/RA)**0.5
         return num/denom
 
     def _uncorrect_Prandtl_Glauert_subsonic(self, coeff, M):
@@ -1360,7 +1367,7 @@ class BIREAero:
         for coeff in self.model_coeffs_dict:
             coeff_base = "\\hat{" + coeff[0] + "}_{"
             if coeff == "Cell":
-                coeff_base = coeff_base + "\ell"
+                coeff_base = coeff_base + r"\ell"
                 print()
             else:
                 coeff_base = coeff_base + coeff[1]
@@ -1386,7 +1393,7 @@ class BIREAero:
                 else:
                     use_comma = True
                 if der[-4:] == "^B^2":
-                    der = der[:-4] + "^{B \, 2}"
+                    der = der[:-4] + r"^{B \, 2}"
                 full_coeff = "$" + coeff_base + ","*use_comma + der + "}" + "$"
 
                 subdict = coeff_dict[coeff_der]

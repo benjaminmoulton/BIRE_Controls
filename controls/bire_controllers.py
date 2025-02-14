@@ -1283,13 +1283,13 @@ class ControlAllocationMomentAssignmentAircraft(Aircraft):
         self.      sine_dsine_fun =       sine_dsine_fun
         self.sine_dsine_wsine_fun = sine_dsine_wsine_fun
         ###
-        self.time_check = 100.0 # 0.0 # 
+        self.time_check = 100.0 # 1.05 # 0.8 # 0.0 # 1.55 # 0.97 # 
         self.dt_check = 0.000001 # 0.1 # 0.05 # 0.01 # 
-        self._err_plot_pause_time = 0.5 # 5.0 # 0.000001 # 1.0 # 
-        self._end_plot_time = 0.01 # 9.9 # 4.9 # 2.145 # 2.7 # 9.9 # 0.325 # 0.1 # 0.0 # 
+        self._err_plot_pause_time = 0.1 # 0.000001 # 0.5 # 5.0 # 1.0 # 
+        self._end_plot_time = 1.2 # 2.0 # 5.0 # 1.57 # 0.01 # 9.9 # 4.9 # 2.145 # 2.7 # 9.9 # 0.325 # 0.1 # 0.0 # 
         self.have_saved = False
         self.log_scale = False # True # 
-        self.symlog_scale = True # False # 
+        self.symlog_scale = False # True # 
         self.first_plot = True # False # 
         self.feval = 0
 
@@ -1300,7 +1300,7 @@ class ControlAllocationMomentAssignmentAircraft(Aircraft):
         self.poss_dBdegs = []
         self.poss_Es     = []
         self.poss_check_num = 10000 # 
-        self.save_poss_every = 2
+        self.save_poss_every = 100 # 10 # 2 # 
         self.save_poss_counter = 0
         self._final_on_rk4 = False
 
@@ -1609,10 +1609,12 @@ class ControlAllocationMomentAssignmentAircraft(Aircraft):
                 # v = - np.matmul(LM.K,e) - np.matmul(LM.KI,eI)
                 v = - np.matmul(self.KP_DI,e) - np.matmul(self.KI_DI,eI)
                 Md = np.matmul(I,(v - np.matmul(Iinv,np.matmul(hmat,w) + Om)))
+                CMd_c = np.matmul(1./Qdyn*np.diag([1./bw,1./cw,1./bw]),Md)
                 # correct moment
                 Md = np.matmul(G,self.aero_model.uncorrect_M(
                     np.matmul(1./Qdyn*np.diag([1./bw,1./cw,1./bw]),Md),a,
                     self.is_compressible,M,self.use_anderson,self.has_stall))
+                CMd_u = np.matmul(1./Qdyn*np.diag([1./bw,1./cw,1./bw]),Md)
                 
                 # ######################################
                 # # # checking second derivative. works!
@@ -1732,48 +1734,6 @@ class ControlAllocationMomentAssignmentAircraft(Aircraft):
                         # #     dB_d = 0.0
                         dBbrack = np.deg2rad(90.0)
                         bracket = (-dBbrack, dB_d, dBbrack)
-                    
-
-                    # print(t) # ,self.integrator) # 
-                    if t >= self.time_check and t <= self._end_plot_time and not(self.have_saved):
-                        if self.first_plot:
-                            plt.xlabel("Tail rotation, deg")
-                            plt.ylabel("Error $E = ||M - M_d||$") # ^2$") # 
-                            if self.log_scale:
-                                plt.yscale("log")
-                            if self.symlog_scale:
-                                plt.yscale("symlog")
-                        if self.line_method == "Newton_Root":
-                            E = lambda dBj : self.sine_fun(\
-                                rho,V,dBj,a,b,pbar,qbar,rbar,Md)[2]
-                        else:
-                            E = lambda dBj : self.delta_E_fun_sq(\
-                                rho,V,dBj,a,b,pbar,qbar,rbar,Md)[2]
-                        #
-                        dBvals_deg = np.linspace(-360.0,360.0,20000) # -90.0,90.0,10000) # 
-                        dBvals = np.deg2rad(dBvals_deg)
-                        Evals = [E(dBvals[i]) for i in range(len(dBvals))]
-                        dBcol = plt.plot(dBvals_deg,Evals)[0].get_color()
-                        plt.plot(np.rad2deg(dB),E(dB),"o",c="k",ms=2.0,mfc=dBcol)
-                        plt.plot(np.rad2deg(dB_d),E(dB_d),"o",c=dBcol,ms=2.0,mfc="w")
-                        if self.line_method in self.scalar_options:
-                            plt.plot(np.rad2deg(bracket[0]),E(bracket[0]),"x",c=dBcol,ms=3.0)
-                            plt.plot(np.rad2deg(bracket[2]),E(bracket[2]),"x",c=dBcol,ms=3.0)
-                        plt.title("t = {:> 7.3f}".format(t))
-                        # plt.yscale("log")
-                        plt.show(block=False)
-                        if not(self.have_saved) and \
-                            self._end_plot_time - self.dt_check <= t:
-                            print("end of times!!!")
-                            now = datetime.now()
-                            ct = now.strftime("%Y-%m-%d_%H-%M-%S")
-                            plt.savefig("/home/ben/Desktop/plotfig_"+ct+".png")
-                            plt.close()
-                            self.have_saved = True
-                        else:
-                            plt.pause(self._err_plot_pause_time)
-                        self.time_check += self.dt_check
-                    # quit()
 
                     # if self._final_on_rk4 and self.plot_alternate_solns:
                     #     if self.save_poss_counter % self.save_poss_every == 0:
@@ -1825,23 +1785,29 @@ class ControlAllocationMomentAssignmentAircraft(Aircraft):
                             rho,V,dBj,a,b,pbar,qbar,rbar,Md)[3]
                         wzero = lambda dBj : self.sine_dsine_wsine_fun(\
                             rho,V,dBj,a,b,pbar,qbar,rbar,Md)[4]
-                        dB_d,res = newton(zero,dB_d, # res.x, # 0.0, # 
+                        dB_d,res = newton(zero,dB_d, # dB, # res.x, # 0.0, # 
                             fprime=dzero,
                             fprime2=wzero,
                             maxiter=self.opt_max_iter, # 1000, # 
                             tol=self.opt_tol,
                             disp=False, # True, # 
                             full_output=True)
-                        # # rebound
+                        # # # rebound
                         if dB_d != 0.0:
                             dBsgn = np.sign(dB_d)
                             dB_d = dBsgn*(abs(dB_d) % np.pi)
-
-                            # if self.bool_limit_inputs:
-                            #     if   dB_d >   np.pi/2.0:
-                            #         dB_d -= np.pi
-                            #     elif dB_d < - np.pi/2.0:
-                            #         dB_d += np.pi
+                            # dB_d,res = newton(zero,dB_d, # res.x, # 0.0, # 
+                            #     fprime=dzero,
+                            #     fprime2=wzero,
+                            #     maxiter=self.opt_max_iter, # 1000, # 
+                            #     tol=self.opt_tol,
+                            #     disp=False, # True, # 
+                            #     full_output=True)
+                        #
+                        #
+                        dB_rep = dB_d*1.0
+                        # if abs(dB_d-dB) > 4.0*self.max_drdot*self.dt:
+                        #     dB_d = dB + np.sign(dB_d-dB)*4.0*self.max_drdot*self.dt
 
                         # # # # # # # #
                         res.fun = zero(dB_d)
@@ -1984,6 +1950,57 @@ class ControlAllocationMomentAssignmentAircraft(Aircraft):
                         self.feval = 0.0
                         self.deval = 0.0
                     
+
+                    # print(t) # ,self.integrator) # 
+                    if t >= self.time_check and t <= self._end_plot_time and not(self.have_saved):
+                        if self.first_plot:
+                            plt.xlabel("Tail rotation, deg")
+                            plt.ylabel("f(dB)")# $E$")#  = ||M - M_d||$") # ^2$") # 
+                            plt.plot([-360,360],[0.0,0.0],"-",c="k",lw=0.5)
+                            if self.log_scale:
+                                plt.yscale("log")
+                            if self.symlog_scale:
+                                plt.yscale("symlog")
+                        if self.line_method == "Newton_Root":
+                            E = lambda dBj : self.sine_fun(\
+                                rho,V,dBj,a,b,pbar,qbar,rbar,Md)[2]
+                        else:
+                            E = lambda dBj : self.delta_E_fun_sq(\
+                                rho,V,dBj,a,b,pbar,qbar,rbar,Md)[2]
+                        #
+                        dBvals_deg = np.linspace(-360.0,360.0,20000) # -90.0,90.0,10000) # 
+                        dBvals = np.deg2rad(dBvals_deg)
+                        Evals = [E(dBvals[i]) for i in range(len(dBvals))]
+                        dBcol = plt.plot(dBvals_deg,Evals)[0].get_color()
+                        plt.plot(np.rad2deg(dB),E(dB),"o",c="k",ms=2.0,mfc=dBcol)
+                        plt.plot(np.rad2deg(dB_d),E(dB_d),"o",c=dBcol,ms=2.0,mfc="w")
+                        i_neg = int(abs((-np.pi*2.0-dB_d)/np.pi))
+                        for ineg in range(i_neg):
+                            dB_in = dB_d - (ineg+1)*np.pi
+                            plt.plot(np.rad2deg(dB_in),0.0,"o",c=dBcol,ms=2.0)#,mfc=dBcol)
+                        i_pos = int(abs(( np.pi*2.0-dB_d)/np.pi))
+                        for ipos in range(i_pos):
+                            dB_ip = dB_d + (ipos+1)*np.pi
+                            plt.plot(np.rad2deg(dB_ip),0.0,"o",c=dBcol,ms=2.0)#,mfc=dBcol)
+                        if self.line_method in self.scalar_options:
+                            plt.plot(np.rad2deg(bracket[0]),E(bracket[0]),"x",c=dBcol,ms=3.0)
+                            plt.plot(np.rad2deg(bracket[2]),E(bracket[2]),"x",c=dBcol,ms=3.0)
+                        plt.title("t = {:> 7.3f}".format(t))
+                        # plt.yscale("log")
+                        plt.show(block=False)
+                        if not(self.have_saved) and \
+                            self._end_plot_time - self.dt_check <= t:
+                            print("end of times!!!")
+                            now = datetime.now()
+                            ct = now.strftime("%Y-%m-%d_%H-%M-%S")
+                            plt.savefig("/home/ben/Desktop/plotfig_"+ct+".png")
+                            plt.close()
+                            self.have_saved = True
+                        else:
+                            plt.pause(self._err_plot_pause_time)
+                        self.time_check += self.dt_check
+                    # quit()
+
                 else:
                     # define aerodynamics
                     BAM = self.aero_model
@@ -2031,6 +2048,27 @@ class ControlAllocationMomentAssignmentAircraft(Aircraft):
                 tcom = self._get_V_tau_control(t,x_euler)
                 #
                 u = np.concatenate((delta,[tcom]))
+
+                # report # # CHECKING CAMA
+                CM__u = self.aero_model.aero_results(*[
+                    a,b,pbar,qbar,rbar,da_d,de_d,dB_rep, # dB_d, # 
+                    False,M,False,False,True
+                ])[3:]
+                CM__c = self.aero_model.aero_results(*[
+                    a,b,pbar,qbar,rbar,da_d,de_d,dB_rep, # dB_d, # 
+                    self.is_compressible,M,self.use_anderson,self.has_stall,True
+                ])[3:]
+                pd_u = (CMd_u - CM__u)/CMd_u*100.0
+                pd_c = (CMd_c - CM__c)/CMd_c*100.0
+                threshold = 1.0e-06
+                if np.linalg.norm(pd_u) > threshold or np.linalg.norm(pd_c) > threshold:
+                    print("CMd   corr =",CMd_c)
+                    print("CMd uncorr =",CMd_u)
+                    print("CM  uncorr =",CM__u)
+                    print("CM    corr =",CM__c)
+                    print("unc % diff =",pd_u)
+                    print("cor % diff =",pd_c)
+                    print()
 
 
                 if self.order > 0:
@@ -3800,7 +3838,7 @@ if __name__ == "__main__":
     # bire_fs_dict["actuators"]["elevator"]["lag[s]"] = new_lag
     # bire_fs_dict["actuators"][    "BIRE"]["lag[s]"] = new_lag
     # # # # # # 
-    blm = 200.0 # 125.0 # 150.0 # 100.0 # 250.0 # 500.0 # 600.0 # 750.0 # 1000.0 # 1500.0 # 50.0
+    blm = 200.0 # 150.0 # 125.0 # 100.0 # 250.0 # 500.0 # 600.0 # 750.0 # 1000.0 # 1500.0 # 50.0
     bire_fs_dict["actuators"][    "BIRE"]["rate_limits[deg/s]"] = [-blm,blm]
     # # # # # # 
     # elm = 50.0

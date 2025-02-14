@@ -67,6 +67,7 @@ class Aircraft:
         If input filepath or filename is invalid.
     """
 
+
     def __init__(self, input_dictionary={}, folder_prefix = "stblz"):
 
         # report
