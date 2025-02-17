@@ -143,6 +143,7 @@ class Aircraft:
         self._set_dynamics_function(self.use_nonlinear,self.use_quaternions)
         self.bool_limit_inputs = simulation.get("limit_input",True)
         self.bool_limit_input_rates = simulation.get("limit_input_rates",True)
+        self.bool_plot_limit_inputs = True
         self.bool_limit_input_accels = simulation.get("limit_input_accelerations",True)
         if self.bool_limit_inputs:
             self._limit_input = self._hit_limit_input
@@ -3957,7 +3958,7 @@ class Aircraft:
         # da_to_de = np.abs(ctrl[0])*0.25
         max_de = max_de_opt # - da_to_de
         min_de = min_de_opt # + da_to_de
-        if self.bool_limit_inputs:
+        if self.bool_limit_inputs and self.bool_plot_limit_inputs:
             if is_zoomed and not(plot_input_limits_zoomed):
                 # lylim,uylim = ctrl_axs[3].get_ylim()
                 # ctrl_axs[3].set_ylim((min(lylim,-0.05),max(uylim,0.05)))

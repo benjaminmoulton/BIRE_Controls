@@ -1042,7 +1042,9 @@ class BIREAero:
               self._CS_da(dB)*da + self._CS_de(dB)*de)
         return CS
 
-    def _CD(self, alpha, beta, pbar, qbar, rbar, da, de, dB):
+    def _CD(self, alpha, beta, pbar, qbar, rbar, da, de, dB,simplified=False):
+        if simplified: de2 = 0.0
+        else: de2 = de**2
         CL1 = self._CL0(dB) + self._CL_alpha(dB)*alpha
         CS1 = self._CS0(dB) + self._CS_beta(dB)*beta
         CD = (self._CD0(dB) + self._CD_L(dB)*CL1 + self._CD_L2(dB)*CL1**2 +
@@ -1053,7 +1055,7 @@ class BIREAero:
               (self._CD_rbar(dB) + self._CD_Srbar(dB)*CS1)*rbar +
               (self._CD_da(dB) + self._CD_Sda(dB)*CS1)*da +
               (self._CD_de(dB) + self._CD_Lde(dB)*CL1)*de +
-              self._CD_de2(dB)*de**2)
+              self._CD_de2(dB)*de2)
         return CD
 
     def _Cl(self, alpha, beta, pbar, qbar, rbar, da, de, dB):
@@ -1103,12 +1105,14 @@ class BIREAero:
     def _inc_aero_results(self, alpha, beta, pbar, qbar, rbar, da, de, dB, simplified):
         params = alpha, beta, pbar, qbar, rbar, da, de, dB
         if simplified:
+            dparams = alpha, beta, pbar, qbar, rbar, da, de, dB, True
             lparams = alpha, beta, pbar, qbar, rbar, da, 0.0, dB
             mparams = alpha, beta, pbar, qbar, rbar, 0.0, de, dB
         else:
+            dparams = params
             lparams = params
             mparams = params
-        return [self._CL(*params), self._CS(*params), self._CD(*params),
+        return [self._CL(*params), self._CS(*params), self._CD(*dparams),
                 self._Cl(*lparams), self._Cm(*mparams), self._Cn(*params)]
 
     def _stall_correction(self,a,CL,CD,Cm):

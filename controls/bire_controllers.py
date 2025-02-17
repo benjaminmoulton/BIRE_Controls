@@ -705,12 +705,13 @@ class ControlAllocationMomentAssignmentAircraft(Aircraft):
         # invoke init of parent
         Aircraft.__init__(self,input_dict,folder_prefix = "track")
         self.tracking = True
+        self.bool_plot_limit_inputs = True # False # 
         self.pseudo_inverse_method = True # False # 
         self.do_line_search = False # True # # if false, use prev calc
         self.ls_dB_lim = 45.0 # 30.0 # 
         self.ls_num = 21 # 11 # 
         self.opt_tol = 1.0e-12
-        self.opt_max_iter = 50 # 10 # 1000 # 
+        self.opt_max_iter = 50 # 1000 # 10 # 100 # 
         self.report_error_threshold = 1.0e10 # 1.0e-2 # 
         #
         self.scalar_options = ["Golden","Brent"]
@@ -1042,13 +1043,18 @@ class ControlAllocationMomentAssignmentAircraft(Aircraft):
         def sine_fun(rho,V,dBj,a,b,pbar,qbar,rbar,Md):
             # determine desired moment coefficients
             CMd_lref = Md/0.5/rho/V**2.0/self.Sw
-            Cld = CMd_lref[0]/self.bw
-            Cmd = CMd_lref[1]/self.cw
-            Cnd = CMd_lref[2]/self.bw
+            Cld = CMd_lref[0]#/self.bw
+            Cmd = CMd_lref[1]#/self.cw
+            Cnd = CMd_lref[2]#/self.bw
+
+            # aero trig
+            ca = cos(a); sa = sin(a)
+            cb = cos(b); sb = sin(b)
 
             # determine moment constants
             BAM = self.aero_model
             CL1 = BAM._CL0(dBj) + BAM._CL_alpha(dBj)*a
+            CS1 = BAM._CS0(dBj) + BAM._CS_beta(dBj)*b
             Cls = (BAM._Cl0(dBj) + BAM._Cl_alpha(dBj)*a +
                 BAM._Cl_beta(dBj)*b + BAM._Cl_pbar(dBj)*pbar +
                 BAM._Cl_qbar(dBj)*qbar +
@@ -1067,6 +1073,34 @@ class ControlAllocationMomentAssignmentAircraft(Aircraft):
             Cnda = BAM._Cn_da(dBj) + BAM._Cn_Lda(dBj)*CL1
             Cnde = BAM._Cn_de(dBj)
 
+            # force constants
+            CLs = (CL1 + BAM._CL_beta(dBj)*b + BAM._CL_pbar(dBj)*pbar +
+                BAM._CL_qbar(dBj)*qbar + BAM._CL_rbar(dBj)*rbar)
+            # CLda = BAM._CL_da(dBj)
+            CLde = BAM._CL_de(dBj)
+            CSs = (CS1 + BAM._CS_alpha(dBj)*a + 
+                (BAM._CS_pbar(dBj) + BAM._CS_Lpbar(dBj)*CL1)*pbar +
+                BAM._CS_qbar(dBj)*qbar + BAM._CS_rbar(dBj)*rbar)
+            CSda = BAM._CS_da(dBj)
+            CSde = BAM._CS_de(dBj)
+            CDs = (BAM._CD0(dBj) + BAM._CD_L(dBj)*CL1 + BAM._CD_L2(dBj)*CL1**2 +
+                BAM._CD_S(dBj)*CS1 + BAM._CD_S2(dBj)*CS1**2 +
+                (BAM._CD_pbar(dBj) + BAM._CD_Spbar(dBj)*CS1)*pbar +
+                (BAM._CD_qbar(dBj) + BAM._CD_Lqbar(dBj)*CL1 + 
+                BAM._CD_L2qbar(dBj)*CL1**2)*qbar +
+                (BAM._CD_rbar(dBj) + BAM._CD_Srbar(dBj)*CS1)*rbar)
+            CDda = (BAM._CD_da(dBj) + BAM._CD_Sda(dBj)*CS1)
+            CDde = (BAM._CD_de(dBj) + BAM._CD_Lde(dBj)*CL1) # dropped squared part
+
+            # add to corresponding moments
+            Cls  = self.bw*Cls
+            Clda = self.bw*Clda
+            Cms  = self.cw*Cms +self.cgshift[0]*(-ca*CLs -sa*sb*CSs -sa*cb*CDs )
+            Cmde = self.cw*Cmde+self.cgshift[0]*(-ca*CLde-sa*sb*CSde-sa*cb*CDde)
+            Cns  = self.cw*Cns -self.cgshift[0]*( cb*CSs -sb*CDs )
+            Cnde = self.cw*Cnde-self.cgshift[0]*( cb*CSde-sb*CDde)
+            Cnda = self.cw*Cnda-self.cgshift[0]*( cb*CSda-sb*CDda)
+
             # differences
             dl = Cld - Cls
             dm = Cmd - Cms
@@ -1078,19 +1112,27 @@ class ControlAllocationMomentAssignmentAircraft(Aircraft):
 
             # determine equation that should be zero
             zero  =  Cnde* dm* Clda +  Cnda* dl* Cmde -  dn* Cmde* Clda
+            # print("Z = {:> 13.10f}, da = {:> 7.3f}, de = {:> 7.3f}, dB = {:> 7.3f}".format(
+            #     zero,dai*180.0/np.pi,dei*180.0/np.pi,dBj*180.0/np.pi
+            # ))
 
             return dai,dei,zero
         
         def sine_dsine_fun(rho,V,dBj,a,b,pbar,qbar,rbar,Md):
             # determine desired moment coefficients
             CMd_lref = Md/0.5/rho/V**2.0/self.Sw
-            Cld = CMd_lref[0]/self.bw
-            Cmd = CMd_lref[1]/self.cw
-            Cnd = CMd_lref[2]/self.bw
+            Cld = CMd_lref[0]#/self.bw
+            Cmd = CMd_lref[1]#/self.cw
+            Cnd = CMd_lref[2]#/self.bw
+
+            # aero trig
+            ca = cos(a); sa = sin(a)
+            cb = cos(b); sb = sin(b)
 
             # determine moment constants
             BAM = self.aero_model
             CL1 = BAM._CL0(dBj) + BAM._CL_alpha(dBj)*a
+            CS1 = BAM._CS0(dBj) + BAM._CS_beta(dBj)*b
             Cls = (BAM._Cl0(dBj) + BAM._Cl_alpha(dBj)*a +
                 BAM._Cl_beta(dBj)*b + BAM._Cl_pbar(dBj)*pbar +
                 BAM._Cl_qbar(dBj)*qbar +
@@ -1111,6 +1153,7 @@ class ControlAllocationMomentAssignmentAircraft(Aircraft):
             # derivatives
             DAM = self.dBAM
             dCL1 = DAM._CL0(dBj) + DAM._CL_alpha(dBj)*a
+            dCS1 = DAM._CS0(dBj) + DAM._CS_beta(dBj)*b
             dCls = (DAM._Cl0(dBj) + DAM._Cl_alpha(dBj)*a +
                 DAM._Cl_beta(dBj)*b + DAM._Cl_pbar(dBj)*pbar +
                 DAM._Cl_qbar(dBj)*qbar +
@@ -1131,6 +1174,68 @@ class ControlAllocationMomentAssignmentAircraft(Aircraft):
             dCnda = DAM._Cn_da(dBj) + DAM._Cn_Lda(dBj)*CL1 + \
                 BAM._Cn_Lda(dBj)*dCL1
             dCnde = DAM._Cn_de(dBj)
+
+            # force constants
+            CLs = (CL1 + BAM._CL_beta(dBj)*b + BAM._CL_pbar(dBj)*pbar +
+                BAM._CL_qbar(dBj)*qbar + BAM._CL_rbar(dBj)*rbar)
+            # CLda = BAM._CL_da(dBj)
+            CLde = BAM._CL_de(dBj)
+            CSs = (CS1 + BAM._CS_alpha(dBj)*a + 
+                (BAM._CS_pbar(dBj) + BAM._CS_Lpbar(dBj)*CL1)*pbar +
+                BAM._CS_qbar(dBj)*qbar + BAM._CS_rbar(dBj)*rbar)
+            CSda = BAM._CS_da(dBj)
+            CSde = BAM._CS_de(dBj)
+            CDs = (BAM._CD0(dBj) + BAM._CD_L(dBj)*CL1 + BAM._CD_L2(dBj)*CL1**2 +
+                BAM._CD_S(dBj)*CS1 + BAM._CD_S2(dBj)*CS1**2 +
+                (BAM._CD_pbar(dBj) + BAM._CD_Spbar(dBj)*CS1)*pbar +
+                (BAM._CD_qbar(dBj) + BAM._CD_Lqbar(dBj)*CL1 + 
+                BAM._CD_L2qbar(dBj)*CL1**2)*qbar +
+                (BAM._CD_rbar(dBj) + BAM._CD_Srbar(dBj)*CS1)*rbar)
+            CDda = (BAM._CD_da(dBj) + BAM._CD_Sda(dBj)*CS1)
+            CDde = (BAM._CD_de(dBj) + BAM._CD_Lde(dBj)*CL1) # dropped squared part
+            # derivatives
+            dCLs = (dCL1 + DAM._CL_beta(dBj)*b + DAM._CL_pbar(dBj)*pbar +
+                DAM._CL_qbar(dBj)*qbar + DAM._CL_rbar(dBj)*rbar)
+            # dCLda = DAM._CL_da(dBj)
+            dCLde = DAM._CL_de(dBj)
+            dCSs = (dCS1 + DAM._CS_alpha(dBj)*a + 
+                (DAM._CS_pbar(dBj) + DAM._CS_Lpbar(dBj)*CL1 + 
+                    BAM._CS_Lpbar(dBj)*dCL1)*pbar +
+                DAM._CS_qbar(dBj)*qbar + DAM._CS_rbar(dBj)*rbar)
+            dCSda = DAM._CS_da(dBj)
+            dCSde = DAM._CS_de(dBj)
+            dCDs = (DAM._CD0(dBj) + DAM._CD_L(dBj)*CL1 + BAM._CD_L(dBj)*dCL1 + 
+                DAM._CD_L2(dBj)*CL1**2 + 2.0*BAM._CD_L2(dBj)*CL1*dCL1 +
+                DAM._CD_S(dBj)*CS1 + BAM._CD_S(dBj)*dCS1 + 
+                DAM._CD_S2(dBj)*CS1**2 + 2.0*BAM._CD_S2(dBj)*CS1*dCS1 +
+                (DAM._CD_pbar(dBj) + DAM._CD_Spbar(dBj)*CS1 + 
+                    BAM._CD_Spbar(dBj)*dCS1)*pbar +
+                (DAM._CD_qbar(dBj) + DAM._CD_Lqbar(dBj)*CL1 + 
+                    BAM._CD_Lqbar(dBj)*dCL1 + DAM._CD_L2qbar(dBj)*CL1**2 + 
+                    2.0*BAM._CD_L2qbar(dBj)*CL1*dCL1)*qbar +
+                (DAM._CD_rbar(dBj) + DAM._CD_Srbar(dBj)*CS1 + 
+                    BAM._CD_Srbar(dBj)*dCS1)*rbar)
+            dCDda = (DAM._CD_da(dBj) + DAM._CD_Sda(dBj)*CS1 + 
+                BAM._CD_Sda(dBj)*dCS1)
+            dCDde = (DAM._CD_de(dBj) + DAM._CD_Lde(dBj)*CL1 + 
+                BAM._CD_Lde(dBj)*dCL1) # dropped squared part
+            
+            # add to corresponding moments
+            Cls  = self.bw*Cls
+            Clda = self.bw*Clda
+            Cms  = self.cw*Cms +self.cgshift[0]*(-ca*CLs -sa*sb*CSs -sa*cb*CDs )
+            Cmde = self.cw*Cmde+self.cgshift[0]*(-ca*CLde-sa*sb*CSde-sa*cb*CDde)
+            Cns  = self.cw*Cns -self.cgshift[0]*( cb*CSs -sb*CDs )
+            Cnde = self.cw*Cnde-self.cgshift[0]*( cb*CSde-sb*CDde)
+            Cnda = self.cw*Cnda-self.cgshift[0]*( cb*CSda-sb*CDda)
+            # derivatives
+            dCls  = self.bw*dCls
+            dClda = self.bw*dClda
+            dCms  = self.cw*dCms +self.cgshift[0]*(-ca*dCLs -sa*sb*dCSs -sa*cb*dCDs )
+            dCmde = self.cw*dCmde+self.cgshift[0]*(-ca*dCLde-sa*sb*dCSde-sa*cb*dCDde)
+            dCns  = self.cw*dCns -self.cgshift[0]*( cb*dCSs -sb*dCDs )
+            dCnde = self.cw*dCnde-self.cgshift[0]*( cb*dCSde-sb*dCDde)
+            dCnda = self.cw*dCnda-self.cgshift[0]*( cb*dCSda-sb*dCDda)
 
             # differences
             dl = Cld - Cls
@@ -1158,13 +1263,18 @@ class ControlAllocationMomentAssignmentAircraft(Aircraft):
         def sine_dsine_wsine_fun(rho,V,dBj,a,b,pbar,qbar,rbar,Md):
             # determine desired moment coefficients
             CMd_lref = Md/0.5/rho/V**2.0/self.Sw
-            Cld = CMd_lref[0]/self.bw
-            Cmd = CMd_lref[1]/self.cw
-            Cnd = CMd_lref[2]/self.bw
+            Cld = CMd_lref[0]#/self.bw
+            Cmd = CMd_lref[1]#/self.cw
+            Cnd = CMd_lref[2]#/self.bw
+
+            # aero trig
+            ca = cos(a); sa = sin(a)
+            cb = cos(b); sb = sin(b)
 
             # determine moment constants
             BAM = self.aero_model
             CL1 = BAM._CL0(dBj) + BAM._CL_alpha(dBj)*a
+            CS1 = BAM._CS0(dBj) + BAM._CS_beta(dBj)*b
             Cls = (BAM._Cl0(dBj) + BAM._Cl_alpha(dBj)*a +
                 BAM._Cl_beta(dBj)*b + BAM._Cl_pbar(dBj)*pbar +
                 BAM._Cl_qbar(dBj)*qbar +
@@ -1185,6 +1295,7 @@ class ControlAllocationMomentAssignmentAircraft(Aircraft):
             # derivatives
             DAM = self.dBAM
             dCL1 = DAM._CL0(dBj) + DAM._CL_alpha(dBj)*a
+            dCS1 = DAM._CS0(dBj) + DAM._CS_beta(dBj)*b
             dCls = (DAM._Cl0(dBj) + DAM._Cl_alpha(dBj)*a +
                 DAM._Cl_beta(dBj)*b + DAM._Cl_pbar(dBj)*pbar +
                 DAM._Cl_qbar(dBj)*qbar +
@@ -1208,6 +1319,7 @@ class ControlAllocationMomentAssignmentAircraft(Aircraft):
             # double derivatives
             WAM = self.ddBAM
             wCL1 = WAM._CL0(dBj) + WAM._CL_alpha(dBj)*a
+            wCS1 = WAM._CS0(dBj) + WAM._CS_beta(dBj)*b
             wCls = (WAM._Cl0(dBj) + WAM._Cl_alpha(dBj)*a +
                 WAM._Cl_beta(dBj)*b + WAM._Cl_pbar(dBj)*pbar +
                 WAM._Cl_qbar(dBj)*qbar +
@@ -1231,6 +1343,115 @@ class ControlAllocationMomentAssignmentAircraft(Aircraft):
                 WAM._Cn_Lda(dBj)*CL1 + 2.0*DAM._Cn_Lda(dBj)*dCL1 + \
                 BAM._Cn_Lda(dBj)*wCL1
             wCnde = WAM._Cn_de(dBj)
+
+            # force constants
+            CLs = (CL1 + BAM._CL_beta(dBj)*b + BAM._CL_pbar(dBj)*pbar +
+                BAM._CL_qbar(dBj)*qbar + BAM._CL_rbar(dBj)*rbar)
+            # CLda = BAM._CL_da(dBj)
+            CLde = BAM._CL_de(dBj)
+            CSs = (CS1 + BAM._CS_alpha(dBj)*a + 
+                (BAM._CS_pbar(dBj) + BAM._CS_Lpbar(dBj)*CL1)*pbar +
+                BAM._CS_qbar(dBj)*qbar + BAM._CS_rbar(dBj)*rbar)
+            CSda = BAM._CS_da(dBj)
+            CSde = BAM._CS_de(dBj)
+            CDs = (BAM._CD0(dBj) + BAM._CD_L(dBj)*CL1 + BAM._CD_L2(dBj)*CL1**2 +
+                BAM._CD_S(dBj)*CS1 + BAM._CD_S2(dBj)*CS1**2 +
+                (BAM._CD_pbar(dBj) + BAM._CD_Spbar(dBj)*CS1)*pbar +
+                (BAM._CD_qbar(dBj) + BAM._CD_Lqbar(dBj)*CL1 + 
+                BAM._CD_L2qbar(dBj)*CL1**2)*qbar +
+                (BAM._CD_rbar(dBj) + BAM._CD_Srbar(dBj)*CS1)*rbar)
+            CDda = (BAM._CD_da(dBj) + BAM._CD_Sda(dBj)*CS1)
+            CDde = (BAM._CD_de(dBj) + BAM._CD_Lde(dBj)*CL1) # dropped squared part
+            # derivatives
+            dCLs = (dCL1 + DAM._CL_beta(dBj)*b + DAM._CL_pbar(dBj)*pbar +
+                DAM._CL_qbar(dBj)*qbar + DAM._CL_rbar(dBj)*rbar)
+            # dCLda = DAM._CL_da(dBj)
+            dCLde = DAM._CL_de(dBj)
+            dCSs = (dCS1 + DAM._CS_alpha(dBj)*a + 
+                (DAM._CS_pbar(dBj) + DAM._CS_Lpbar(dBj)*CL1 + 
+                    BAM._CS_Lpbar(dBj)*dCL1)*pbar +
+                DAM._CS_qbar(dBj)*qbar + DAM._CS_rbar(dBj)*rbar)
+            dCSda = DAM._CS_da(dBj)
+            dCSde = DAM._CS_de(dBj)
+            dCDs = (DAM._CD0(dBj) + DAM._CD_L(dBj)*CL1 + BAM._CD_L(dBj)*dCL1 + 
+                DAM._CD_L2(dBj)*CL1**2 + 2.0*BAM._CD_L2(dBj)*CL1*dCL1 +
+                DAM._CD_S(dBj)*CS1 + BAM._CD_S(dBj)*dCS1 + 
+                DAM._CD_S2(dBj)*CS1**2 + 2.0*BAM._CD_S2(dBj)*CS1*dCS1 +
+                (DAM._CD_pbar(dBj) + DAM._CD_Spbar(dBj)*CS1 + 
+                    BAM._CD_Spbar(dBj)*dCS1)*pbar +
+                (DAM._CD_qbar(dBj) + DAM._CD_Lqbar(dBj)*CL1 + 
+                    BAM._CD_Lqbar(dBj)*dCL1 + DAM._CD_L2qbar(dBj)*CL1**2 + 
+                    2.0*BAM._CD_L2qbar(dBj)*CL1*dCL1)*qbar +
+                (DAM._CD_rbar(dBj) + DAM._CD_Srbar(dBj)*CS1 + 
+                    BAM._CD_Srbar(dBj)*dCS1)*rbar)
+            dCDda = (DAM._CD_da(dBj) + DAM._CD_Sda(dBj)*CS1 + 
+                BAM._CD_Sda(dBj)*dCS1)
+            dCDde = (DAM._CD_de(dBj) + DAM._CD_Lde(dBj)*CL1 + 
+                BAM._CD_Lde(dBj)*dCL1) # dropped squared part
+            # double derivatives
+            wCLs = (wCL1 + WAM._CL_beta(dBj)*b + WAM._CL_pbar(dBj)*pbar +
+                WAM._CL_qbar(dBj)*qbar + WAM._CL_rbar(dBj)*rbar)
+            # wCLda = WAM._CL_da(dBj)
+            wCLde = WAM._CL_de(dBj)
+            wCSs = (wCS1 + WAM._CS_alpha(dBj)*a + 
+                (WAM._CS_pbar(dBj) + WAM._CS_Lpbar(dBj)*CL1 + 
+                    2.0*DAM._CS_Lpbar(dBj)*dCL1 + 
+                    BAM._CS_Lpbar(dBj)*wCL1)*pbar +
+                WAM._CS_qbar(dBj)*qbar + WAM._CS_rbar(dBj)*rbar)
+            wCSda = WAM._CS_da(dBj)
+            wCSde = WAM._CS_de(dBj)
+            wCDs = (WAM._CD0(dBj) + WAM._CD_L(dBj)*CL1 + 
+                2.0*DAM._CD_L(dBj)*dCL1 + BAM._CD_L(dBj)*wCL1 + 
+                WAM._CD_L2(dBj)*CL1**2 + 4.0*DAM._CD_L2(dBj)*CL1*dCL1 + 
+                4.0*BAM._CD_L2(dBj)*dCL1 + 2.0*BAM._CD_L2(dBj)*CL1*wCL1 +
+                WAM._CD_S(dBj)*CS1 + 
+                2.0*BAM._CD_S(dBj)*dCS1 + BAM._CD_S(dBj)*wCS1 + 
+                WAM._CD_S2(dBj)*CS1**2 + 2.0*DAM._CD_S2(dBj)*CS1*dCS1 + 
+                2.0*WAM._CD_S2(dBj)*CS1*dCS1 + 4.0*BAM._CD_S2(dBj)*dCS1 + 
+                2.0*BAM._CD_S2(dBj)*CS1*wCS1 + 
+                (WAM._CD_pbar(dBj) + WAM._CD_Spbar(dBj)*CS1 + 
+                    2.0*DAM._CD_Spbar(dBj)*dCS1 + BAM._CD_Spbar(dBj)*wCS1)*pbar +
+                (WAM._CD_qbar(dBj) + 
+                    WAM._CD_Lqbar(dBj)*CL1 + DAM._CD_Lqbar(dBj)*dCL1 + 
+                    DAM._CD_Lqbar(dBj)*dCL1 + BAM._CD_Lqbar(dBj)*wCL1 + 
+                    WAM._CD_L2qbar(dBj)*CL1**2 + 2.0*DAM._CD_L2qbar(dBj)*CL1*dCL1 + 
+                    2.0*WAM._CD_L2qbar(dBj)*CL1*dCL1 + 
+                    4.0*BAM._CD_L2qbar(dBj)*dCL1 + 
+                    2.0*BAM._CD_L2qbar(dBj)*CL1*wCL1)*qbar +
+                (WAM._CD_rbar(dBj) + WAM._CD_Srbar(dBj)*CS1 + 
+                    2.0*DAM._CD_Srbar(dBj)*dCS1 + 
+                    BAM._CD_Srbar(dBj)*wCS1)*rbar)
+            wCDda = (WAM._CD_da(dBj) + WAM._CD_Sda(dBj)*CS1 + 
+                        2.0*DAM._CD_Sda(dBj)*dCS1 + 
+                        BAM._CD_Sda(dBj)*wCS1)
+            wCDde = (WAM._CD_de(dBj) + WAM._CD_Lde(dBj)*CL1 + 
+                        2.0*DAM._CD_Lde(dBj)*dCL1 + 
+                        BAM._CD_Lde(dBj)*wCL1) # dropped squared part
+            
+            # add to corresponding moments
+            Cls  = self.bw*Cls
+            Clda = self.bw*Clda
+            Cms  = self.cw*Cms +self.cgshift[0]*(-ca*CLs -sa*sb*CSs -sa*cb*CDs )
+            Cmde = self.cw*Cmde+self.cgshift[0]*(-ca*CLde-sa*sb*CSde-sa*cb*CDde)
+            Cns  = self.cw*Cns -self.cgshift[0]*( cb*CSs -sb*CDs )
+            Cnde = self.cw*Cnde-self.cgshift[0]*( cb*CSde-sb*CDde)
+            Cnda = self.cw*Cnda-self.cgshift[0]*( cb*CSda-sb*CDda)
+            # derivatives
+            dCls  = self.bw*dCls
+            dClda = self.bw*dClda
+            dCms  = self.cw*dCms +self.cgshift[0]*(-ca*dCLs -sa*sb*dCSs -sa*cb*dCDs )
+            dCmde = self.cw*dCmde+self.cgshift[0]*(-ca*dCLde-sa*sb*dCSde-sa*cb*dCDde)
+            dCns  = self.cw*dCns -self.cgshift[0]*( cb*dCSs -sb*dCDs )
+            dCnde = self.cw*dCnde-self.cgshift[0]*( cb*dCSde-sb*dCDde)
+            dCnda = self.cw*dCnda-self.cgshift[0]*( cb*dCSda-sb*dCDda)
+            # double derivatives
+            wCls  = self.bw*wCls
+            wClda = self.bw*wClda
+            wCms  = self.cw*wCms +self.cgshift[0]*(-ca*wCLs -sa*sb*wCSs -sa*cb*wCDs )
+            wCmde = self.cw*wCmde+self.cgshift[0]*(-ca*wCLde-sa*sb*wCSde-sa*cb*wCDde)
+            wCns  = self.cw*wCns -self.cgshift[0]*( cb*wCSs -sb*wCDs )
+            wCnde = self.cw*wCnde-self.cgshift[0]*( cb*wCSde-sb*wCDde)
+            wCnda = self.cw*wCnda-self.cgshift[0]*( cb*wCSda-sb*wCDda)
 
             # differences
             dl = Cld - Cls
@@ -1282,11 +1503,13 @@ class ControlAllocationMomentAssignmentAircraft(Aircraft):
         self.            sine_fun =             sine_fun
         self.      sine_dsine_fun =       sine_dsine_fun
         self.sine_dsine_wsine_fun = sine_dsine_wsine_fun
+        #
+        self.prev_E = 0.0
         ###
-        self.time_check = 100.0 # 1.05 # 0.8 # 0.0 # 1.55 # 0.97 # 
+        self.time_check = 100.0 # 1.0 # 
         self.dt_check = 0.000001 # 0.1 # 0.05 # 0.01 # 
-        self._err_plot_pause_time = 0.1 # 0.000001 # 0.5 # 5.0 # 1.0 # 
-        self._end_plot_time = 1.2 # 2.0 # 5.0 # 1.57 # 0.01 # 9.9 # 4.9 # 2.145 # 2.7 # 9.9 # 0.325 # 0.1 # 0.0 # 
+        self._err_plot_pause_time = 0.25 # 0.1 # 0.000001 # 5.0 # 1.0 # 
+        self._end_plot_time = 1.5 # 
         self.have_saved = False
         self.log_scale = False # True # 
         self.symlog_scale = False # True # 
@@ -1299,8 +1522,10 @@ class ControlAllocationMomentAssignmentAircraft(Aircraft):
         self.poss_dedegs = []
         self.poss_dBdegs = []
         self.poss_Es     = []
-        self.poss_check_num = 10000 # 
-        self.save_poss_every = 100 # 10 # 2 # 
+        self.poss_check_num = 10000 # 20000 # 5000 # 
+        self.save_poss_every = 5 # 10 # 2 # 100 # 
+        self._Evals_threshold = 5.0e-7 # 1.0e-7 # 
+        self.poss_dB_lim = 90.0 # 180.0 # 
         self.save_poss_counter = 0
         self._final_on_rk4 = False
 
@@ -1448,7 +1673,6 @@ class ControlAllocationMomentAssignmentAircraft(Aircraft):
         legend = fevl_axs.legend()
         legend.set_zorder(4)
         #
-
         if self.plot_alternate_solns:
             for i in range(len(self.poss_ts)):
                 for j in range(len(self.poss_dadegs[i])):
@@ -1467,7 +1691,7 @@ class ControlAllocationMomentAssignmentAircraft(Aircraft):
             ctrl_axs[0].set_ylim((min_da-5.,max_da+5.))
             ctrl_axs[1].set_ylim((min_de_opt-5.,max_de_opt+5.))
             ctrl_axs[2].set_ylim((min_dr-5.,max_dr+5.))
-
+        
         if self.tracking:
             # TESTING MACA
             errs_axs.set_ylim((-150.0,150.0))
@@ -1651,7 +1875,7 @@ class ControlAllocationMomentAssignmentAircraft(Aircraft):
                 #     dCS[i] = np.imag(E(dBtesti)[fi])/h # hessian
                 # pd = (dME - dCS)/dME
                 # print(pd)
-                # print(np.linalg.norm(pd)**2.)
+                # print(np.linalg.norm(pd))#**2.)
                 # quit()
                 # ######################################
 
@@ -1762,11 +1986,11 @@ class ControlAllocationMomentAssignmentAircraft(Aircraft):
                             # determine all "zero" controls
                             da_de_Eall = lambda dBj : self.sine_fun(\
                                 rho,V,dBj,a,b,pbar,qbar,rbar,Md)
-                            dBvals_deg = np.linspace(-90.0,90.0,self.poss_check_num)
+                            dBvals_deg = np.linspace(-self.poss_dB_lim,self.poss_dB_lim,self.poss_check_num)
                             dBvals = np.deg2rad(dBvals_deg)
                             Evals = [da_de_Eall(dBvals[i]) for i in range(len(dBvals))]
                             Evals = np.array(Evals)
-                            Evals_threshold = 1.0e-5
+                            Evals_threshold = self._Evals_threshold
                             poss_inds = np.argwhere(np.abs(Evals[:,2]) < Evals_threshold)[:,0]
                             poss_Evals = Evals[poss_inds]
                             self.poss_dadeg = np.rad2deg(poss_Evals[:,0])
@@ -1785,24 +2009,53 @@ class ControlAllocationMomentAssignmentAircraft(Aircraft):
                             rho,V,dBj,a,b,pbar,qbar,rbar,Md)[3]
                         wzero = lambda dBj : self.sine_dsine_wsine_fun(\
                             rho,V,dBj,a,b,pbar,qbar,rbar,Md)[4]
-                        dB_d,res = newton(zero,dB_d, # dB, # res.x, # 0.0, # 
+                        # guess = ref[0]/np.pi*self.max_dr
+                        # if abs(dB_d) > np.pi: dB_d = dB*1.0
+                        # if zero(dB)*self.prev_E < 0.0:
+                        #     dB_d = dB
+                        # self.prev_E = zero(dB)
+                        dB_d,res = newton(zero,dB_d, # dB, # 0.0, # 
                             fprime=dzero,
                             fprime2=wzero,
                             maxiter=self.opt_max_iter, # 1000, # 
                             tol=self.opt_tol,
                             disp=False, # True, # 
                             full_output=True)
-                        # # # rebound
-                        if dB_d != 0.0:
+                        # print()
+                        # dB_d_2,res_2 = newton(zero,dB,
+                        #     fprime=dzero,
+                        #     fprime2=wzero,
+                        #     maxiter=self.opt_max_iter, # 1000, # 
+                        #     tol=self.opt_tol,
+                        #     disp=False, # True, # 
+                        #     full_output=True)
+                        # # pick which one
+                        # if abs(dB_d_1 - dB) < abs(dB_d_2 - dB):
+                        #     dB_d = dB_d_1
+                        #     res = res_1
+                        # else:
+                        #     dB_d = dB_d_2
+                        #     res = res_2
+                        # # # # # rebound
+                        if dB_d != 0.0: # and abs(abs(dB) - self.max_dr) < 1.0*np.pi/180.0:
                             dBsgn = np.sign(dB_d)
-                            dB_d = dBsgn*(abs(dB_d) % np.pi)
-                            # dB_d,res = newton(zero,dB_d, # res.x, # 0.0, # 
-                            #     fprime=dzero,
-                            #     fprime2=wzero,
-                            #     maxiter=self.opt_max_iter, # 1000, # 
-                            #     tol=self.opt_tol,
-                            #     disp=False, # True, # 
-                            #     full_output=True)
+                            dB_d = dBsgn*(abs(dB_d) % np.pi) # 2.0*
+                            # if abs(zero(dB_d)) >= self.opt_tol:
+                            #     dB_d,res = newton(zero,dB_d, # dB, # 0.0, # 
+                            #         fprime=dzero,
+                            #         fprime2=wzero,
+                            #         maxiter=self.opt_max_iter, # 1000, # 
+                            #         tol=self.opt_tol,
+                            #         disp=False, # True, # 
+                            #         full_output=True)
+                            #     # print()
+                            # if   dB_d >  np.pi/2.0:
+                            #     dB_d -= np.pi
+                            # elif dB_d < -np.pi/2.0:
+                            #     dB_d += np.pi
+                        # if dB_d > np.pi:
+                        #     dBsgn = np.sign(dB_d)
+                        #     dB_d = dBsgn*(abs(dB_d) % np.pi)
                         #
                         #
                         dB_rep = dB_d*1.0
@@ -2050,14 +2303,29 @@ class ControlAllocationMomentAssignmentAircraft(Aircraft):
                 u = np.concatenate((delta,[tcom]))
 
                 # report # # CHECKING CAMA
+                ca = cos(a); sa = sin(a)
+                cb = cos(b); sb = sin(b)
+                #
                 CM__u = self.aero_model.aero_results(*[
                     a,b,pbar,qbar,rbar,da_d,de_d,dB_rep, # dB_d, # 
                     False,M,False,False,True
-                ])[3:]
+                ])#[3:]
+                CM__u[4] = CM__u[4] \
+                    + self.cgshift[0]*\
+                    (-ca*CM__u[0] -sa*sb*CM__u[1] -sa*cb*CM__u[2] )/self.cw
+                CM__u[5] = CM__u[5] \
+                    + self.cgshift[0]*(cb*CM__u[1] -sb*CM__u[2] )/self.bw
+                CM__u = CM__u[3:]
                 CM__c = self.aero_model.aero_results(*[
                     a,b,pbar,qbar,rbar,da_d,de_d,dB_rep, # dB_d, # 
                     self.is_compressible,M,self.use_anderson,self.has_stall,True
-                ])[3:]
+                ])#[3:]
+                CM__c[4] = CM__c[4] \
+                    + self.cgshift[0]*\
+                    (-ca*CM__c[0] -sa*sb*CM__c[1] -sa*cb*CM__c[2] )/self.cw
+                CM__c[5] = CM__c[5] \
+                    + self.cgshift[0]*(cb*CM__c[1] -sb*CM__c[2] )/self.bw
+                CM__c = CM__c[3:]
                 pd_u = (CMd_u - CM__u)/CMd_u*100.0
                 pd_c = (CMd_c - CM__c)/CMd_c*100.0
                 threshold = 1.0e-06
@@ -2069,6 +2337,7 @@ class ControlAllocationMomentAssignmentAircraft(Aircraft):
                     print("unc % diff =",pd_u)
                     print("cor % diff =",pd_c)
                     print()
+                    # quit()
 
 
                 if self.order > 0:
@@ -3624,7 +3893,7 @@ if __name__ == "__main__":
     # # # 
     run_bire_fs["aircraft_class"] = ControlAllocationMomentAssignmentAircraft
     run_bire_fs["name_end"] = "_" + f1 + "_CAMA_sine" # 2" # 
-    # # bire_fs_dict["aircraft"]["CG_shift[ft]"] = [+1.0,+0.0,0.0]
+    bire_fs_dict["aircraft"]["CG_shift[ft]"] = [+1.0,+0.0,0.0]
     # # # # # # 
     # # # run_bire_fs["aircraft_class"] = ControlAllocationMomentAssignmentActuatorsAircraft
     # # # run_bire_fs["name_end"] = "_" + f1 + "_CAMAA_1"
@@ -3773,16 +4042,16 @@ if __name__ == "__main__":
     # r_tr_deg =  2.2128855348515439
     # #######################################################################
     # 60 deg bank fullscale BIRE
-    # # # (0) tail
-    # p_tr_deg = -0.2654216358834438
-    # q_tr_deg =  4.3218126454667702
-    # r_tr_deg =  2.4951996942473698
+    # # (0) tail
+    p_tr_deg = -0.2654216358834438
+    q_tr_deg =  4.3218126454667702
+    r_tr_deg =  2.4951996942473698
     # #######################################################################
     # # 10 deg bank RC scale BIRE w/o stall
     # p_tr_deg = -0.3294739663431505
     # q_tr_deg =  0.5582409457023837
     # r_tr_deg =  3.1659417263281258
-    p_bfcm = 40.0 # 60.0 # 50.0 # 30.0 # 15.0 # 5.0 # 20.0 # 10.0 # 7.5 # 
+    p_bfcm = 60.0 # 40.0 # 50.0 # 30.0 # 15.0 # 5.0 # 20.0 # 10.0 # 7.5 # 
     if "left_roll" in locals():
         p_bfcm = - p_bfcm
         p_tr_deg = - p_tr_deg
@@ -3800,7 +4069,7 @@ if __name__ == "__main__":
     # p_time2 = p_time  + recover_time
     # p_time3 = p_time2 + transition_time
     t_end = 0.0 # 25.0 # 
-    tf = 10.0 # 4.90 # 60.0 # 20.0 # 
+    tf = 10.0 # 2.50 # 4.90 # 60.0 # 20.0 # 
     V_trim = 634.4133153512273111
     bire_fs_dict["reference"] = {
         "deg2rad_states" : [1,2,3,4,5],
@@ -3838,7 +4107,7 @@ if __name__ == "__main__":
     # bire_fs_dict["actuators"]["elevator"]["lag[s]"] = new_lag
     # bire_fs_dict["actuators"][    "BIRE"]["lag[s]"] = new_lag
     # # # # # # 
-    blm = 200.0 # 150.0 # 125.0 # 100.0 # 250.0 # 500.0 # 600.0 # 750.0 # 1000.0 # 1500.0 # 50.0
+    blm = 200.0 # 50.0 # 150.0 # 125.0 # 100.0 # 250.0 # 500.0 # 600.0 # 750.0 # 1000.0 # 1500.0 # 
     bire_fs_dict["actuators"][    "BIRE"]["rate_limits[deg/s]"] = [-blm,blm]
     # # # # # # 
     # elm = 50.0
