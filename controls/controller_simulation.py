@@ -1985,10 +1985,10 @@ class Aircraft:
             filename = system_notes
         filename += ".mat"
         if self.use_quaternions:
-            note = "x,y,z (7,8,9) (1 based indexing)" \
+            note = "x,y (7,8) (1 based indexing)" \
                 + " states removed for state feedback design"
         else:
-            note = "x,y,z and psi (7,8,9,12) (1 based indexing)" \
+            note = "x,y and psi (7,8,12) (1 based indexing)" \
                 + " states removed for state feedback design"
 
         file_dict = {
@@ -2010,6 +2010,7 @@ class Aircraft:
             file_dict["Q"] = Lin_Model.Q
             file_dict["R"] = Lin_Model.R
         savemat(folder+filename,file_dict,oned_as="column")
+        self._control_matrices_file = folder+filename
 
 
     def _build_controller(self,x_tr="o",u_tr="o",report=True,
@@ -2846,7 +2847,10 @@ class Aircraft:
                 while fp[iT] == fp[-1] and iT > 0:
                     iT -= 1
                 if iT != 0: iT += 1
-                iT = np.argwhere(ts >= xp[iT])[0,0]
+                try:
+                    iT = np.argwhere(ts >= xp[iT])[0,0]
+                except:
+                    iT = 0
                 # determine error at this timestep
                 xe0 = xerr[i,iT]
                 # determine rise time 10% -> 90%
@@ -3156,6 +3160,7 @@ class Aircraft:
         plot_second_set = kwargs.get("plot_second_set",False)
         plot_input_limits_zoomed = kwargs.get("plot_input_limits_zoomed",True)
         plot_norm = kwargs.get("plot_norm",False) # True) # 
+        norm_lw = 0.375
         plot_ul_bounds = kwargs.get("plot_upp_and_low",False)
         color_the_sky = kwargs.get("color_the_sky",False)
 
@@ -3459,9 +3464,9 @@ class Aircraft:
                     vels_axs[ivw].fill_between(tarr, xupp[1], xlow[1],ls="--",**fil2)
                     vels_axs[ivw].fill_between(tarr, xupp[2], xlow[2],ls="-.",**fil2)
             if not deltas and plot_norm:
-                vels_axs[  0].plot(tarr,xhat_eq[0],c="k",ls="-" ,lw=0.5)
-                vels_axs[ivw].plot(tarr,xhat_eq[1],c="k",ls="--",lw=0.5)
-                vels_axs[ivw].plot(tarr,xhat_eq[2],c="k",ls="-.",lw=0.5)
+                vels_axs[  0].plot(tarr,xhat_eq[0],c="k",ls="-" ,lw=norm_lw)
+                vels_axs[ivw].plot(tarr,xhat_eq[1],c="k",ls="--",lw=norm_lw)
+                vels_axs[ivw].plot(tarr,xhat_eq[2],c="k",ls="-.",lw=norm_lw)
             vels_axs[  0].plot(tarr, state[0],c=c,ls="-",
                 label=Del+r"$V_{x_b}$")
             vels_axs[ivw].plot(tarr, state[1],c=c,ls="--",
@@ -3536,14 +3541,14 @@ class Aircraft:
                         aero_axs[2].fill_between(tarr, aupp[3], alow[3],**fill)
                         aero_axs[2].fill_between(tarr, aupp[3], alow[3],ls="--",**fil2)
             if not deltas and plot_norm:
-                aero_axs[0].plot(tarr, aerohat_eq[0],c="k",ls="-",lw=0.5)
+                aero_axs[0].plot(tarr, aerohat_eq[0],c="k",ls="-",lw=norm_lw)
                 if self.is_rc:
-                    aero_axs[1].plot(tarr, aerohat_eq[2],c="k",ls="-",lw=0.5)
-                    aero_axs[1].plot(tarr, aerohat_eq[3],c="k",ls="--",lw=0.5)
+                    aero_axs[1].plot(tarr, aerohat_eq[2],c="k",ls="-",lw=norm_lw)
+                    aero_axs[1].plot(tarr, aerohat_eq[3],c="k",ls="--",lw=norm_lw)
                 else:
-                    aero_axs[1].plot(tarr, aerohat_eq[1],c="k",ls="-",lw=0.5)
-                    aero_axs[2].plot(tarr, aerohat_eq[2],c="k",ls="-",lw=0.5)
-                    aero_axs[2].plot(tarr, aerohat_eq[3],c="k",ls="--",lw=0.5)
+                    aero_axs[1].plot(tarr, aerohat_eq[1],c="k",ls="-",lw=norm_lw)
+                    aero_axs[2].plot(tarr, aerohat_eq[2],c="k",ls="-",lw=norm_lw)
+                    aero_axs[2].plot(tarr, aerohat_eq[3],c="k",ls="--",lw=norm_lw)
             aero_axs[0].plot(tarr, aero[0],c=c,ls="-")
             if self.is_rc:
                 aero_axs[1].plot(tarr, aero[2],c=c,ls="-",label=Del+r"$\alpha$")
@@ -3604,11 +3609,11 @@ class Aircraft:
                         ls="-"+("" if ir else "."),**fil2)
             if not deltas and plot_norm:
                 rate_axs[ 0].plot(tarr, xhat_eq[3],c="k",
-                    ls="-",lw=0.5)
+                    ls="-",lw=norm_lw)
                 rate_axs[iq].plot(tarr, xhat_eq[4],c="k",
-                    ls="-"+("" if iq else "-"),lw=0.5)
+                    ls="-"+("" if iq else "-"),lw=norm_lw)
                 rate_axs[ir].plot(tarr, xhat_eq[5],c="k",
-                    ls="-"+("" if ir else "."),lw=0.5)
+                    ls="-"+("" if ir else "."),lw=norm_lw)
             rate_axs[ 0].plot(tarr, state[3],c=c,ls="-",
                 label=Del+r"$p$")
             rate_axs[iq].plot(tarr, state[4],c=c,ls="-"+("" if iq else "-"),
@@ -3678,6 +3683,8 @@ class Aircraft:
                 igrs_axs.legend()
 
             # # xyz plots
+            if self.is_rc: posn_mlt = 1.0
+            else:          posn_mlt = 1.0/1000.0
             if i==0:
                 # # y limits
                 # posn_axs[0].set_ylim(-7500.0,17500.0)
@@ -3691,37 +3698,38 @@ class Aircraft:
                 posn_axs[2].grid(which="major",lw=0.6,ls="-",c="0.75")
                 # posn_axs[2].grid(which="minor",lw=0.5,ls="dotted",c="0.5")
                 posn_fig.supxlabel(r"Time, s")
-                posn_fig.supylabel(r"Position, ft")
+                unit = "ft" if self.is_rc else "kft"
+                posn_fig.supylabel(r"Position, " + unit)
                 # xticks
                 posn_axs[2].set_xticks(ticks=xticks)
                 # line var labels
-                posn_axs[0].text(tarr[ilbl],state[6,ilbl],
+                posn_axs[0].text(tarr[ilbl],state[6,ilbl]*posn_mlt,
                     Del+r"$x_f$",bbox=bbox_dict,**lbl_params)
-                posn_axs[1].text(tarr[ilbl],state[7,ilbl],
+                posn_axs[1].text(tarr[ilbl],state[7,ilbl]*posn_mlt,
                     Del+r"$y_f$",bbox=bbox_dict,**lbl_params)
-                posn_axs[2].text(tarr[ilbl],state[8,ilbl],
+                posn_axs[2].text(tarr[ilbl],state[8,ilbl]*posn_mlt,
                     Del+r"$z_f$",bbox=bbox_dict,**lbl_params)
                 output_coords = posn_axs[2].transLimits.inverted().transform((
-                    tarr[ilbl],state[8,ilbl]))
+                    tarr[ilbl],state[8,ilbl]*posn_mlt))
                 if plot_ul_bounds:
-                    posn_axs[0].fill_between(tarr, xupp[6], xlow[6],**fill)
-                    posn_axs[0].fill_between(tarr, xupp[6], xlow[6],ls="-",**fil2)
-                    posn_axs[1].fill_between(tarr, xupp[7], xlow[7],**fill)
-                    posn_axs[1].fill_between(tarr, xupp[7], xlow[7],ls="-",**fil2)
-                    posn_axs[2].fill_between(tarr, xupp[8], xlow[8],**fill)
-                    posn_axs[2].fill_between(tarr, xupp[8], xlow[8],ls="-",**fil2)
+                    posn_axs[0].fill_between(tarr, xupp[6]*posn_mlt, xlow[6]*posn_mlt,**fill)
+                    posn_axs[0].fill_between(tarr, xupp[6]*posn_mlt, xlow[6]*posn_mlt,ls="-",**fil2)
+                    posn_axs[1].fill_between(tarr, xupp[7]*posn_mlt, xlow[7]*posn_mlt,**fill)
+                    posn_axs[1].fill_between(tarr, xupp[7]*posn_mlt, xlow[7]*posn_mlt,ls="-",**fil2)
+                    posn_axs[2].fill_between(tarr, xupp[8]*posn_mlt, xlow[8]*posn_mlt,**fill)
+                    posn_axs[2].fill_between(tarr, xupp[8]*posn_mlt, xlow[8]*posn_mlt,ls="-",**fil2)
             if not deltas and plot_norm:
-                # posn_axs[0].plot(tarr, xhat_eq[6],c="k",ls="-",lw=0.5)
-                posn_axs[1].plot(tarr, xhat_eq[7],c="k",ls="-",lw=0.5)
-                posn_axs[2].plot(tarr, xhat_eq[8],c="k",ls="-",lw=0.5)
-            posn_axs[0].plot(tarr, state[6],c=c,ls="-",label=lbl)
-            posn_axs[1].plot(tarr, state[7],c=c,ls="-")
-            posn_axs[2].plot(tarr, state[8],c=c,ls="-")
+                # posn_axs[0].plot(tarr, xhat_eq[6]*posn_mlt,c="k",ls="-",lw=norm_lw)
+                posn_axs[1].plot(tarr, xhat_eq[7]*posn_mlt,c="k",ls="-",lw=norm_lw)
+                posn_axs[2].plot(tarr, xhat_eq[8]*posn_mlt,c="k",ls="-",lw=norm_lw)
+            posn_axs[0].plot(tarr, state[6]*posn_mlt,c=c,ls="-",label=lbl)
+            posn_axs[1].plot(tarr, state[7]*posn_mlt,c=c,ls="-")
+            posn_axs[2].plot(tarr, state[8]*posn_mlt,c=c,ls="-")
             # ################################
             # if not deltas:
-            #     posn_axs[0].plot(tarr, self.xs_sim[6],c="r",ls="-",label=lbl)
-            #     posn_axs[1].plot(tarr, self.xs_sim[7],c="r",ls="-")
-            #     posn_axs[2].plot(tarr, self.xs_sim[8],c="r",ls="-")
+            #     posn_axs[0].plot(tarr, self.xs_sim[6]*posn_mlt,c="r",ls="-",label=lbl)
+            #     posn_axs[1].plot(tarr, self.xs_sim[7]*posn_mlt,c="r",ls="-")
+            #     posn_axs[2].plot(tarr, self.xs_sim[8]*posn_mlt,c="r",ls="-")
             # ################################
             if i==1:
                 posn_axs[0].legend()
@@ -3772,11 +3780,11 @@ class Aircraft:
                         ls="-"+("" if ip else "."),**fil2)
             if not deltas and plot_norm:
                 ornt_axs[ 0].plot(tarr, xhat_eq[ 9],c="k",
-                    ls="-",lw=0.5)
+                    ls="-",lw=norm_lw)
                 ornt_axs[it].plot(tarr, xhat_eq[10],c="k",
-                    ls="-"+("" if it else "-"),lw=0.5)
+                    ls="-"+("" if it else "-"),lw=norm_lw)
                 ornt_axs[ip].plot(tarr, xhat_eq[11],c="k",
-                    ls="-"+("" if ip else "."),lw=0.5)
+                    ls="-"+("" if ip else "."),lw=norm_lw)
             ornt_axs[ 0].plot(tarr, state[9],c=c,ls="-",
                 label=Del+r"$\phi$")
             ornt_axs[it].plot(tarr, state[10],c=c,ls="-"+("" if it else "-"),
@@ -3914,13 +3922,13 @@ class Aircraft:
                     surf_axs.fill_between(tarr, cupp[2], clow[2],**fill)
                     surf_axs.fill_between(tarr, cupp[2], clow[2],ls="-.",**fil2)
             if not deltas and plot_norm:
-                ctrl_axs[0].plot(tarr, uhat_eq[0],c="k",ls="-",lw=0.5)
-                ctrl_axs[1].plot(tarr, uhat_eq[1],c="k",ls="-",lw=0.5)
-                ctrl_axs[2].plot(tarr, uhat_eq[2],c="k",ls="-",lw=0.5)
-                ctrl_axs[3].plot(tarr, uhat_eq[3],c="k",ls="-",lw=0.5)
-                surf_axs   .plot(tarr, uhat_eq[0],c="k",ls= "-",lw=0.5)
-                surf_axs   .plot(tarr, uhat_eq[1],c="k",ls="--",lw=0.5)
-                surf_axs   .plot(tarr, uhat_eq[2],c="k",ls="-.",lw=0.5)
+                ctrl_axs[0].plot(tarr, uhat_eq[0],c="k",ls="-",lw=norm_lw)
+                ctrl_axs[1].plot(tarr, uhat_eq[1],c="k",ls="-",lw=norm_lw)
+                ctrl_axs[2].plot(tarr, uhat_eq[2],c="k",ls="-",lw=norm_lw)
+                ctrl_axs[3].plot(tarr, uhat_eq[3],c="k",ls="-",lw=norm_lw)
+                surf_axs   .plot(tarr, uhat_eq[0],c="k",ls= "-",lw=norm_lw)
+                surf_axs   .plot(tarr, uhat_eq[1],c="k",ls="--",lw=norm_lw)
+                surf_axs   .plot(tarr, uhat_eq[2],c="k",ls="-.",lw=norm_lw)
             ctrl_axs[0].plot(tarr, ctrl[0],c=c,ls="-",label=lbl)
             ctrl_axs[1].plot(tarr, ctrl[1],c=c,ls="-")
             ctrl_axs[2].plot(tarr, ctrl[2],c=c,ls="-")
@@ -4981,6 +4989,10 @@ def run_single_simulation(filename,rtdst_1sg=[20.,10.,5.],
     aircraft.u_tr       = interp1d(t21,trim_cos,kind="linear",axis=0)(z21)
     K_trs = np.zeros((gain_steps, \
         aircraft.Lin_Model.K.shape[0], aircraft.Lin_Model.K.shape[1]))
+    A_s = np.zeros((gain_steps, \
+        aircraft.Lin_Model.A_min.shape[0], aircraft.Lin_Model.A_min.shape[1]))
+    B_s = np.zeros((gain_steps, \
+        aircraft.Lin_Model.B_min.shape[0], aircraft.Lin_Model.B_min.shape[1]))
     # determine true trim gains
     for i in range(gain_steps):
         # store trim condition
@@ -4991,7 +5003,9 @@ def run_single_simulation(filename,rtdst_1sg=[20.,10.,5.],
             include_stall_derivatives=include_stall_derivatives,
             include_altitude_derivatives=include_altitude_derivatives,
             skip_reporting=True,run_freq=False)
-        K_trs[i] = Lin_Model.K*1.
+        K_trs[i] = Lin_Model.K*1.0
+        A_s[i] = Lin_Model.A_min*1.0
+        B_s[i] = Lin_Model.B_min*1.0
     aircraft.K_tr = K_trs*1.
     aircraft.t_tr = z21*t_gain_schedule
     _,Lin_Model = aircraft._build_controller(
@@ -5002,6 +5016,20 @@ def run_single_simulation(filename,rtdst_1sg=[20.,10.,5.],
         include_altitude_derivatives=include_altitude_derivatives,
         skip_reporting=True,run_freq=False)
     aircraft.K_slf = Lin_Model.K*1.
+
+    # reopen matrices file and save trim states, control, lin models, and gains
+    if trim_steps > 2:
+        mat_info = loadmat(aircraft._control_matrices_file)
+        [mat_info.pop(popper) for popper in ["A","B","K"]]
+        mat_info["Phis[deg]"] = np.linspace(initial_bank,final_bank,trim_steps)
+        mat_info["Heights[ft]"] = np.linspace(initial_altitude,final_altitude,trim_steps)
+        mat_info["Machs[]"] = np.linspace(initial_mach,final_mach,trim_steps)
+        mat_info["x_trs_euler[ft/s,rad/s,ft,rad]"] = aircraft.x_tr_euler
+        mat_info["u_trs[rad,per-unit]"] = aircraft.u_tr
+        mat_info["As"] = A_s
+        mat_info["Bs"] = B_s
+        mat_info["Ks"] = K_trs
+        savemat(aircraft._control_matrices_file,mat_info,oned_as="column")
 
     # create interpolation functions
     typ = interpolation_type # "linear" # "nearest-up" # 

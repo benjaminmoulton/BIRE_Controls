@@ -2302,42 +2302,42 @@ class ControlAllocationMomentAssignmentAircraft(Aircraft):
                 #
                 u = np.concatenate((delta,[tcom]))
 
-                # report # # CHECKING CAMA
-                ca = cos(a); sa = sin(a)
-                cb = cos(b); sb = sin(b)
-                #
-                CM__u = self.aero_model.aero_results(*[
-                    a,b,pbar,qbar,rbar,da_d,de_d,dB_rep, # dB_d, # 
-                    False,M,False,False,True
-                ])#[3:]
-                CM__u[4] = CM__u[4] \
-                    + self.cgshift[0]*\
-                    (-ca*CM__u[0] -sa*sb*CM__u[1] -sa*cb*CM__u[2] )/self.cw
-                CM__u[5] = CM__u[5] \
-                    + self.cgshift[0]*(cb*CM__u[1] -sb*CM__u[2] )/self.bw
-                CM__u = CM__u[3:]
-                CM__c = self.aero_model.aero_results(*[
-                    a,b,pbar,qbar,rbar,da_d,de_d,dB_rep, # dB_d, # 
-                    self.is_compressible,M,self.use_anderson,self.has_stall,True
-                ])#[3:]
-                CM__c[4] = CM__c[4] \
-                    + self.cgshift[0]*\
-                    (-ca*CM__c[0] -sa*sb*CM__c[1] -sa*cb*CM__c[2] )/self.cw
-                CM__c[5] = CM__c[5] \
-                    + self.cgshift[0]*(cb*CM__c[1] -sb*CM__c[2] )/self.bw
-                CM__c = CM__c[3:]
-                pd_u = (CMd_u - CM__u)/CMd_u*100.0
-                pd_c = (CMd_c - CM__c)/CMd_c*100.0
-                threshold = 1.0e-06
-                if np.linalg.norm(pd_u) > threshold or np.linalg.norm(pd_c) > threshold:
-                    print("CMd   corr =",CMd_c)
-                    print("CMd uncorr =",CMd_u)
-                    print("CM  uncorr =",CM__u)
-                    print("CM    corr =",CM__c)
-                    print("unc % diff =",pd_u)
-                    print("cor % diff =",pd_c)
-                    print()
-                    # quit()
+                # # report # # CHECKING CAMA
+                # ca = cos(a); sa = sin(a)
+                # cb = cos(b); sb = sin(b)
+                # #
+                # CM__u = self.aero_model.aero_results(*[
+                #     a,b,pbar,qbar,rbar,da_d,de_d,dB_rep, # dB_d, # 
+                #     False,M,False,False,True
+                # ])#[3:]
+                # CM__u[4] = CM__u[4] \
+                #     + self.cgshift[0]*\
+                #     (-ca*CM__u[0] -sa*sb*CM__u[1] -sa*cb*CM__u[2] )/self.cw
+                # CM__u[5] = CM__u[5] \
+                #     + self.cgshift[0]*(cb*CM__u[1] -sb*CM__u[2] )/self.bw
+                # CM__u = CM__u[3:]
+                # CM__c = self.aero_model.aero_results(*[
+                #     a,b,pbar,qbar,rbar,da_d,de_d,dB_rep, # dB_d, # 
+                #     self.is_compressible,M,self.use_anderson,self.has_stall,True
+                # ])#[3:]
+                # CM__c[4] = CM__c[4] \
+                #     + self.cgshift[0]*\
+                #     (-ca*CM__c[0] -sa*sb*CM__c[1] -sa*cb*CM__c[2] )/self.cw
+                # CM__c[5] = CM__c[5] \
+                #     + self.cgshift[0]*(cb*CM__c[1] -sb*CM__c[2] )/self.bw
+                # CM__c = CM__c[3:]
+                # pd_u = (CMd_u - CM__u)/CMd_u*100.0
+                # pd_c = (CMd_c - CM__c)/CMd_c*100.0
+                # threshold = 1.0e-06
+                # if np.linalg.norm(pd_u) > threshold or np.linalg.norm(pd_c) > threshold:
+                #     print("CMd   corr =",CMd_c)
+                #     print("CMd uncorr =",CMd_u)
+                #     print("CM  uncorr =",CM__u)
+                #     print("CM    corr =",CM__c)
+                #     print("unc % diff =",pd_u)
+                #     print("cor % diff =",pd_c)
+                #     print()
+                #     # quit()
 
 
                 if self.order > 0:
@@ -3893,7 +3893,7 @@ if __name__ == "__main__":
     # # # 
     run_bire_fs["aircraft_class"] = ControlAllocationMomentAssignmentAircraft
     run_bire_fs["name_end"] = "_" + f1 + "_CAMA_sine" # 2" # 
-    bire_fs_dict["aircraft"]["CG_shift[ft]"] = [+1.0,+0.0,0.0]
+    # # # bire_fs_dict["aircraft"]["CG_shift[ft]"] = [+1.0,+0.0,0.0]
     # # # # # # 
     # # # run_bire_fs["aircraft_class"] = ControlAllocationMomentAssignmentActuatorsAircraft
     # # # run_bire_fs["name_end"] = "_" + f1 + "_CAMAA_1"
@@ -4029,11 +4029,11 @@ if __name__ == "__main__":
     # q_tr_deg =  1.1619249236475548
     # r_tr_deg =  1.6594007636912391
     # #######################################################################
-    # # # 40 deg bank fullscale BIRE
-    # (0) tail
-    p_tr_deg = -0.1195200902391827
-    q_tr_deg =  1.5598776114662467
-    r_tr_deg =  1.8589897474721753
+    # # # # 40 deg bank fullscale BIRE
+    # # (0) tail
+    # p_tr_deg = -0.1195200902391827
+    # q_tr_deg =  1.5598776114662467
+    # r_tr_deg =  1.8589897474721753
     # #######################################################################
     # # 50 deg bank fullscale BIRE
     # (0) tail
@@ -4041,17 +4041,17 @@ if __name__ == "__main__":
     # q_tr_deg =  2.6372142861590873
     # r_tr_deg =  2.2128855348515439
     # #######################################################################
-    # 60 deg bank fullscale BIRE
-    # # (0) tail
-    p_tr_deg = -0.2654216358834438
-    q_tr_deg =  4.3218126454667702
-    r_tr_deg =  2.4951996942473698
+    # # 60 deg bank fullscale BIRE
+    # # # (0) tail
+    # p_tr_deg = -0.2654216358834438
+    # q_tr_deg =  4.3218126454667702
+    # r_tr_deg =  2.4951996942473698
     # #######################################################################
     # # 10 deg bank RC scale BIRE w/o stall
     # p_tr_deg = -0.3294739663431505
     # q_tr_deg =  0.5582409457023837
     # r_tr_deg =  3.1659417263281258
-    p_bfcm = 60.0 # 40.0 # 50.0 # 30.0 # 15.0 # 5.0 # 20.0 # 10.0 # 7.5 # 
+    p_bfcm = 5.0 # 60.0 # 40.0 # 50.0 # 30.0 # 15.0 # 20.0 # 10.0 # 7.5 # 
     if "left_roll" in locals():
         p_bfcm = - p_bfcm
         p_tr_deg = - p_tr_deg
@@ -4064,12 +4064,12 @@ if __name__ == "__main__":
     ###########################################################################
     t_zero = 0.0
     recover_time = 10.0
-    transition_time = 1.0 # 2.0 # 
+    transition_time = 2.0 # 1.0 # 
     p_time = t_zero + transition_time
     # p_time2 = p_time  + recover_time
     # p_time3 = p_time2 + transition_time
     t_end = 0.0 # 25.0 # 
-    tf = 10.0 # 2.50 # 4.90 # 60.0 # 20.0 # 
+    tf = 10.0 # 16.0 # 2.50 # 4.90 # 60.0 # 20.0 # 
     V_trim = 634.4133153512273111
     bire_fs_dict["reference"] = {
         "deg2rad_states" : [1,2,3,4,5],
@@ -4106,10 +4106,10 @@ if __name__ == "__main__":
     # bire_fs_dict["actuators"][ "aileron"]["lag[s]"] = new_lag
     # bire_fs_dict["actuators"]["elevator"]["lag[s]"] = new_lag
     # bire_fs_dict["actuators"][    "BIRE"]["lag[s]"] = new_lag
-    # # # # # # 
-    blm = 200.0 # 50.0 # 150.0 # 125.0 # 100.0 # 250.0 # 500.0 # 600.0 # 750.0 # 1000.0 # 1500.0 # 
-    bire_fs_dict["actuators"][    "BIRE"]["rate_limits[deg/s]"] = [-blm,blm]
-    # # # # # # 
+    # # # # # # # 
+    # blm = 200.0 # 50.0 # 150.0 # 125.0 # 100.0 # 250.0 # 500.0 # 600.0 # 750.0 # 1000.0 # 1500.0 # 
+    # bire_fs_dict["actuators"][    "BIRE"]["rate_limits[deg/s]"] = [-blm,blm]
+    # # # # # # # 
     # elm = 50.0
     # bire_fs_dict["actuators"]["elevator"]["rate_limits[deg/s]"] = [-elm,elm]
     # # # # # # #
@@ -4123,6 +4123,22 @@ if __name__ == "__main__":
     # run_bire_fs["has_turbulence"] = True # False # 
     # run_bire_fs["has_model_error"] = False # True # 
     # # #########################################################################
+    # # # # # # # zoom climb
+    # run_bire_fs["track_check_time"] = run_bire_fs["final_time"] = 25.0
+    # pitch_rot = 35.0
+    # bire_fs_dict["reference"] = {
+    #     "deg2rad_states" : [1,2,3,4,5],
+    #     "0" : [[ 0.0,   650.0],[ 7.0,   650.0],
+    #             [ 17.0,   400.0],],
+    #     "3" : [ [0.0, 0.0], [15.0, 0.0], [15.0, 180.0], [16.0, 180.0],
+    #             [16.0, 0.0], [21.0, 180.0], [22.0, 180.0], [22.0, 0.0], ],
+    #     "4" : [ [0.0, 0.0], [5.0, 0.0], [5.0, pitch_rot], 
+    #             [7.0, pitch_rot], [7.0, 0.0], [17.0, 0.0], 
+    #             [17.0, pitch_rot], [19.0, pitch_rot], [19.0, 0.0], ],
+    #     "5" : [ [0.0, 0.0], [2.0, 0.0], ],
+    #     "sct_on_5" : False
+    # }
+    
     # # # # zeros
     # bire_fs_dict["reference"] = {
     #     "deg2rad_states" : [1,2,3,4,5],
