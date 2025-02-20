@@ -690,6 +690,8 @@ class DynamicInversionAircraft(Aircraft):
 
         return u,inputs
 
+class empty_class():
+    pass
 
 class ControlAllocationMomentAssignmentAircraft(Aircraft):
     """A default class for calculating and containing the mass properties of a
@@ -703,14 +705,14 @@ class ControlAllocationMomentAssignmentAircraft(Aircraft):
     def __init__(self,input_dict={}):
 
         # invoke init of parent
-        Aircraft.__init__(self,input_dict,folder_prefix = "track")
+        Aircraft.__init__(self,input_dict,folder_prefix = "track",SAS_Cma=-1.0)#-0.3)
         self.tracking = True
         self.bool_plot_limit_inputs = True # False # 
         self.pseudo_inverse_method = True # False # 
         self.do_line_search = False # True # # if false, use prev calc
         self.ls_dB_lim = 45.0 # 30.0 # 
         self.ls_num = 21 # 11 # 
-        self.opt_tol = 1.0e-12
+        self.opt_tol = 1.0e-12 # 1.0e-15 # 
         self.opt_max_iter = 50 # 1000 # 10 # 100 # 
         self.report_error_threshold = 1.0e10 # 1.0e-2 # 
         #
@@ -719,6 +721,7 @@ class ControlAllocationMomentAssignmentAircraft(Aircraft):
         line_search_options = ["Newton"] + self.scalar_options + self.scipy_options
         self.line_method = line_search_options[0] # "None" # [1] # [0] # 
         self.line_method = "Newton_Root"
+        # self.line_method = "No_dB"
         # self.add_tail_lag_eq = False # True # 
         # bire aero model for derivs
         self.dBAM = BIREAero(**self.aero_dict)
@@ -758,6 +761,7 @@ class ControlAllocationMomentAssignmentAircraft(Aircraft):
         R[0,1] = R[1,0] = 0.0
         R[0,2] = R[2,0] = 0.0
         R[1,2] = R[2,1] = 5.0e-2
+        #
         # # # # # # # # # # vvvv OLD QR from optimization setup
         # Q = np.diag([8.4e+2] + [4.2e+3]*2 + [4.0e+0] + [4.0e+1]*2)
         # Q[0,2] = Q[2,0] = 1.0e2 # 5.0e2
@@ -779,26 +783,28 @@ class ControlAllocationMomentAssignmentAircraft(Aircraft):
         rep2D(self.KP_DI,"KP",decimals=3)# print("KP =",self.KP_DI)
 
         # search functions
-        def delta_E_fun(rho,V,dBj,a,b,pbar,qbar,rbar,Md):
+        def delta_E_fun(rho,V,dBj,a,b,pbar,qbar,rbar,Md,ignore_terms=False):
             BAM = self.aero_model
             CL1 = BAM._CL0(dBj) + BAM._CL_alpha(dBj)*a
-            Cls = (BAM._Cl0(dBj) + BAM._Cl_alpha(dBj)*a +
+            Cls = (BAM._Cl0(dBj) + BAM._Cl_alpha(dBj)*a + self.SAS_Cma*BAM._Cl_de(dBj)/BAM._Cm_de(dBj)*a + 
                 BAM._Cl_beta(dBj)*b + BAM._Cl_pbar(dBj)*pbar +
                 BAM._Cl_qbar(dBj)*qbar +
                 (BAM._Cl_rbar(dBj) + BAM._Cl_Lrbar(dBj)*CL1)*rbar)
             Clda = BAM._Cl_da(dBj)
             Clde = BAM._Cl_de(dBj)
-            Cms = (BAM._Cm0(dBj) + BAM._Cm_alpha(dBj)*a +
+            Cms = (BAM._Cm0(dBj) + BAM._Cm_alpha(dBj)*a + self.SAS_Cma*a + 
                 BAM._Cm_beta(dBj)*b + BAM._Cm_pbar(dBj)*pbar +
                 BAM._Cm_qbar(dBj)*qbar + BAM._Cm_rbar(dBj)*rbar)
             Cmda = BAM._Cm_da(dBj)
             Cmde = BAM._Cm_de(dBj)
-            Cns = (BAM._Cn0(dBj) + BAM._Cn_alpha(dBj)*a +
+            Cns = (BAM._Cn0(dBj) + BAM._Cn_alpha(dBj)*a + self.SAS_Cma*BAM._Cn_de(dBj)/BAM._Cm_de(dBj)*a + 
                 BAM._Cn_beta(dBj)*b +
                 (BAM._Cn_pbar(dBj) + BAM._Cn_Lpbar(dBj)*CL1)*pbar +
                 BAM._Cn_qbar(dBj)*qbar + BAM._Cn_rbar(dBj)*rbar)
             Cnda = BAM._Cn_da(dBj) + BAM._Cn_Lda(dBj)*CL1
             Cnde = BAM._Cn_de(dBj)
+            if ignore_terms:
+                Clde = Cmda = 0.0
             # determine da, de
             Cs = np.array([Cls,Cms,Cns])
             Cc = np.array([[Clda,Clde],[Cmda,Cmde],[Cnda,Cnde]])
@@ -811,63 +817,33 @@ class ControlAllocationMomentAssignmentAircraft(Aircraft):
             Error = np.linalg.norm(M-Md)
             return dai,dei,Error
         
-        def delta_E_fun_sum(rho,V,dBj,a,b,pbar,qbar,rbar,Md):
-            BAM = self.aero_model
-            CL1 = BAM._CL0(dBj) + BAM._CL_alpha(dBj)*a
-            Cls = (BAM._Cl0(dBj) + BAM._Cl_alpha(dBj)*a +
-                BAM._Cl_beta(dBj)*b + BAM._Cl_pbar(dBj)*pbar +
-                BAM._Cl_qbar(dBj)*qbar +
-                (BAM._Cl_rbar(dBj) + BAM._Cl_Lrbar(dBj)*CL1)*rbar)
-            Clda = BAM._Cl_da(dBj)
-            Clde = BAM._Cl_de(dBj)
-            Cms = (BAM._Cm0(dBj) + BAM._Cm_alpha(dBj)*a +
-                BAM._Cm_beta(dBj)*b + BAM._Cm_pbar(dBj)*pbar +
-                BAM._Cm_qbar(dBj)*qbar + BAM._Cm_rbar(dBj)*rbar)
-            Cmda = BAM._Cm_da(dBj)
-            Cmde = BAM._Cm_de(dBj)
-            Cns = (BAM._Cn0(dBj) + BAM._Cn_alpha(dBj)*a +
-                BAM._Cn_beta(dBj)*b +
-                (BAM._Cn_pbar(dBj) + BAM._Cn_Lpbar(dBj)*CL1)*pbar +
-                BAM._Cn_qbar(dBj)*qbar + BAM._Cn_rbar(dBj)*rbar)
-            Cnda = BAM._Cn_da(dBj) + BAM._Cn_Lda(dBj)*CL1
-            Cnde = BAM._Cn_de(dBj)
-            # determine da, de
-            Cs = np.array([Cls,Cms,Cns])
-            Cc = np.array([[Clda,Clde],[Cmda,Cmde],[Cnda,Cnde]])
-            Qdyn = 0.5*rho*V**2.*self.Sw
-            G = Qdyn*np.diag([self.bw,self.cw,self.bw])
-            GCs = mm(G,Cs)
-            GCc = mm(G,Cc)
-            dai,dei = mm(np.linalg.pinv(GCc),Md - GCs)
-            M = GCs + mm(GCc,[dai,dei])
-            Error = np.sum(M-Md)
-            return dai,dei,Error
-
-        def delta_E_fun_sq(rho,V,dBj,a,b,pbar,qbar,rbar,Md):
-            da,de,E = delta_E_fun(rho,V,dBj,a,b,pbar,qbar,rbar,Md)
+        def delta_E_fun_sq(rho,V,dBj,a,b,pbar,qbar,rbar,Md,ignore_terms=False):
+            da,de,E = delta_E_fun(rho,V,dBj,a,b,pbar,qbar,rbar,Md,ignore_terms)
             return da,de,E**2.0
         
-        def delta_E_dE_fun(rho,V,dBj,a,b,pbar,qbar,rbar,Md):
+        def delta_E_dE_fun(rho,V,dBj,a,b,pbar,qbar,rbar,Md,ignore_terms=False):
             # previously
             BAM = self.aero_model
             CL1 = BAM._CL0(dBj) + BAM._CL_alpha(dBj)*a
-            Cls = (BAM._Cl0(dBj) + BAM._Cl_alpha(dBj)*a +
+            Cls = (BAM._Cl0(dBj) + BAM._Cl_alpha(dBj)*a + self.SAS_Cma*BAM._Cl_de(dBj)/BAM._Cm_de(dBj)*a + 
                 BAM._Cl_beta(dBj)*b + BAM._Cl_pbar(dBj)*pbar +
                 BAM._Cl_qbar(dBj)*qbar +
                 (BAM._Cl_rbar(dBj) + BAM._Cl_Lrbar(dBj)*CL1)*rbar)
             Clda = BAM._Cl_da(dBj)
             Clde = BAM._Cl_de(dBj)
-            Cms = (BAM._Cm0(dBj) + BAM._Cm_alpha(dBj)*a +
+            Cms = (BAM._Cm0(dBj) + BAM._Cm_alpha(dBj)*a + self.SAS_Cma*a + 
                 BAM._Cm_beta(dBj)*b + BAM._Cm_pbar(dBj)*pbar +
                 BAM._Cm_qbar(dBj)*qbar + BAM._Cm_rbar(dBj)*rbar)
             Cmda = BAM._Cm_da(dBj)
             Cmde = BAM._Cm_de(dBj)
-            Cns = (BAM._Cn0(dBj) + BAM._Cn_alpha(dBj)*a +
+            Cns = (BAM._Cn0(dBj) + BAM._Cn_alpha(dBj)*a + self.SAS_Cma*BAM._Cn_de(dBj)/BAM._Cm_de(dBj)*a + 
                 BAM._Cn_beta(dBj)*b +
                 (BAM._Cn_pbar(dBj) + BAM._Cn_Lpbar(dBj)*CL1)*pbar +
                 BAM._Cn_qbar(dBj)*qbar + BAM._Cn_rbar(dBj)*rbar)
             Cnda = BAM._Cn_da(dBj) + BAM._Cn_Lda(dBj)*CL1
             Cnde = BAM._Cn_de(dBj)
+            if ignore_terms:
+                Clde = Cmda = 0.0
             # determine da, de
             Cs = np.array([Cls,Cms,Cns])
             Cc = np.array([[Clda,Clde],[Cmda,Cmde],[Cnda,Cnde]])
@@ -883,6 +859,7 @@ class ControlAllocationMomentAssignmentAircraft(Aircraft):
             DAM = self.dBAM
             dCL1 = DAM._CL0(dBj) + DAM._CL_alpha(dBj)*a
             dCls = (DAM._Cl0(dBj) + DAM._Cl_alpha(dBj)*a +
+                self.SAS_Cma*(DAM._Cl_de(dBj)*BAM._Cm_de(dBj) - BAM._Cl_de(dBj)*DAM._Cm_de(dBj))/BAM._Cm_de(dBj)**2.0*a + 
                 DAM._Cl_beta(dBj)*b + DAM._Cl_pbar(dBj)*pbar +
                 DAM._Cl_qbar(dBj)*qbar +
                 (DAM._Cl_rbar(dBj) + DAM._Cl_Lrbar(dBj)*CL1 + 
@@ -894,7 +871,8 @@ class ControlAllocationMomentAssignmentAircraft(Aircraft):
                 DAM._Cm_qbar(dBj)*qbar + DAM._Cm_rbar(dBj)*rbar)
             dCmda = DAM._Cm_da(dBj)
             dCmde = DAM._Cm_de(dBj)
-            dCns = (DAM._Cn0(dBj) + DAM._Cn_alpha(dBj)*a +
+            dCns = (DAM._Cn0(dBj) + DAM._Cn_alpha(dBj)*a + 
+                self.SAS_Cma*(DAM._Cn_de(dBj)*BAM._Cm_de(dBj) - BAM._Cn_de(dBj)*DAM._Cm_de(dBj))/BAM._Cm_de(dBj)**2.0*a + 
                 DAM._Cn_beta(dBj)*b +
                 (DAM._Cn_pbar(dBj) + DAM._Cn_Lpbar(dBj)*CL1 + 
                 BAM._Cn_Lpbar(dBj)*dCL1)*pbar +
@@ -902,6 +880,8 @@ class ControlAllocationMomentAssignmentAircraft(Aircraft):
             dCnda = DAM._Cn_da(dBj) + DAM._Cn_Lda(dBj)*CL1 + \
                 BAM._Cn_Lda(dBj)*dCL1
             dCnde = DAM._Cn_de(dBj)
+            if ignore_terms:
+                dClde = dCmda = 0.0
             # determine da, de
             dCs = np.array([dCls,dCms,dCns])
             dCc = np.array([[dClda,dClde],[dCmda,dCmde],[dCnda,dCnde]])
@@ -919,31 +899,33 @@ class ControlAllocationMomentAssignmentAircraft(Aircraft):
             dE = mm(dM.T,(M-Md))/Error
             return dai,dei,Error,dE
         
-        def delta_E_dE_fun_sq(rho,V,dBj,a,b,pbar,qbar,rbar,Md):
-            da,de,E,dE = delta_E_dE_fun(rho,V,dBj,a,b,pbar,qbar,rbar,Md)
+        def delta_E_dE_fun_sq(rho,V,dBj,a,b,pbar,qbar,rbar,Md,ignore_terms=False):
+            da,de,E,dE = delta_E_dE_fun(rho,V,dBj,a,b,pbar,qbar,rbar,Md,ignore_terms)
             return da,de,E**2.0,2.0*dE*E
         
-        def delta_E_dE_wE_fun_sq(rho,V,dBj,a,b,pbar,qbar,rbar,Md):
+        def delta_E_dE_wE_fun_sq(rho,V,dBj,a,b,pbar,qbar,rbar,Md,ignore_terms=False):
             # previously
             BAM = self.aero_model
             CL1 = BAM._CL0(dBj) + BAM._CL_alpha(dBj)*a
-            Cls = (BAM._Cl0(dBj) + BAM._Cl_alpha(dBj)*a +
+            Cls = (BAM._Cl0(dBj) + BAM._Cl_alpha(dBj)*a + self.SAS_Cma*BAM._Cl_de(dBj)/BAM._Cm_de(dBj)*a + 
                 BAM._Cl_beta(dBj)*b + BAM._Cl_pbar(dBj)*pbar +
                 BAM._Cl_qbar(dBj)*qbar +
                 (BAM._Cl_rbar(dBj) + BAM._Cl_Lrbar(dBj)*CL1)*rbar)
             Clda = BAM._Cl_da(dBj)
             Clde = BAM._Cl_de(dBj)
-            Cms = (BAM._Cm0(dBj) + BAM._Cm_alpha(dBj)*a +
+            Cms = (BAM._Cm0(dBj) + BAM._Cm_alpha(dBj)*a + self.SAS_Cma*a + 
                 BAM._Cm_beta(dBj)*b + BAM._Cm_pbar(dBj)*pbar +
                 BAM._Cm_qbar(dBj)*qbar + BAM._Cm_rbar(dBj)*rbar)
             Cmda = BAM._Cm_da(dBj)
             Cmde = BAM._Cm_de(dBj)
-            Cns = (BAM._Cn0(dBj) + BAM._Cn_alpha(dBj)*a +
+            Cns = (BAM._Cn0(dBj) + BAM._Cn_alpha(dBj)*a + self.SAS_Cma*BAM._Cn_de(dBj)/BAM._Cm_de(dBj)*a + 
                 BAM._Cn_beta(dBj)*b +
                 (BAM._Cn_pbar(dBj) + BAM._Cn_Lpbar(dBj)*CL1)*pbar +
                 BAM._Cn_qbar(dBj)*qbar + BAM._Cn_rbar(dBj)*rbar)
             Cnda = BAM._Cn_da(dBj) + BAM._Cn_Lda(dBj)*CL1
             Cnde = BAM._Cn_de(dBj)
+            if ignore_terms:
+                Clde = Cmda = 0.0
             # determine da, de
             Cs = np.array([Cls,Cms,Cns])
             Cc = np.array([[Clda,Clde],[Cmda,Cmde],[Cnda,Cnde]])
@@ -959,6 +941,7 @@ class ControlAllocationMomentAssignmentAircraft(Aircraft):
             DAM = self.dBAM
             dCL1 = DAM._CL0(dBj) + DAM._CL_alpha(dBj)*a
             dCls = (DAM._Cl0(dBj) + DAM._Cl_alpha(dBj)*a +
+                self.SAS_Cma*(DAM._Cl_de(dBj)*BAM._Cm_de(dBj) - BAM._Cl_de(dBj)*DAM._Cm_de(dBj))/BAM._Cm_de(dBj)**2.0*a + 
                 DAM._Cl_beta(dBj)*b + DAM._Cl_pbar(dBj)*pbar +
                 DAM._Cl_qbar(dBj)*qbar +
                 (DAM._Cl_rbar(dBj) + DAM._Cl_Lrbar(dBj)*CL1 + 
@@ -970,7 +953,8 @@ class ControlAllocationMomentAssignmentAircraft(Aircraft):
                 DAM._Cm_qbar(dBj)*qbar + DAM._Cm_rbar(dBj)*rbar)
             dCmda = DAM._Cm_da(dBj)
             dCmde = DAM._Cm_de(dBj)
-            dCns = (DAM._Cn0(dBj) + DAM._Cn_alpha(dBj)*a +
+            dCns = (DAM._Cn0(dBj) + DAM._Cn_alpha(dBj)*a + 
+                self.SAS_Cma*(DAM._Cn_de(dBj)*BAM._Cm_de(dBj) - BAM._Cn_de(dBj)*DAM._Cm_de(dBj))/BAM._Cm_de(dBj)**2.0*a + 
                 DAM._Cn_beta(dBj)*b +
                 (DAM._Cn_pbar(dBj) + DAM._Cn_Lpbar(dBj)*CL1 + 
                 BAM._Cn_Lpbar(dBj)*dCL1)*pbar +
@@ -978,6 +962,8 @@ class ControlAllocationMomentAssignmentAircraft(Aircraft):
             dCnda = DAM._Cn_da(dBj) + DAM._Cn_Lda(dBj)*CL1 + \
                 BAM._Cn_Lda(dBj)*dCL1
             dCnde = DAM._Cn_de(dBj)
+            if ignore_terms:
+                dClde = dCmda = 0.0
             # determine da, de
             dCs = np.array([dCls,dCms,dCns])
             dCc = np.array([[dClda,dClde],[dCmda,dCmde],[dCnda,dCnde]])
@@ -997,6 +983,7 @@ class ControlAllocationMomentAssignmentAircraft(Aircraft):
             WAM = self.ddBAM
             wCL1 = WAM._CL0(dBj) + WAM._CL_alpha(dBj)*a
             wCls = (WAM._Cl0(dBj) + WAM._Cl_alpha(dBj)*a +
+                self.SAS_Cma*(WAM._Cl_de(dBj)*BAM._Cm_de(dBj)**2.0 - BAM._Cl_de(dBj)*WAM._Cm_de(dBj)*BAM._Cm_de(dBj) - 2.0*DAM._Cl_de(dBj)*BAM._Cm_de(dBj)*DAM._Cm_de(dBj) + 2.0*BAM._Cl_de(dBj)*DAM._Cm_de(dBj)**2.0)/BAM._Cm_de(dBj)**3.0*a + 
                 WAM._Cl_beta(dBj)*b + WAM._Cl_pbar(dBj)*pbar +
                 WAM._Cl_qbar(dBj)*qbar +
                 (WAM._Cl_rbar(dBj) + 
@@ -1010,6 +997,7 @@ class ControlAllocationMomentAssignmentAircraft(Aircraft):
             wCmda = WAM._Cm_da(dBj)
             wCmde = WAM._Cm_de(dBj)
             wCns = (WAM._Cn0(dBj) + WAM._Cn_alpha(dBj)*a +
+                self.SAS_Cma*(WAM._Cn_de(dBj)*BAM._Cm_de(dBj)**2.0 - BAM._Cn_de(dBj)*WAM._Cm_de(dBj)*BAM._Cm_de(dBj) - 2.0*DAM._Cn_de(dBj)*BAM._Cm_de(dBj)*DAM._Cm_de(dBj) + 2.0*BAM._Cn_de(dBj)*DAM._Cm_de(dBj)**2.0)/BAM._Cm_de(dBj)**3.0*a + 
                 WAM._Cn_beta(dBj)*b +
                 (WAM._Cn_pbar(dBj) + 
                 WAM._Cn_Lpbar(dBj)*CL1 + 2.0*DAM._Cn_Lpbar(dBj)*dCL1 + 
@@ -1019,6 +1007,8 @@ class ControlAllocationMomentAssignmentAircraft(Aircraft):
                 WAM._Cn_Lda(dBj)*CL1 + 2.0*DAM._Cn_Lda(dBj)*dCL1 + \
                 BAM._Cn_Lda(dBj)*wCL1
             wCnde = WAM._Cn_de(dBj)
+            if ignore_terms:
+                wClde = wCmda = 0.0
             # determine da, de
             wCs = np.array([wCls,wCms,wCns])
             wCc = np.array([[wClda,wClde],[wCmda,wCmde],[wCnda,wCnde]])
@@ -1055,18 +1045,18 @@ class ControlAllocationMomentAssignmentAircraft(Aircraft):
             BAM = self.aero_model
             CL1 = BAM._CL0(dBj) + BAM._CL_alpha(dBj)*a
             CS1 = BAM._CS0(dBj) + BAM._CS_beta(dBj)*b
-            Cls = (BAM._Cl0(dBj) + BAM._Cl_alpha(dBj)*a +
+            Cls = (BAM._Cl0(dBj) + BAM._Cl_alpha(dBj)*a + self.SAS_Cma*BAM._Cl_de(dBj)/BAM._Cm_de(dBj)*a + 
                 BAM._Cl_beta(dBj)*b + BAM._Cl_pbar(dBj)*pbar +
                 BAM._Cl_qbar(dBj)*qbar +
                 (BAM._Cl_rbar(dBj) + BAM._Cl_Lrbar(dBj)*CL1)*rbar)
             Clda = BAM._Cl_da(dBj)
             # Clde = BAM._Cl_de(dBj)
-            Cms = (BAM._Cm0(dBj) + BAM._Cm_alpha(dBj)*a +
+            Cms = (BAM._Cm0(dBj) + BAM._Cm_alpha(dBj)*a + self.SAS_Cma*a + 
                 BAM._Cm_beta(dBj)*b + BAM._Cm_pbar(dBj)*pbar +
                 BAM._Cm_qbar(dBj)*qbar + BAM._Cm_rbar(dBj)*rbar)
             # Cmda = BAM._Cm_da(dBj)
             Cmde = BAM._Cm_de(dBj)
-            Cns = (BAM._Cn0(dBj) + BAM._Cn_alpha(dBj)*a +
+            Cns = (BAM._Cn0(dBj) + BAM._Cn_alpha(dBj)*a + self.SAS_Cma*BAM._Cn_de(dBj)/BAM._Cm_de(dBj)*a + 
                 BAM._Cn_beta(dBj)*b +
                 (BAM._Cn_pbar(dBj) + BAM._Cn_Lpbar(dBj)*CL1)*pbar +
                 BAM._Cn_qbar(dBj)*qbar + BAM._Cn_rbar(dBj)*rbar)
@@ -1097,9 +1087,9 @@ class ControlAllocationMomentAssignmentAircraft(Aircraft):
             Clda = self.bw*Clda
             Cms  = self.cw*Cms +self.cgshift[0]*(-ca*CLs -sa*sb*CSs -sa*cb*CDs )
             Cmde = self.cw*Cmde+self.cgshift[0]*(-ca*CLde-sa*sb*CSde-sa*cb*CDde)
-            Cns  = self.cw*Cns -self.cgshift[0]*( cb*CSs -sb*CDs )
-            Cnde = self.cw*Cnde-self.cgshift[0]*( cb*CSde-sb*CDde)
-            Cnda = self.cw*Cnda-self.cgshift[0]*( cb*CSda-sb*CDda)
+            Cns  = self.bw*Cns -self.cgshift[0]*( cb*CSs -sb*CDs )
+            Cnde = self.bw*Cnde-self.cgshift[0]*( cb*CSde-sb*CDde)
+            Cnda = self.bw*Cnda-self.cgshift[0]*( cb*CSda-sb*CDda)
 
             # differences
             dl = Cld - Cls
@@ -1133,18 +1123,18 @@ class ControlAllocationMomentAssignmentAircraft(Aircraft):
             BAM = self.aero_model
             CL1 = BAM._CL0(dBj) + BAM._CL_alpha(dBj)*a
             CS1 = BAM._CS0(dBj) + BAM._CS_beta(dBj)*b
-            Cls = (BAM._Cl0(dBj) + BAM._Cl_alpha(dBj)*a +
+            Cls = (BAM._Cl0(dBj) + BAM._Cl_alpha(dBj)*a + self.SAS_Cma*BAM._Cl_de(dBj)/BAM._Cm_de(dBj)*a + 
                 BAM._Cl_beta(dBj)*b + BAM._Cl_pbar(dBj)*pbar +
                 BAM._Cl_qbar(dBj)*qbar +
                 (BAM._Cl_rbar(dBj) + BAM._Cl_Lrbar(dBj)*CL1)*rbar)
             Clda = BAM._Cl_da(dBj)
             # Clde = BAM._Cl_de(dBj)
-            Cms = (BAM._Cm0(dBj) + BAM._Cm_alpha(dBj)*a +
+            Cms = (BAM._Cm0(dBj) + BAM._Cm_alpha(dBj)*a + self.SAS_Cma*a + 
                 BAM._Cm_beta(dBj)*b + BAM._Cm_pbar(dBj)*pbar +
                 BAM._Cm_qbar(dBj)*qbar + BAM._Cm_rbar(dBj)*rbar)
             # Cmda = BAM._Cm_da(dBj)
             Cmde = BAM._Cm_de(dBj)
-            Cns = (BAM._Cn0(dBj) + BAM._Cn_alpha(dBj)*a +
+            Cns = (BAM._Cn0(dBj) + BAM._Cn_alpha(dBj)*a + self.SAS_Cma*BAM._Cn_de(dBj)/BAM._Cm_de(dBj)*a + 
                 BAM._Cn_beta(dBj)*b +
                 (BAM._Cn_pbar(dBj) + BAM._Cn_Lpbar(dBj)*CL1)*pbar +
                 BAM._Cn_qbar(dBj)*qbar + BAM._Cn_rbar(dBj)*rbar)
@@ -1154,7 +1144,8 @@ class ControlAllocationMomentAssignmentAircraft(Aircraft):
             DAM = self.dBAM
             dCL1 = DAM._CL0(dBj) + DAM._CL_alpha(dBj)*a
             dCS1 = DAM._CS0(dBj) + DAM._CS_beta(dBj)*b
-            dCls = (DAM._Cl0(dBj) + DAM._Cl_alpha(dBj)*a +
+            dCls = (DAM._Cl0(dBj) + DAM._Cl_alpha(dBj)*a + 
+                self.SAS_Cma*(DAM._Cl_de(dBj)*BAM._Cm_de(dBj) - BAM._Cl_de(dBj)*DAM._Cm_de(dBj))/BAM._Cm_de(dBj)**2.0*a + 
                 DAM._Cl_beta(dBj)*b + DAM._Cl_pbar(dBj)*pbar +
                 DAM._Cl_qbar(dBj)*qbar +
                 (DAM._Cl_rbar(dBj) + DAM._Cl_Lrbar(dBj)*CL1 + 
@@ -1166,7 +1157,8 @@ class ControlAllocationMomentAssignmentAircraft(Aircraft):
                 DAM._Cm_qbar(dBj)*qbar + DAM._Cm_rbar(dBj)*rbar)
             # dCmda = DAM._Cm_da(dBj)
             dCmde = DAM._Cm_de(dBj)
-            dCns = (DAM._Cn0(dBj) + DAM._Cn_alpha(dBj)*a +
+            dCns = (DAM._Cn0(dBj) + DAM._Cn_alpha(dBj)*a + 
+                self.SAS_Cma*(DAM._Cn_de(dBj)*BAM._Cm_de(dBj) - BAM._Cn_de(dBj)*DAM._Cm_de(dBj))/BAM._Cm_de(dBj)**2.0*a + 
                 DAM._Cn_beta(dBj)*b +
                 (DAM._Cn_pbar(dBj) + DAM._Cn_Lpbar(dBj)*CL1 + 
                 BAM._Cn_Lpbar(dBj)*dCL1)*pbar +
@@ -1225,17 +1217,17 @@ class ControlAllocationMomentAssignmentAircraft(Aircraft):
             Clda = self.bw*Clda
             Cms  = self.cw*Cms +self.cgshift[0]*(-ca*CLs -sa*sb*CSs -sa*cb*CDs )
             Cmde = self.cw*Cmde+self.cgshift[0]*(-ca*CLde-sa*sb*CSde-sa*cb*CDde)
-            Cns  = self.cw*Cns -self.cgshift[0]*( cb*CSs -sb*CDs )
-            Cnde = self.cw*Cnde-self.cgshift[0]*( cb*CSde-sb*CDde)
-            Cnda = self.cw*Cnda-self.cgshift[0]*( cb*CSda-sb*CDda)
+            Cns  = self.bw*Cns -self.cgshift[0]*( cb*CSs -sb*CDs )
+            Cnde = self.bw*Cnde-self.cgshift[0]*( cb*CSde-sb*CDde)
+            Cnda = self.bw*Cnda-self.cgshift[0]*( cb*CSda-sb*CDda)
             # derivatives
             dCls  = self.bw*dCls
             dClda = self.bw*dClda
             dCms  = self.cw*dCms +self.cgshift[0]*(-ca*dCLs -sa*sb*dCSs -sa*cb*dCDs )
             dCmde = self.cw*dCmde+self.cgshift[0]*(-ca*dCLde-sa*sb*dCSde-sa*cb*dCDde)
-            dCns  = self.cw*dCns -self.cgshift[0]*( cb*dCSs -sb*dCDs )
-            dCnde = self.cw*dCnde-self.cgshift[0]*( cb*dCSde-sb*dCDde)
-            dCnda = self.cw*dCnda-self.cgshift[0]*( cb*dCSda-sb*dCDda)
+            dCns  = self.bw*dCns -self.cgshift[0]*( cb*dCSs -sb*dCDs )
+            dCnde = self.bw*dCnde-self.cgshift[0]*( cb*dCSde-sb*dCDde)
+            dCnda = self.bw*dCnda-self.cgshift[0]*( cb*dCSda-sb*dCDda)
 
             # differences
             dl = Cld - Cls
@@ -1275,18 +1267,18 @@ class ControlAllocationMomentAssignmentAircraft(Aircraft):
             BAM = self.aero_model
             CL1 = BAM._CL0(dBj) + BAM._CL_alpha(dBj)*a
             CS1 = BAM._CS0(dBj) + BAM._CS_beta(dBj)*b
-            Cls = (BAM._Cl0(dBj) + BAM._Cl_alpha(dBj)*a +
+            Cls = (BAM._Cl0(dBj) + BAM._Cl_alpha(dBj)*a + self.SAS_Cma*BAM._Cl_de(dBj)/BAM._Cm_de(dBj)*a + 
                 BAM._Cl_beta(dBj)*b + BAM._Cl_pbar(dBj)*pbar +
                 BAM._Cl_qbar(dBj)*qbar +
                 (BAM._Cl_rbar(dBj) + BAM._Cl_Lrbar(dBj)*CL1)*rbar)
             Clda = BAM._Cl_da(dBj)
             # Clde = BAM._Cl_de(dBj)
-            Cms = (BAM._Cm0(dBj) + BAM._Cm_alpha(dBj)*a +
+            Cms = (BAM._Cm0(dBj) + BAM._Cm_alpha(dBj)*a + self.SAS_Cma*a + 
                 BAM._Cm_beta(dBj)*b + BAM._Cm_pbar(dBj)*pbar +
                 BAM._Cm_qbar(dBj)*qbar + BAM._Cm_rbar(dBj)*rbar)
             # Cmda = BAM._Cm_da(dBj)
             Cmde = BAM._Cm_de(dBj)
-            Cns = (BAM._Cn0(dBj) + BAM._Cn_alpha(dBj)*a +
+            Cns = (BAM._Cn0(dBj) + BAM._Cn_alpha(dBj)*a + self.SAS_Cma*BAM._Cn_de(dBj)/BAM._Cm_de(dBj)*a + 
                 BAM._Cn_beta(dBj)*b +
                 (BAM._Cn_pbar(dBj) + BAM._Cn_Lpbar(dBj)*CL1)*pbar +
                 BAM._Cn_qbar(dBj)*qbar + BAM._Cn_rbar(dBj)*rbar)
@@ -1296,7 +1288,8 @@ class ControlAllocationMomentAssignmentAircraft(Aircraft):
             DAM = self.dBAM
             dCL1 = DAM._CL0(dBj) + DAM._CL_alpha(dBj)*a
             dCS1 = DAM._CS0(dBj) + DAM._CS_beta(dBj)*b
-            dCls = (DAM._Cl0(dBj) + DAM._Cl_alpha(dBj)*a +
+            dCls = (DAM._Cl0(dBj) + DAM._Cl_alpha(dBj)*a + 
+                self.SAS_Cma*(DAM._Cl_de(dBj)*BAM._Cm_de(dBj) - BAM._Cl_de(dBj)*DAM._Cm_de(dBj))/BAM._Cm_de(dBj)**2.0*a + 
                 DAM._Cl_beta(dBj)*b + DAM._Cl_pbar(dBj)*pbar +
                 DAM._Cl_qbar(dBj)*qbar +
                 (DAM._Cl_rbar(dBj) + DAM._Cl_Lrbar(dBj)*CL1 + 
@@ -1308,7 +1301,8 @@ class ControlAllocationMomentAssignmentAircraft(Aircraft):
                 DAM._Cm_qbar(dBj)*qbar + DAM._Cm_rbar(dBj)*rbar)
             # dCmda = DAM._Cm_da(dBj)
             dCmde = DAM._Cm_de(dBj)
-            dCns = (DAM._Cn0(dBj) + DAM._Cn_alpha(dBj)*a +
+            dCns = (DAM._Cn0(dBj) + DAM._Cn_alpha(dBj)*a + 
+                self.SAS_Cma*(DAM._Cn_de(dBj)*BAM._Cm_de(dBj) - BAM._Cn_de(dBj)*DAM._Cm_de(dBj))/BAM._Cm_de(dBj)**2.0*a + 
                 DAM._Cn_beta(dBj)*b +
                 (DAM._Cn_pbar(dBj) + DAM._Cn_Lpbar(dBj)*CL1 + 
                 BAM._Cn_Lpbar(dBj)*dCL1)*pbar +
@@ -1321,6 +1315,7 @@ class ControlAllocationMomentAssignmentAircraft(Aircraft):
             wCL1 = WAM._CL0(dBj) + WAM._CL_alpha(dBj)*a
             wCS1 = WAM._CS0(dBj) + WAM._CS_beta(dBj)*b
             wCls = (WAM._Cl0(dBj) + WAM._Cl_alpha(dBj)*a +
+                self.SAS_Cma*(WAM._Cl_de(dBj)*BAM._Cm_de(dBj)**2.0 - BAM._Cl_de(dBj)*WAM._Cm_de(dBj)*BAM._Cm_de(dBj) - 2.0*DAM._Cl_de(dBj)*BAM._Cm_de(dBj)*DAM._Cm_de(dBj) + 2.0*BAM._Cl_de(dBj)*DAM._Cm_de(dBj)**2.0)/BAM._Cm_de(dBj)**3.0*a + 
                 WAM._Cl_beta(dBj)*b + WAM._Cl_pbar(dBj)*pbar +
                 WAM._Cl_qbar(dBj)*qbar +
                 (WAM._Cl_rbar(dBj) + 
@@ -1334,6 +1329,7 @@ class ControlAllocationMomentAssignmentAircraft(Aircraft):
             wCmda = WAM._Cm_da(dBj)
             wCmde = WAM._Cm_de(dBj)
             wCns = (WAM._Cn0(dBj) + WAM._Cn_alpha(dBj)*a +
+                self.SAS_Cma*(WAM._Cn_de(dBj)*BAM._Cm_de(dBj)**2.0 - BAM._Cn_de(dBj)*WAM._Cm_de(dBj)*BAM._Cm_de(dBj) - 2.0*DAM._Cn_de(dBj)*BAM._Cm_de(dBj)*DAM._Cm_de(dBj) + 2.0*BAM._Cn_de(dBj)*DAM._Cm_de(dBj)**2.0)/BAM._Cm_de(dBj)**3.0*a + 
                 WAM._Cn_beta(dBj)*b +
                 (WAM._Cn_pbar(dBj) + 
                 WAM._Cn_Lpbar(dBj)*CL1 + 2.0*DAM._Cn_Lpbar(dBj)*dCL1 + 
@@ -1433,25 +1429,25 @@ class ControlAllocationMomentAssignmentAircraft(Aircraft):
             Clda = self.bw*Clda
             Cms  = self.cw*Cms +self.cgshift[0]*(-ca*CLs -sa*sb*CSs -sa*cb*CDs )
             Cmde = self.cw*Cmde+self.cgshift[0]*(-ca*CLde-sa*sb*CSde-sa*cb*CDde)
-            Cns  = self.cw*Cns -self.cgshift[0]*( cb*CSs -sb*CDs )
-            Cnde = self.cw*Cnde-self.cgshift[0]*( cb*CSde-sb*CDde)
-            Cnda = self.cw*Cnda-self.cgshift[0]*( cb*CSda-sb*CDda)
+            Cns  = self.bw*Cns -self.cgshift[0]*( cb*CSs -sb*CDs )
+            Cnde = self.bw*Cnde-self.cgshift[0]*( cb*CSde-sb*CDde)
+            Cnda = self.bw*Cnda-self.cgshift[0]*( cb*CSda-sb*CDda)
             # derivatives
             dCls  = self.bw*dCls
             dClda = self.bw*dClda
             dCms  = self.cw*dCms +self.cgshift[0]*(-ca*dCLs -sa*sb*dCSs -sa*cb*dCDs )
             dCmde = self.cw*dCmde+self.cgshift[0]*(-ca*dCLde-sa*sb*dCSde-sa*cb*dCDde)
-            dCns  = self.cw*dCns -self.cgshift[0]*( cb*dCSs -sb*dCDs )
-            dCnde = self.cw*dCnde-self.cgshift[0]*( cb*dCSde-sb*dCDde)
-            dCnda = self.cw*dCnda-self.cgshift[0]*( cb*dCSda-sb*dCDda)
+            dCns  = self.bw*dCns -self.cgshift[0]*( cb*dCSs -sb*dCDs )
+            dCnde = self.bw*dCnde-self.cgshift[0]*( cb*dCSde-sb*dCDde)
+            dCnda = self.bw*dCnda-self.cgshift[0]*( cb*dCSda-sb*dCDda)
             # double derivatives
             wCls  = self.bw*wCls
             wClda = self.bw*wClda
             wCms  = self.cw*wCms +self.cgshift[0]*(-ca*wCLs -sa*sb*wCSs -sa*cb*wCDs )
             wCmde = self.cw*wCmde+self.cgshift[0]*(-ca*wCLde-sa*sb*wCSde-sa*cb*wCDde)
-            wCns  = self.cw*wCns -self.cgshift[0]*( cb*wCSs -sb*wCDs )
-            wCnde = self.cw*wCnde-self.cgshift[0]*( cb*wCSde-sb*wCDde)
-            wCnda = self.cw*wCnda-self.cgshift[0]*( cb*wCSda-sb*wCDda)
+            wCns  = self.bw*wCns -self.cgshift[0]*( cb*wCSs -sb*wCDs )
+            wCnde = self.bw*wCnde-self.cgshift[0]*( cb*wCSde-sb*wCDde)
+            wCnda = self.bw*wCnda-self.cgshift[0]*( cb*wCSda-sb*wCDda)
 
             # differences
             dl = Cld - Cls
@@ -1495,7 +1491,6 @@ class ControlAllocationMomentAssignmentAircraft(Aircraft):
       
         ###
         self.delta_E_fun = delta_E_fun
-        self.delta_E_fun_sum = delta_E_fun_sum
         self.delta_E_dE_fun = delta_E_dE_fun
         self.delta_E_fun_sq = delta_E_fun_sq
         self.delta_E_dE_fun_sq = delta_E_dE_fun_sq
@@ -1547,9 +1542,9 @@ class ControlAllocationMomentAssignmentAircraft(Aircraft):
         nits = []
         devals = []
         for k in range(tarr.shape[0]):
-            x_at_t = xarr[:,k]
-            u_at_t = uarr[:,k]
-            t = tarr[k]
+            x_at_t = xarr[:,k]*1.0
+            u_at_t = uarr[:,k]*1.0
+            t = tarr[k]*1.0
             #
             ref = self._get_reference(t)[self.Lin_Model.Cslice]
             V_xb    = x_at_t[ 0]
@@ -1559,13 +1554,14 @@ class ControlAllocationMomentAssignmentAircraft(Aircraft):
             q       = np.deg2rad(x_at_t[ 4])
             r       = np.deg2rad(x_at_t[ 5])
             z_f     = x_at_t[ 8]
-            dB      = np.deg2rad(x_at_t[14])
-            dB_comm = np.deg2rad(u_at_t[ 2]) # u_at_t[ 2] # 
+            if self.order > 0: dB = np.deg2rad(x_at_t[14])
+            else:              dB = np.deg2rad(u_at_t[ 2])
+            dB_comm = np.deg2rad(u_at_t[ 2])
             epI     = np.deg2rad(x_at_t[self.xIi_eul[1]])
             eqI     = np.deg2rad(x_at_t[self.xIi_eul[2]])
             erI     = np.deg2rad(x_at_t[self.xIi_eul[3]])
             # Derived Quantities
-            V = np.sqrt(V_xb**2+V_yb**2+V_zb**2)
+            V = np.sqrt(V_xb**2.0+V_yb**2.0+V_zb**2.0)
             a   = np.arctan2(V_zb,V_xb)
             b   = asin(V_yb/V)
             if self.constant_density:
@@ -1620,10 +1616,15 @@ class ControlAllocationMomentAssignmentAircraft(Aircraft):
             dB_commanded = ucomm[2]
             dBdiff.append(np.rad2deg(dB_commanded - dB_comm))
             # print(t,np.rad2deg(dB_commanded),np.rad2deg(dB_comm),np.rad2deg(dB_commanded-dB_comm))
+            ignore_terms = True if self.line_method == "Newton_Root" else False
+            uvar = dB_commanded if self.line_method == "Newton_Root" else dB_commanded
             MErr.append(self.delta_E_fun_sq(
-                rho,V,dB_comm,a,b,pbar,qbar,rbar,Md)[2])
+                rho,V,uvar,a,b,pbar,qbar,rbar,Md,False)[2])
             MErrnew.append(self.delta_E_fun_sq(
-                rho,V,dB_commanded,a,b,pbar,qbar,rbar,Md)[2])
+                rho,V,dB_commanded,a,b,pbar,qbar,rbar,Md,ignore_terms)[2])
+            # if t == 1.0:
+            #     print(t,MErrnew[-1])
+            #     MErrnew[-1] = 1.0e-10
             # MErr.append(Md)
         Mds = np.array(Mds).T
         dBdiff = np.array(dBdiff)
@@ -1635,8 +1636,9 @@ class ControlAllocationMomentAssignmentAircraft(Aircraft):
         # # Error plots
         ErMg_fig, ErMg_axs = plt.subplots(1,1,**subdict)
         ErMg_ax2 = ErMg_axs.twinx()
-        ErMn_fig, ErMn_axs = plt.subplots(1,1,**subdict)
-        ErMn_ax2 = ErMn_axs.twinx()
+        ErMo_fig, ErMo_axs = plt.subplots(1,1,**subdict)
+        if self.line_method != "Newton_Root":
+            ErMo_ax2 = ErMo_axs.twinx()
         fevl_fig, fevl_axs = plt.subplots(1,1,**subdict)
         fevl_ax2 = fevl_axs.twinx()
         # axis labels, legends
@@ -1644,29 +1646,32 @@ class ControlAllocationMomentAssignmentAircraft(Aircraft):
         ErMg_fig.supxlabel(r"Time, s")
         ErMg_fig.supylabel(r"Moment Error, lbf$^2$-ft$^2$")
         ErMg_ax2.set_ylabel(r"Desired Moment, lbf-ft",c=altcol)
-        ErMn_fig.supxlabel(r"Time, s")
-        ErMn_fig.supylabel(r"Moment Error, lbf$^2$-ft$^2$")
-        ErMn_ax2.set_ylabel(r"$\Delta \delta_B$ difference, deg",c=altcol)
+        ErMo_fig.supxlabel(r"Time, s")
+        ErMo_fig.supylabel(r"Moment Error, lbf$^2$-ft$^2$")
+        if self.line_method != "Newton_Root":
+            ErMo_ax2.set_ylabel(r"$\Delta \delta_B$ difference, deg",c=altcol)
         fevl_fig.supxlabel(r"Time, s")
         fevl_fig.supylabel(r"Evaluations")
         fevl_ax2.set_ylabel(r"Iterations",c=altcol)
         # xticks
         ErMg_axs.set_xticks(ticks=xticks)
-        ErMn_axs.set_xticks(ticks=xticks)
+        ErMo_axs.set_xticks(ticks=xticks)
         fevl_axs.set_xticks(ticks=xticks)
         # ErMg_ax2.set_yticks(ticks=ErMg_ax2.get_yticks(),color=altcol)
-        # ErMn_ax2.set_yticks(ticks=ErMn_ax2.get_yticks(),color=altcol)
+        # if self.line_method != "Newton_Root":
+        #     ErMo_ax2.set_yticks(ticks=ErMo_ax2.get_yticks(),color=altcol)
         # grid, axis labels, legends
         ErMg_axs.grid(which="major",lw=0.6,ls="-",c="0.75")
-        ErMn_axs.grid(which="major",lw=0.6,ls="-",c="0.75")
+        ErMo_axs.grid(which="major",lw=0.6,ls="-",c="0.75")
         fevl_axs.grid(which="major",lw=0.6,ls="-",c="0.75")
         #
         ErMg_ax2.plot(tarr,Mds[0],c=altcol,ls="-" )
         ErMg_ax2.plot(tarr,Mds[1],c=altcol,ls="--")
         ErMg_ax2.plot(tarr,Mds[2],c=altcol,ls="-.")
-        ErMg_axs.plot(tarr,MErr,c="k")
-        ErMn_ax2.plot(tarr,dBdiff,c=altcol)
-        ErMn_axs.plot(tarr,MErrnew,c="k")
+        ErMg_axs.plot(tarr,MErrnew,c="k")
+        ErMo_axs.plot(tarr,MErr,c="k")
+        if self.line_method != "Newton_Root":
+            ErMo_ax2.plot(tarr,dBdiff,c=altcol)
         fevl_axs.plot(tarr,fevals,ls="-" ,c="k",label="fun",zorder=2)
         fevl_axs.plot(tarr,devals,ls="--",c="k",label="jac",zorder=3)
         fevl_ax2.plot(tarr,nits,c=altcol,zorder=1)
@@ -1692,24 +1697,26 @@ class ControlAllocationMomentAssignmentAircraft(Aircraft):
             ctrl_axs[1].set_ylim((min_de_opt-5.,max_de_opt+5.))
             ctrl_axs[2].set_ylim((min_dr-5.,max_dr+5.))
         
-        if self.tracking:
-            # TESTING MACA
-            errs_axs.set_ylim((-150.0,150.0))
-            # TESTING MACA
+        # if self.tracking:
+        #     # TESTING MACA
+        #     errs_axs.set_ylim((-150.0,150.0))
+        #     # TESTING MACA
 
-        ErMg_axs.set_yscale("log")
+        # ErMg_axs.set_yscale("log")
         ErMg_axs.set_xlim((0.,perc_zoom*self.tf))
         ErMg_ax2.set_xlim((0.,perc_zoom*self.tf))
-        ErMn_axs.set_xlim((0.,perc_zoom*self.tf))
-        ErMn_ax2.set_xlim((0.,perc_zoom*self.tf))
+        ErMo_axs.set_xlim((0.,perc_zoom*self.tf))
+        if self.line_method != "Newton_Root":
+            ErMo_ax2.set_xlim((0.,perc_zoom*self.tf))
         fevl_axs.set_xlim((0.,perc_zoom*self.tf))
         fevl_ax2.set_xlim((0.,perc_zoom*self.tf))
         if save_plot:
             ErMg_fig.savefig(predir+"moment_error."+format,**savedict)
-            ErMn_fig.savefig(predir+"moment_error_new."+format,**savedict)
+            nm = "keep_terms" if self.line_method == "Newton_Root" else "old"
+            ErMo_fig.savefig(predir+"moment_error_"+nm+"."+format,**savedict)
             fevl_fig.savefig(predir+"function_evaluations."+format,**savedict)
         plt.close(ErMg_fig)
-        plt.close(ErMn_fig)
+        plt.close(ErMo_fig)
         plt.close(fevl_fig)
         #
         return 0
@@ -1855,20 +1862,22 @@ class ControlAllocationMomentAssignmentAircraft(Aircraft):
                 # pd = (dME - dCS)/dME
                 # print(pd)
                 # print(np.linalg.norm(pd)**2.)
+                # print("Don't forget to check both!!!")
                 # quit()
                 # ######################################
                 # ######################################
                 # # # checking second derivative. works!
                 # E = lambda dBj : self.sine_dsine_wsine_fun(rho,V,dBj,a,b,pbar,qbar,rbar,Md)
+                # # E = lambda dBj : self.sine_dsine_fun(rho,V,dBj,a,b,pbar,qbar,rbar,Md)
                 # dBtest = np.deg2rad(np.linspace(-90.0,90.0,1000))
                 # dME = np.zeros((len(dBtest),))
                 # dCS = np.zeros((len(dBtest),))
-                # pows = np.zeros((len(dBtest),))
+                # # pows = np.zeros((len(dBtest),))
                 # h = np.deg2rad(1.0e-6)
-                # # # hessian test
-                # # fi = 3; di = 4
-                # # jacobian test
-                # fi = 2; di = 3
+                # # hessian test
+                # fi = 3; di = 4
+                # # # jacobian test
+                # # fi = 2; di = 3
                 # for i in range(len(dBtest)):
                 #     dME[i] = E(dBtest[i])[di] # hessian
                 #     dBtesti = complex(dBtest[i],h)
@@ -1876,6 +1885,7 @@ class ControlAllocationMomentAssignmentAircraft(Aircraft):
                 # pd = (dME - dCS)/dME
                 # print(pd)
                 # print(np.linalg.norm(pd))#**2.)
+                # print("Don't forget to check both!!!")
                 # quit()
                 # ######################################
 
@@ -2021,6 +2031,8 @@ class ControlAllocationMomentAssignmentAircraft(Aircraft):
                             tol=self.opt_tol,
                             disp=False, # True, # 
                             full_output=True)
+                        #
+                        da_d,de_d = self.sine_fun(rho,V,dB_d,a,b,pbar,qbar,rbar,Md)[0:2]
                         # print()
                         # dB_d_2,res_2 = newton(zero,dB,
                         #     fprime=dzero,
@@ -2037,22 +2049,22 @@ class ControlAllocationMomentAssignmentAircraft(Aircraft):
                         #     dB_d = dB_d_2
                         #     res = res_2
                         # # # # # rebound
-                        if dB_d != 0.0: # and abs(abs(dB) - self.max_dr) < 1.0*np.pi/180.0:
+                        if dB_d != 0.0 and self.bool_limit_inputs and self.order > 0: # and abs(abs(dB) - self.max_dr) < 1.0*np.pi/180.0:
                             dBsgn = np.sign(dB_d)
                             dB_d = dBsgn*(abs(dB_d) % np.pi) # 2.0*
-                            # if abs(zero(dB_d)) >= self.opt_tol:
-                            #     dB_d,res = newton(zero,dB_d, # dB, # 0.0, # 
-                            #         fprime=dzero,
-                            #         fprime2=wzero,
-                            #         maxiter=self.opt_max_iter, # 1000, # 
-                            #         tol=self.opt_tol,
-                            #         disp=False, # True, # 
-                            #         full_output=True)
-                            #     # print()
-                            # if   dB_d >  np.pi/2.0:
-                            #     dB_d -= np.pi
-                            # elif dB_d < -np.pi/2.0:
-                            #     dB_d += np.pi
+                        elif dB_d != 0.0:
+                            if   dB_d >  2.0*np.pi:
+                                while dB_d >  2.0*np.pi:
+                                    dB_d -= 2.0*np.pi
+                            elif dB_d < -2.0*np.pi:
+                                while dB_d < -2.0*np.pi:
+                                    dB_d += 2.0*np.pi
+                        # if   dB_d >  np.pi:
+                        #     while dB_d >  np.pi:
+                        #         dB_d -= 2.0*np.pi
+                        # elif dB_d < -np.pi:
+                        #     while dB_d < -np.pi:
+                        #         dB_d += 2.0*np.pi
                         # if dB_d > np.pi:
                         #     dBsgn = np.sign(dB_d)
                         #     dB_d = dBsgn*(abs(dB_d) % np.pi)
@@ -2069,6 +2081,20 @@ class ControlAllocationMomentAssignmentAircraft(Aircraft):
                         self.feval = res.function_calls
                         self.deval = res.function_calls
                     # other
+                    elif self.line_method == "No_dB":
+                        dB_d = 0.0
+                        da_d,de_d,E = self.delta_E_fun_sq(\
+                            rho,V,dB_d,a,b,pbar,qbar,rbar,Md)
+                        #
+                        res = empty_class()
+                        res.fun = 0.0
+                        res.function_calls = 1
+                        res.iterations = 1
+                        res.nit = res.iterations
+                        self.nit = res.iterations
+                        self.feval = res.function_calls
+                        self.deval = res.function_calls
+                    #
                     elif self.line_method == "Newton":
                         E = lambda dBj : self.delta_E_fun_sq(\
                             rho,V,dBj,a,b,pbar,qbar,rbar,Md)[2]
@@ -2191,7 +2217,6 @@ class ControlAllocationMomentAssignmentAircraft(Aircraft):
                         # the below is technically not true, but since E is 
                         # not returned, it doesn't matter (some need _sq)
                         if self.line_method == "Newton_Root":
-                            da_d,de_d = self.sine_fun(rho,V,dB_d,a,b,pbar,qbar,rbar,Md)[0:2]
                             if abs(E_d) > 1/self.report_error_threshold:
                                 print("t = {:>10.3f}, i = {:>6d}, Z = {:> 12.3e}".format(t,i_d,E_d))
                         else:
@@ -2292,7 +2317,10 @@ class ControlAllocationMomentAssignmentAircraft(Aircraft):
                     da_d,de_d,dB_d = res.x
                     # print(np.rad2deg(da_d),np.rad2deg(de_d),np.rad2deg(dB_d))
                     # quit()
+                de_d += self.SAS_Cma/self.aero_model._Cm_de(dB_d)*a
                 delta = np.array([da_d,de_d,dB_d])
+                # print(t,self.delta_E_fun_sq(
+                # rho,V,dB_d,a,b,pbar,qbar,rbar,Md,self.line_method=="Newton_Root")[2])
                 # print("{:> 6.3f}::{:> 8.3f} deg, {:> 8.3f} deg, {:> 8.3f} deg"\
                 #     .format(t,np.rad2deg(delta[0]),np.rad2deg(delta[1]),\
                 #     np.rad2deg(delta[2])))
@@ -4014,7 +4042,7 @@ if __name__ == "__main__":
     # p_tr_deg = -0.0820880039056245
     # q_tr_deg =  0.8352580178704386
     # r_tr_deg =  1.4467093243808735
-    # (0) tail
+    # # # # (0) tail
     # p_tr_deg = -0.0800043056586719
     # q_tr_deg =  0.8353731041767737
     # r_tr_deg =  1.4469086597107013
@@ -4041,7 +4069,7 @@ if __name__ == "__main__":
     # q_tr_deg =  2.6372142861590873
     # r_tr_deg =  2.2128855348515439
     # #######################################################################
-    # # 60 deg bank fullscale BIRE
+    # # # 60 deg bank fullscale BIRE
     # # # (0) tail
     # p_tr_deg = -0.2654216358834438
     # q_tr_deg =  4.3218126454667702
@@ -4051,7 +4079,7 @@ if __name__ == "__main__":
     # p_tr_deg = -0.3294739663431505
     # q_tr_deg =  0.5582409457023837
     # r_tr_deg =  3.1659417263281258
-    p_bfcm = 5.0 # 60.0 # 40.0 # 50.0 # 30.0 # 15.0 # 20.0 # 10.0 # 7.5 # 
+    p_bfcm = 5.0 # 15.0 # 60.0 # 30.0 # 10.0 # 40.0 # 50.0 # 20.0 # 7.5 # 
     if "left_roll" in locals():
         p_bfcm = - p_bfcm
         p_tr_deg = - p_tr_deg
@@ -4069,7 +4097,7 @@ if __name__ == "__main__":
     # p_time2 = p_time  + recover_time
     # p_time3 = p_time2 + transition_time
     t_end = 0.0 # 25.0 # 
-    tf = 10.0 # 16.0 # 2.50 # 4.90 # 60.0 # 20.0 # 
+    tf = 10.0 # 5.0 # 16.0 # 2.50 # 4.90 # 60.0 # 20.0 # 
     V_trim = 634.4133153512273111
     bire_fs_dict["reference"] = {
         "deg2rad_states" : [1,2,3,4,5],
@@ -4139,12 +4167,13 @@ if __name__ == "__main__":
     #     "sct_on_5" : False
     # }
     
-    # # # # zeros
+    # # # # # zeros
     # bire_fs_dict["reference"] = {
     #     "deg2rad_states" : [1,2,3,4,5],
     #     "0" : [[ 0.0,   V_trim],[ 2.0,   V_trim],],
     #     "3" : [[0.0]*2]*2, "4" : [[0.0]*2]*2, "5" : [[0.0]*2]*2, "sct_on_5" : False
     # }
+    # # # # starting in bank
     # bire_fs_dict["reference"] = {
     #     "deg2rad_states" : [1,2,3,4,5],
     #     "0" : [[ 0.0,   V_trim],[ 2.0,   V_trim],],

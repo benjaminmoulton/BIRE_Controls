@@ -68,7 +68,8 @@ class Aircraft:
     """
 
 
-    def __init__(self, input_dictionary={}, folder_prefix = "stblz"):
+    def __init__(self, input_dictionary={}, folder_prefix = "stblz", 
+        SAS_Cma = "o"):
 
         # report
         if isinstance(input_dictionary,(str)):
@@ -87,8 +88,15 @@ class Aircraft:
 
         # get input variables
         self._get_input_vars(input_dictionary)
+        # self.aero_model.Cm_a_z -= 0.3
 
         # initialize state
+        if SAS_Cma == "o":
+            self.SAS_on = False
+            self.SAS_Cma = 0.0
+        else:
+            self.SAS_on = True
+            self.SAS_Cma = SAS_Cma
         self._initialize_state(self.a_guess,self.b_guess,self.phi_guess,
             self.u_guess)
 
@@ -1100,6 +1108,12 @@ class Aircraft:
             a,b,pbar,qbar,rbar,ail,ele,rud,
             self.is_compressible,M,self.use_anderson,self.has_stall
         ])
+        # if self.SAS_on and is_trim:
+        #     BAM = self.aero_model
+        #     # aero_results[4] +=(self.SAS_Cma - self.aero_model._Cm_alpha(rud))*a
+        #     aero_results[3] += self.SAS_Cma*BAM._Cl_de(rud)/BAM._Cm_de(rud)*a
+        #     aero_results[4] += self.SAS_Cma*a
+        #     aero_results[5] += self.SAS_Cma*BAM._Cn_de(rud)/BAM._Cm_de(rud)*a
         # add in errors
         [CL, CS, CD, Cl, Cm, Cn] = [aero_results[i]*(1. + self.FM_errors[i]) \
             for i in range(len(aero_results))]
@@ -4816,7 +4830,8 @@ def run_single_simulation(filename,rtdst_1sg=[20.,10.,5.],
         P = perc*(final_bank - initial_bank) + initial_bank
         aircraft.phi_trim = np.deg2rad(P)
         # change guess to stay at tail near-zero trim condition
-        guesses["u_guess"] = np.array([0.0,aircraft.max_de*1.0,0.0,0.0])
+        if not(aircraft.SAS_on):
+            guesses["u_guess"] = np.array([0.0,aircraft.max_de*1.0,0.0,0.0]) # 
         #
         H = perc*(final_altitude - initial_altitude) + initial_altitude
         aircraft.H0 = H
