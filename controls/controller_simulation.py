@@ -292,6 +292,8 @@ class Aircraft:
             aileron.get("limits[deg]")))
         self.min_dadot, self.max_dadot = np.deg2rad(np.array(\
             aileron.get("rate_limits[deg/s]")))
+        self.min_daddot, self.max_daddot = np.deg2rad(np.array(\
+            aileron.get("acceleration_limits[deg/s^2]")))
         aileron_steps = aileron.get("quantization_steps",1201)
         aileron_steps += aileron_steps % 2 - 1
         self.da_quants = np.linspace(self.min_da,self.max_da,num=aileron_steps)
@@ -305,6 +307,8 @@ class Aircraft:
             elevator.get("limits[deg]")))
         self.min_dedot, self.max_dedot = np.deg2rad(np.array(\
             elevator.get("rate_limits[deg/s]")))
+        self.min_deddot, self.max_deddot = np.deg2rad(np.array(\
+            elevator.get("acceleration_limits[deg/s^2]")))
         elevator_steps = elevator.get("quantization_steps",1200)
         elevator_steps += elevator_steps % 2 - 1
         self.de_quants = np.linspace(self.min_de,self.max_de,\
@@ -333,8 +337,9 @@ class Aircraft:
         throttle = actuators.get("throttle")
         self.z_tau = throttle.get("damping_ratio")
         self.w_tau = throttle.get("bandwidth[rad/s]")
-        self.min_tau, self.max_tau = throttle.get("limits[perc]")
-        self.min_taudot, self.max_taudot = throttle.get("rate_limits[perc/s]")
+        self.min_tau, self.max_tau = throttle.get("limits[per-unit]")
+        self.min_taudot, self.max_taudot = throttle.get("rate_limits[per-unit/s]")
+        self.min_tauddot, self.max_tauddot = throttle.get("acceleration_limits[per-unit/s^2]")
         throttle_steps = throttle.get("quantization_steps",1200)
         throttle_steps += throttle_steps % 2 - 1
         self.tau_quants = np.linspace(self.min_tau,self.max_tau,\
@@ -1236,26 +1241,26 @@ class Aircraft:
         q = 1*self.use_quaternions
         # set 1st order
         ## INTSTATE
-        dda = x[16+q]
-        dde = x[17+q]
-        ddr = x[18+q]
-        ddt = x[19+q]
+        dda = x[16+q]*1.0
+        dde = x[17+q]*1.0
+        ddr = x[18+q]*1.0
+        dta = x[19+q]*1.0
 
         # limit rates
-        dda,dde,ddr,ddt = self._limit_input_rates([dda,dde,ddr,ddt])
+        dda,dde,ddr,dta = self._limit_input_rates([dda,dde,ddr,dta])
 
         # 2nd order
         ## INTSTATE
         ddda = -2.*self.z_da *self.w_da *dda + self.w_da **2.*(u[0] - x[12+q])
         ddde = -2.*self.z_de *self.w_de *dde + self.w_de **2.*(u[1] - x[13+q])
         dddr = -2.*self.z_dr *self.w_dr *ddr + self.w_dr **2.*(u[2] - x[14+q])
-        dddt = -2.*self.z_tau*self.w_tau*ddt + self.w_tau**2.*(u[3] - x[15+q])
+        ddta = -2.*self.z_tau*self.w_tau*dta + self.w_tau**2.*(u[3] - x[15+q])
 
         # limit accelerations
-        ddda,ddde,dddr,dddt = self._limit_input_accelerations(
-            [ddda,ddde,dddr,dddt])
+        ddda,ddde,dddr,ddta = self._limit_input_accelerations(
+            [ddda,ddde,dddr,ddta])
 
-        return dda,dde,ddr,ddt,ddda,ddde,dddr,dddt
+        return dda,dde,ddr,dta,ddda,ddde,dddr,ddta
 
 
     def _OLD__hit_quantize_input(self,u):
@@ -1304,11 +1309,11 @@ class Aircraft:
 
 
     def _hit_limit_input_rates(self,du):
-        dda  = max(min(du[0],self.max_dadot ),self.min_dadot )
-        dde  = max(min(du[1],self.max_dedot ),self.min_dedot )
-        ddr  = max(min(du[2],self.max_drdot ),self.min_drdot )
-        dtau = max(min(du[3],self.max_taudot),self.min_taudot)
-        return dda,dde,ddr,dtau
+        dda = max(min(du[0],self.max_dadot ),self.min_dadot )
+        dde = max(min(du[1],self.max_dedot ),self.min_dedot )
+        ddr = max(min(du[2],self.max_drdot ),self.min_drdot )
+        dta = max(min(du[3],self.max_taudot),self.min_taudot)
+        return dda,dde,ddr,dta
 
 
     def _skip_limit_input_rates(self,du):
@@ -1316,11 +1321,11 @@ class Aircraft:
 
 
     def _hit_limit_input_accelerations(self,ddu):
-        ddda  = ddu[0]
-        ddde  = ddu[1]
-        dddr  = max(min(ddu[2],self.max_drddot ),self.min_drddot )
-        ddtau = ddu[3]
-        return ddda,ddde,dddr,ddtau
+        ddda = max(min(ddu[0],self.max_daddot ),self.min_daddot )
+        ddde = max(min(ddu[1],self.max_deddot ),self.min_deddot )
+        dddr = max(min(ddu[2],self.max_drddot ),self.min_drddot )
+        ddta = max(min(ddu[3],self.max_tauddot),self.min_tauddot)
+        return ddda,ddde,dddr,ddta
 
 
     def _skip_limit_input_accelerations(self,ddu):
@@ -2113,6 +2118,12 @@ class Aircraft:
         CW = W/0.5/self.rho0/self.V0**2./self.aero_model.S_w
         n_a = CL_a/CW
 
+        # A = (Lin_Model.A[4:6,:])[:,4:6]
+        # B = (Lin_Model.B[4:6,:])[:,1:3]
+        # G_rank = np.linalg.matrix_rank((co.ctrb(A,B)))
+        # print(G_rank)
+        # quit()
+
         # report trim condition, and linearized matrices
         repstr = ""
         if not(skip_reporting):
@@ -2266,7 +2277,6 @@ class Aircraft:
         
         # propogate
         self.t = self.t + dt
-        xm1 = x * 1.
         x = self.int_method(self.t,x,dt)
 
         # limit actuators
@@ -2274,6 +2284,9 @@ class Aircraft:
             q = 1*self.use_quaternions
             ## INTSTATE
             x[12+q:16+q] = self._quantize_input(self._limit_input(x[12+q:16+q]))
+            # 2nd order
+            if self.order > 1:
+                x[16+q:20+q] = self._limit_input_rates(x[16+q:20+q])
 
         # normalize quaternion
         if self.use_quaternions:
@@ -4215,15 +4228,30 @@ class Aircraft:
         uddt_axs[0].plot(tarr, uddt[0],c=c,ls="-",label=uddt_lbl)
         uddt_axs[1].plot(tarr, uddt[1],c=c,ls="-")
         uddt_axs[2].plot(tarr, uddt[2],c=c,ls="-")
-        if self.is_BIRE and self.order >= 2:
-            ddBc = "0.25"
+        if self.order > 1 and self.bool_limit_input_accels:
+            ddc = "0.25"
             # else:
             #     ddBc = "g"
-            ddBmax_deg = 0. * tarr + np.rad2deg(self.max_drddot)
-            uddt_axs[2].plot(tarr, ddBmax_deg,c=ddBc,ls="--")
-            uddt_axs[2].plot(tarr,-ddBmax_deg,c=ddBc,ls="--")
-            uddt_axs[2].set_ylim((-np.rad2deg(self.max_drddot)-10.,\
-                np.rad2deg(self.max_drddot)+10.))
+            # ddBmax_deg = 0. * tarr + np.rad2deg(self.max_drddot)
+            # uddt_axs[2].plot(tarr, ddBmax_deg,c=ddc,ls="--")
+            # uddt_axs[2].plot(tarr,-ddBmax_deg,c=ddc,ls="--")
+            # uddt_axs[2].set_ylim((-1.1*np.rad2deg(self.max_drddot),\
+            #     1.1*np.rad2deg(self.max_drddot)))
+            uddt_axs[0].plot(tarr,zrs+np.rad2deg(self.min_daddot),c="0.25",ls="--")
+            uddt_axs[0].plot(tarr,zrs+np.rad2deg(self.max_daddot),c="0.25",ls="--")
+            uddt_axs[1].plot(tarr,zrs+np.rad2deg(self.min_deddot),c="0.25",ls="--")
+            uddt_axs[1].plot(tarr,zrs+np.rad2deg(self.max_deddot),c="0.25",ls="--")
+            uddt_axs[2].plot(tarr,zrs+np.rad2deg(self.min_drddot),c="0.25",ls="--")
+            uddt_axs[2].plot(tarr,zrs+np.rad2deg(self.max_drddot),c="0.25",ls="--")
+            uddt_axs[3].plot(tarr,zrs+self.min_tauddot,c="0.25",ls="--")
+            uddt_axs[3].plot(tarr,zrs+self.max_tauddot,c="0.25",ls="--")
+            uddt_axs[0].set_ylim((1.1*np.rad2deg(self.min_daddot),\
+                1.1*np.rad2deg(self.max_daddot)))
+            uddt_axs[1].set_ylim((1.1*np.rad2deg(self.min_deddot),\
+                1.1*np.rad2deg(self.max_deddot)))
+            uddt_axs[2].set_ylim((1.1*np.rad2deg(self.min_drddot),\
+                1.1*np.rad2deg(self.max_drddot)))
+            uddt_axs[3].set_ylim((1.1*self.min_tauddot,1.1*self.max_tauddot))
         uddt_axs[3].plot(tarr, uddt[3],c=c,ls="-")
         
         # set xlimits

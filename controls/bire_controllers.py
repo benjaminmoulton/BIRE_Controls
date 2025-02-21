@@ -690,8 +690,10 @@ class DynamicInversionAircraft(Aircraft):
 
         return u,inputs
 
+
 class empty_class():
     pass
+
 
 class ControlAllocationMomentAssignmentAircraft(Aircraft):
     """A default class for calculating and containing the mass properties of a
@@ -2053,11 +2055,11 @@ class ControlAllocationMomentAssignmentAircraft(Aircraft):
                             dBsgn = np.sign(dB_d)
                             dB_d = dBsgn*(abs(dB_d) % np.pi) # 2.0*
                         elif dB_d != 0.0:
-                            if   dB_d >  2.0*np.pi:
-                                while dB_d >  2.0*np.pi:
+                            if   dB_d >  np.pi: # 2.0*
+                                while dB_d >  np.pi: # 2.0*
                                     dB_d -= 2.0*np.pi
-                            elif dB_d < -2.0*np.pi:
-                                while dB_d < -2.0*np.pi:
+                            elif dB_d < -np.pi: # 2.0*
+                                while dB_d < -np.pi: # 2.0*
                                     dB_d += 2.0*np.pi
                         # if   dB_d >  np.pi:
                         #     while dB_d >  np.pi:
@@ -3921,7 +3923,7 @@ if __name__ == "__main__":
     # # # 
     run_bire_fs["aircraft_class"] = ControlAllocationMomentAssignmentAircraft
     run_bire_fs["name_end"] = "_" + f1 + "_CAMA_sine" # 2" # 
-    # # # bire_fs_dict["aircraft"]["CG_shift[ft]"] = [+1.0,+0.0,0.0]
+    # bire_fs_dict["aircraft"]["CG_shift[ft]"] = [+1.0,+0.0,0.0]
     # # # # # # 
     # # # run_bire_fs["aircraft_class"] = ControlAllocationMomentAssignmentActuatorsAircraft
     # # # run_bire_fs["name_end"] = "_" + f1 + "_CAMAA_1"
@@ -4058,10 +4060,10 @@ if __name__ == "__main__":
     # r_tr_deg =  1.6594007636912391
     # #######################################################################
     # # # # 40 deg bank fullscale BIRE
-    # # (0) tail
-    # p_tr_deg = -0.1195200902391827
-    # q_tr_deg =  1.5598776114662467
-    # r_tr_deg =  1.8589897474721753
+    # (0) tail
+    p_tr_deg = -0.1195200902391827
+    q_tr_deg =  1.5598776114662467
+    r_tr_deg =  1.8589897474721753
     # #######################################################################
     # # 50 deg bank fullscale BIRE
     # (0) tail
@@ -4079,7 +4081,7 @@ if __name__ == "__main__":
     # p_tr_deg = -0.3294739663431505
     # q_tr_deg =  0.5582409457023837
     # r_tr_deg =  3.1659417263281258
-    p_bfcm = 5.0 # 15.0 # 60.0 # 30.0 # 10.0 # 40.0 # 50.0 # 20.0 # 7.5 # 
+    p_bfcm = 40.0 # 60.0 # 5.0 # 30.0 # 10.0 # 2.0 # 15.0 # 50.0 # 20.0 # 7.5 # 
     if "left_roll" in locals():
         p_bfcm = - p_bfcm
         p_tr_deg = - p_tr_deg
@@ -4092,12 +4094,12 @@ if __name__ == "__main__":
     ###########################################################################
     t_zero = 0.0
     recover_time = 10.0
-    transition_time = 2.0 # 1.0 # 
+    transition_time = 1.0 # 12.0 # 2.0 # 5.0 # 
     p_time = t_zero + transition_time
     # p_time2 = p_time  + recover_time
     # p_time3 = p_time2 + transition_time
     t_end = 0.0 # 25.0 # 
-    tf = 10.0 # 5.0 # 16.0 # 2.50 # 4.90 # 60.0 # 20.0 # 
+    tf = 600.0 # 60.0 # 10.0 # 20.0 # 5.0 # 16.0 # 2.50 # 4.90 # 20.0 # 
     V_trim = 634.4133153512273111
     bire_fs_dict["reference"] = {
         "deg2rad_states" : [1,2,3,4,5],
@@ -4113,9 +4115,11 @@ if __name__ == "__main__":
     bire_fs_dict["simulation"]["integrator"] = "rk4"
     # run_bire_fs["time_step"] = 0.001 # 0.0001 # 
     # #
-    # bire_fs_dict["actuators"]["order"] = 0
-    # run_bire_fs["state_threshold"] = run_bire_fs["state_threshold"][:-4]
+    bire_fs_dict["actuators"]["order"] = 0
+    run_bire_fs["state_threshold"] = run_bire_fs["state_threshold"][:-4]
     # run_bire_fs["name_end"] += "_noact"
+    if bire_fs_dict["actuators"]["order"] > 1:
+        state_threshold += [5., 5., 5., 0.05]
     # #
     # bire_fs_dict["aircraft"]["CG_shift[ft]"] = [0.0, 0.0, 0.0] # [1.0, 2.0, -1.0] # 
     # #
@@ -4135,15 +4139,17 @@ if __name__ == "__main__":
     # bire_fs_dict["actuators"]["elevator"]["lag[s]"] = new_lag
     # bire_fs_dict["actuators"][    "BIRE"]["lag[s]"] = new_lag
     # # # # # # # 
-    # blm = 200.0 # 50.0 # 150.0 # 125.0 # 100.0 # 250.0 # 500.0 # 600.0 # 750.0 # 1000.0 # 1500.0 # 
-    # bire_fs_dict["actuators"][    "BIRE"]["rate_limits[deg/s]"] = [-blm,blm]
+    blm = 500.0 # 200.0 # 50.0 # 150.0 # 125.0 # 100.0 # 250.0 # 500.0 # 600.0 # 750.0 # 1000.0 # 1500.0 # 
+    bire_fs_dict["actuators"][    "BIRE"]["rate_limits[deg/s]"] = [-blm,blm]
+    alm = 5000.0 # 50.0 # 150.0 # 125.0 # 100.0 # 250.0 # 500.0 # 600.0 # 750.0 # 1000.0 # 1500.0 # 
+    bire_fs_dict["actuators"][    "BIRE"]["acceleration_limits[deg/s]"] = [-alm,alm]
     # # # # # # # 
     # elm = 50.0
     # bire_fs_dict["actuators"]["elevator"]["rate_limits[deg/s]"] = [-elm,elm]
     # # # # # # #
 
-    # bire_fs_dict["simulation"][      "limit_input"] = False # True # 
-    # bire_fs_dict["simulation"]["limit_input_rates"] = False # True # 
+    bire_fs_dict["simulation"][      "limit_input"] = False # True # 
+    bire_fs_dict["simulation"]["limit_input_rates"] = False # True # 
     # run_bire_fs["name_end"] += "_nolim"
     # # # # # #
     # bire_fs_dict["simulation"]["constant_density"] = True # False # 
