@@ -28,7 +28,8 @@
     "units" : "English",
     "scene" : {
         "atmosphere" : {
-            "rho": "standard"
+            "rho": "standard",
+            "_rho": 1.49615642399e-03
         },
         "aircraft" : {
             "BIRE" : {
@@ -40,6 +41,20 @@
                 },
                 "control_state" : {
                     "elevator" : 0.0,
+                    "aileron" : 0.0
+                }
+            }
+        },
+        "_aircraft" : {
+            "BIRE" : {
+                "file" : "BIRE_airplane.json",
+                "state" : {
+                    "velocity" : 634.4133153512273111,
+                    "alpha" : 2.6447774345355031,
+                    "beta" : 0.0
+                },
+                "control_state" : {
+                    "elevator" : 0.0386120760727478,
                     "aileron" : 0.0
                 }
             }

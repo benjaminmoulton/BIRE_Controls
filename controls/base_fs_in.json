@@ -84,34 +84,37 @@
         "aileron" : {
             "lag[s]" : 0.0495,
             "damping_ratio" : 0.7,
-            "bandwidth[rad/s]" : 30.0,
+            "bandwidth[rad/s]" : 10.0,
             "limits[deg]" : [-21.5,21.5],
             "rate_limits[deg/s]" : [-80.0,80.0],
+            "acceleration_limits[deg/s^2]" : [-100.0,100.0],
             "quantization_steps" : 10000
         },
         "elevator" : {
             "lag[s]" : 0.0495,
             "damping_ratio" : 0.7,
-            "bandwidth[rad/s]" : 30.0,
+            "bandwidth[rad/s]" : 10.0,
             "limits[deg]" : [-25.0,25.0],
             "rate_limits[deg/s]" : [-60.0,60.0],
+            "acceleration_limits[deg/s^2]" : [-100.0,100.0],
             "quantization_steps" : 10000
         },
         "rudder" : {
             "lag[s]" : 0.0495,
             "damping_ratio" : 0.7,
-            "bandwidth[rad/s]" : 30.0,
+            "bandwidth[rad/s]" : 10.0,
             "limits[deg]" : [-30.0,30.0],
             "rate_limits[deg/s]" : [-120.0,120.0],
-            "acceleration_limits[deg/s^2]" : [-1.0e20,1.0e20],
+            "acceleration_limits[deg/s^2]" : [-100.0,100.0],
             "quantization_steps" : 10000
         },
         "throttle" : {
             "lag[s]" : "model",
             "damping_ratio" : 0.7,
-            "bandwidth[rad/s]" : 2000.0,
-            "limits[perc]" : [0.0,1.0],
-            "rate_limits[perc/s]" : [-1.0,1.0],
+            "bandwidth[rad/s]" : 10.0,
+            "limits[per-unit]" : [0.0,1.0],
+            "rate_limits[per-unit/s]" : [-1.0,1.0],
+            "acceleration_limits[per-unit/s^2]" : [-10.0,10.0],
             "quantization_steps" : 10000
         }
     },

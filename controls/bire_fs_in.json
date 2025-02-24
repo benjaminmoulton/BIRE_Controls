@@ -85,7 +85,7 @@
         }
     },
     "actuators" : {
-        "order" : 2,
+        "order" : 1,
         "quantized_actuators" : false,
         "aileron" : {
             "lag[s]" : 0.0495,
@@ -107,8 +107,8 @@
         },
         "BIRE" : {
             "lag[s]" : 0.0495,
-            "damping_ratio" : 0.3,
-            "bandwidth[rad/s]" : 8.0,
+            "damping_ratio" : 0.7,
+            "bandwidth[rad/s]" : 10.0,
             "limits[deg]" : [-90.0,90.0],
             "rate_limits[deg/s]" : [-50.0,50.0],
             "acceleration_limits[deg/s^2]" : [-300.0,300.0],

@@ -151,7 +151,7 @@ class Aircraft:
         self._set_dynamics_function(self.use_nonlinear,self.use_quaternions)
         self.bool_limit_inputs = simulation.get("limit_input",True)
         self.bool_limit_input_rates = simulation.get("limit_input_rates",True)
-        self.bool_plot_limit_inputs = True
+        self.bool_plot_limit_inputs = False # True # 
         self.bool_limit_input_accels = simulation.get("limit_input_accelerations",True)
         if self.bool_limit_inputs:
             self._limit_input = self._hit_limit_input
@@ -3190,6 +3190,7 @@ class Aircraft:
         norm_lw = 0.375
         plot_ul_bounds = kwargs.get("plot_upp_and_low",False)
         color_the_sky = kwargs.get("color_the_sky",False)
+        limits_affect_view = kwargs.get("limits_affect_view",False)
 
         # determine where to save plots
         folder = kwargs.get("plotting_directory","")
@@ -3875,13 +3876,17 @@ class Aircraft:
             predir,format,savedict,not(save_states and not(plot_full)))
         
         svuc = uarr*0.0
-        for i in range(run_len + 1):
+        for i in reversed(range(run_len + 1)):
             # if controlled or uncontrolled
             if i == 0:
+                scaley = False
+                zorder = 2
                 c = "k"
                 lbl = "commanded"
                 ctrl = uarr
             elif i == 1:
+                scaley = True
+                zorder = 2.5
                 c = "0.5"
                 lbl = "response"
                 if self.order == 0:
@@ -3898,6 +3903,8 @@ class Aircraft:
                         cupp = xupp[12:16]
                         clow = xlow[12:16]
             else:
+                scaley = False
+                zorder = 2
                 c = "0.6"
                 lbl = second_label + " commanded"
                 ctrl = varr
@@ -3956,10 +3963,15 @@ class Aircraft:
                 surf_axs   .plot(tarr, uhat_eq[0],c="k",ls= "-",lw=norm_lw)
                 surf_axs   .plot(tarr, uhat_eq[1],c="k",ls="--",lw=norm_lw)
                 surf_axs   .plot(tarr, uhat_eq[2],c="k",ls="-.",lw=norm_lw)
-            ctrl_axs[0].plot(tarr, ctrl[0],c=c,ls="-",label=lbl)
-            ctrl_axs[1].plot(tarr, ctrl[1],c=c,ls="-")
-            ctrl_axs[2].plot(tarr, ctrl[2],c=c,ls="-")
-            ctrl_axs[3].plot(tarr, ctrl[3],c=c,ls="-")
+            ctrl_axs[0].plot(tarr, ctrl[0],zorder=zorder,c=c,ls="-",label=lbl)
+            ctrl_axs[1].plot(tarr, ctrl[1],zorder=zorder,c=c,ls="-")
+            ctrl_axs[2].plot(tarr, ctrl[2],zorder=zorder,c=c,ls="-")
+            ctrl_axs[3].plot(tarr, ctrl[3],zorder=zorder,c=c,ls="-")
+            if scaley:
+                ctrl_axs[0].set_ylim(ctrl_axs[0].get_ylim())
+                ctrl_axs[1].set_ylim(ctrl_axs[1].get_ylim())
+                ctrl_axs[2].set_ylim(ctrl_axs[2].get_ylim())
+                ctrl_axs[3].set_ylim(ctrl_axs[3].get_ylim())
             surf_axs   .plot(tarr, ctrl[0],c=c,ls= "-",
                 label=(i==0)*r"$\delta_a$"       + "")
             surf_axs   .plot(tarr, ctrl[1],c=c,ls="--",
@@ -3994,25 +4006,26 @@ class Aircraft:
         max_de = max_de_opt # - da_to_de
         min_de = min_de_opt # + da_to_de
         if self.bool_limit_inputs and self.bool_plot_limit_inputs:
-            if is_zoomed and not(plot_input_limits_zoomed):
+            if is_zoomed and not(plot_input_limits_zoomed) and limits_affect_view:
                 # lylim,uylim = ctrl_axs[3].get_ylim()
                 # ctrl_axs[3].set_ylim((min(lylim,-0.05),max(uylim,0.05)))
                 ctrl_axs[2].set_ylim((min_dr*0.1,max_dr*0.1))
                 ctrl_axs[3].set_ylim((min_tau*0.1,max_tau*0.1))
             else:
-                ctrl_axs[0].plot(tarr, zrs + min_da ,c="0.25",ls="--")
-                ctrl_axs[0].plot(tarr, zrs + max_da ,c="0.25",ls="--")
-                ctrl_axs[1].plot(tarr, zrs + min_de ,c="0.25",ls="--")
-                ctrl_axs[1].plot(tarr, zrs + max_de ,c="0.25",ls="--")
-                ctrl_axs[2].plot(tarr, zrs + min_dr ,c="0.25",ls="--")
-                ctrl_axs[2].plot(tarr, zrs + max_dr ,c="0.25",ls="--")
-                ctrl_axs[3].plot(tarr, zrs + min_tau,c="0.25",ls="--")
-                ctrl_axs[3].plot(tarr, zrs + max_tau,c="0.25",ls="--")
+                ctrl_axs[0].plot(tarr, zrs + min_da ,scaley=False,c="0.25",ls="--")
+                ctrl_axs[0].plot(tarr, zrs + max_da ,scaley=False,c="0.25",ls="--")
+                ctrl_axs[1].plot(tarr, zrs + min_de ,scaley=False,c="0.25",ls="--")
+                ctrl_axs[1].plot(tarr, zrs + max_de ,scaley=False,c="0.25",ls="--")
+                ctrl_axs[2].plot(tarr, zrs + min_dr ,scaley=False,c="0.25",ls="--")
+                ctrl_axs[2].plot(tarr, zrs + max_dr ,scaley=False,c="0.25",ls="--")
+                ctrl_axs[3].plot(tarr, zrs + min_tau,scaley=False,c="0.25",ls="--")
+                ctrl_axs[3].plot(tarr, zrs + max_tau,scaley=False,c="0.25",ls="--")
                 #
-                ctrl_axs[0].set_ylim((min_da-5.,max_da+5.))
-                ctrl_axs[1].set_ylim((min_de_opt-5.,max_de_opt+5.))
-                ctrl_axs[2].set_ylim((min_dr-5.,max_dr+5.))
-                ctrl_axs[3].set_ylim((min_tau-0.05,max_tau+0.05))
+                if limits_affect_view:
+                    ctrl_axs[0].set_ylim((min_da-5.,max_da+5.))
+                    ctrl_axs[1].set_ylim((min_de_opt-5.,max_de_opt+5.))
+                    ctrl_axs[2].set_ylim((min_dr-5.,max_dr+5.))
+                    ctrl_axs[3].set_ylim((min_tau-0.05,max_tau+0.05))
         # surf maxes
         # determine maxes and mins
         if plot_ul_bounds:
@@ -4120,22 +4133,23 @@ class Aircraft:
         udot_axs[2].plot(tarr, udot[2],c=c,ls="-")
         udot_axs[3].plot(tarr, udot[3],c=c,ls="-")
         ## limits ##
-        if self.order >= 1 and self.bool_limit_input_rates:
-            udot_axs[0].plot(tarr,zrs+np.rad2deg(self.min_dadot),c="0.25",ls="--")
-            udot_axs[0].plot(tarr,zrs+np.rad2deg(self.max_dadot),c="0.25",ls="--")
-            udot_axs[1].plot(tarr,zrs+np.rad2deg(self.min_dedot),c="0.25",ls="--")
-            udot_axs[1].plot(tarr,zrs+np.rad2deg(self.max_dedot),c="0.25",ls="--")
-            udot_axs[2].plot(tarr,zrs+np.rad2deg(self.min_drdot),c="0.25",ls="--")
-            udot_axs[2].plot(tarr,zrs+np.rad2deg(self.max_drdot),c="0.25",ls="--")
-            udot_axs[3].plot(tarr,zrs+self.min_taudot,c="0.25",ls="--")
-            udot_axs[3].plot(tarr,zrs+self.max_taudot,c="0.25",ls="--")
-            udot_axs[0].set_ylim((1.1*np.rad2deg(self.min_dadot),\
-                1.1*np.rad2deg(self.max_dadot)))
-            udot_axs[1].set_ylim((1.1*np.rad2deg(self.min_dedot),\
-                1.1*np.rad2deg(self.max_dedot)))
-            udot_axs[2].set_ylim((1.1*np.rad2deg(self.min_drdot),\
-                1.1*np.rad2deg(self.max_drdot)))
-            udot_axs[3].set_ylim((1.1*self.min_taudot,1.1*self.max_taudot))
+        if self.order >= 1 and self.bool_limit_input_rates and self.bool_plot_limit_inputs:
+            udot_axs[0].plot(tarr,zrs+np.rad2deg(self.min_dadot),scaley=False,c="0.25",ls="--")
+            udot_axs[0].plot(tarr,zrs+np.rad2deg(self.max_dadot),scaley=False,c="0.25",ls="--")
+            udot_axs[1].plot(tarr,zrs+np.rad2deg(self.min_dedot),scaley=False,c="0.25",ls="--")
+            udot_axs[1].plot(tarr,zrs+np.rad2deg(self.max_dedot),scaley=False,c="0.25",ls="--")
+            udot_axs[2].plot(tarr,zrs+np.rad2deg(self.min_drdot),scaley=False,c="0.25",ls="--")
+            udot_axs[2].plot(tarr,zrs+np.rad2deg(self.max_drdot),scaley=False,c="0.25",ls="--")
+            udot_axs[3].plot(tarr,zrs+self.min_taudot,scaley=False,c="0.25",ls="--")
+            udot_axs[3].plot(tarr,zrs+self.max_taudot,scaley=False,c="0.25",ls="--")
+            if limits_affect_view:
+                udot_axs[0].set_ylim((1.1*np.rad2deg(self.min_dadot),\
+                    1.1*np.rad2deg(self.max_dadot)))
+                udot_axs[1].set_ylim((1.1*np.rad2deg(self.min_dedot),\
+                    1.1*np.rad2deg(self.max_dedot)))
+                udot_axs[2].set_ylim((1.1*np.rad2deg(self.min_drdot),\
+                    1.1*np.rad2deg(self.max_drdot)))
+                udot_axs[3].set_ylim((1.1*self.min_taudot,1.1*self.max_taudot))
 
         # double derivative of control
         if self.order == 2:
@@ -4228,7 +4242,7 @@ class Aircraft:
         uddt_axs[0].plot(tarr, uddt[0],c=c,ls="-",label=uddt_lbl)
         uddt_axs[1].plot(tarr, uddt[1],c=c,ls="-")
         uddt_axs[2].plot(tarr, uddt[2],c=c,ls="-")
-        if self.order > 1 and self.bool_limit_input_accels:
+        if self.order > 1 and self.bool_limit_input_accels and self.bool_plot_limit_inputs:
             ddc = "0.25"
             # else:
             #     ddBc = "g"
@@ -4237,21 +4251,22 @@ class Aircraft:
             # uddt_axs[2].plot(tarr,-ddBmax_deg,c=ddc,ls="--")
             # uddt_axs[2].set_ylim((-1.1*np.rad2deg(self.max_drddot),\
             #     1.1*np.rad2deg(self.max_drddot)))
-            uddt_axs[0].plot(tarr,zrs+np.rad2deg(self.min_daddot),c="0.25",ls="--")
-            uddt_axs[0].plot(tarr,zrs+np.rad2deg(self.max_daddot),c="0.25",ls="--")
-            uddt_axs[1].plot(tarr,zrs+np.rad2deg(self.min_deddot),c="0.25",ls="--")
-            uddt_axs[1].plot(tarr,zrs+np.rad2deg(self.max_deddot),c="0.25",ls="--")
-            uddt_axs[2].plot(tarr,zrs+np.rad2deg(self.min_drddot),c="0.25",ls="--")
-            uddt_axs[2].plot(tarr,zrs+np.rad2deg(self.max_drddot),c="0.25",ls="--")
-            uddt_axs[3].plot(tarr,zrs+self.min_tauddot,c="0.25",ls="--")
-            uddt_axs[3].plot(tarr,zrs+self.max_tauddot,c="0.25",ls="--")
-            uddt_axs[0].set_ylim((1.1*np.rad2deg(self.min_daddot),\
-                1.1*np.rad2deg(self.max_daddot)))
-            uddt_axs[1].set_ylim((1.1*np.rad2deg(self.min_deddot),\
-                1.1*np.rad2deg(self.max_deddot)))
-            uddt_axs[2].set_ylim((1.1*np.rad2deg(self.min_drddot),\
-                1.1*np.rad2deg(self.max_drddot)))
-            uddt_axs[3].set_ylim((1.1*self.min_tauddot,1.1*self.max_tauddot))
+            uddt_axs[0].plot(tarr,zrs+np.rad2deg(self.min_daddot),scaley=False,c="0.25",ls="--")
+            uddt_axs[0].plot(tarr,zrs+np.rad2deg(self.max_daddot),scaley=False,c="0.25",ls="--")
+            uddt_axs[1].plot(tarr,zrs+np.rad2deg(self.min_deddot),scaley=False,c="0.25",ls="--")
+            uddt_axs[1].plot(tarr,zrs+np.rad2deg(self.max_deddot),scaley=False,c="0.25",ls="--")
+            uddt_axs[2].plot(tarr,zrs+np.rad2deg(self.min_drddot),scaley=False,c="0.25",ls="--")
+            uddt_axs[2].plot(tarr,zrs+np.rad2deg(self.max_drddot),scaley=False,c="0.25",ls="--")
+            uddt_axs[3].plot(tarr,zrs+self.min_tauddot,scaley=False,c="0.25",ls="--")
+            uddt_axs[3].plot(tarr,zrs+self.max_tauddot,scaley=False,c="0.25",ls="--")
+            if limits_affect_view:
+                uddt_axs[0].set_ylim((1.1*np.rad2deg(self.min_daddot),\
+                    1.1*np.rad2deg(self.max_daddot)))
+                uddt_axs[1].set_ylim((1.1*np.rad2deg(self.min_deddot),\
+                    1.1*np.rad2deg(self.max_deddot)))
+                uddt_axs[2].set_ylim((1.1*np.rad2deg(self.min_drddot),\
+                    1.1*np.rad2deg(self.max_drddot)))
+                uddt_axs[3].set_ylim((1.1*self.min_tauddot,1.1*self.max_tauddot))
         uddt_axs[3].plot(tarr, uddt[3],c=c,ls="-")
         
         # set xlimits

@@ -10,7 +10,7 @@ from os import mkdir, rmdir, walk, remove, listdir
 from linearization import linearization
 import control as co
 from scipy.linalg import block_diag
-from math import asin,atan2,sin,tan
+from math import cos,asin,atan2,sin,tan
 
 if __name__ == "__main__":
 
@@ -42,7 +42,7 @@ if __name__ == "__main__":
     run_sct  = True # False # 
     run_fs = True
     skip_run = True # False # 
-    skip_DOC = False # True # 
+    skip_DOC = True # False # 
     if run_sct: trim_bank_degs = np.linspace(0.0,75.0,num=16).tolist() # [30.0] # np.linspace(0.0,60.0,num=13).tolist() # [0.0] # [10.0] # [60.0] # np.linspace(0.0,75.0,num=16).tolist() # 
     else: trim_beta_degs = np.linspace(0.0,16.0,num=9).tolist() # [6.0] # np.linspace(0.0,16.0,num=9).tolist() # [14.0,16.0] # [0.0] # 
     trim_climb_deg = 0.0 # 10.0 # 
@@ -83,7 +83,6 @@ if __name__ == "__main__":
     p_shift = 0.0 # 0.0 # 
     u_shift = np.array([0.0,0.0,0.0,0.0]) # np.array([0.0,-0.05,0.0,0.276]) # 
     # set up run
-    craftdict = bire_dict if run_bire else base_dict
     trim_type = "sct" if run_sct else "shss"
     scale_type = "fs" if run_fs  else "rc"
     folder = "trim_files/" + fc + "_" + trim_type + "/"
@@ -142,30 +141,36 @@ if __name__ == "__main__":
     
     # initialize aircraft
     # set to initial params
-    craftdict["simulation"] = craftdict.get("simulation",{})
-    craftdict["simulation"]["include_compressibility"] = include_compressibility
-    craftdict["simulation"]["use_Anderson_corrections"] = use_Anderson_corrections
-    craftdict["simulation"]["include_stall"] = include_stall
-    craftdict["aircraft"] = craftdict.get("aircraft",{})
-    craftdict["aircraft"]["CG_shift[ft]"] = cgshift
-    craftdict["initial"] = craftdict.get("initial",{})
-    craftdict["initial"]["mach"] = mfc
-    craftdict["initial"]["altitude[ft]"] = hfc
-    craftdict["initial"].pop("airspeed[ft/s]",None)
-    craftdict["initial"]["type"] = "trim"
-    craftdict["initial"]["trim"] = craftdict["initial"].get("trim",{})
-    craftdict["initial"]["trim"]["type"] = trim_type
-    craftdict["initial"]["trim"].pop("elevation_angle[deg]",None)
-    craftdict["initial"]["trim"]["climb_angle[deg]"] = trim_climb_deg
-    craftdict["initial"]["trim"]["solver"] = \
-        craftdict["initial"]["trim"].get("solver",{})
-    craftdict["initial"]["trim"]["solver"]["max_iterations"] = trim_iter
-    if run_sct:
-        craftdict["initial"]["trim"]["bank_angle[deg]"] = 0.0
-        craftdict["initial"]["trim"].pop("sideslip_angle[deg]",None)
-    else:
-        craftdict["initial"]["trim"]["sideslip_angle[deg]"] = 0.0
-        craftdict["initial"]["trim"].pop("bank_angle[deg]",None)
+    for craftdict in [bire_dict,base_dict]:
+        craftdict["simulation"] = craftdict.get("simulation",{})
+        craftdict["simulation"]["include_compressibility"] = include_compressibility
+        craftdict["simulation"]["use_Anderson_corrections"] = use_Anderson_corrections
+        craftdict["simulation"]["include_stall"] = include_stall
+        craftdict["aircraft"] = craftdict.get("aircraft",{})
+        craftdict["aircraft"]["CG_shift[ft]"] = cgshift
+        craftdict["initial"] = craftdict.get("initial",{})
+        craftdict["initial"]["mach"] = mfc
+        craftdict["initial"]["altitude[ft]"] = hfc
+        craftdict["initial"].pop("airspeed[ft/s]",None)
+        craftdict["initial"]["type"] = "trim"
+        craftdict["initial"]["trim"] = craftdict["initial"].get("trim",{})
+        craftdict["initial"]["trim"]["type"] = trim_type
+        craftdict["initial"]["trim"].pop("elevation_angle[deg]",None)
+        craftdict["initial"]["trim"]["climb_angle[deg]"] = trim_climb_deg
+        craftdict["initial"]["trim"]["solver"] = \
+            craftdict["initial"]["trim"].get("solver",{})
+        craftdict["initial"]["trim"]["solver"]["max_iterations"] = trim_iter
+        if run_sct:
+            craftdict["initial"]["trim"]["bank_angle[deg]"] = 0.0
+            craftdict["initial"]["trim"].pop("sideslip_angle[deg]",None)
+        else:
+            craftdict["initial"]["trim"]["sideslip_angle[deg]"] = 0.0
+            craftdict["initial"]["trim"].pop("bank_angle[deg]",None)
+    
+    # baseline and bire crafts for nN calc
+    craftdict = bire_dict if run_bire else base_dict
+    base_nN = Aircraft(base_dict)
+    bire_nN = Aircraft(bire_dict)
 
     if not(skip_run):
         # initialize
@@ -619,6 +624,7 @@ if __name__ == "__main__":
                 constrained_layout=True)
             fig_da,axs_da = plt.subplots(1,1,**plot_dict)
             fig_de,axs_de = plt.subplots(1,1,**plot_dict)
+            fig_nN,axs_nN = plt.subplots(1,1,**plot_dict)
             fig_dB,axs_dB = plt.subplots(1,1,**plot_dict)
             fig_ta,axs_ta = plt.subplots(1,1,**plot_dict)
             fig_t2,axs_t2 = plt.subplots(1,1,**plot_dict)
@@ -672,6 +678,7 @@ if __name__ == "__main__":
             grid_lw = 0.6
             axs_da.grid(which="major",lw=grid_lw,ls="-",c=grid_color)
             axs_de.grid(which="major",lw=grid_lw,ls="-",c=grid_color)
+            axs_nN.grid(which="major",lw=grid_lw,ls="-",c=grid_color)
             axs_dB.grid(which="major",lw=grid_lw,ls="-",c=grid_color)
             axs_ta.grid(which="major",lw=grid_lw,ls="-",c=grid_color)
             axs_t2.grid(which="major",lw=grid_lw,ls="-",c=grid_color)
@@ -797,6 +804,116 @@ if __name__ == "__main__":
                         axs[0].plot(ivr,np.rad2deg(sol["u_trim"][0]),**kdict)
                         # elevator
                         axs[1].plot(ivr,np.rad2deg(sol["u_trim"][1]),**kdict)
+                        # normal load factor
+                        dB = sol["u_trim"][2]
+                        de_tr = sol["u_trim"][1]
+                        af = sol["angles"][0]
+                        ss = sol["angles"][1]
+                        caf = cos(af); saf = sin(af)
+                        css = cos(ss); sss = sin(ss)
+                        if cname == "bire":
+                            V = bire_nN.V0
+                            cw = bire_nN.cw
+                            bw = bire_nN.bw
+                            Sw = bire_nN.Sw
+                            _,g,_,_,rho,sos = bire_nN.stdatm(bire_nN.H0)
+                            W = bire_nN.inertia_model.W
+                            pbar = bw*sol["x_trim_euler"][3]/2.0/V
+                            qbar = cw*sol["x_trim_euler"][4]/2.0/V
+                            rbar = bw*sol["x_trim_euler"][5]/2.0/V
+                            min_de = bire_nN.min_de
+                            CLtr,CStr,CDtr = bire_nN.aero_model.aero_results(*[
+                                af,ss,pbar,qbar,rbar,sol["u_trim"][0],de_tr,dB,
+                                bire_nN.is_compressible,V/sos,
+                                bire_nN.use_anderson,bire_nN.has_stall
+                            ])[0:3]
+                            CLmx,CSmx,CDmx = bire_nN.aero_model.aero_results(*[
+                                af,ss,pbar,qbar,rbar,sol["u_trim"][0],min_de,dB,
+                                bire_nN.is_compressible,V/sos,
+                                bire_nN.use_anderson,bire_nN.has_stall
+                            ])[0:3]
+                            # Cmde  = bire_nN.aero_model._Cm_de(dB)
+                            # Cmq   = bire_nN.aero_model._Cm_qbar(dB)
+                            # CLde  = bire_nN.aero_model._CL_de(dB)
+                            # CL0   = bire_nN.aero_model._CL0(dB)
+                            # CLa   = bire_nN.aero_model._CL_alpha(dB)
+                            # CLq   = bire_nN.aero_model._CL_qbar(dB)
+                            # CSde  = bire_nN.aero_model._CS_de(dB)
+                            # CSq   = bire_nN.aero_model._CS_qbar(dB)
+                            # CDLde = bire_nN.aero_model._CD_Lde(dB)
+                            # CDde  = bire_nN.aero_model._CD_de(dB)
+                            # CDde2 = bire_nN.aero_model._CD_de2(dB)
+                            # CDq   = bire_nN.aero_model._CD_qbar(dB)
+                            # CDLq  = bire_nN.aero_model._CD_Lqbar(dB)
+                            # CDL2q = bire_nN.aero_model._CD_L2qbar(dB)
+                            # de = bire_nN.min_de - de_tr
+                        else:
+                            V = base_nN.V0
+                            cw = base_nN.cw
+                            bw = base_nN.bw
+                            Sw = base_nN.Sw
+                            _,g,_,_,rho,sos = base_nN.stdatm(base_nN.H0)
+                            W = base_nN.inertia_model.W
+                            pbar = bw*sol["x_trim_euler"][3]/2.0/V
+                            qbar = cw*sol["x_trim_euler"][4]/2.0/V
+                            rbar = bw*sol["x_trim_euler"][5]/2.0/V
+                            min_de = base_nN.min_de
+                            CLtr,CStr,CDtr = base_nN.aero_model.aero_results(*[
+                                af,ss,pbar,qbar,rbar,sol["u_trim"][0],de_tr,dB,
+                                base_nN.is_compressible,V/sos,
+                                base_nN.use_anderson,base_nN.has_stall
+                            ])[0:3]
+                            CLmx,CSmx,CDmx = base_nN.aero_model.aero_results(*[
+                                af,ss,pbar,qbar,rbar,sol["u_trim"][0],min_de,dB,
+                                base_nN.is_compressible,V/sos,
+                                base_nN.use_anderson,base_nN.has_stall
+                            ])[0:3]
+                            # dnN = 0.0
+                            # Cmde  = base_nN.aero_model.Cmde
+                            # Cmq   = base_nN.aero_model.Cmq
+                            # CLde  = base_nN.aero_model.CLde
+                            # CL0   = base_nN.aero_model.CL0
+                            # CLa   = base_nN.aero_model.CLa
+                            # CLq   = base_nN.aero_model.CLq
+                            # CSde  = 0.0
+                            # CSq   = 0.0
+                            # CDLde = base_nN.aero_model.CDLde
+                            # CDde  = base_nN.aero_model.CDde
+                            # CDde2 = base_nN.aero_model.CDde2
+                            # CDq   = base_nN.aero_model.CDq
+                            # CDLq  = base_nN.aero_model.CDLq
+                            # CDL2q = base_nN.aero_model.CDL2q
+                            # W = base_nN.inertia_model.W
+                            # cw = base_nN.cw
+                            # Sw = base_nN.Sw
+                            # V = base_nN.V0
+                            # _,g,_,_,rho,_ = base_nN.stdatm(base_nN.H0)
+                            # min_de = base_nN.min_de
+                            # de = base_nN.min_de - de_tr
+                        # calcs
+                        Qdyn = 0.5*rho*V**2.0*Sw
+                        Fztr = Qdyn*(-caf*CLtr -saf*sss*CStr -saf*css*CDtr)
+                        Fzmx = Qdyn*(-caf*CLmx -saf*sss*CSmx -saf*css*CDmx)
+                        dnN = (Fzmx - Fztr)/W # Fztr/W # 
+                        # CL1 = CL0 + CLa*af
+                        # CDde = (CDLde*CL1 + CDde)
+                        # Cmde_cg = - caf*CLde - saf*sss*CSde - saf*css*CDde
+                        # Cmde_all = Cmde + xcg/cw*Cmde_cg
+                        # Cmde2_cg= -saf*css*CDde2
+                        # Cmde2_all= -xcg/cw*Cmde2_cg
+                        # CDq  = (CDL2q*CL1**2. + CDLq*CL1 + CDq)
+                        # Cmq_cg = - caf*CLq - saf*sss*CSq - saf*css*CDq
+                        # Cmq_all  = Cmq  + xcg/cw*Cmq_cg
+                        # nNm1 = -(Cmde_all*de + Cmde2_all*(min_de**2.0 - de**2.0))/Cmq_all*2.0*V**2.0/g/cw
+                        # nNm1 = 0.5*rho*V**2.0*Sw*(Cmde_cg*de + Cmde2_cg*(min_de**2.0 - de**2.0))/W
+                        # print(np.rad2deg(sol["angles"][2]),cname,xcg)#,Cmq,V,de,Cmde,Cmde2,g,cname,xcg)
+                        # # print(nNm1)
+                        # # print((min_de**2.0 - de**2.0)*180.0*180.0/np.pi/np.pi)
+                        # # print(Cmde,Cmq,de,V,g,cw)
+                        # # print(-(Cmde*de)/Cmq*2.0*V**2.0/g/cw)
+                        # print(dnN)
+                        # print()
+                        axs_nN.plot(ivr,dnN,**kdict)
                         # rudder
                         axs[2].plot(ivr,np.rad2deg(sol["u_trim"][2]),**kdict)
                         # throttle
@@ -965,6 +1082,9 @@ if __name__ == "__main__":
             axs[3].set_ylabel(r"Throttle setting ($\tau$), per-unit")
             axs[4].set_ylabel(vrylbl)
             axs[5].set_ylabel(r"Angle of attack ($\alpha$), deg")
+            #
+            axs_nN.set_xlabel(xlabel)
+            axs_nN.set_ylabel(r"Additional load factor ($\Delta n_N$)")
             #
             axs_t2.set_xlabel(xlabel)
             axs_t2.set_ylabel(r"Throttle difference ($\tau - \tau_{n0}$), per-unit")
@@ -1171,6 +1291,7 @@ if __name__ == "__main__":
                 base_plotting_xcgs == [0.0]:
                 axs_da.set_xlim((-3.75,78.75)); axs_da.set_ylim((-0.25690926945446085, 0.3730970519700059)) # print("da",axs_da.get_xlim(),axs_da.get_ylim())
                 axs_de.set_xlim((-3.75,78.75)); axs_de.set_ylim((-6.0781895601012685, 2.0705537097073003)) # print("de",axs_de.get_xlim(),axs_de.get_ylim())
+                print("nN",axs_nN.get_xlim(),axs_nN.get_ylim())
                 axs_dB.set_xlim((-3.75,78.75)); axs_dB.set_ylim((-94.58206897637467, 96.33296571209728)) # print("dB",axs_dB.get_xlim(),axs_dB.get_ylim())
                 axs_ta.set_xlim((-3.75,78.75)); axs_ta.set_ylim((0.24323978768270088, 0.8947909296317877)) # print("ta",axs_ta.get_xlim(),axs_ta.get_ylim())
                 axs_vr.set_xlim((-3.75,78.75)); axs_vr.set_ylim((-0.36764186742069865, 0.4215223236673418)) # print("vr",axs_vr.get_xlim(),axs_vr.get_ylim())
@@ -1207,6 +1328,9 @@ if __name__ == "__main__":
             axs[0].legend(fontsize=8.0,**legdict) # aileron
             fig_da   .savefig(sv_fldr+"00_da_wlg."+plot_format,**save_dict)
             fig_de   .savefig(sv_fldr+"01_de."    +plot_format,**save_dict)
+            fig_nN   .savefig(sv_fldr+"01_nN."    +plot_format,**save_dict)
+            axs_nN.legend(fontsize=8.0,**legdict) # normal load factor
+            fig_nN   .savefig(sv_fldr+"01_nN_wlg."+plot_format,**save_dict)
             fig_dB   .savefig(sv_fldr+"02_dB."    +plot_format,**save_dict)
             fig_ta   .savefig(sv_fldr+"03_tau."   +plot_format,**save_dict)
             axs_t2.legend(fontsize=8.0,**fr2dict)
@@ -1279,6 +1403,7 @@ if __name__ == "__main__":
             if show_plots:
                 plt.close(fig_da)
                 plt.close(fig_de)
+                plt.close(fig_nN)
                 plt.close(fig_dB)
                 plt.close(fig_ta)
                 plt.close(fig_t2)
