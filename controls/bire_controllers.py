@@ -709,7 +709,7 @@ class ControlAllocationMomentAssignmentAircraft(Aircraft):
         # invoke init of parent
         Aircraft.__init__(self,input_dict,folder_prefix = "track",SAS_Cma=-1.0)#-0.3)
         self.tracking = True
-        self.bool_plot_limit_inputs = True # False # 
+        self.bool_plot_limit_inputs = False # True # 
         self.pseudo_inverse_method = True # False # 
         self.do_line_search = False # True # # if false, use prev calc
         self.ls_dB_lim = 45.0 # 30.0 # 
@@ -1549,6 +1549,7 @@ class ControlAllocationMomentAssignmentAircraft(Aircraft):
             t = tarr[k]*1.0
             #
             ref = self._get_reference(t)[self.Lin_Model.Cslice]
+            dref = self._get_reference_derivative(t)[self.Lin_Model.Cslice]
             V_xb    = x_at_t[ 0]
             V_yb    = x_at_t[ 1]
             V_zb    = x_at_t[ 2]
@@ -1599,7 +1600,7 @@ class ControlAllocationMomentAssignmentAircraft(Aircraft):
             # LM = self.Lin_Model
             # v = - np.matmul(LM.K,e) - np.matmul(LM.KI,eI)
             v = - np.matmul(self.KP_DI,e) - np.matmul(self.KI_DI,eI)
-            Md = np.matmul(I,(v - np.matmul(Iinv,np.matmul(hmat,w) + Om)))
+            Md = np.matmul(I,(v - np.matmul(Iinv,np.matmul(hmat,w) + Om) + dref))
             # correct moment
             Md = np.matmul(G,self.aero_model.uncorrect_M(
                 np.matmul(1./Qdyn*np.diag([1./bw,1./cw,1./bw]),Md),a,
@@ -1747,6 +1748,7 @@ class ControlAllocationMomentAssignmentAircraft(Aircraft):
                     x_euler[9:12] = quat_2_euler(euler_2_quat(x_euler[9:12]))
                 #
                 ref = self._get_reference(t)[self.Lin_Model.Cslice]
+                wrefdot = self._get_reference_derivative(t)[self.Lin_Model.Cslice]
                 # per dave, full stick should be 270 deg/s in aileron
                 # 120 deg/s in elevator
                 # 60 deg/s in rudder
@@ -1841,7 +1843,7 @@ class ControlAllocationMomentAssignmentAircraft(Aircraft):
                 # LM = self.Lin_Model
                 # v = - np.matmul(LM.K,e) - np.matmul(LM.KI,eI)
                 v = - np.matmul(self.KP_DI,e) - np.matmul(self.KI_DI,eI)
-                Md = np.matmul(I,(v - np.matmul(Iinv,np.matmul(hmat,w) + Om)))
+                Md = np.matmul(I,(v - np.matmul(Iinv,np.matmul(hmat,w) + Om) + wrefdot))
                 CMd_c = np.matmul(1./Qdyn*np.diag([1./bw,1./cw,1./bw]),Md)
                 # correct moment
                 Md = np.matmul(G,self.aero_model.uncorrect_M(
@@ -4019,99 +4021,161 @@ if __name__ == "__main__":
     # # #
     # # # 
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-    # 10 deg bank fullscale BIRE
-    p_tr_deg = -0.0236847366216922
-    q_tr_deg =  0.0886486340380570
-    r_tr_deg =  0.5027513865539764
-    # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-    # # # 15 deg bank fullscale BIRE
-    # p_tr_deg = -0.0361891562749016
-    # q_tr_deg =  0.2007714630167870
-    # r_tr_deg =  0.7492893006885849
+    phi__deg = 10.0 # 15.0 # 20.0 # # 25.0 # 30.0 # 35.0 # 40.0 # 50.0 # 60.0 #  
+    tail = "0" # "+" # "-" # 
+    # left_roll = True # False # 
+    if   phi__deg == 10.0: # 10 deg bank fullscale BIRE
+        p_tr_deg = -0.0236847366216922
+        q_tr_deg =  0.0886486340380570
+        r_tr_deg =  0.5027513865539764
+    elif phi__deg == 15.0: # # # 15 deg bank fullscale BIRE
+        p_tr_deg = -0.0361891562749016
+        q_tr_deg =  0.2007714630167870
+        r_tr_deg =  0.7492893006885849
+    elif phi__deg == 20.0: # # 20 deg bank fullscale BIRE
+        p_tr_deg = -0.0495920266927013
+        q_tr_deg =  0.3603497293338741
+        r_tr_deg =  0.9900527444514043
+    elif phi__deg == 25.0: # # 25 deg bank fullscale BIRE # # (0) tail
+        p_tr_deg = -0.0638179984370310
+        q_tr_deg =  0.5703966435396264
+        r_tr_deg =  1.2232195495061524
+    elif phi__deg == 30.0: # # 30 deg bank fullscale BIRE
+        if   tail == "-": # # (-) tail
+            p_tr_deg = -0.0820880039056245
+            q_tr_deg =  0.8352580178704386
+            r_tr_deg =  1.4467093243808735
+        elif tail == "0": # # (0) tail
+            p_tr_deg = -0.0800043056586719
+            q_tr_deg =  0.8353731041767737
+            r_tr_deg =  1.4469086597107013
+        elif tail == "+": # # (+) tail
+            p_tr_deg = -0.0783041992237063
+            q_tr_deg =  0.8354699615635688
+            r_tr_deg =  1.4470764216257186
+    elif phi__deg == 35.0: # # 35 deg bank fullscale BIRE # # (0) tail
+        p_tr_deg = -0.0982988942950006
+        q_tr_deg =  1.1619249236475548
+        r_tr_deg =  1.6594007636912391
+    elif phi__deg == 40.0: # # 40 deg bank fullscale BIRE # # (0) tail
+        p_tr_deg = -0.1195200902391827
+        q_tr_deg =  1.5598776114662467
+        r_tr_deg =  1.8589897474721753
+    elif phi__deg == 50.0: # # 50 deg bank fullscale BIRE # # (0) tail
+        p_tr_deg = -0.1755564353175651
+        q_tr_deg =  2.6372142861590873
+        r_tr_deg =  2.2128855348515439
+    elif phi__deg == 60.0: # # 60 deg bank fullscale BIRE
+        p_tr_deg = -0.2654216358834438
+        q_tr_deg =  4.3218126454667702
+        r_tr_deg =  2.4951996942473698
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-    # # # 20 deg bank fullscale BIRE
-    # p_tr_deg = -0.0495920266927013
-    # q_tr_deg =  0.3603497293338741
-    # r_tr_deg =  0.9900527444514043
-    # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-    # # # 25 deg bank fullscale BIRE
-    # # (0) tail
-    # p_tr_deg = -0.0638179984370310
-    # q_tr_deg =  0.5703966435396264
-    # r_tr_deg =  1.2232195495061524
-    # #######################################################################
-    # # 30 deg bank fullscale BIRE
-    # p_tr_deg = -0.0820880039056245
-    # q_tr_deg =  0.8352580178704386
-    # r_tr_deg =  1.4467093243808735
-    # # # # (0) tail
-    # p_tr_deg = -0.0800043056586719
-    # q_tr_deg =  0.8353731041767737
-    # r_tr_deg =  1.4469086597107013
-    # # (+) tail
-    # p_tr_deg = -0.0783041992237063
-    # q_tr_deg =  0.8354699615635688
-    # r_tr_deg =  1.4470764216257186
-    # #######################################################################
-    # # 35 deg bank fullscale BIRE
-    # # (0) tail
-    # p_tr_deg = -0.0982988942950006
-    # q_tr_deg =  1.1619249236475548
-    # r_tr_deg =  1.6594007636912391
-    # #######################################################################
-    # # # # 40 deg bank fullscale BIRE
-    # # (0) tail
-    # p_tr_deg = -0.1195200902391827
-    # q_tr_deg =  1.5598776114662467
-    # r_tr_deg =  1.8589897474721753
-    # #######################################################################
-    # # 50 deg bank fullscale BIRE
-    # (0) tail
-    # p_tr_deg = -0.1755564353175651
-    # q_tr_deg =  2.6372142861590873
-    # r_tr_deg =  2.2128855348515439
-    # #######################################################################
-    # # # 60 deg bank fullscale BIRE
-    # # # (0) tail
-    # p_tr_deg = -0.2654216358834438
-    # q_tr_deg =  4.3218126454667702
-    # r_tr_deg =  2.4951996942473698
-    # #######################################################################
-    # # 10 deg bank RC scale BIRE w/o stall
-    # p_tr_deg = -0.3294739663431505
-    # q_tr_deg =  0.5582409457023837
-    # r_tr_deg =  3.1659417263281258
-    p_bfcm = 5.0 # 30.0 # 40.0 # 60.0 # 10.0 # 2.0 # 15.0 # 50.0 # 20.0 # 7.5 # 
     if "left_roll" in locals():
-        p_bfcm = - p_bfcm
+        phi__deg = - phi__deg
         p_tr_deg = - p_tr_deg
         r_tr_deg = - r_tr_deg
-    r_comm = 0.0    # 
-    p_comm = p_bfcm # 
-    a_tr_rad =  np.deg2rad(2.6447774345355031)
-    r_comm = p_bfcm*np.sin(a_tr_rad) # 
-    p_comm = p_bfcm*np.cos(a_tr_rad) # 
     ###########################################################################
-    t_zero = 0.0
-    recover_time = 10.0
-    transition_time = 2.0 # 1.0 # 12.0 # 5.0 # 
-    p_time = t_zero + transition_time
-    # p_time2 = p_time  + recover_time
-    # p_time3 = p_time2 + transition_time
-    t_end = 0.0 # 25.0 # 
-    tf = 10.0 # 600.0 # 60.0 # 20.0 # 5.0 # 16.0 # 2.50 # 4.90 # 20.0 # 
+    # trim properties
     V_trim = 634.4133153512273111
+    a_tr_rad =  np.deg2rad(2.6447774345355031)
+    ###########################################################################
+    t_start = 0.0 # 1.0 # 
+    transition_time = 2.0 # 1.0 # 4.0 # 12.0 # 5.0 # 
+    signal_type = "quartic_bump" # "1-cosine_smoother" # "1-cosine" # "triangle" # "step" # 
+    # calculations
+    p_wind = phi__deg/transition_time
+    r_roll = p_wind*np.sin(a_tr_rad) # 
+    p_roll = p_wind*np.cos(a_tr_rad) # 
+    t__end = t_start + transition_time
     bire_fs_dict["reference"] = {
         "deg2rad_states" : [1,2,3,4,5],
         "0" : [[ 0.0,   V_trim],[ 2.0,   V_trim],],
-        # "3" : [ [0.0, 0.0], [t_zero, 0.0], [t_zero, p_comm], [p_time, p_comm], [p_time, p_tr_deg], ], # [p_time2, p_tr_deg ], [p_time2, p_comm], [p_time3, p_comm], [p_time3, p_tr_deg2] ], # [p_time + recover_time, p_tr_deg], [p_time + recover_time, -p_comm], [p_time + recover_time + transition_time, -p_comm], [p_time + recover_time + transition_time, 0.0], ], # 
-        "3" : [ [0.0, 0.0], [t_zero, 0.0], [t_zero, 0.0], [p_time, 2.0*p_comm], [p_time, p_tr_deg], ], # [p_time2, p_tr_deg ], [p_time2, p_comm], [p_time3, p_comm], [p_time3, p_tr_deg2] ], # [p_time + recover_time, p_tr_deg], [p_time + recover_time, -p_comm], [p_time + recover_time + transition_time, -p_comm], [p_time + recover_time + transition_time, 0.0], ], # 
-        "4" : [ [0.0, 0.0], [t_zero, 0.0], [t_zero,    0.0], [p_time,    0.0], [p_time, q_tr_deg], ], # [p_time2, q_tr_deg ], [p_time2,    0.0], [p_time3,    0.0], [p_time3, q_tr_deg2] ], # [p_time + recover_time, q_tr_deg], [p_time + recover_time, -   0.0], [p_time + recover_time + transition_time, -   0.0], [p_time + recover_time + transition_time, 0.0], ], # 
-        # "5" : [ [0.0, 0.0], [t_zero, 0.0], [t_zero, r_comm], [p_time, r_comm], [p_time, r_tr_deg], ], # [p_time2, r_tr_deg ], [p_time2, r_comm], [p_time3, r_comm], [p_time3, r_tr_deg2] ], # [p_time + recover_time, r_tr_deg], [p_time + recover_time, -r_comm], [p_time + recover_time + transition_time, -r_comm], [p_time + recover_time + transition_time, 0.0], ], # 
-        "5" : [ [0.0, 0.0], [t_zero, 0.0], [t_zero, 0.0], [p_time, 2.0*r_comm], [p_time, r_tr_deg], ], # [p_time2, r_tr_deg ], [p_time2, r_comm], [p_time3, r_comm], [p_time3, r_tr_deg2] ], # [p_time + recover_time, r_tr_deg], [p_time + recover_time, -r_comm], [p_time + recover_time + transition_time, -r_comm], [p_time + recover_time + transition_time, 0.0], ], # 
         "sct_on_5" : False
     }
-    run_bire_fs["track_check_time"] = run_bire_fs["final_time"] = tf # 200.0 # 10.0 # 
+    #
+    if   signal_type == "step":
+        p_sig = [ [t_start, 0.0], [t_start, p_roll], [t__end, p_roll], [t__end, p_tr_deg], ]
+        q_sig = [ [t__end, 0.0], [t__end, q_tr_deg], ]
+        r_sig = [ [t_start, 0.0], [t_start, r_roll], [t__end, r_roll], [t__end, r_tr_deg], ]
+    elif signal_type == "triangle":
+        t__mid = t_start + transition_time/2.0
+        p_sig = [ [t_start, 0.0], [t__mid, p_roll*2.0], [t__end, 0.0], [t__end, p_tr_deg], ]
+        q_sig = [ [t__mid, 0.0], [t__end, q_tr_deg], ]
+        r_sig = [ [t_start, 0.0], [t__mid, r_roll*2.0], [t__end, 0.0], [t__end, r_tr_deg], ]
+    elif signal_type == "1-cosine":
+        n_points = 101
+        t_tran = np.linspace(t_start,t__end,n_points)
+        onemcos = 1.0 - cos(2.0*pi/transition_time*(t_tran-t_start))
+        #
+        t__mid = t_start + transition_time/2.0
+        n_points = 51
+        t_tranq = np.linspace(t__mid,t__end,n_points)
+        onemcosq = (1.0 - cos(2.0*pi/transition_time*(t_tranq-t__mid)))/2.0
+        #
+        p_sig = np.vstack((t_tran,p_roll*onemcos)).T.tolist() + [[t__end, p_tr_deg], ]
+        q_sig = np.vstack((t_tranq,q_tr_deg*onemcosq)).T.tolist()
+        r_sig = np.vstack((t_tran,r_roll*onemcos)).T.tolist() + [[t__end, r_tr_deg], ]
+    elif signal_type == "1-cosine_smoother":
+        n_points = 101
+        t_tran = np.linspace(t_start,t__end,n_points)
+        onemcos = 1.0 - cos(2.0*pi/transition_time*(t_tran-t_start))
+        #
+        t__mid = t_start + transition_time/2.0
+        n_pointsq = int((n_points-1)/2)
+        t_tranq = np.linspace(t__mid,t__end,n_pointsq)
+        onemcosq = (1.0 - cos(2.0*pi/transition_time*(t_tranq-t__mid)))/2.0
+        #
+        p_signal = p_roll*onemcos
+        p_signal[n_points-n_pointsq:] += p_tr_deg*onemcosq
+        r_signal = r_roll*onemcos
+        r_signal[n_points-n_pointsq:] += r_tr_deg*onemcosq
+        #
+        p_sig = np.vstack((t_tran,p_signal)).T.tolist()
+        q_sig = np.vstack((t_tranq,q_tr_deg*onemcosq)).T.tolist()
+        r_sig = np.vstack((t_tran,r_signal)).T.tolist()
+    elif signal_type == "quartic_bump":
+        phi_0 = 0.0
+        w_0   = 0.0
+        w_f   = 0.0 # p_wind
+        dw_0  = 0.0
+        dw_f  = 0.0
+        T = transition_time
+        # calcs
+        M = np.array([
+            [T**2.,T**3.,T**4.],
+            [2.*T,3.*T**2.,4.*T**3.],
+            [T**3./3.,T**4./4.,T**5./5.]
+        ])
+        E = np.array([w_f-w_0-dw_0*T,dw_f-dw_0,phi__deg-phi_0-w_0*T-dw_0*T**2./2.])
+        X = np.matmul(np.linalg.inv(M),E)
+        # signal
+        n_points = 101
+        ts = np.linspace(0.0,transition_time,n_points)
+        p_tran = w_0 + dw_0*ts + X[0]*ts**2. + X[1]*ts**3. + X[2]*ts**4.
+        print("int =",w_0*T + dw_0*T**2./2. + X[0]*T**3./3. + X[1]*T**4./4. + X[2]*T**5./5.)
+        plt.plot(ts,p_tran)
+        plt.show()
+        # q calcs
+        t__mid = t_start + transition_time/2.0
+        n_points = 51
+        t_tranq = np.linspace(t__mid,t__end,n_points)
+        onemcosq = (1.0 - cos(2.0*pi/transition_time*(t_tranq-t__mid)))/2.0
+        #
+        q_sig = np.vstack((t_tranq,q_tr_deg*onemcosq)).T.tolist()
+
+        #
+        quit()
+        p_sig = [[t_start, 0.0],[t__end, p_tr_deg], ]
+        q_sig = [[t_start, 0.0],[t__end, q_tr_deg], ]
+        r_sig = [[t_start, 0.0],[t__end, r_tr_deg], ]
+    # create signal
+    bire_fs_dict["reference"]["3"] = p_sig
+    bire_fs_dict["reference"]["4"] = q_sig
+    bire_fs_dict["reference"]["5"] = r_sig
+    #
+    tf = 10.0 # 600.0 # 60.0 # 20.0 # 5.0 # 16.0 # 2.50 # 4.90 # 20.0 # 
+    ###########################################################################
+    run_bire_fs["track_check_time"] = run_bire_fs["final_time"] = tf
     # bire_fs_dict["simulation"]["include_stall"] = False
     # bire_fs_dict["simulation"]["include_compressibility"] = False
     bire_fs_dict["simulation"]["integrator"] = "rk4"

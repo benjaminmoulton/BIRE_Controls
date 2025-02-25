@@ -464,6 +464,43 @@ class Aircraft:
         
         self.ref_data_xp = xp
         self.ref_data_fp = fp
+
+        # plot p,q,r signals from 0 to 10 sec
+        t = np.linspace(0.0,3.0,1000)
+        p = np.rad2deg([self.r_ints[3](3,ti) for ti in t])
+        q = np.rad2deg([self.r_ints[4](4,ti) for ti in t])
+        r = np.rad2deg([self.r_ints[5](5,ti) for ti in t])
+        plt.plot(t,p/np.max(p),label="$p_{ref}$")
+        plt.plot(t,q/np.max(q),label="$q_{ref}$")
+        plt.plot(t,r/np.max(r),label="$r_{ref}$")
+        plt.xlabel("Time ($t$), sec")
+        plt.ylabel("Reference rate / max reference, deg/s")
+        plt.legend()
+        plt.tight_layout()
+        plt.show()
+        quit()
+
+        # store reference signal derivative
+        self.dr_ints = []
+        dxp = []
+        dfp = []
+        for i in range(len(self.r_ints)):
+            # define derivative
+            dxpi = []; dfpi = []
+            for j in range(len(fp[i])-1):
+                if (xp[i][j+1] - xp[i][j]) != 0.0:
+                    der = (fp[i][j+1] - fp[i][j])/(xp[i][j+1] - xp[i][j])
+                else:
+                    der = 0.0
+                dxpi += [xp[i][j],xp[i][j+1]]
+                dfpi += [der,der]
+            # hold der at zero at end
+            dxpi += [xp[i][-1]]
+            dfpi += [0.0]
+            dxp.append(dxpi)
+            dfp.append(dfpi)
+            dref = lambda k,t_i : np.interp(t_i,dxp[k],dfp[k])
+            self.dr_ints.append(dref)
         
         # gust parameters
         gust = input_dict.get("gust",{})
@@ -1251,10 +1288,12 @@ class Aircraft:
 
         # 2nd order
         ## INTSTATE
+        w_tau = self.w_tau # 20.202 # self._throttle_gain(x[15+q])/self.z_tau # 
+        z_tau = self.z_tau # self._throttle_gain(x[15+q])/self.w_tau # 
         ddda = -2.*self.z_da *self.w_da *dda + self.w_da **2.*(u[0] - x[12+q])
         ddde = -2.*self.z_de *self.w_de *dde + self.w_de **2.*(u[1] - x[13+q])
         dddr = -2.*self.z_dr *self.w_dr *ddr + self.w_dr **2.*(u[2] - x[14+q])
-        ddta = -2.*self.z_tau*self.w_tau*dta + self.w_tau**2.*(u[3] - x[15+q])
+        ddta = -2.*     z_tau*     w_tau*dta +      w_tau**2.*(u[3] - x[15+q])
 
         # limit accelerations
         ddda,ddde,dddr,ddta = self._limit_input_accelerations(
@@ -1335,6 +1374,11 @@ class Aircraft:
     def _get_reference(self,t):
         r = np.array([self.r_ints[i](i,t) for i in range(len(self.r_ints))])
         return r
+
+
+    def _get_reference_derivative(self,t):
+        dr = np.array([self.dr_ints[i](i,t) for i in range(len(self.dr_ints))])
+        return dr
 
 
     def _get_control(self,t,x,is_controlled=True,given_control=False,u="o",
@@ -1485,6 +1529,7 @@ class Aircraft:
         PIc = - self.kVp*eV - self.kVi*VI
         tcom = self.u_trim[3] \
             + 1./self.B_Vdot*(- self.A_Vdot*eV - self.A_Vdot*Vref + PIc) # + zcon
+        # tcom = self.u_trim[3]
         return tcom
 
 
@@ -3973,11 +4018,11 @@ class Aircraft:
                 ctrl_axs[2].set_ylim(ctrl_axs[2].get_ylim())
                 ctrl_axs[3].set_ylim(ctrl_axs[3].get_ylim())
             surf_axs   .plot(tarr, ctrl[0],c=c,ls= "-",
-                label=(i==0)*r"$\delta_a$"       + "")
+                label=(i==0)*(r"$\delta_a$"       + ""))
             surf_axs   .plot(tarr, ctrl[1],c=c,ls="--",
-                label=(i==0)*r"$\delta_"+de+r"$" + "")
+                label=(i==0)*(r"$\delta_"+de+r"$" + ""))
             surf_axs   .plot(tarr, ctrl[2],c=c,ls="-.",
-                label=(i==0)*r"$\delta_"+dr+r"$" + "")
+                label=(i==0)*(r"$\delta_"+dr+r"$" + ""))
             if i==2:
                 ctrl_axs[0].legend()
             if i==0:
@@ -4134,14 +4179,14 @@ class Aircraft:
         udot_axs[3].plot(tarr, udot[3],c=c,ls="-")
         ## limits ##
         if self.order >= 1 and self.bool_limit_input_rates and self.bool_plot_limit_inputs:
-            udot_axs[0].plot(tarr,zrs+np.rad2deg(self.min_dadot),scaley=False,c="0.25",ls="--")
-            udot_axs[0].plot(tarr,zrs+np.rad2deg(self.max_dadot),scaley=False,c="0.25",ls="--")
-            udot_axs[1].plot(tarr,zrs+np.rad2deg(self.min_dedot),scaley=False,c="0.25",ls="--")
-            udot_axs[1].plot(tarr,zrs+np.rad2deg(self.max_dedot),scaley=False,c="0.25",ls="--")
-            udot_axs[2].plot(tarr,zrs+np.rad2deg(self.min_drdot),scaley=False,c="0.25",ls="--")
-            udot_axs[2].plot(tarr,zrs+np.rad2deg(self.max_drdot),scaley=False,c="0.25",ls="--")
-            udot_axs[3].plot(tarr,zrs+self.min_taudot,scaley=False,c="0.25",ls="--")
-            udot_axs[3].plot(tarr,zrs+self.max_taudot,scaley=False,c="0.25",ls="--")
+            udot_axs[0].plot(tarr,zrs+np.rad2deg(self.min_dadot),c="0.25",ls="--")
+            udot_axs[0].plot(tarr,zrs+np.rad2deg(self.max_dadot),c="0.25",ls="--")
+            udot_axs[1].plot(tarr,zrs+np.rad2deg(self.min_dedot),c="0.25",ls="--")
+            udot_axs[1].plot(tarr,zrs+np.rad2deg(self.max_dedot),c="0.25",ls="--")
+            udot_axs[2].plot(tarr,zrs+np.rad2deg(self.min_drdot),c="0.25",ls="--")
+            udot_axs[2].plot(tarr,zrs+np.rad2deg(self.max_drdot),c="0.25",ls="--")
+            udot_axs[3].plot(tarr,zrs+self.min_taudot,c="0.25",ls="--")
+            udot_axs[3].plot(tarr,zrs+self.max_taudot,c="0.25",ls="--")
             if limits_affect_view:
                 udot_axs[0].set_ylim((1.1*np.rad2deg(self.min_dadot),\
                     1.1*np.rad2deg(self.max_dadot)))
