@@ -79,6 +79,7 @@ class Aircraft:
         
         self.fldr_prfx = folder_prefix
         self.tracking = False
+        self.gain_scheduling = False
         self.additional_states = 0
 
         # V tau controller initialize terms, only used with tracking contrls
@@ -464,21 +465,6 @@ class Aircraft:
         
         self.ref_data_xp = xp
         self.ref_data_fp = fp
-
-        # plot p,q,r signals from 0 to 10 sec
-        t = np.linspace(0.0,3.0,1000)
-        p = np.rad2deg([self.r_ints[3](3,ti) for ti in t])
-        q = np.rad2deg([self.r_ints[4](4,ti) for ti in t])
-        r = np.rad2deg([self.r_ints[5](5,ti) for ti in t])
-        plt.plot(t,p/np.max(p),label="$p_{ref}$")
-        plt.plot(t,q/np.max(q),label="$q_{ref}$")
-        plt.plot(t,r/np.max(r),label="$r_{ref}$")
-        plt.xlabel("Time ($t$), sec")
-        plt.ylabel("Reference rate / max reference, deg/s")
-        plt.legend()
-        plt.tight_layout()
-        plt.show()
-        quit()
 
         # store reference signal derivative
         self.dr_ints = []
@@ -1064,18 +1050,28 @@ class Aircraft:
         u_trim_deg[0:3] = np.rad2deg(u_trim_deg[0:3])
         if not self.use_quaternions:
             x_trim = x_trim_euler*1.
+        # aero
+        a = atan2(x_trim[2],x_trim[0])
+        V = (x_trim[0]*x_trim[0] + x_trim[1]*x_trim[1] + x_trim[2]*x_trim[2])**0.5
+        b = asin(x_trim[1]/V)
+        _,_,_,_,_,sos = self.stdatm(-x_trim[8])
+        M = V / sos
+        aero_trim = np.array([V,M,a,b])
+        
         if not(run2):
             self.u_trim = u_trim
             self.x_trim = x_trim
             self.x_trim_euler = x_trim_euler
             self.x_trim_euler_deg = x_trim_euler_deg
             self.u_trim_deg = u_trim_deg
+            self.aero_trim = aero_trim
         else:
             self.u_trim2 = u_trim
             self.x_trim2 = x_trim
             self.x_trim2_euler = x_trim_euler
             self.x_trim2_euler_deg = x_trim_euler_deg
             self.u_trim2_deg = u_trim_deg
+            self.aero_trim2 = aero_trim
 
         # if state not given, determine
         if self.state_type == "state":
@@ -1379,6 +1375,71 @@ class Aircraft:
     def _get_reference_derivative(self,t):
         dr = np.array([self.dr_ints[i](i,t) for i in range(len(self.dr_ints))])
         return dr
+
+
+    def _plot_reference(self,file_folder="banana",sub_folders = [""],transparent=True,format="pdf"):
+        # report
+        print("plotting reference signals...")
+
+        # plot params
+        plt.rcParams["font.family"] = "Serif"
+        plt.rcParams["font.size"] = 8.0
+        plt.rcParams["axes.labelsize"] = 8.0
+        plt.rcParams['axes.xmargin'] = 0
+        plt.rcParams['lines.linewidth'] = 0.75 # 1.0
+        plt.rcParams["xtick.minor.visible"] = True
+        plt.rcParams["ytick.minor.visible"] = True
+        plt.rcParams["xtick.direction"] = plt.rcParams["ytick.direction"] = "in"
+        plt.rcParams["xtick.bottom"] = plt.rcParams["xtick.top"] = True
+        plt.rcParams["ytick.left"] = plt.rcParams["ytick.right"] = True
+        plt.rcParams["xtick.major.width"] = plt.rcParams["ytick.major.width"] = 0.75
+        plt.rcParams["xtick.minor.width"] = plt.rcParams["ytick.minor.width"] = 0.75
+        plt.rcParams["xtick.major.size"] = plt.rcParams["ytick.major.size"] = 5.0
+        plt.rcParams["xtick.minor.size"] = plt.rcParams["ytick.minor.size"] = 2.5
+        plt.rcParams["mathtext.fontset"] = "dejavuserif"
+        plt.rcParams['figure.dpi'] = 300.0
+
+        # initialize plots
+        subdict = {
+            "figsize" : (3.25,3.5),
+            "constrained_layout" : True,
+            "sharex" : True
+        }
+        rate_fig, rate_axs = plt.subplots(1,1,**subdict)
+        aero_fig, aero_axs = plt.subplots(1,1,**subdict)
+        
+        # plot V,a,b signals from 0 to tf
+        t = np.linspace(0.0,self.tf,1000)
+        V =   np.array([self.r_ints[0](0,ti) for ti in t]) - self.V0
+        a = np.rad2deg([self.r_ints[1](1,ti) for ti in t])
+        b = np.rad2deg([self.r_ints[2](2,ti) for ti in t])
+        aero_axs.plot(t,V,c="k",ls= "-",label="$V_{ref} - V_{tr}$")
+        aero_axs.plot(t,a,c="k",ls="--",label=r"$\alpha_{ref}$")
+        aero_axs.plot(t,b,c="k",ls="-.",label=r"$\beta_{ref}$")
+        aero_axs.set_xlabel("Time ($t$), sec")
+        aero_axs.set_ylabel("Reference velocity and aerodynamic angles, ft/s or deg")
+        aero_axs.legend()
+
+        # plot p,q,r signals from 0 to tf
+        p = np.rad2deg([self.r_ints[3](3,ti) for ti in t])
+        q = np.rad2deg([self.r_ints[4](4,ti) for ti in t])
+        r = np.rad2deg([self.r_ints[5](5,ti) for ti in t])
+        rate_axs.plot(t,p,c="k",ls= "-",label="$p_{ref}$")
+        rate_axs.plot(t,q,c="k",ls="--",label="$q_{ref}$")
+        rate_axs.plot(t,r,c="k",ls="-.",label="$r_{ref}$")
+        rate_axs.set_xlabel("Time ($t$), sec")
+        rate_axs.set_ylabel("Reference rate, deg/s")
+        rate_axs.legend()
+
+        name = "bire_" if self.is_BIRE else "base_"
+
+        # save
+        if file_folder != "banana":
+            savedict = dict(transparent=transparent,format=format,dpi=300.0)
+            for subf in sub_folders:
+                aero_fig.savefig(file_folder+subf+"/"+name+"reference_aero."+format,**savedict)
+                rate_fig.savefig(file_folder+subf+"/"+name+"reference_rates."+format,**savedict)
+        plt.close("all")
 
 
     def _get_control(self,t,x,is_controlled=True,given_control=False,u="o",
@@ -2763,7 +2824,7 @@ class Aircraft:
 
 
     def _report_simulation_deltas(self,
-        ts:str|np.ndarray="o",xs:str|np.ndarray="o",
+        ts:str|np.ndarray="o",xs:str|np.ndarray="o",Vs:str|np.ndarray="o",
         us:str|np.ndarray="o",rs:str|np.ndarray="o",
         shift_to_trim:bool=True,file_folder:str="."):
         # pull in values or use member saved info
@@ -2771,6 +2832,8 @@ class Aircraft:
             ts = self.tarr
         if isinstance(xs,str):
             xs = self.xarr
+        if isinstance(Vs,str):
+            Vs = self.aerox
         if isinstance(us,str):
             us = self.uarr 
         if isinstance(rs,str):
@@ -2779,6 +2842,7 @@ class Aircraft:
         if shift_to_trim:
             xs = xs - self.x_trim_euler[:,None]
             us = us - self.u_trim[:,None]
+            Vs = Vs - self.aero_trim[:,None]
         # turbulence
         if self.has_turbulence:
             turb_interps = [
@@ -2849,24 +2913,31 @@ class Aircraft:
             "dB"*self.is_BIRE+"dr"*(not(self.is_BIRE))+" cmd","tau cmd"
         ]
         control_units = ["deg"]*3 + ["p-u"]
+        Vab_names = int_names[0:3]*1
+        Vab_units = ["ft/s"] + ["deg"]*2
 
         # report
         # start
         n = 25
-        nadd = 16
+        nadd = 13
         print("-"*(n*2+nadd))
         print("-"*(n*2+nadd))
         # states
-        print("-"*n + "   max states   " + "-"*n)
+        track_or_stab = "track" if self.tracking else "stblz"
+        print("-"*n + "   max " + track_or_stab + " states   " + "-"*n)
         for i in range(min(xs.shape[0] - self.additional_states,len(state_names))):
             vals = xs[i,:]
             name = state_names[i]
             unit = state_units[i]
             max_val = np.max(np.abs(vals))
             print("max{:^12s}= {:> 9.3f} {:<5s}".format("\u0394"+name,max_val,\
-                unit))
+                unit),end="")
+            if i in [0,1,2]:
+                print()
+            else:
+                print()
         # actuator rates and accelerations
-        print("-"*n + " max actn rates " + "-"*n)
+        print("-"*n + "    max actn rates    " + "-"*n)
         for i in range(us.shape[0]):
             vals = _dxus[i,:]
             name = state_names[i+12]
@@ -2874,7 +2945,7 @@ class Aircraft:
             max_val = np.max(np.abs(vals))
             print("max{:^12s}= {:> 9.3f} {:<5s}".format("\u0394"+name+" dot",\
                 max_val,unit+"/s"))
-        print("-"*n + " max actn accel " + "-"*n)
+        print("-"*n + "    max actn accel    " + "-"*n)
         for i in range(us.shape[0]):
             vals = ddxus[i,:]
             name = state_names[i+12]
@@ -2883,7 +2954,7 @@ class Aircraft:
             print("max{:^12s}= {:> 9.3f} {:<5s}".format("\u0394"+name+" ddot",\
                 max_val,unit+"/s/s"))
         # controls
-        print("-"*n + "  max controls  " + "-"*n)
+        print("-"*n + "     max controls     " + "-"*n)
         for i in range(us.shape[0]):
             vals = us[i,:]
             name = control_names[i]
@@ -2896,7 +2967,7 @@ class Aircraft:
                 min_val,unit))
         # turbulence
         if self.has_turbulence:
-            print("-"*n + " max turbulence " + "-"*n)
+            print("-"*n + "    max turbulence    " + "-"*n)
             for i in range(6):
                 turb_fun = turb_interps[i]
                 vals = [turb_fun(tk) for tk in ts]
@@ -2907,7 +2978,7 @@ class Aircraft:
                     max_val,unit))
         # tracking
         if self.tracking:
-            print("-"*n + " error response " + "-"*n)
+            print("-"*n + "    error response    " + "-"*n)
             # calc signal
             info_txt = ("   {:<7s}  & {:^7s} & {:^7s}" + \
                     " & {:^10s} \\\\ \n").format(" ","Trs [s]","Tst [s]","%OS")
@@ -4466,6 +4537,7 @@ class GainSchedulingAircraft(Aircraft):
 
         # invoke init of parent
         Aircraft.__init__(self,input_dict,folder_prefix = "stblz")
+        self.gain_scheduling = True
     
     def _get_control(self,t,x,is_controlled=True,given_control=False,u="o",
         force_control_to_inputs=False):
@@ -5067,6 +5139,14 @@ def run_single_simulation(filename,rtdst_1sg=[20.,10.,5.],
                 mkdir(full__zm_folder)
     plot_dict["plotting_directory"] = file_folder + "/"
 
+    # reference signal plot
+    if aircraft.tracking:
+        sub_folders = [""]
+        sub_folders += ["/full"] if plot_dict["plot_full"] else []
+        sub_folders += ["/delta"] if plot_dict["plot_delta"] else []
+        aircraft._plot_reference(file_folder,sub_folders,
+            plot_dict["transparent"],plot_dict["format"])
+
     # build controller
     aircraft._build_controller(report=True,save_matrices=save_data,
         filename="matrices",mrrr=mrrr,
@@ -5119,6 +5199,48 @@ def run_single_simulation(filename,rtdst_1sg=[20.,10.,5.],
         include_altitude_derivatives=include_altitude_derivatives,
         skip_reporting=True,run_freq=False)
     aircraft.K_slf = Lin_Model.K*1.
+    #
+    # report by input most affecting state outputs
+    if aircraft.gain_scheduling or not(aircraft.tracking):
+        sts = ["Vxb","Vyb","Vzb","p","q","r","zf","phi","tht"]
+        cts = ["da","de","dB","tau"]
+        for i in range(gain_steps):
+            print("gain step {:> 3d}".format(i))
+            for k in range(len(cts)):
+                oom = np.floor(np.log10(abs(K_trs[i][k])))
+                oomax = np.max(oom)
+                oomsort_i = np.flip(np.argsort(np.abs(K_trs[i][k])))
+                #
+                print("    {:<3s} -> ".format(cts[k]),end="")
+                for j in range(len(sts)):
+                    if oom[oomsort_i[j]] == oomax:
+                        print(sts[oomsort_i[j]],end=", ")
+                print("-> ",end="")
+                for j in range(len(sts)):
+                    if oom[oomsort_i[j]] == oomax - 1:
+                        print(sts[oomsort_i[j]],end=", ")
+                print("-> ",end="")
+                for j in range(len(sts)):
+                    if oom[oomsort_i[j]] == oomax - 2:
+                        print(sts[oomsort_i[j]],end=", ")
+                print()
+    
+    # # bmatrix with zeros
+    # print(aircraft.x_tr_euler[0])
+    # u_de0 = aircraft.u_tr[0]*1.0
+    # u_de0[1] = 0.0
+    # _,Lin_Model = aircraft._build_controller(
+    #         aircraft.x_tr_euler[0],u_de0,
+    #         report=False,save_matrices=False,
+    #         mrrr=mrrr,mrrc=mrrc,drop_actrs=True,
+    #         include_stall_derivatives=include_stall_derivatives,
+    #         include_altitude_derivatives=include_altitude_derivatives,
+    #         skip_reporting=True,run_freq=False)
+    # Bde0 = ((Lin_Model.B_min*1.0)[3:6,:])[:,0:3]
+    # Bcomp = ((B_s[0])[3:6,:])[:,0:3]
+    # print("B no de0 =\n",Bcomp,"\n",np.linalg.cond(Bcomp),"\n")
+    # print("B  w de0 =\n", Bde0,"\n",np.linalg.cond( Bde0),"\n")
+    # quit()
 
     # reopen matrices file and save trim states, control, lin models, and gains
     if trim_steps > 2:

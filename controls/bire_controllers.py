@@ -104,6 +104,7 @@ class NonlinearDynamicInversionAircraft(Aircraft):
                     x_euler[9:12] = quat_2_euler(euler_2_quat(x_euler[9:12]))
                 #
                 ref = self._get_reference(t)[self.Lin_Model.Cslice]
+                refdot = self._get_reference_derivative(t)[self.Lin_Model.Cslice]
                 # per dave, full stick should be 270 deg/s in aileron
                 # 120 deg/s in elevator
                 # 60 deg/s in rudder
@@ -284,7 +285,7 @@ class NonlinearDynamicInversionAircraft(Aircraft):
                     Fy * self.cgshift[2] - Fz * self.cgshift[1],
                     Fz * self.cgshift[0] - Fx * self.cgshift[2],
                     Fx * self.cgshift[1] - Fy * self.cgshift[0]])
-                z3 = np.matmul(Iinv,Mxyz + Sigma) # omega dot
+                z3 = np.matmul(Iinv,Mxyz + Sigma) # + refdot - refdot # omega dot
                 z2 = x_euler[self.Lin_Model.Cslice] - ref
                 z1 = np.array([epI,eqI,erI])
                 delta = x_euler[12:15]*1.
@@ -408,7 +409,7 @@ class NonlinearDynamicInversionAircraft(Aircraft):
                         - np.matmul(self.Lin_Model.KI,eI)
                     
                     delta = np.matmul(Binv,
-                                      - np.matmul(A,e) - np.matmul(A,dref) + v)
+                                      - np.matmul(A,e) - np.matmul(A,dref) + refdot + v)
                     vcom = delta + self.u_trim[0:3]
                     ## # ## # ## # ## # ## # ## # ## # ## # ## #
                 else:
@@ -567,6 +568,7 @@ class DynamicInversionAircraft(Aircraft):
                     x_euler[9:12] = quat_2_euler(euler_2_quat(x_euler[9:12]))
                 #
                 ref = self._get_reference(t)[self.Lin_Model.Cslice]
+                refdot = self._get_reference_derivative(t)[self.Lin_Model.Cslice]
                 # per dave, full stick should be 270 deg/s in aileron
                 # 120 deg/s in elevator
                 # 60 deg/s in rudder
@@ -637,9 +639,9 @@ class DynamicInversionAircraft(Aircraft):
                         - np.matmul(self.KI_DI,eI)
                 
                 if self.LQDI:
-                    delta = np.matmul(self.Lin_Model.nBiA_min,dref) + v
+                    delta = np.matmul(self.Lin_Model.nBiA_min,dref) + refdot + v
                 else:
-                    delta = np.matmul(Binv, - np.matmul(A,e) - np.matmul(A,dref) + v)
+                    delta = np.matmul(Binv, - np.matmul(A,e) - np.matmul(A,dref) + refdot + v)
                 #
                 # tcom = self.u_trim[3]
                 tcom = self._get_V_tau_control(t,x_euler)
@@ -2636,6 +2638,7 @@ class ITPIAircraft(Aircraft):
                 #
                 ref = self._get_reference(t)[self.Lin_Model.Cslice]
                 ref = ref - self.x_trim2_euler[self.xPi_eul[1:]]
+                refdot = self._get_reference_derivative(t)[self.Lin_Model.Cslice]
                 # per dave, full stick should be 270 deg/s in aileron
                 # 120 deg/s in elevator
                 # 60 deg/s in rudder
@@ -2704,7 +2707,7 @@ class ITPIAircraft(Aircraft):
                     self.kP = mm(mm(2.0*self.z,self.w) + A,Binv)
                     self.kI = mm(mm(self.w,self.w),Binv)
                 # # # # # # # # # 
-                uff = - mm(self.Binv,mm(self.A,ref)) #- mm(self.Binv,self.Abeta*(b-b_trim)) #  *0.0 # 
+                uff = - mm(self.Binv,mm(self.A,ref)) + refdot #- mm(self.Binv,self.Abeta*(b-b_trim)) #  *0.0 # 
                 delta = - mm(self.kP,e) - mm(self.kI,eI) + uff + self.altu_trim
                 da,dm,dn = delta
                 # dm = -(dm - self.altu_trim[1]) + self.altu_trim[1]
@@ -3227,8 +3230,10 @@ class LinearQuadraticRegulatorDynamicInversionAircraft(Aircraft):
                 eI = np.array([epI,eqI,erI])
                 x_trim = self.x_trim
                 dref = ref - x_trim[3:6]
-                dref = np.concatenate(([0.0],dref))
-                refdot = dref*0.0
+                dref = np.concatenate(([self._get_reference(t)[2]],dref))
+                refdot = np.concatenate((
+                    [self._get_reference_derivative(t)[2]],
+                    self._get_reference_derivative(t)[self.Lin_Model.Cslice]))
                 e = w - ref
                 self.b_counter += 1
                 bI = self.b_prev + (b - self.b_prev)*self.dt
@@ -3830,7 +3835,8 @@ if __name__ == "__main__":
         "mrrr" : [0,1,2,6,7,8,9,10,11],
         "mrrc" : [3],
         "get_aero_FM" : True,
-        "include_stall_derivatives" : False, # True, # 
+        "include_stall_derivatives" : True, # False, # 
+        "include_altitude_derivatives" : True, # False, # 
         "skip_simulation" : False, # True, # 
         "skip_video" : True, # False, # 
         "plot_ul_bounds" : False,
@@ -4021,7 +4027,7 @@ if __name__ == "__main__":
     # # #
     # # # 
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-    phi__deg = 10.0 # 15.0 # 20.0 # # 25.0 # 30.0 # 35.0 # 40.0 # 50.0 # 60.0 #  
+    phi__deg = 10.0 # 30.0 # 20.0 # 40.0 # 15.0 # 25.0 # 35.0 # 50.0 # 60.0 #  
     tail = "0" # "+" # "-" # 
     # left_roll = True # False # 
     if   phi__deg == 10.0: # 10 deg bank fullscale BIRE
@@ -4081,7 +4087,7 @@ if __name__ == "__main__":
     ###########################################################################
     t_start = 0.0 # 1.0 # 
     transition_time = 2.0 # 1.0 # 4.0 # 12.0 # 5.0 # 
-    signal_type = "quartic_bump" # "1-cosine_smoother" # "1-cosine" # "triangle" # "step" # 
+    signal_type = "step" # "1-cosine_cont" # "triangle_cont" # "triangle" # "1-cosine" # "quartic_bump" # 
     # calculations
     p_wind = phi__deg/transition_time
     r_roll = p_wind*np.sin(a_tr_rad) # 
@@ -4102,20 +4108,25 @@ if __name__ == "__main__":
         p_sig = [ [t_start, 0.0], [t__mid, p_roll*2.0], [t__end, 0.0], [t__end, p_tr_deg], ]
         q_sig = [ [t__mid, 0.0], [t__end, q_tr_deg], ]
         r_sig = [ [t_start, 0.0], [t__mid, r_roll*2.0], [t__end, 0.0], [t__end, r_tr_deg], ]
+    elif signal_type == "triangle_cont": # continuous
+        t__mid = t_start + transition_time/2.0
+        p_sig = [ [t_start, 0.0], [t__mid, p_roll*2.0], [t__end, p_tr_deg], ]
+        q_sig = [ [t__mid, 0.0], [t__end, q_tr_deg], ]
+        r_sig = [ [t_start, 0.0], [t__mid, r_roll*2.0], [t__end, r_tr_deg], ]
     elif signal_type == "1-cosine":
         n_points = 101
         t_tran = np.linspace(t_start,t__end,n_points)
         onemcos = 1.0 - cos(2.0*pi/transition_time*(t_tran-t_start))
         #
         t__mid = t_start + transition_time/2.0
-        n_points = 51
+        n_points = int((n_points-1)/2)
         t_tranq = np.linspace(t__mid,t__end,n_points)
         onemcosq = (1.0 - cos(2.0*pi/transition_time*(t_tranq-t__mid)))/2.0
         #
         p_sig = np.vstack((t_tran,p_roll*onemcos)).T.tolist() + [[t__end, p_tr_deg], ]
         q_sig = np.vstack((t_tranq,q_tr_deg*onemcosq)).T.tolist()
         r_sig = np.vstack((t_tran,r_roll*onemcos)).T.tolist() + [[t__end, r_tr_deg], ]
-    elif signal_type == "1-cosine_smoother":
+    elif signal_type == "1-cosine_cont": # continuous
         n_points = 101
         t_tran = np.linspace(t_start,t__end,n_points)
         onemcos = 1.0 - cos(2.0*pi/transition_time*(t_tran-t_start))
@@ -4152,22 +4163,22 @@ if __name__ == "__main__":
         n_points = 101
         ts = np.linspace(0.0,transition_time,n_points)
         p_tran = w_0 + dw_0*ts + X[0]*ts**2. + X[1]*ts**3. + X[2]*ts**4.
-        print("int =",w_0*T + dw_0*T**2./2. + X[0]*T**3./3. + X[1]*T**4./4. + X[2]*T**5./5.)
-        plt.plot(ts,p_tran)
-        plt.show()
         # q calcs
         t__mid = t_start + transition_time/2.0
-        n_points = 51
-        t_tranq = np.linspace(t__mid,t__end,n_points)
+        n_pointsq = int((n_points-1)/2)
+        t_tranq = np.linspace(t__mid,t__end,n_pointsq)
         onemcosq = (1.0 - cos(2.0*pi/transition_time*(t_tranq-t__mid)))/2.0
         #
-        q_sig = np.vstack((t_tranq,q_tr_deg*onemcosq)).T.tolist()
-
+        p_signal = p_tran*np.cos(a_tr_rad)
+        p_signal[n_points-n_pointsq:] += p_tr_deg*onemcosq
+        r_signal = p_tran*np.sin(a_tr_rad)
+        r_signal[n_points-n_pointsq:] += r_tr_deg*onemcosq
         #
-        quit()
-        p_sig = [[t_start, 0.0],[t__end, p_tr_deg], ]
-        q_sig = [[t_start, 0.0],[t__end, q_tr_deg], ]
-        r_sig = [[t_start, 0.0],[t__end, r_tr_deg], ]
+        ts += t_start
+        #
+        p_sig = np.vstack((ts,p_signal)).T.tolist()
+        q_sig = np.vstack((t_tranq,q_tr_deg*onemcosq)).T.tolist()
+        r_sig = np.vstack((ts,r_signal)).T.tolist()
     # create signal
     bire_fs_dict["reference"]["3"] = p_sig
     bire_fs_dict["reference"]["4"] = q_sig
