@@ -79,6 +79,7 @@ class Aircraft:
         
         self.fldr_prfx = folder_prefix
         self.tracking = False
+        self.uses_linear_control = True
         self.gain_scheduling = False
         self.additional_states = 0
 
@@ -2333,6 +2334,8 @@ class Aircraft:
                 self.Lin_Model2 = Lin_Model
             else:
                 self.Lin_Model = Lin_Model
+                self.A_model = self.Lin_Model.A_min*1.0
+                self.B_model = self.Lin_Model.B_min*1.0
             
             return repstr
         else:
@@ -2826,7 +2829,7 @@ class Aircraft:
     def _report_simulation_deltas(self,
         ts:str|np.ndarray="o",xs:str|np.ndarray="o",Vs:str|np.ndarray="o",
         us:str|np.ndarray="o",rs:str|np.ndarray="o",
-        shift_to_trim:bool=True,file_folder:str="."):
+        shift_to_trim:bool=True,file_folder:str=".",print_at_end=True):
         # pull in values or use member saved info
         if isinstance(ts,str):
             ts = self.tarr
@@ -2843,6 +2846,10 @@ class Aircraft:
             xs = xs - self.x_trim_euler[:,None]
             us = us - self.u_trim[:,None]
             Vs = Vs - self.aero_trim[:,None]
+            rs = rs - self.x_trim_euler[:,None]
+            rs[0] = rs[0] + self.x_trim_euler[0,None] - self.aero_trim[0,None]
+            rs[1] = rs[1] + self.x_trim_euler[1,None] - self.aero_trim[2,None]
+            rs[2] = rs[2] + self.x_trim_euler[2,None] - self.aero_trim[3,None]
         # turbulence
         if self.has_turbulence:
             turb_interps = [
@@ -2854,7 +2861,11 @@ class Aircraft:
                 lambda t : np.rad2deg(self.disturbance_model.Wgr(t))]
         # error for tracking
         if self.tracking:
-            xerr = xs[self.xPi_eul,:] - rs[self.xPi_eul,:]
+            xs_V = xs*1.0
+            xs_V[0,:] = Vs[0,:]*1.0
+            xs_V[1,:] = Vs[2,:]*1.0
+            xs_V[2,:] = Vs[3,:]*1.0
+            xerr = xs_V[self.xPi_eul,:] - rs[self.xPi_eul,:]
         # derivatives
         if   self.order == 0:
             _dxus = np.array([
@@ -2908,77 +2919,94 @@ class Aircraft:
         int_names[2] = r"\beta"
         state_units = ["ft/s"]*3 + ["deg/s"]*3 + ["ft"]*3 + \
             ["deg"]*6 + ["p-u"] + ["deg/s"]*3 + ["p-u/s"]
+        int_units = state_units*1
+        int_units[1] = int_units[2] = "deg"
         control_names = [
             "da cmd","de"+"B"*self.is_BIRE+" cmd",
             "dB"*self.is_BIRE+"dr"*(not(self.is_BIRE))+" cmd","tau cmd"
         ]
         control_units = ["deg"]*3 + ["p-u"]
-        Vab_names = int_names[0:3]*1
-        Vab_units = ["ft/s"] + ["deg"]*2
+        Vab_names = ["V","M","alpha","beta"]
+        Vab_units = ["ft/s"] + [""] + ["deg"]*2
+        counter = 0
 
         # report
+        repstr = ""
         # start
-        n = 25
-        nadd = 13
-        print("-"*(n*2+nadd))
-        print("-"*(n*2+nadd))
+        n = 17 # 27 # 
+        nadd = 16
+        repstr += "-"*(n*2+nadd) + "\n"
+        repstr += "-"*(n*2+nadd) + "\n"
         # states
-        track_or_stab = "track" if self.tracking else "stblz"
-        print("-"*n + "   max " + track_or_stab + " states   " + "-"*n)
-        for i in range(min(xs.shape[0] - self.additional_states,len(state_names))):
+        repstr += "-"*n + "   largest magnt states   " + "-"*n + "\n"
+        states_num = min(xs.shape[0] - self.additional_states,len(state_names))
+        for i in range(states_num):
             vals = xs[i,:]
             name = state_names[i]
             unit = state_units[i]
-            max_val = np.max(np.abs(vals))
-            print("max{:^12s}= {:> 9.3f} {:<5s}".format("\u0394"+name,max_val,\
-                unit),end="")
-            if i in [0,1,2]:
-                print()
-            else:
-                print()
+            max_val = vals[np.argmax(np.abs(vals))]
+            repstr += "mag{:^12s}= {:> 9.3f} {:<5s}".format("\u0394"+name,\
+                max_val,unit)
+            if i >= states_num - 4: # in [0,1,2,3]: # 
+                j = i - states_num + 4
+                vals = Vs[j,:]
+                name = Vab_names[j]
+                unit = Vab_units[j]
+                max_val = vals[np.argmax(np.abs(vals))]
+                repstr += " || mag{:^12s}= {:> 9.3f} {:<5s}".format(\
+                    "\u0394"+name,max_val,unit)
+            elif self.tracking and i in self.xPi_eul:
+                j = counter*1; counter += 1
+                vals = xerr[j,:]
+                name = int_names[i]
+                unit = int_units[i]
+                max_val = vals[np.argmax(np.abs(vals))]
+                repstr += " ** mag{:^12s}= {:> 9.3f} {:<5s}".format(\
+                    "\u0394e"+name,max_val,unit)
+            repstr += "\n"
         # actuator rates and accelerations
-        print("-"*n + "    max actn rates    " + "-"*n)
+        repstr += "-"*n + " largest magnt actn rates " + "-"*n + "\n"
         for i in range(us.shape[0]):
             vals = _dxus[i,:]
             name = state_names[i+12]
             unit = state_units[i+12]
-            max_val = np.max(np.abs(vals))
-            print("max{:^12s}= {:> 9.3f} {:<5s}".format("\u0394"+name+" dot",\
-                max_val,unit+"/s"))
-        print("-"*n + "    max actn accel    " + "-"*n)
+            max_val = vals[np.argmax(np.abs(vals))]
+            repstr += "mag{:^12s}= {:> 9.3f} {:<5s}".format(\
+                "\u0394"+name+" dot",max_val,unit+"/s") + "\n"
+        repstr += "-"*n + " largest magnt actn accel " + "-"*n + "\n"
         for i in range(us.shape[0]):
             vals = ddxus[i,:]
             name = state_names[i+12]
             unit = state_units[i+12]
-            max_val = np.max(np.abs(vals))
-            print("max{:^12s}= {:> 9.3f} {:<5s}".format("\u0394"+name+" ddot",\
-                max_val,unit+"/s/s"))
+            max_val = vals[np.argmax(np.abs(vals))]
+            repstr += "mag{:^12s}= {:> 9.3f} {:<5s}".format(\
+                "\u0394"+name+" ddot",max_val,unit+"/s/s") + "\n"
         # controls
-        print("-"*n + "     max controls     " + "-"*n)
+        repstr += "-"*n + "  largest magnt controls  " + "-"*n + "\n"
         for i in range(us.shape[0]):
             vals = us[i,:]
             name = control_names[i]
             unit = control_units[i]
             max_val = np.max(vals)
             min_val = np.min(vals)
-            print("max{:^12s}= {:> 9.3f} {:<5s}".format("\u0394"+name,max_val,\
-                unit),end="")
-            print(", min{:^12s}= {:> 9.3f} {:<5s}".format("\u0394"+name,\
-                min_val,unit))
+            repstr += "mag{:^12s}= {:> 9.3f} {:<5s}".format("\u0394"+name,\
+                max_val,unit)
+            repstr += ", min{:^12s}= {:> 9.3f} {:<5s}".format("\u0394"+name,\
+                min_val,unit) + "\n"
         # turbulence
         if self.has_turbulence:
-            print("-"*n + "    max turbulence    " + "-"*n)
+            repstr += "-"*n + " largest magnt turbulence " + "-"*n + "\n"
             for i in range(6):
                 turb_fun = turb_interps[i]
                 vals = [turb_fun(tk) for tk in ts]
                 name = state_names[i]
                 unit = state_units[i]
-                max_val = np.max(np.abs(vals))
-                print("max{:^12s}= {:> 9.3f} {:<5s}".format("\u0394"+name,\
-                    max_val,unit))
+                max_val = vals[np.argmax(np.abs(vals))]
+                repstr += "mag{:^12s}= {:> 9.3f} {:<5s}".format("\u0394"+name,\
+                    max_val,unit) + "\n"
         # tracking
         if self.tracking:
-            print("-"*n + "    error response    " + "-"*n)
+            repstr += "-"*n + " error response " + "-"*n + "\n"
             # calc signal
             info_txt = ("   {:<7s}  & {:^7s} & {:^7s}" + \
                     " & {:^10s} \\\\ \n").format(" ","Trs [s]","Tst [s]","%OS")
@@ -3033,16 +3061,19 @@ class Aircraft:
                     " & {:> 7.1f}").format(
                     int_names[self.xPi_eul[i]],tris,tstl,posh*100.0
                     ) + r" \%" + " \\\\ \n"
-            print(info_txt,end="")
+            repstr += info_txt
             # save to file
             with open(file_folder+"/signal_info.txt","w") as f:
                 f.write(info_txt)
                 f.close()
         # ending
-        print("-"*(n*2+nadd))
-        print("-"*(n*2+nadd))
+        repstr += "-"*(n*2+nadd) + "\n"
+        repstr += "-"*(n*2+nadd) + "\n"
 
-        return
+        if print_at_end:
+            print(repstr,end="")
+
+        return repstr
 
 
     def _add_to_delta_x0(self,delta_x0):
@@ -3225,17 +3256,14 @@ class Aircraft:
         duration = current_time() - start
 
         if report_simulation:
+            # report time
             hr = int(duration//3600)
             mn = int(int((duration/3600-hr)*3600)//60)
             sc = float(duration%60)
-            print("finished simulating",end="")
-            print(", duration = {:>02d}:{:>02d}:{:>05.2f}".format(hr,mn,sc))
+            print("\nfinished simulating",end="")
+            print(", duration = {:>02d}:{:>02d}:{:>05.2f}\n".format(hr,mn,sc))
             # print(np.max(self.xarr[6,:]))
             # print(np.min(self.xarr[6,:]))
-        
-        # sim deltas
-        if report_simulation_deltas:
-            self._report_simulation_deltas()
 
         # calculate total velocity and aero angles
         Vxarr = (self.xarr[0]**2. + self.xarr[1]**2. + self.xarr[2]**2.)**0.5
@@ -3273,6 +3301,14 @@ class Aircraft:
         # self.xs_sim[xicnv,:] = np.rad2deg(self.xs_sim[xicnv,:])
         # self.us_sim[uicnv,:] = np.rad2deg(self.us_sim[uicnv,:])
         # ####################################
+
+        # sim deltas
+        if report_simulation_deltas:
+            # report controller
+            repcon = self._final_control_and_model_report()
+
+            # deltas
+            self._report_simulation_deltas()
 
         return self.xarr,self.uarr
 
@@ -4522,6 +4558,42 @@ class Aircraft:
             self._plot_results(plot_deltas=True, percent_zoom=zm_frc,**kwargs)
 
 
+    def _controller_gains_report(self):
+        return report_latex(self.Lin_Model.K,"K",print_report=False)
+
+
+    def _final_control_and_model_report(self,print_at_end=True):
+        # intialize some variables
+        n = 53 if not(self.tracking) else 12
+        nadd = 20
+        filler = "#"
+
+        # header
+        repstr = ""
+        repstr += filler*(n*2+nadd) + "\n"
+        repstr += filler*(n*2+nadd) + "\n"
+        repstr += filler*n + " controller  report " + filler*n + "\n\n"
+
+        # the in-betweens: model
+        if self.uses_linear_control:
+            repstr += report_latex(self.A_model,"A",
+                predecimals=5,align=True,endln=True,print_report=False)
+            repstr += report_latex(self.B_model,"B",
+                align=True,print_report=False)
+        
+        # the in-betweens: control gains
+        repstr += self._controller_gains_report()
+
+        # footer
+        repstr += filler*(n*2+nadd) + "\n"
+        repstr += filler*(n*2+nadd) + "\n"
+        repstr += "\n"
+        
+        if print_at_end:
+            print(repstr,end="")
+
+        return repstr
+
 
 
 class GainSchedulingAircraft(Aircraft):
@@ -4978,6 +5050,7 @@ def run_single_simulation(filename,rtdst_1sg=[20.,10.,5.],
      "phi_guess":aircraft.phi_guess,"u_guess":aircraft.u_guess}
     trim_steps = max(trim_steps,2)
     trim_sts = np.zeros((trim_steps,aircraft.x_trim_euler.shape[0]))
+    trim_ars = np.zeros((trim_steps,aircraft.aero_trim.shape[0]))
     trim_cos = np.zeros((trim_steps,aircraft.u_trim.shape[0]))
     for i in range(trim_steps):
         perc = float(i/(trim_steps - 1))
@@ -5000,6 +5073,7 @@ def run_single_simulation(filename,rtdst_1sg=[20.,10.,5.],
         aircraft.V0 = M*aircraft.stdatm(H)[5]*Y_mult
         aircraft._initialize_state(run2=True,no_report=True,**guesses)
         trim_sts[i,:] = aircraft.x_trim2_euler*1.
+        trim_ars[i,:] = aircraft.aero_trim2*1.
         trim_cos[i,:] = aircraft.u_trim2[:aircraft.u_trim.shape[0]]*1.
         print()
         if trim_climb != 0.:
@@ -5014,6 +5088,7 @@ def run_single_simulation(filename,rtdst_1sg=[20.,10.,5.],
     aircraft.phi_trim = np.deg2rad(final_bank)
     aircraft._initialize_state(run2=True,no_report=True,**guesses)
     aircraft.x_trim2_euler_slf = aircraft.x_trim2_euler*1.
+    aircraft.aero_trim2_slf = aircraft.aero_trim2*1.
     aircraft.u_trim2_slf = aircraft.u_trim2*1.
     print()
     print("steady flight at {} ft altitude".format(final_altitude))
@@ -5169,6 +5244,7 @@ def run_single_simulation(filename,rtdst_1sg=[20.,10.,5.],
     # aircraft.x_tr_euler = np.array([(1. - i)*x1 + i*x2 for i in z21])
     # aircraft.u_tr       = np.array([(1. - i)*u1 + i*u2 for i in z21])
     aircraft.x_tr_euler = interp1d(t21,trim_sts,kind="linear",axis=0)(z21)
+    aircraft.aero_tr    = interp1d(t21,trim_ars,kind="linear",axis=0)(z21)
     aircraft.u_tr       = interp1d(t21,trim_cos,kind="linear",axis=0)(z21)
     K_trs = np.zeros((gain_steps, \
         aircraft.Lin_Model.K.shape[0], aircraft.Lin_Model.K.shape[1]))
@@ -5261,17 +5337,26 @@ def run_single_simulation(filename,rtdst_1sg=[20.,10.,5.],
     nan = float("nan")
     st_r2d_i = [3,4,5,9,10,11]+(aircraft.order>=1)*[12,13,14]
     co_r2d_i = [0,1,2]
+    ar_r2d_i = [2,3]
     xdeg = aircraft.x_tr_euler*1.
     xdeg[:,st_r2d_i] = np.rad2deg(xdeg[:,st_r2d_i])
     xdsf = aircraft.x_trim2_euler_slf*1.
     xdsf[st_r2d_i] = np.rad2deg(xdsf[st_r2d_i])
+    #
     udeg = aircraft.u_tr*1.
     udeg[:,co_r2d_i] = np.rad2deg(udeg[:,co_r2d_i])
     udsf = aircraft.u_trim2_slf*1.
     udsf[co_r2d_i] = np.rad2deg(udsf[co_r2d_i])
+    #
+    adeg = aircraft.aero_tr*1.0
+    adeg[:,ar_r2d_i] = np.rad2deg(adeg[:,ar_r2d_i])
+    adsf = aircraft.aero_trim2_slf*1.0
+    adsf[ar_r2d_i] = np.rad2deg(adsf[ar_r2d_i])
     
     aircraft.x_tr_deg_itp = interp1d(aircraft.t_tr,xdeg,kind=typ,\
         axis=0,bounds_error=False,fill_value=(nan,xdsf))
+    aircraft.a_tr_deg_itp = interp1d(aircraft.t_tr,adeg,kind=typ,\
+        axis=0,bounds_error=False,fill_value=(nan,adsf))
     aircraft.u_tr_deg_itp = interp1d(aircraft.t_tr,udeg,kind=typ,\
         axis=0,bounds_error=False,fill_value=(nan,udsf))
 
@@ -5348,6 +5433,7 @@ def run_single_simulation(filename,rtdst_1sg=[20.,10.,5.],
             xr,ur = aircraft.run_simulation(report_trim=report_trim,
                     mrrr=mrrr,delta_x0=dx0,actr_warm_start=actr_warm_start,
                     save_matrices=False,report_simulation=save_data)
+            Vr = aircraft.aerox*1.0
             
             x_zero = xr[:,-1]*1.
             dx = x_zero - aircraft.x_trim2_euler_deg
@@ -5375,14 +5461,27 @@ def run_single_simulation(filename,rtdst_1sg=[20.,10.,5.],
                 print(succ)
                 print(header)
     
-        succ = "{:>5d}/{:>5d} cases successful".format(counter,num)
+        succ = "{:>5d}/{:>5d} cases successful\n".format(counter,num)
         print(succ)
+
+        # report on controller
+        if not(aircraft.gain_scheduling):
+            repcon = aircraft._final_control_and_model_report()
+
+        # pull out info
+        rr = np.array([aircraft._get_reference(ti) for ti in aircraft.tarr]).T
+        rr[aircraft.xicnv] = np.rad2deg(rr[aircraft.xicnv])
         
         # report max vals from trim
         xs = xr - np.array([aircraft.x_tr_deg_itp(w) for w in aircraft.tarr]).T
+        Vs = Vr - np.array([aircraft.a_tr_deg_itp(w) for w in aircraft.tarr]).T
         us = ur - np.array([aircraft.u_tr_deg_itp(w) for w in aircraft.tarr]).T
-        aircraft._report_simulation_deltas(xs=xs,us=us,shift_to_trim=False,
-            file_folder=file_folder)
+        rs = rr - np.array([aircraft.x_tr_deg_itp(w) for w in aircraft.tarr]).T
+        rs[0] = rr[0] + Vs[0] - Vr[0]
+        rs[1] = rr[1] + Vs[2] - Vr[2]
+        rs[2] = rr[2] + Vs[3] - Vr[3]
+        aircraft._report_simulation_deltas(xs=xs,Vs=Vs,us=us,rs=rs,
+            shift_to_trim=False,file_folder=file_folder)
 
         # plot
         if save_data:
@@ -6929,31 +7028,13 @@ def report_latex(M, name="M", predecimals=4, decimals=4, diag=False,
     if len(M.shape) == 1:
         M = M[:,np.newaxis]
 
-    if align:
-        char = "&" # "  " # 
-    else:
-        char = ""
-    if endln:
-        end = "\\\\"
-    elif comquad:
-        end = ", \\quad"
-    else:
-        end = ""
-    if diag:
-        bef = "\\operatorname{diag} \\left( "
-        aft = " \\right)"
-    else:
-        bef = ""
-        aft = ""
-    if transpose:
-        tran = "^T"
-    else:
-        tran = ""
-    
-    if add_tab:
-        t = "    "
-    else:
-        t = ""
+    # delimiters etc.
+    char = "&" if align else  ""
+    end = "\\\\" if endln else ", \\quad" if comquad else ""
+    bef = "\\operatorname{diag} \\left( " if diag else ""
+    aft = " \\right)" if diag else ""
+    tran = "^T" if transpose else ""
+    t = "    " if add_tab else ""
 
     # print name
     if eigvecs:
