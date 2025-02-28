@@ -55,6 +55,34 @@ class UncoupledPIAircraft(Aircraft):
         self.Z = np.diag([ z_p, z_q, z_r])
         self.W = np.diag([wn_p,wn_q,wn_r])
 
+    def _build_tracking_gains(self):
+
+        # build controller
+        if self.first_step:
+            # build system, solve problem
+            A,B = self._build_linear_slf_model()
+            self.A_model = A_tr = np.diag(np.diag(A))
+            self.B_model = B_tr = np.diag(np.diag(B))
+            self.Binv = Binv = np.linalg.inv(B_tr)
+            
+            # build gains
+            self.Kp = np.matmul(Binv,2.0*np.matmul(self.Z,self.W)+A_tr)
+            self.Ki = np.matmul(Binv,np.matmul(self.W,self.W))
+
+            # flip bool
+            self.first_step = False
+        return
+
+    def _add_to_delta_x0(self,delta_x0):
+        ref = self._get_reference(0.0)[self.Lin_Model.Cslice]
+        dref = ref - self.x_trim_euler_slf[3:6]
+        #
+        delta = self.u_trim[0:3] - self.u_trim_slf[0:3] + \
+            np.matmul(self.Binv,np.matmul(self.A_model,dref))
+        eI = - np.matmul(np.linalg.inv(self.Ki),delta)
+        delta_x0[self.xIi[1:]] += eI
+        return delta_x0
+
     def _get_control(self,t,x,is_controlled=True,given_control=False,u="o",
         force_control_to_inputs=False):
         # build control or pass through
@@ -75,19 +103,8 @@ class UncoupledPIAircraft(Aircraft):
                 # 60 deg/s in rudder
                 #
 
-                # build controller
                 if self.first_step:
-                    # build system, solve problem
-                    self.A_model = A_tr = np.diag(np.diag(self.Lin_Model.A_min))
-                    self.B_model = B_tr = np.diag(np.diag(self.Lin_Model.B_min))
-                    self.Binv = Binv = np.linalg.inv(B_tr)
-                    
-                    # build gains
-                    self.Kp = np.matmul(Binv,2.0*np.matmul(self.Z,self.W)+A_tr)
-                    self.Ki = np.matmul(Binv,np.matmul(self.W,self.W))
-
-                    # flip bool
-                    self.first_step = False
+                    self._build_tracking_gains()
                 
                 #-------------------#
                 # STATE DEFINITIONS #
@@ -100,7 +117,7 @@ class UncoupledPIAircraft(Aircraft):
                 erI     = x_euler[self.xIi_eul[3]]
                 w  = np.array([  p,  q,  r])
                 eI = np.array([epI,eqI,erI])
-                dref = ref - self.x_trim[3:6]
+                dref = ref - self.x_trim_euler_slf[3:6]
                 e = w - ref
                 A = self.A_model
                 Binv = self.Binv
@@ -112,7 +129,7 @@ class UncoupledPIAircraft(Aircraft):
                 # tcom = self.u_trim[3]
                 tcom = self._get_V_tau_control(t,x_euler)
                 #
-                u = np.concatenate((delta + self.u_trim[0:3],[tcom]))
+                u = np.concatenate((delta + self.u_trim_slf[0:3],[tcom]))
 
 
                 if self.order > 0:
@@ -1742,7 +1759,6 @@ class ControlAllocationMomentAssignmentAircraft(Aircraft):
         Must be a python dictionary
     """
     def __init__(self,input_dict={}):
-
         # invoke init of parent
         Aircraft.__init__(self,input_dict,folder_prefix = "track",SAS_Cma=-1.0)#-0.3)
         self.tracking = True
@@ -1813,6 +1829,10 @@ class ControlAllocationMomentAssignmentAircraft(Aircraft):
         # # similar response to SMD system
         # Q = np.diag([4.2e+3]*3 + [4.0e+1]*3)
         # R = np.diag([1.0e+0,1.0e+0,1.0e+0])
+        self.A_cl = A*1.0
+        self.B_cl = B*1.0
+        self.Q_cl = Q*1.0
+        self.R_cl = R*1.0
         K,_,K_eigs = co.lqr(A,B,Q,R)
         self.Ki,self.Kp = K[:,0:3],K[:,3:6]
         # #
@@ -2445,26 +2465,28 @@ class ControlAllocationMomentAssignmentAircraft(Aircraft):
                 WAM._CS_qbar(dBj)*qbar + WAM._CS_rbar(dBj)*rbar)
             wCSda = WAM._CS_da(dBj)
             wCSde = WAM._CS_de(dBj)
-            wCDs = (WAM._CD0(dBj) + WAM._CD_L(dBj)*CL1 + 
+            wCDs = (WAM._CD0(dBj) + 
+                WAM._CD_L(dBj)*CL1 + 
                 2.0*DAM._CD_L(dBj)*dCL1 + BAM._CD_L(dBj)*wCL1 + 
                 WAM._CD_L2(dBj)*CL1**2 + 4.0*DAM._CD_L2(dBj)*CL1*dCL1 + 
-                4.0*BAM._CD_L2(dBj)*dCL1 + 2.0*BAM._CD_L2(dBj)*CL1*wCL1 +
-                WAM._CD_S(dBj)*CS1 + 
-                2.0*BAM._CD_S(dBj)*dCS1 + BAM._CD_S(dBj)*wCS1 + 
-                WAM._CD_S2(dBj)*CS1**2 + 2.0*DAM._CD_S2(dBj)*CS1*dCS1 + 
-                2.0*WAM._CD_S2(dBj)*CS1*dCS1 + 4.0*BAM._CD_S2(dBj)*dCS1 + 
-                2.0*BAM._CD_S2(dBj)*CS1*wCS1 + 
-                (WAM._CD_pbar(dBj) + WAM._CD_Spbar(dBj)*CS1 + 
-                    2.0*DAM._CD_Spbar(dBj)*dCS1 + BAM._CD_Spbar(dBj)*wCS1)*pbar +
+                2.0*BAM._CD_L2(dBj)*dCL1**2.0 + 2.0*BAM._CD_L2(dBj)*CL1*wCL1 + 
+                WAM._CD_S(dBj)*CS1 + 2.0*DAM._CD_S(dBj)*dCS1 + 
+                BAM._CD_S(dBj)*wCS1 + 
+                WAM._CD_S2(dBj)*CS1**2 + 4.0*DAM._CD_S2(dBj)*CS1*dCS1 + 
+                2.0*BAM._CD_S2(dBj)*dCS1**2.0 + 2.0*BAM._CD_S2(dBj)*CS1*wCS1 + 
+                (WAM._CD_pbar(dBj) + 
+                WAM._CD_Spbar(dBj)*CS1 + 
+                    2.0*DAM._CD_Spbar(dBj)*dCS1 + 
+                    BAM._CD_Spbar(dBj)*wCS1)*pbar +
                 (WAM._CD_qbar(dBj) + 
-                    WAM._CD_Lqbar(dBj)*CL1 + DAM._CD_Lqbar(dBj)*dCL1 + 
-                    DAM._CD_Lqbar(dBj)*dCL1 + BAM._CD_Lqbar(dBj)*wCL1 + 
-                    WAM._CD_L2qbar(dBj)*CL1**2 + 2.0*DAM._CD_L2qbar(dBj)*CL1*dCL1 + 
-                    2.0*WAM._CD_L2qbar(dBj)*CL1*dCL1 + 
-                    4.0*BAM._CD_L2qbar(dBj)*dCL1 + 
-                    2.0*BAM._CD_L2qbar(dBj)*CL1*wCL1)*qbar +
-                (WAM._CD_rbar(dBj) + WAM._CD_Srbar(dBj)*CS1 + 
-                    2.0*DAM._CD_Srbar(dBj)*dCS1 + 
+                    WAM._CD_Lqbar(dBj)*CL1 + 2.0*DAM._CD_Lqbar(dBj)*dCL1 + 
+                    BAM._CD_Lqbar(dBj)*wCL1 + 
+                    WAM._CD_L2qbar(dBj)*CL1**2 + 
+                    4.0*DAM._CD_L2qbar(dBj)*CL1*dCL1 + 
+                    2.0*BAM._CD_L2qbar(dBj)*dCL1**2.0 + 
+                    2.0*BAM._CD_L2qbar(dBj)*CL1*wCL1)*qbar + 
+                (WAM._CD_rbar(dBj) + 
+                    WAM._CD_Srbar(dBj)*CS1 + 2.0*DAM._CD_Srbar(dBj)*dCS1 + 
                     BAM._CD_Srbar(dBj)*wCS1)*rbar)
             wCDda = (WAM._CD_da(dBj) + WAM._CD_Sda(dBj)*CS1 + 
                         2.0*DAM._CD_Sda(dBj)*dCS1 + 
@@ -2473,10 +2495,6 @@ class ControlAllocationMomentAssignmentAircraft(Aircraft):
                         2.0*DAM._CD_Lde(dBj)*dCL1 + 
                         BAM._CD_Lde(dBj)*wCL1) # dropped squared part
 
-            dCLde = wCLde = dCSde = wCSde = dCDde = wCDde = 0.0
-            dCLda = wCLda = dCSda = wCSda = dCDda = wCDda = 0.0
-            dCLs  = wCLs  = dCSs  = wCSs  = dCDs  = wCDs  = 0.0
-            
             # add to corresponding moments
             Cls  = self.bw*Cls
             Clda = self.bw*Clda
@@ -2920,29 +2938,36 @@ class ControlAllocationMomentAssignmentAircraft(Aircraft):
                 # print("Don't forget to check both!!!")
                 # quit()
                 # ######################################
-                ######################################
-                # # checking second derivative. works!
-                E = lambda dBj : self.sine_dsine_wsine_fun(rho,V,dBj,a,b,pbar,qbar,rbar,Md)
-                # E = lambda dBj : self.sine_dsine_fun(rho,V,dBj,a,b,pbar,qbar,rbar,Md)
-                dBtest = np.deg2rad(np.linspace(-90.0,90.0,1000))
-                dME = np.zeros((len(dBtest),))
-                dCS = np.zeros((len(dBtest),))
-                # pows = np.zeros((len(dBtest),))
-                h = np.deg2rad(1.0e-6)
-                # hessian test
-                fi = 3; di = 4
+                # ######################################
+                # # # checking second derivative. works!
+                # E = lambda dBj : self.sine_dsine_wsine_fun(rho,V,dBj,a,b,pbar,qbar,rbar,Md)
+                # # E = lambda dBj : self.sine_dsine_fun(rho,V,dBj,a,b,pbar,qbar,rbar,Md)
+                # dBtest = np.deg2rad(np.linspace(-90.0,90.0,1000))
+                # dME = np.zeros((len(dBtest),))
+                # dCS = np.zeros((len(dBtest),))
+                # # pows = np.zeros((len(dBtest),))
+                # h = np.deg2rad(1.0e-6)
                 # # jacobian test
                 # fi = 2; di = 3
-                for i in range(len(dBtest)):
-                    dME[i] = E(dBtest[i])[di] # hessian
-                    dBtesti = complex(dBtest[i],h)
-                    dCS[i] = np.imag(E(dBtesti)[fi])/h # hessian
-                pd = (dME - dCS)/dME
-                print(pd)
-                print(np.linalg.norm(pd))#**2.)
-                print("Don't forget to check both!!!")
-                quit()
-                ######################################
+                # for i in range(len(dBtest)):
+                #     dME[i] = E(dBtest[i])[di] # hessian
+                #     dBtesti = complex(dBtest[i],h)
+                #     dCS[i] = np.imag(E(dBtesti)[fi])/h # hessian
+                # pd = (dME - dCS)/dME
+                # # print(pd)
+                # print("jacobian =",np.linalg.norm(pd))#**2.)
+                # # hessian test
+                # fi = 3; di = 4
+                # for i in range(len(dBtest)):
+                #     dME[i] = E(dBtest[i])[di] # hessian
+                #     dBtesti = complex(dBtest[i],h)
+                #     dCS[i] = np.imag(E(dBtesti)[fi])/h # hessian
+                # pd = (dME - dCS)/dME
+                # # print(pd)
+                # print("hessian  =",np.linalg.norm(pd))#**2.)
+                # print("Don't forget to check both!!!")
+                # quit()
+                # ######################################
 
                 if self.pseudo_inverse_method:
                     # if self.add_tail_lag_eq:
@@ -3468,6 +3493,10 @@ class ControlAllocationMomentAssignmentAircraft(Aircraft):
 
     def _controller_gains_report(self):
         repcon = ""
+        repcon += report_latex(self.A_cl,"A_{cl}",print_report=False)
+        repcon += report_latex(self.B_cl,"B_{cl}",print_report=False)
+        repcon += report_latex(self.Q_cl,"Q_{cl}",print_report=False)
+        repcon += report_latex(self.R_cl,"R_{cl}",print_report=False)
         repcon += report_latex(self.Kp,"K_p",print_report=False)
         repcon += report_latex(self.Ki,"K_i",print_report=False)
         return repcon
@@ -4088,9 +4117,9 @@ if __name__ == "__main__":
     #     [     0.0,     0.0,wn_r**2.]
     # ]).tolist()
     # # #
-    run_bire_fs["aircraft_class"] = ControlAllocationMomentAssignmentAircraft
-    run_bire_fs["name_end"] = "_" + f1 + "_CAMA_sine" # 2" # 
-    bire_fs_dict["aircraft"]["CG_shift[ft]"] = [+1.0,+0.0,0.0]
+    # run_bire_fs["aircraft_class"] = ControlAllocationMomentAssignmentAircraft
+    # run_bire_fs["name_end"] = "_" + f1 + "_CAMA_sine" # 2" # 
+    # # # bire_fs_dict["aircraft"]["CG_shift[ft]"] = [+1.0,+0.0,0.0]
     # # # # # # 
     # run_bire_fs["aircraft_class"] = ITPIAircraft
     # run_bire_fs["name_end"] = "_" + f1 + "_ITPI_noABup" # 1" # 
@@ -4108,35 +4137,35 @@ if __name__ == "__main__":
     # run_bire_fs["name_end"] = "_" + f1 + "_LQRDI_1" # 2" # 
     # # bire_fs_dict["aircraft"]["CG_shift[ft]"] = [+1.0,+0.0,0.0]
     # #
-    # run_bire_fs["aircraft_class"] = UncoupledPIAircraft
-    # run_bire_fs["name_end"] = "_" + f1 + "_PI"
-    # # # # bire_fs_dict["aircraft"]["CG_shift[ft]"] = [+0.5,+0.0,0.0]
+    run_bire_fs["aircraft_class"] = UncoupledPIAircraft
+    run_bire_fs["name_end"] = "_" + f1 + "_PI"
+    # # # bire_fs_dict["aircraft"]["CG_shift[ft]"] = [+0.5,+0.0,0.0]
     # #
     # #
     # # #
     # # #
     # # # 
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-    phi__deg = 60.0 # 50.0 # 40.0 # 10.0 # 20.0 # 30.0 # 15.0 # 25.0 # 35.0 # 
+    phi__deg = 10.0 # 90.0 # 360.0 # 10.0 # 30.0 # 60.0 # 50.0 # 40.0 # 20.0 # 15.0 # 25.0 # 35.0 # 
     tail = "0" # "+" # "-" # 
     # left_roll = True # False # 
-    if   phi__deg == 10.0: # 10 deg bank fullscale BIRE
+    if   phi__deg ==  10.0: # #  10 deg bank fullscale BIRE
         p_tr_deg = -0.0236847366216922
         q_tr_deg =  0.0886486340380570
         r_tr_deg =  0.5027513865539764
-    elif phi__deg == 15.0: # # # 15 deg bank fullscale BIRE
+    elif phi__deg ==  15.0: # #  15 deg bank fullscale BIRE
         p_tr_deg = -0.0361891562749016
         q_tr_deg =  0.2007714630167870
         r_tr_deg =  0.7492893006885849
-    elif phi__deg == 20.0: # # 20 deg bank fullscale BIRE
+    elif phi__deg ==  20.0: # #  20 deg bank fullscale BIRE
         p_tr_deg = -0.0495920266927013
         q_tr_deg =  0.3603497293338741
         r_tr_deg =  0.9900527444514043
-    elif phi__deg == 25.0: # # 25 deg bank fullscale BIRE # # (0) tail
+    elif phi__deg ==  25.0: # #  25 deg bank fullscale BIRE # # (0) tail
         p_tr_deg = -0.0638179984370310
         q_tr_deg =  0.5703966435396264
         r_tr_deg =  1.2232195495061524
-    elif phi__deg == 30.0: # # 30 deg bank fullscale BIRE
+    elif phi__deg ==  30.0: # #  30 deg bank fullscale BIRE
         if   tail == "-": # # (-) tail
             p_tr_deg = -0.0820880039056245
             q_tr_deg =  0.8352580178704386
@@ -4149,22 +4178,34 @@ if __name__ == "__main__":
             p_tr_deg = -0.0783041992237063
             q_tr_deg =  0.8354699615635688
             r_tr_deg =  1.4470764216257186
-    elif phi__deg == 35.0: # # 35 deg bank fullscale BIRE # # (0) tail
+    elif phi__deg ==  35.0: # #  35 deg bank fullscale BIRE # # (0) tail
         p_tr_deg = -0.0982988942950006
         q_tr_deg =  1.1619249236475548
         r_tr_deg =  1.6594007636912391
-    elif phi__deg == 40.0: # # 40 deg bank fullscale BIRE # # (0) tail
+    elif phi__deg ==  40.0: # #  40 deg bank fullscale BIRE # # (0) tail
         p_tr_deg = -0.1195200902391827
         q_tr_deg =  1.5598776114662467
         r_tr_deg =  1.8589897474721753
-    elif phi__deg == 50.0: # # 50 deg bank fullscale BIRE # # (0) tail
+    elif phi__deg ==  50.0: # #  50 deg bank fullscale BIRE # # (0) tail
         p_tr_deg = -0.1755564353175651
         q_tr_deg =  2.6372142861590873
         r_tr_deg =  2.2128855348515439
-    elif phi__deg == 60.0: # # 60 deg bank fullscale BIRE
+    elif phi__deg ==  60.0: # #  60 deg bank fullscale BIRE
         p_tr_deg = -0.2654216358834438
         q_tr_deg =  4.3218126454667702
         r_tr_deg =  2.4951996942473698
+    elif phi__deg ==  90.0: # #  90 deg bank fullscale BIRE
+        p_tr_deg = 0.0
+        q_tr_deg = 0.0
+        r_tr_deg = 0.0
+    elif phi__deg == 180.0: # # 180 deg bank fullscale BIRE
+        p_tr_deg = 0.0
+        q_tr_deg = 0.0
+        r_tr_deg = 0.0
+    elif phi__deg == 360.0: # # 360 deg bank fullscale BIRE
+        p_tr_deg = 0.0
+        q_tr_deg = 0.0
+        r_tr_deg = 0.0
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
     if "left_roll" in locals():
         phi__deg = - phi__deg
@@ -4173,15 +4214,15 @@ if __name__ == "__main__":
     ###########################################################################
     # trim properties
     V_trim = 634.4133153512273111
-    a_tr_rad =  np.deg2rad(2.6447774345355031)
+    a_SLF_rad =  np.deg2rad(2.6447774345355031)
     ###########################################################################
     t_start = 0.0 # 1.0 # 
-    transition_time = 2.0 # 10.0 # 4.0 # 1.0 # 4.0 # 12.0 # 5.0 # 
+    transition_time = 2.0 # 1.3 # 2.8 # 2.0 # 1.0 # 10.0 # 4.0 # 4.0 # 12.0 # 5.0 # 
     signal_type = "1-cosine_cont" # "step" # "triangle_cont" # "triangle" # "1-cosine" # "quartic_bump" # 
     # calculations
     p_wind = phi__deg/transition_time
-    r_roll = p_wind*np.sin(a_tr_rad) # 
-    p_roll = p_wind*np.cos(a_tr_rad) # 
+    r_roll = p_wind*np.sin(a_SLF_rad) # 
+    p_roll = p_wind*np.cos(a_SLF_rad) # 
     t__end = t_start + transition_time
     bire_fs_dict["reference"] = {
         "deg2rad_states" : [1,2,3,4,5],
@@ -4259,9 +4300,9 @@ if __name__ == "__main__":
         t_tranq = np.linspace(t__mid,t__end,n_pointsq)
         onemcosq = (1.0 - cos(2.0*pi/transition_time*(t_tranq-t__mid)))/2.0
         #
-        p_signal = p_tran*np.cos(a_tr_rad)
+        p_signal = p_tran*np.cos(a_SLF_rad)
         p_signal[n_points-n_pointsq:] += p_tr_deg*onemcosq
-        r_signal = p_tran*np.sin(a_tr_rad)
+        r_signal = p_tran*np.sin(a_SLF_rad)
         r_signal[n_points-n_pointsq:] += r_tr_deg*onemcosq
         #
         ts += t_start
@@ -4274,7 +4315,7 @@ if __name__ == "__main__":
     bire_fs_dict["reference"]["4"] = q_sig
     bire_fs_dict["reference"]["5"] = r_sig
     #
-    tf = 10.0 # 600.0 # 60.0 # 20.0 # 5.0 # 16.0 # 2.50 # 4.90 # 20.0 # 
+    tf = 10.0 # 1.0 # 600.0 # 60.0 # 20.0 # 5.0 # 16.0 # 2.50 # 4.90 # 20.0 # 
     ###########################################################################
     run_bire_fs["track_check_time"] = run_bire_fs["final_time"] = tf
     # bire_fs_dict["simulation"]["include_stall"] = False
@@ -4288,7 +4329,7 @@ if __name__ == "__main__":
     if bire_fs_dict["actuators"]["order"] > 1:
         state_threshold += [5., 5., 5., 0.05]
     # #
-    # bire_fs_dict["aircraft"]["CG_shift[ft]"] = [0.0, 0.0, 0.0] # [1.0, 2.0, -1.0] # 
+    # bire_fs_dict["aircraft"]["CG_shift[ft]"] = [1.0, 0.0, 0.0] # [0.0, 0.0, 0.0] # [1.0, 2.0, -1.0] # 
     # #
     # # # # run_bire_fs["initial_mach"] = 0.2
     # bire_fs_dict["initial"]["trim_guess"] = {
@@ -4306,14 +4347,17 @@ if __name__ == "__main__":
     # bire_fs_dict["actuators"]["elevator"]["lag[s]"] = new_lag
     # bire_fs_dict["actuators"][    "BIRE"]["lag[s]"] = new_lag
     # # # # # # # 
-    # blm = 300.0 # 200.0 # 500.0 # 50.0 # 150.0 # 125.0 # 100.0 # 250.0 # 500.0 # 600.0 # 750.0 # 1000.0 # 1500.0 # 
+    # blm = 200.0 # 500.0 # 300.0 # 250.0 # 50.0 # 150.0 # 125.0 # 100.0 # 500.0 # 600.0 # 750.0 # 1000.0 # 1500.0 # 
     # bire_fs_dict["actuators"][    "BIRE"]["rate_limits[deg/s]"] = [-blm,blm]
-    # alm = 5000.0 # 50.0 # 150.0 # 125.0 # 100.0 # 250.0 # 500.0 # 600.0 # 750.0 # 1000.0 # 1500.0 # 
+    # alm = 5000.0 # 1000.0 # 870.0 # 50.0 # 150.0 # 125.0 # 100.0 # 250.0 # 500.0 # 600.0 # 750.0 # 1000.0 # 1500.0 # 
     # bire_fs_dict["actuators"][    "BIRE"]["acceleration_limits[deg/s]"] = [-alm,alm]
     # # # # # # # 
     # elm = 50.0
     # bire_fs_dict["actuators"]["elevator"]["rate_limits[deg/s]"] = [-elm,elm]
     # # # # # # #
+    # # 
+    # bire_fs_dict["aircraft"]["surface_effectiveness_scaling"] = 2.0 # 1.5 # 1.2 # 1.0 # 1.1 # 
+    # # 
 
     # bire_fs_dict["simulation"][      "limit_input"] = False # True # 
     # bire_fs_dict["simulation"]["limit_input_rates"] = False # True # 
@@ -4346,17 +4390,17 @@ if __name__ == "__main__":
     #     "0" : [[ 0.0,   V_trim],[ 2.0,   V_trim],],
     #     "3" : [[0.0]*2]*2, "4" : [[0.0]*2]*2, "5" : [[0.0]*2]*2, "sct_on_5" : False
     # }
-    # # # # starting in bank
-    # bire_fs_dict["reference"] = {
-    #     "deg2rad_states" : [1,2,3,4,5],
-    #     "0" : [[ 0.0,   V_trim],[ 2.0,   V_trim],],
-    #     "3" : [[ 0.0, p_tr_deg],[ 2.0, p_tr_deg]],
-    #     "4" : [[ 0.0, q_tr_deg],[ 2.0, q_tr_deg]],
-    #     "5" : [[ 0.0, r_tr_deg],[ 2.0, r_tr_deg]],
-    #     "sct_on_5" : False
-    # }
-    # run_bire_fs["trim_bank"] = 10.0 # 10.0 # 30.0 # 
-    # # di = [0.7,0.0,0.0] # [0.7772,0.0,0.0] # [1.0,1.0,1.0] # [0.0,0.0,0.0] # [0.1,0.1,0.1] # [10.0,10.0,10.0] # 
+    # # # starting in bank
+    bire_fs_dict["reference"] = {
+        "deg2rad_states" : [1,2,3,4,5],
+        "0" : [[ 0.0,   V_trim],[ 2.0,   V_trim],],
+        "3" : [[ 0.0, p_tr_deg],[ 2.0, p_tr_deg]],
+        "4" : [[ 0.0, q_tr_deg],[ 2.0, q_tr_deg]],
+        "5" : [[ 0.0, r_tr_deg],[ 2.0, r_tr_deg]],
+        "sct_on_5" : False
+    }
+    run_bire_fs["trim_bank"] = 10.0 # 10.0 # 30.0 # 
+    di = [0.7,0.0,0.0] # [0.7772,0.0,0.0] # [1.0,1.0,1.0] # [0.0,0.0,0.0] # [0.1,0.1,0.1] # [10.0,10.0,10.0] # 
     # di = [0.0, 35.0994612584134487, 0.0] # [0.0, 28.1437298697430229, 0.0] # 
     # # run_bire_fs[ "has_turbulence"] = True # False # 
     # # # run_bire_fs["has_model_error"] = False # True # 

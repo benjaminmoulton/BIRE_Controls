@@ -25,7 +25,8 @@
         "thrust" : {
             "location[ft]" : [0.0, 0.0, 0.0],
             "direction" : [1.0, 0.0, 0.0]
-        }
+        },
+        "surface_effectiveness_scaling" : 1.0
     },
     "gust" : {
         "amplitude[ft/s]" : 80.0,

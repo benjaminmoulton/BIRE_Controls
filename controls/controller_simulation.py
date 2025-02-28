@@ -247,7 +247,18 @@ class Aircraft:
         thrust = aircraft.get("thrust",{})
         self.T_loc  = np.array(thrust.get("location[ft]", [0.0, 0.0, 0.0]))
         self.T_dir  = np.array(thrust.get("direction", [1.0, 0.0, 0.0]))
-
+        self.tail_surface_multiplier = aircraft.get("surface_effectiveness_scaling", 1.0)
+        if self.is_BIRE:
+            self.aero_model.Cm_de_A *= self.tail_surface_multiplier
+            self.aero_model.Cm_de_z *= self.tail_surface_multiplier
+            self.aero_model.Cm_de_d *= self.tail_surface_multiplier
+            self.aero_model.Cn_de_A *= self.tail_surface_multiplier
+            self.aero_model.Cn_de_z *= self.tail_surface_multiplier
+            self.aero_model.Cn_de_d *= self.tail_surface_multiplier
+        elif self.tail_surface_multiplier != 1.0:
+            print("you cannot make that change to this airplane!!!")
+            quit()
+        
         # store controller dictionary for Linear Model use
         controller_dict = input_dict.get("controller")
         self.enforce_update_frequency = \
@@ -689,7 +700,7 @@ class Aircraft:
 
 
     def _report_trim_solution(self,x="o",u="o",iter="o",
-        load_factors_axis="stab",report_coord_frame_rates=False):
+        load_factors_axis="stab",report_coord_frame_rates=False,printatend=True):
 
         # if nothing given, use save trim state
         if isinstance(x,str):
@@ -726,70 +737,73 @@ class Aircraft:
         ps,qs,rs = np.matmul([[ca,0.,sa],[ 0.,1.,0.],[-sa,0.,ca]],w)
         pw,qw,rw = np.matmul([[cb,sb,0.],[-sb,cb,0.],[ 0.,0.,1.]],[ps,qs,rs])
 
+        # initialize report string
+        repstr = ""
+
         thrust_string = "    {:<23s} : {:>23.16f}   {:>23.16}".format(\
             "thrust[lbf]",T,"")
         title = " Trim Settings "
         num_eq_sn = int((len(thrust_string) - len(title))/2)
-        print("=" * num_eq_sn + title + "=" * num_eq_sn)
-        print("    {:<23s} : {:> 23.16f} : {:> 23.16f}".format(\
-            "\"elevation[deg,rad]\"",th*self.rtod,th))
-        print("    {:<23s} : {:> 23.16f} : {:> 23.16f}".format(\
-            "\"bank_angle[deg,rad]\"",ph*self.rtod,ph))
-        print("    {:<23s} : {:> 23.16f} : {:> 23.16f}".format(\
-            "\"climb_angle[deg,rad]\"",clm*self.rtod,clm))
-        print("    {:<23s} : {:> 23.16f} : {:> 23.16f}".format(\
-            "\"alpha[deg,rad]\"",a*self.rtod,a))
-        print("    {:<23s} : {:> 23.16f} : {:> 23.16f}".format(\
-            "\"beta[deg,rad]\"",b*self.rtod,b))
-        print("    {:<23s} : {:> 23.16f}".format("\"M\"",M))
-        print("    {:<23s} : {:> 23.16f}".format("\"V[ft/s]\"",V))
+        repstr += "=" * num_eq_sn + title + "=" * num_eq_sn + "\n"
+        repstr += "    {:<23s} : {:> 23.16f} : {:> 23.16f}".format(\
+            "\"elevation[deg,rad]\"",th*self.rtod,th) + "\n"
+        repstr += "    {:<23s} : {:> 23.16f} : {:> 23.16f}".format(\
+            "\"bank_angle[deg,rad]\"",ph*self.rtod,ph) + "\n"
+        repstr += "    {:<23s} : {:> 23.16f} : {:> 23.16f}".format(\
+            "\"climb_angle[deg,rad]\"",clm*self.rtod,clm) + "\n"
+        repstr += "    {:<23s} : {:> 23.16f} : {:> 23.16f}".format(\
+            "\"alpha[deg,rad]\"",a*self.rtod,a) + "\n"
+        repstr += "    {:<23s} : {:> 23.16f} : {:> 23.16f}".format(\
+            "\"beta[deg,rad]\"",b*self.rtod,b) + "\n"
+        repstr += "    {:<23s} : {:> 23.16f}".format("\"M\"",M) + "\n"
+        repstr += "    {:<23s} : {:> 23.16f}".format("\"V[ft/s]\"",V) + "\n"
         ## INTSTATE
-        print("    {:<23s} : {:> 23.16f}".format("\"u[ft/s]\"",x[0]))
-        print("    {:<23s} : {:> 23.16f}".format("\"v[ft/s]\"",x[1]))
-        print("    {:<23s} : {:> 23.16f}".format("\"w[ft/s]\"",x[2]))
-        print("    {:<23s} : {:> 23.16f} : {:> 23.16f}".format(\
-            "\"p[deg/s,rad/s]\"",x[3]*self.rtod,x[3]))
-        print("    {:<23s} : {:> 23.16f} : {:> 23.16f}".format(\
-            "\"q[deg/s,rad/s]\"",x[4]*self.rtod,x[4]))
-        print("    {:<23s} : {:> 23.16f} : {:> 23.16f}".format(\
-            "\"r[deg/s,rad/s]\"",x[5]*self.rtod,x[5]))
-        print("    {:<23s} : {:> 23.16f}".format("\"H[ft]\"",-x[8]))
-        print("    {:<23s} : {:> 23.16f} : {:> 23.16f}".format(\
-            "\"aileron[deg,rad]\"",u[0]*self.rtod,u[0]))
-        print("    {:<23s} : {:> 23.16f} : {:> 23.16f}".format(\
-            "\"elevator[deg,rad]\"",u[1]*self.rtod,u[1]))
+        repstr += "    {:<23s} : {:> 23.16f}".format("\"u[ft/s]\"",x[0]) + "\n"
+        repstr += "    {:<23s} : {:> 23.16f}".format("\"v[ft/s]\"",x[1]) + "\n"
+        repstr += "    {:<23s} : {:> 23.16f}".format("\"w[ft/s]\"",x[2]) + "\n"
+        repstr += "    {:<23s} : {:> 23.16f} : {:> 23.16f}".format(\
+            "\"p[deg/s,rad/s]\"",x[3]*self.rtod,x[3]) + "\n"
+        repstr += "    {:<23s} : {:> 23.16f} : {:> 23.16f}".format(\
+            "\"q[deg/s,rad/s]\"",x[4]*self.rtod,x[4]) + "\n"
+        repstr += "    {:<23s} : {:> 23.16f} : {:> 23.16f}".format(\
+            "\"r[deg/s,rad/s]\"",x[5]*self.rtod,x[5]) + "\n"
+        repstr += "    {:<23s} : {:> 23.16f}".format("\"H[ft]\"",-x[8]) + "\n"
+        repstr += "    {:<23s} : {:> 23.16f} : {:> 23.16f}".format(\
+            "\"aileron[deg,rad]\"",u[0]*self.rtod,u[0]) + "\n"
+        repstr += "    {:<23s} : {:> 23.16f} : {:> 23.16f}".format(\
+            "\"elevator[deg,rad]\"",u[1]*self.rtod,u[1]) + "\n"
         if self.is_BIRE:
-            print("    {:<23s} : {:> 23.16f} : {:> 23.16f}".format(\
-                "\"BIRE[deg,rad]\"",u[2]*self.rtod,u[2]))
+            repstr += "    {:<23s} : {:> 23.16f} : {:> 23.16f}".format(\
+                "\"BIRE[deg,rad]\"",u[2]*self.rtod,u[2]) + "\n"
         else:
-            print("    {:<23s} : {:> 23.16f} : {:> 23.16f}".format(\
-                "\"rudder[deg,rad]\"",u[2]*self.rtod,u[2]))
+            repstr += "    {:<23s} : {:> 23.16f} : {:> 23.16f}".format(\
+                "\"rudder[deg,rad]\"",u[2]*self.rtod,u[2]) + "\n"
         # empty for most controllers
         self._report_trim_other(u)
-        print("    {:<23s} : {:> 23.16f}".format("\"throttle\"",u[3]))
-        print(thrust_string)
+        repstr += "    {:<23s} : {:> 23.16f}".format("\"throttle\"",u[3]) + "\n"
+        repstr += thrust_string + "\n"
         if load_factors_axis != "none":
-            print("    {:<23s} : {:> 23.16f}".format(\
-                "\""+load_factors_axis+" fwrd load factor\"",nxyz[0]))
-            print("    {:<23s} : {:> 23.16f}".format(\
-                "\""+load_factors_axis+" side load factor\"",nxyz[1]))
-            print("    {:<23s} : {:> 23.16f}".format(\
-                "\""+load_factors_axis+" norm load factor\"",nxyz[2]))
+            repstr += "    {:<23s} : {:> 23.16f}".format(\
+                "\""+load_factors_axis+" fwrd load factor\"",nxyz[0]) + "\n"
+            repstr += "    {:<23s} : {:> 23.16f}".format(\
+                "\""+load_factors_axis+" side load factor\"",nxyz[1]) + "\n"
+            repstr += "    {:<23s} : {:> 23.16f}".format(\
+                "\""+load_factors_axis+" norm load factor\"",nxyz[2]) + "\n"
         if report_coord_frame_rates:
-            print("    {:<23s} : {:> 23.16f} : {:> 23.16f}".format(\
-                "\"ps[deg/s,rad/s]\"",ps*self.rtod,ps))
-            print("    {:<23s} : {:> 23.16f} : {:> 23.16f}".format(\
-                "\"qs[deg/s,rad/s]\"",qs*self.rtod,qs))
-            print("    {:<23s} : {:> 23.16f} : {:> 23.16f}".format(\
-                "\"rs[deg/s,rad/s]\"",rs*self.rtod,rs))
-            print("    {:<23s} : {:> 23.16f} : {:> 23.16f}".format(\
-                "\"pw[deg/s,rad/s]\"",pw*self.rtod,pw))
-            print("    {:<23s} : {:> 23.16f} : {:> 23.16f}".format(\
-                "\"qw[deg/s,rad/s]\"",qw*self.rtod,qw))
-            print("    {:<23s} : {:> 23.16f} : {:> 23.16f}".format(\
-                "\"rw[deg/s,rad/s]\"",rw*self.rtod,rw))
-        print("    {:<23s} : {:> 8}{}".format("\"iterations\"",iter," "*13))
-        print("=" * len(thrust_string))
+            repstr += "    {:<23s} : {:> 23.16f} : {:> 23.16f}".format(\
+                "\"ps[deg/s,rad/s]\"",ps*self.rtod,ps) + "\n"
+            repstr += "    {:<23s} : {:> 23.16f} : {:> 23.16f}".format(\
+                "\"qs[deg/s,rad/s]\"",qs*self.rtod,qs) + "\n"
+            repstr += "    {:<23s} : {:> 23.16f} : {:> 23.16f}".format(\
+                "\"rs[deg/s,rad/s]\"",rs*self.rtod,rs) + "\n"
+            repstr += "    {:<23s} : {:> 23.16f} : {:> 23.16f}".format(\
+                "\"pw[deg/s,rad/s]\"",pw*self.rtod,pw) + "\n"
+            repstr += "    {:<23s} : {:> 23.16f} : {:> 23.16f}".format(\
+                "\"qw[deg/s,rad/s]\"",qw*self.rtod,qw) + "\n"
+            repstr += "    {:<23s} : {:> 23.16f} : {:> 23.16f}".format(\
+                "\"rw[deg/s,rad/s]\"",rw*self.rtod,rw) + "\n"
+        repstr += "    {:<23s} : {:> 8}{}".format("\"iterations\"",iter," "*13) + "\n"
+        repstr += "=" * len(thrust_string) + "\n"
 
         # trim aero coeffs
         # nondimensionalize rates
@@ -809,14 +823,19 @@ class Aircraft:
         # report
         title = " Trim Aerodynamic Coefficients "
         num_eq_sn = int((len(thrust_string) - len(title))/2)
-        print("|" * num_eq_sn + title + "|" * num_eq_sn)
-        print("    {:<23s} : {:> 23.16f}".format("\"CL\"",CL))
-        print("    {:<23s} : {:> 23.16f}".format("\"CS\"",CS))
-        print("    {:<23s} : {:> 23.16f}".format("\"CD\"",CD))
-        print("    {:<23s} : {:> 23.16f}".format("\"Cl\"",Cl))
-        print("    {:<23s} : {:> 23.16f}".format("\"Cm\"",Cm))
-        print("    {:<23s} : {:> 23.16f}".format("\"Cn\"",Cn))
-        print("|" * len(thrust_string))
+        repstr += "|" * num_eq_sn + title + "|" * num_eq_sn + "\n"
+        repstr += "    {:<23s} : {:> 23.16f}".format("\"CL\"",CL) + "\n"
+        repstr += "    {:<23s} : {:> 23.16f}".format("\"CS\"",CS) + "\n"
+        repstr += "    {:<23s} : {:> 23.16f}".format("\"CD\"",CD) + "\n"
+        repstr += "    {:<23s} : {:> 23.16f}".format("\"Cl\"",Cl) + "\n"
+        repstr += "    {:<23s} : {:> 23.16f}".format("\"Cm\"",Cm) + "\n"
+        repstr += "    {:<23s} : {:> 23.16f}".format("\"Cn\"",Cn) + "\n"
+        repstr += "|" * len(thrust_string) + "\n"
+
+        if printatend:
+            print(repstr)
+
+        return repstr
 
 
     def run_trim(self,a_guess=None,b_guess=None,phi_guess=None,u_guess=None,
@@ -1516,70 +1535,22 @@ class Aircraft:
 
 
     def _get_V_tau_control(self,t,x_euler):
+
+        if self.first_Vtau_step:
+            self._build_Vtau_tracking_gains()
+        
         # pull out vars
         V_xb    = x_euler[ 0]
         V_yb    = x_euler[ 1]
         V_zb    = x_euler[ 2]
         # calcs
         V       = np.sqrt(V_xb**2+V_yb**2+V_zb**2)
-
-        if self.first_Vtau_step:
-            # vars that only need to be pulled out on first step
-            p       = x_euler[ 3]
-            q       = x_euler[ 4]
-            r       = x_euler[ 5]
-            z_f     = x_euler[ 8]
-            da      = x_euler[12]
-            de      = x_euler[13]
-            dB      = x_euler[14]
-            tau     = x_euler[15]
-            W = self.inertia_model.W
-            _,g,_,_,rho,_ = self.stdatm(-z_f)
-            _,g_h,_,_,rho_h,_ = self.stdatm_der(-z_f)
-            g_z,rho_z = -g_h, -rho_h
-            # calcs that only need to be done first step
-            a       = np.arctan2(V_zb,V_xb)
-            b       = asin(V_yb/V)
-            Ca = cos(a)#; Sa = sin(a)
-            Cb = cos(b)#; Sb = sin(b)
-            pbar = self.bw*p/2.0/V
-            qbar = self.cw*q/2.0/V
-            rbar = self.bw*r/2.0/V
-            #
-            AM = self.aero_model
-            TM = AM.Prop
-            expMmin = exp(-AM.S_M*(a - AM.S_ab))
-            expMplu = exp(AM.S_M*(a + AM.S_ab))
-            sig = (1. + expMmin + expMplu) / (1. + expMmin) / (1. + expMplu)
-            CL1 = AM._CL0(dB) + AM._CL_alpha(dB)*a
-            CS1 = AM._CS0(dB) + AM._CS_beta(dB)*b
-            oCD_V = (AM._CD_Spbar(dB)*CS1 + AM._CD_pbar(dB))*self.bw*p/2/V**2.0 \
-                    + (AM._CD_L2qbar(dB)*CL1*CL1 + AM._CD_Lqbar(dB)*CL1 
-                    + AM._CD_qbar(dB))*self.cw*q/2/V**2.0 \
-                    + (AM._CD_Srbar(dB)*CS1 + AM._CD_rbar(dB))*self.bw*r/2/V**2.0
-            CD_V   = (1.0 - sig)*oCD_V
-            CD     = (1.0 - sig)*AM._CD(a,b,pbar,qbar,rbar,da,de,dB)
-            T_V    =  TM.T_der_V  (tau,-z_f,V)
-            T_tau  =  TM.T_der_tau(tau,-z_f,V)
-            Qdyn   = 0.5*rho  *V**2.0*self.Sw
-            Qdyn_V =     rho  *V     *self.Sw
-            self.A_Vdot = g/W*(- Qdyn_V*CD - Qdyn*CD_V + Ca*Cb*T_V)
-            self.B_Vdot = g/W*Ca*Cb*T_tau
-            # #
-            # T = TM.get_thrust(tau,-z_f,V)
-            # T_z = -TM.T_der_H  (tau,-z_f,V)
-            # Qdyn_z = 0.5*rho_z*V**2.0*self.Sw
-            # self.A_Vdot_z = g/W*(-Qdyn_z*CD + Ca*Cb*T_z) + g_z/W*(-Qdyn*CD + Ca*Cb*T)
-            # #
-            self.kVp = 2.0*self.V_zeta*self.V_wn
-            self.kVi = self.V_wn*self.V_wn
-            self.first_Vtau_step = False
         
         # other vars
         # z_f     = x_euler[ 8]
-        V_xb_ss = self.x_trim[0]
-        V_yb_ss = self.x_trim[1]
-        V_zb_ss = self.x_trim[2]
+        V_xb_ss = self.x_trim_euler_slf[0]
+        V_yb_ss = self.x_trim_euler_slf[1]
+        V_zb_ss = self.x_trim_euler_slf[2]
         # z_ss    = self.x_trim[8]
         # other calcs
         V_ss    = np.sqrt(V_xb_ss**2+V_yb_ss**2+V_zb_ss**2)
@@ -1589,7 +1560,7 @@ class Aircraft:
         VI     = x_euler[self.xIi_eul[0]]
         # zcon = - self.A_Vdot_z*(z_f - z_ss)
         PIc = - self.kVp*eV - self.kVi*VI
-        tcom = self.u_trim[3] \
+        tcom = self.u_trim_slf[3] \
             + 1./self.B_Vdot*(- self.A_Vdot*eV - self.A_Vdot*Vref + PIc) # + zcon
         # tcom = self.u_trim[3]
         return tcom
@@ -2342,6 +2313,94 @@ class Aircraft:
             return repstr,Lin_Model
 
 
+    def _build_linear_slf_model(self,rows=[3,4,5],cols=[0,1,2]):
+        # rerun trim for slf
+        placeholder = self.phi_trim*1.0; self.phi_trim = 0.0
+        # run trim at condition
+        u_trim,x_trim = self.run_trim(0.0,0.0,0.0,[0.0,0.0,0.0,0.0],
+            verbose=self.verbose_trim,no_report=True)
+        ## INTSTATE
+        x_trim_euler = np.delete(x_trim,9)
+        x_trim_euler[9:12] = self._euler_angles(x_trim)
+        x_trim_euler[12:] = x_trim[13:]*1.
+        self.u_trim_slf = u_trim*1.0
+        self.x_trim_euler_slf = x_trim_euler*1.0
+        # return bank
+        self.phi_trim = placeholder*1.0
+
+        # build matrices
+        placeholder = self.Lin_Model.report*1; self.Lin_Model.report = False
+        A = self.Lin_Model._build_state_jacobian(x_trim_euler,u_trim,self.cgshift)
+        B = self.Lin_Model._build_input_jacobian(x_trim_euler,u_trim,self.cgshift)
+        self.Lin_Model.report = placeholder*1
+
+        # return A and B
+        return (A[rows,:])[:,rows],(B[rows,:])[:,cols]
+
+
+    def _build_tracking_gains(self):
+        return
+
+
+    def _build_Vtau_tracking_gains(self):
+        if self.first_Vtau_step:
+            self._build_tracking_gains()
+            # vars that only need to be pulled out on first step
+            V_xb_slf= self.x_trim_euler_slf[ 0]
+            V_yb_slf= self.x_trim_euler_slf[ 1]
+            V_zb_slf= self.x_trim_euler_slf[ 2]
+            p       = self.x_trim_euler_slf[ 3]
+            q       = self.x_trim_euler_slf[ 4]
+            r       = self.x_trim_euler_slf[ 5]
+            z_f     = self.x_trim_euler_slf[ 8]
+            da      = self.u_trim_slf[0]
+            de      = self.u_trim_slf[1]
+            dB      = self.u_trim_slf[2]
+            tau     = self.u_trim_slf[3]
+            W = self.inertia_model.W
+            _,g,_,_,rho,_ = self.stdatm(-z_f)
+            _,g_h,_,_,rho_h,_ = self.stdatm_der(-z_f)
+            g_z,rho_z = -g_h, -rho_h
+            # calcs that only need to be done first step
+            V_slf   = np.sqrt(V_xb_slf**2+V_yb_slf**2+V_zb_slf**2)
+            a       = np.arctan2(V_zb_slf,V_xb_slf)
+            b       = asin(V_yb_slf/V_slf)
+            Ca = cos(a)#; Sa = sin(a)
+            Cb = cos(b)#; Sb = sin(b)
+            pbar = self.bw*p/2.0/V_slf
+            qbar = self.cw*q/2.0/V_slf
+            rbar = self.bw*r/2.0/V_slf
+            #
+            AM = self.aero_model
+            TM = AM.Prop
+            expMmin = exp(-AM.S_M*(a - AM.S_ab))
+            expMplu = exp(AM.S_M*(a + AM.S_ab))
+            sig = (1. + expMmin + expMplu) / (1. + expMmin) / (1. + expMplu)
+            CL1 = AM._CL0(dB) + AM._CL_alpha(dB)*a
+            CS1 = AM._CS0(dB) + AM._CS_beta(dB)*b
+            oCD_V = (AM._CD_Spbar(dB)*CS1 + AM._CD_pbar(dB))*self.bw*p/2/V_slf**2.0 \
+                    + (AM._CD_L2qbar(dB)*CL1*CL1 + AM._CD_Lqbar(dB)*CL1 
+                    + AM._CD_qbar(dB))*self.cw*q/2/V_slf**2.0 \
+                    + (AM._CD_Srbar(dB)*CS1 + AM._CD_rbar(dB))*self.bw*r/2/V_slf**2.0
+            CD_V   = (1.0 - sig)*oCD_V
+            CD     = (1.0 - sig)*AM._CD(a,b,pbar,qbar,rbar,da,de,dB)
+            T_V    =  TM.T_der_V  (tau,-z_f,V_slf)
+            T_tau  =  TM.T_der_tau(tau,-z_f,V_slf)
+            Qdyn   = 0.5*rho  *V_slf**2.0*self.Sw
+            Qdyn_V =     rho  *V_slf     *self.Sw
+            self.A_Vdot = g/W*(- Qdyn_V*CD - Qdyn*CD_V + Ca*Cb*T_V)
+            self.B_Vdot = g/W*Ca*Cb*T_tau
+            # #
+            # T = TM.get_thrust(tau,-z_f,V)
+            # T_z = -TM.T_der_H  (tau,-z_f,V)
+            # Qdyn_z = 0.5*rho_z*V**2.0*self.Sw
+            # self.A_Vdot_z = g/W*(-Qdyn_z*CD + Ca*Cb*T_z) + g_z/W*(-Qdyn*CD + Ca*Cb*T)
+            # #
+            self.kVp = 2.0*self.V_zeta*self.V_wn
+            self.kVi = self.V_wn*self.V_wn
+            self.first_Vtau_step = False
+
+
     def initialize_sim(self,x,atol=1e-12,rtol=1e-6,nonlinear=True,quat=True):
         """Method which initializes the state and time of the simulator.
         """
@@ -3080,6 +3139,20 @@ class Aircraft:
         return delta_x0
 
 
+    def _add_to_delta_x0_VI(self,delta_x0):
+        ref = self._get_reference(0.0)[0]
+        V_xb_slf= self.x_trim_euler_slf[ 0]
+        V_yb_slf= self.x_trim_euler_slf[ 1]
+        V_zb_slf= self.x_trim_euler_slf[ 2]
+        V_slf   = np.sqrt(V_xb_slf**2+V_yb_slf**2+V_zb_slf**2)
+        Vref = ref - V_slf
+        #
+        VI = (self.B_Vdot*(self.u_trim[3] - self.u_trim_slf[3]) + 
+            self.A_Vdot*Vref)/self.kVi
+        delta_x0[self.xIi[0]] += VI
+        return delta_x0
+
+
     def run_simulation(self,report_controller=False,report_trim=True,
         save_matrices=True,mrrr=None,mrrc=None,delta_x0=None,
         include_stall_derivatives=False,
@@ -3096,6 +3169,8 @@ class Aircraft:
                 include_stall_derivatives=include_stall_derivatives,
                 include_altitude_derivatives = include_altitude_derivatives,
                 run_freq=False)
+        self._build_tracking_gains()
+        self._build_Vtau_tracking_gains()
         
         if report_trim:
             self._report_trim_solution(self.x_trim,self.u_trim,self.trim_iter)
@@ -3108,6 +3183,7 @@ class Aircraft:
         if delta_x0 is not None:
             delta_x0 = np.concatenate((delta_x0,[0.]*self.additional_states))
             delta_x0 = self._add_to_delta_x0(delta_x0)
+            delta_x0 = self._add_to_delta_x0_VI(delta_x0)
             x0 = self.x0 + delta_x0
         else:
             x0 = self.x0*1.
@@ -4562,7 +4638,8 @@ class Aircraft:
         return report_latex(self.Lin_Model.K,"K",print_report=False)
 
 
-    def _final_control_and_model_report(self,print_at_end=True):
+    def _final_control_and_model_report(self, predecimals=4, decimals=4, 
+        print_at_end=True):
         # intialize some variables
         n = 53 if not(self.tracking) else 12
         nadd = 20
@@ -4573,6 +4650,26 @@ class Aircraft:
         repstr += filler*(n*2+nadd) + "\n"
         repstr += filler*(n*2+nadd) + "\n"
         repstr += filler*n + " controller  report " + filler*n + "\n\n"
+
+        # the in-betweens: velocity model and control
+        if self.tracking:
+            repstr += "\n"
+            n_vel = 9
+            repstr += filler*n_vel + " velocity " + filler*n_vel + "\n"
+            repstr += "A_V              &= {:>+{}.{}f}".format(self.A_Vdot,\
+                predecimals+decimals,decimals) + "\n"
+            repstr += "B_V              &= {:>+{}.{}f}".format(self.B_Vdot,\
+                predecimals+decimals,decimals) + "\n"
+            repstr += r"\zeta_V          &= " + "{:>+{}.{}f}".format(self.V_zeta,\
+                predecimals+decimals,decimals) + "\n"
+            repstr += r"\omega_{n \, V}  &= " + "{:>+{}.{}f}".format(self.V_wn,\
+                predecimals+decimals,decimals) + "\n"
+            repstr += r"k_{p \, V}       &= " + "{:>+{}.{}f}".format(self.kVp,\
+                predecimals+decimals,decimals) + "\n"
+            repstr += r"k_{i \, V}       &= " + "{:>+{}.{}f}".format(self.kVi,\
+                predecimals+decimals,decimals) + "\n"
+            repstr += filler*(2*n_vel+10) + "\n"
+            repstr += "\n"
 
         # the in-betweens: model
         if self.uses_linear_control:
