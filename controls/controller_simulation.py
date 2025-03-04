@@ -1422,6 +1422,7 @@ class Aircraft:
         # initialize plots
         subdict = {
             "figsize" : (3.25,3.5),
+            # "figsize" : (2.0,2.153846154),
             "constrained_layout" : True,
             "sharex" : True
         }
@@ -2333,6 +2334,8 @@ class Aircraft:
         A = self.Lin_Model._build_state_jacobian(x_trim_euler,u_trim,self.cgshift)
         B = self.Lin_Model._build_input_jacobian(x_trim_euler,u_trim,self.cgshift)
         self.Lin_Model.report = placeholder*1
+        self.A_slf = A*1.0
+        self.B_slf = B*1.0
 
         # return A and B
         return (A[rows,:])[:,rows],(B[rows,:])[:,cols]
@@ -3147,7 +3150,7 @@ class Aircraft:
         V_slf   = np.sqrt(V_xb_slf**2+V_yb_slf**2+V_zb_slf**2)
         Vref = ref - V_slf
         #
-        VI = (self.B_Vdot*(self.u_trim[3] - self.u_trim_slf[3]) + 
+        VI = -(self.B_Vdot*(self.u_trim[3] - self.u_trim_slf[3]) + 
             self.A_Vdot*Vref)/self.kVi
         delta_x0[self.xIi[0]] += VI
         return delta_x0
@@ -3336,8 +3339,10 @@ class Aircraft:
             hr = int(duration//3600)
             mn = int(int((duration/3600-hr)*3600)//60)
             sc = float(duration%60)
-            print("\nfinished simulating",end="")
-            print(", duration = {:>02d}:{:>02d}:{:>05.2f}\n".format(hr,mn,sc))
+            tm_str ="\nfinished simulating"
+            tm_str+=", duration = {:>02d}:{:>02d}:{:>05.2f}\n".format(hr,mn,sc)
+            self.tm_str = tm_str + "\n"
+            print(tm_str)
             # print(np.max(self.xarr[6,:]))
             # print(np.min(self.xarr[6,:]))
 
@@ -5129,14 +5134,17 @@ def run_single_simulation(filename,rtdst_1sg=[20.,10.,5.],
         aircraft = GainSchedulingAircraft(input_dict)
     else:
         aircraft = aircraft_class(input_dict)
-    print()
+    #
+    run_str = "\n"
     if trim_climb != 0. and start_climbing:
-        print("steady climbing flight at " + \
+        run_str += "steady climbing flight at " + \
             "{} ft altitude, climb angle = {} deg".format(initial_altitude,\
-            trim_climb))
+            trim_climb) + "\n"
     else:
-        print("steady level flight at {} ft altitude".format(initial_altitude))
-    aircraft._report_trim_solution(aircraft.x_trim,aircraft.u_trim)
+        run_str += "steady level flight at {} ft altitude".format(\
+            initial_altitude) + "\n"
+    print(run_str)
+    run_str += aircraft._report_trim_solution(aircraft.x_trim,aircraft.u_trim)
 
     # track check time
     if track_check_time == "o":
@@ -5172,13 +5180,14 @@ def run_single_simulation(filename,rtdst_1sg=[20.,10.,5.],
         trim_sts[i,:] = aircraft.x_trim2_euler*1.
         trim_ars[i,:] = aircraft.aero_trim2*1.
         trim_cos[i,:] = aircraft.u_trim2[:aircraft.u_trim.shape[0]]*1.
-        print()
+        run_str += "\n"; print()
         if trim_climb != 0.:
-            print("steady climbing flight at " + \
-                "{} ft altitude, climb angle = {} deg".format(H,Y))
+            curr_op = "steady climbing flight at " + \
+                "{} ft altitude, climb angle = {} deg".format(H,Y) + "\n"
         else:
-            print("steady flight at {} ft altitude".format(H))
-        aircraft._report_trim_solution(aircraft.x_trim2,aircraft.u_trim2)
+            curr_op = "steady flight at {} ft altitude".format(H) + "\n"
+        run_str += curr_op; print(curr_op,end="")
+        run_str += aircraft._report_trim_solution(aircraft.x_trim2,aircraft.u_trim2)
 
     aircraft.climb_trim = 0.
     aircraft.V0 = final_mach*aircraft.stdatm(final_altitude)[5]
@@ -5187,15 +5196,13 @@ def run_single_simulation(filename,rtdst_1sg=[20.,10.,5.],
     aircraft.x_trim2_euler_slf = aircraft.x_trim2_euler*1.
     aircraft.aero_trim2_slf = aircraft.aero_trim2*1.
     aircraft.u_trim2_slf = aircraft.u_trim2*1.
-    print()
-    print("steady flight at {} ft altitude".format(final_altitude))
-    aircraft._report_trim_solution(aircraft.x_trim2,aircraft.u_trim2)
+    run_str += "\n"; print()
+    curr_op = "steady flight at {} ft altitude".format(final_altitude) + "\n"
+    run_str += curr_op; print(curr_op,end="")
+    run_str += aircraft._report_trim_solution(aircraft.x_trim2,aircraft.u_trim2)
     aircraft.x0 = aircraft.x_trim*1.
     aircraft.u = aircraft.u_trim*1.
     aircraft.t_gs = t_gain_schedule
-    # print(aircraft.x_trim_euler)
-    # print(aircraft.u_trim)
-    # quit()
 
     _,g,_,_,rho,_ = aircraft.stdatm(aircraft.H0)
     #
@@ -5320,7 +5327,8 @@ def run_single_simulation(filename,rtdst_1sg=[20.,10.,5.],
             plot_dict["transparent"],plot_dict["format"])
 
     # build controller
-    aircraft._build_controller(report=True,save_matrices=save_data,
+    run_str += "\n\nbuilding controller...\n"
+    run_str += aircraft._build_controller(report=True,save_matrices=save_data,
         filename="matrices",mrrr=mrrr,
         mrrc=mrrc,run_freq=save_data,save_name_end=name_end,
         include_stall_derivatives=include_stall_derivatives,
@@ -5374,29 +5382,31 @@ def run_single_simulation(filename,rtdst_1sg=[20.,10.,5.],
     aircraft.K_slf = Lin_Model.K*1.
     #
     # report by input most affecting state outputs
+    gs_gains_info = ""
     if aircraft.gain_scheduling or not(aircraft.tracking):
         sts = ["Vxb","Vyb","Vzb","p","q","r","zf","phi","tht"]
         cts = ["da","de","dB","tau"]
         for i in range(gain_steps):
-            print("gain step {:> 3d}".format(i))
+            gs_gains_info += "gain step {:> 3d}".format(i) + "\n"
             for k in range(len(cts)):
                 oom = np.floor(np.log10(abs(K_trs[i][k])))
                 oomax = np.max(oom)
                 oomsort_i = np.flip(np.argsort(np.abs(K_trs[i][k])))
                 #
-                print("    {:<3s} -> ".format(cts[k]),end="")
+                gs_gains_info += "    {:<3s} -> ".format(cts[k]) + ""
                 for j in range(len(sts)):
                     if oom[oomsort_i[j]] == oomax:
-                        print(sts[oomsort_i[j]],end=", ")
-                print("-> ",end="")
+                        gs_gains_info += sts[oomsort_i[j]] + ", "
+                gs_gains_info += "-> " + ""
                 for j in range(len(sts)):
                     if oom[oomsort_i[j]] == oomax - 1:
-                        print(sts[oomsort_i[j]],end=", ")
-                print("-> ",end="")
+                        gs_gains_info += sts[oomsort_i[j]] + ", "
+                gs_gains_info += "-> " + ""
                 for j in range(len(sts)):
                     if oom[oomsort_i[j]] == oomax - 2:
-                        print(sts[oomsort_i[j]],end=", ")
-                print()
+                        gs_gains_info += sts[oomsort_i[j]] + ", "
+                gs_gains_info += "\n"
+    run_str += gs_gains_info; print(gs_gains_info)
     
     # # bmatrix with zeros
     # print(aircraft.x_tr_euler[0])
@@ -5471,7 +5481,8 @@ def run_single_simulation(filename,rtdst_1sg=[20.,10.,5.],
     # aircraft.climb_trim = 0
     
     # skip sim
-    print("running case:",run_name)
+    run_title = "running case: " + run_name; print(run_title)
+    run_str += run_title + "\n"
     if not(skip_simulation):
         # create errored FM
         if type(fixed_FM_errors) == str:
@@ -5504,7 +5515,7 @@ def run_single_simulation(filename,rtdst_1sg=[20.,10.,5.],
         names = ["CL","CS","CD","Cl","Cm","Cn"]
         for j in range(6):
             header += " {:^6s}".format(names[j])
-        print(header)
+        print(header); run_str += header + "\n"
 
         # determine time to check
         ############### tracking checker
@@ -5531,6 +5542,8 @@ def run_single_simulation(filename,rtdst_1sg=[20.,10.,5.],
                     mrrr=mrrr,delta_x0=dx0,actr_warm_start=actr_warm_start,
                     save_matrices=False,report_simulation=save_data)
             Vr = aircraft.aerox*1.0
+
+            run_str += aircraft.tm_str
             
             x_zero = xr[:,-1]*1.
             dx = x_zero - aircraft.x_trim2_euler_deg
@@ -5547,7 +5560,7 @@ def run_single_simulation(filename,rtdst_1sg=[20.,10.,5.],
             case_run_text += " -- |Dx| = {:>9.3f},".format(Dx_norm)
             case_run_text += "   Stable" if Dx_norm <= Dx_norm_stable_threshold \
                 else " Unstable"
-            print(case_run_text)
+            print(case_run_text); run_str += case_run_text + "\n"
 
             if Dx_norm <= Dx_norm_stable_threshold:
                 counter += 1
@@ -5555,15 +5568,15 @@ def run_single_simulation(filename,rtdst_1sg=[20.,10.,5.],
             if (i+1) % 50 == 0:
                 succ = "{:>5d}/{:>5d} cases successful,".format(counter,i+1)
                 succ += " est {:>5d}/{:>5d}".format(int(counter*num/(i+1)),num)
-                print(succ)
-                print(header)
+                print(succ); run_str += succ + "\n"
+                print(header); run_str += header + "\n"
     
         succ = "{:>5d}/{:>5d} cases successful\n".format(counter,num)
-        print(succ)
+        print(succ); run_str += succ + "\n"
 
         # report on controller
         if not(aircraft.gain_scheduling):
-            repcon = aircraft._final_control_and_model_report()
+            run_str += aircraft._final_control_and_model_report()
 
         # pull out info
         rr = np.array([aircraft._get_reference(ti) for ti in aircraft.tarr]).T
@@ -5577,11 +5590,22 @@ def run_single_simulation(filename,rtdst_1sg=[20.,10.,5.],
         rs[0] = rr[0] + Vs[0] - Vr[0]
         rs[1] = rr[1] + Vs[2] - Vr[2]
         rs[2] = rr[2] + Vs[3] - Vr[3]
-        aircraft._report_simulation_deltas(xs=xs,Vs=Vs,us=us,rs=rs,
+        run_str += aircraft._report_simulation_deltas(xs=xs,Vs=Vs,us=us,rs=rs,
             shift_to_trim=False,file_folder=file_folder)
 
         # plot
         if save_data:
+            # readout
+            with open(file_folder+"/"+"terminal_output.txt","a") as f:
+                f.write(run_str)
+                f.close()
+
+            fnl_bank = "P{:02d}".format(int(round((xr[9])[-1])))
+            with open(file_folder+"/"+"final_bank_"+fnl_bank+".txt","a") as f:
+                f.write(run_str)
+                f.close()
+            
+            # plots
             aircraft.plot_results(**plot_dict)
 
     return
@@ -6091,8 +6115,8 @@ def monte_carlo_perturbations(filename,rtdst_1sg=[5.,5.,5.],
         aircraft.refresh_FM_error(FM_error_percs=FM_error)
 
         # report
-        pdeg,qdeg,rdeg = np.rad2deg([pshift,qshift,rshift]) # Dq = {:> 9.3f}
-        case_run_text = ("{:>4d} Dp = {:> 9.3f} Dq = {:> 22.16f} " + \
+        pdeg,qdeg,rdeg = np.rad2deg([pshift,qshift,rshift]) # Dq = {:> 22.16f}
+        case_run_text = ("{:>4d} Dp = {:> 9.3f} Dq = {:> 9.3f} " + \
             "Dr = {:> 9.3f}").format(i+1,pdeg,qdeg,rdeg)
 
         # call run sim
@@ -6342,11 +6366,197 @@ def monte_carlo_perturbations(filename,rtdst_1sg=[5.,5.,5.],
         with open(file_folder+"/"+"terminal_output.txt","a") as f:
             f.write(r50_str)
             f.close()
-    print("finished simulating {}...".format(run_name))
+    finished_sim = "finished simulating {}...".format(run_name)
+    print(finished_sim); run_str += finished_sim + "\n"
     hr = int(duration_time//3600)
     mn = int(int((duration_time/3600-hr)*3600)//60)
     sc = float(duration_time%60)
-    print("    duration = {:>02d}:{:>02d}:{:>05.2f}".format(hr,mn,sc))
+    timing = "    duration = {:>02d}:{:>02d}:{:>05.2f}".format(hr,mn,sc)
+    print(timing); run_str += timing + "\n"
+
+    # report on smallest unstable cases
+    case_range = np.arange(num)
+    unstb_rnge = case_range[np.logical_not(stables)]
+    stabl_rnge = case_range[stables]
+    p__argsort = np.argsort(np.abs(p_vals))
+    q__argsort = np.argsort(np.abs(q_vals))
+    r__argsort = np.argsort(np.abs(r_vals))
+    CL_argsort = np.argsort(FM_err_percs[0])
+    CS_argsort = np.argsort(FM_err_percs[1])
+    CD_argsort = np.argsort(FM_err_percs[2])
+    Cl_argsort = np.argsort(FM_err_percs[3])
+    Cm_argsort = np.argsort(FM_err_percs[4])
+    Cn_argsort = np.argsort(FM_err_percs[5])
+    if len(unstb_rnge) == 0:
+        p_min = np.rad2deg(p_vals[p__argsort[-1]])
+        p_ind = p__argsort[-1]
+        q_min = np.rad2deg(q_vals[q__argsort[-1]])
+        q_ind = q__argsort[-1]
+        r_min = np.rad2deg(r_vals[r__argsort[-1]])
+        r_ind = r__argsort[-1]
+        #
+        CLmin = FM_err_percs[0,CL_argsort[-1]] \
+            if FM_err_percs[0,CL_argsort[-1]] > abs(FM_err_percs[0,CL_argsort[0]]) \
+            else FM_err_percs[0,CL_argsort[0]]
+        CLind = CL_argsort[-1] \
+            if FM_err_percs[0,CL_argsort[-1]] > abs(FM_err_percs[0,CL_argsort[0]]) \
+            else CL_argsort[0]
+        CSmin = FM_err_percs[1,CS_argsort[-1]] \
+            if FM_err_percs[1,CS_argsort[-1]] > abs(FM_err_percs[1,CS_argsort[0]]) \
+            else FM_err_percs[1,CS_argsort[0]]
+        CSind = CS_argsort[-1] \
+            if FM_err_percs[1,CS_argsort[-1]] > abs(FM_err_percs[1,CS_argsort[0]]) \
+            else CS_argsort[0]
+        CDmin = FM_err_percs[2,CD_argsort[-1]] \
+            if FM_err_percs[2,CD_argsort[-1]] > abs(FM_err_percs[2,CD_argsort[0]]) \
+            else FM_err_percs[2,CD_argsort[0]]
+        CDind = CD_argsort[-1] \
+            if FM_err_percs[2,CD_argsort[-1]] > abs(FM_err_percs[2,CD_argsort[0]]) \
+            else CD_argsort[0]
+        Clmin = FM_err_percs[3,Cl_argsort[-1]] \
+            if FM_err_percs[3,Cl_argsort[-1]] > abs(FM_err_percs[3,Cl_argsort[0]]) \
+            else FM_err_percs[3,Cl_argsort[0]]
+        Clind = Cl_argsort[-1] \
+            if FM_err_percs[3,Cl_argsort[-1]] > abs(FM_err_percs[3,Cl_argsort[0]]) \
+            else Cl_argsort[0]
+        Cmmin = FM_err_percs[4,Cm_argsort[-1]] \
+            if FM_err_percs[4,Cm_argsort[-1]] > abs(FM_err_percs[4,Cm_argsort[0]]) \
+            else FM_err_percs[4,Cm_argsort[0]]
+        Cmind = Cm_argsort[-1] \
+            if FM_err_percs[4,Cm_argsort[-1]] > abs(FM_err_percs[4,Cm_argsort[0]]) \
+            else Cm_argsort[0]
+        Cnmin = FM_err_percs[5,Cn_argsort[-1]] \
+            if FM_err_percs[5,Cn_argsort[-1]] > abs(FM_err_percs[5,Cn_argsort[0]]) \
+            else FM_err_percs[5,Cn_argsort[0]]
+        Cnind = Cn_argsort[-1] \
+            if FM_err_percs[5,Cn_argsort[-1]] > abs(FM_err_percs[5,Cn_argsort[0]]) \
+            else Cn_argsort[0]
+    else:
+        if p__argsort[0] in unstb_rnge:
+            p_min = 0.0
+            p_ind = -1
+        else:
+            for k in range(len(p__argsort)):
+                if p__argsort[k] in unstb_rnge:
+                    p_min = np.rad2deg(p_vals[p__argsort[k-1]])
+                    p_ind = p__argsort[k-1]*1
+                    break
+        if q__argsort[0] in unstb_rnge:
+            q_min = 0.0
+            q_ind = -1
+        else:
+            for k in range(len(q__argsort)):
+                if q__argsort[k] in unstb_rnge:
+                    q_min = np.rad2deg(q_vals[q__argsort[k-1]])
+                    q_ind = q__argsort[k-1]*1
+                    break
+        if r__argsort[0] in unstb_rnge:
+            r_min = 0.0
+            r_ind = -1
+        else:
+            for k in range(len(r__argsort)):
+                if r__argsort[k] in unstb_rnge:
+                    r_min = np.rad2deg(r_vals[r__argsort[k-1]])
+                    r_ind = r__argsort[k-1]*1
+                    break
+        #
+        for k in range(len(CL_argsort)):
+            if CL_argsort[k] in stabl_rnge:
+                CLmin = FM_err_percs[0,CL_argsort[k]]
+                CLind = CL_argsort[k]*1
+                break
+        for k in reversed(range(len(CL_argsort))):
+            if CL_argsort[k] in stabl_rnge:
+                if abs(FM_err_percs[0,CL_argsort[k]]) < abs(CLmin):
+                    CLmin = FM_err_percs[0,CL_argsort[k]]
+                    CLind = CL_argsort[k]*1
+                break
+        for k in range(len(CS_argsort)):
+            if CS_argsort[k] in stabl_rnge:
+                CSmin = FM_err_percs[1,CS_argsort[k]]
+                CSind = CS_argsort[k]*1
+                break
+        for k in reversed(range(len(CS_argsort))):
+            if CS_argsort[k] in stabl_rnge:
+                if abs(FM_err_percs[1,CS_argsort[k]]) < abs(CSmin):
+                    CSmin = FM_err_percs[1,CS_argsort[k]]
+                    CSind = CS_argsort[k]*1
+                break
+        for k in range(len(CD_argsort)):
+            if CD_argsort[k] in stabl_rnge:
+                CDmin = FM_err_percs[2,CD_argsort[k]]
+                CDind = CD_argsort[k]*1
+                break
+        for k in reversed(range(len(CD_argsort))):
+            if CD_argsort[k] in stabl_rnge:
+                if abs(FM_err_percs[2,CD_argsort[k]]) < abs(CDmin):
+                    CDmin = FM_err_percs[2,CD_argsort[k]]
+                    CDind = CD_argsort[k]*1
+                break
+        for k in range(len(Cl_argsort)):
+            if Cl_argsort[k] in stabl_rnge:
+                Clmin = FM_err_percs[3,Cl_argsort[k]]
+                Clind = Cl_argsort[k]*1
+                break
+        for k in reversed(range(len(Cl_argsort))):
+            if Cl_argsort[k] in stabl_rnge:
+                if abs(FM_err_percs[3,Cl_argsort[k]]) < abs(Clmin):
+                    Clmin = FM_err_percs[3,Cl_argsort[k]]
+                    Clind = Cl_argsort[k]*1
+                break
+        for k in range(len(Cm_argsort)):
+            if Cm_argsort[k] in stabl_rnge:
+                Cmmin = FM_err_percs[4,Cm_argsort[k]]
+                Cmind = Cm_argsort[k]*1
+                break
+        for k in reversed(range(len(Cm_argsort))):
+            if Cm_argsort[k] in stabl_rnge:
+                if abs(FM_err_percs[4,Cm_argsort[k]]) < abs(Cmmin):
+                    Cmmin = FM_err_percs[4,Cm_argsort[k]]
+                    Cmind = Cm_argsort[k]*1
+                break
+        for k in range(len(Cn_argsort)):
+            if Cn_argsort[k] in stabl_rnge:
+                Cnmin = FM_err_percs[5,Cn_argsort[k]]
+                Cnind = Cn_argsort[k]*1
+                break
+        for k in reversed(range(len(Cn_argsort))):
+            if Cn_argsort[k] in stabl_rnge:
+                if abs(FM_err_percs[5,Cn_argsort[k]]) < abs(Cnmin):
+                    Cnmin = FM_err_percs[5,Cn_argsort[k]]
+                    Cnind = Cn_argsort[k]*1
+                break
+    # report
+    p_str = "    case {:> 4d}, p  stable <= {:>+9.3f} deg/s".format(p_ind,abs(p_min))
+    q_str = "    case {:> 4d}, q  stable <= {:>+9.3f} deg/s".format(q_ind,abs(q_min))
+    r_str = "    case {:> 4d}, r  stable <= {:>+9.3f} deg/s".format(r_ind,abs(r_min))
+    #
+    CLstr = "    case {:> 4d}, CL stable <= {:>+9.3f}".format(CLind,abs(CLmin))
+    CSstr = "    case {:> 4d}, CS stable <= {:>+9.3f}".format(CSind,abs(CSmin))
+    CDstr = "    case {:> 4d}, CD stable <= {:>+9.3f}".format(CDind,abs(CDmin))
+    Clstr = "    case {:> 4d}, Cl stable <= {:>+9.3f}".format(Clind,abs(Clmin))
+    Cmstr = "    case {:> 4d}, Cm stable <= {:>+9.3f}".format(Cmind,abs(Cmmin))
+    Cnstr = "    case {:> 4d}, Cn stable <= {:>+9.3f}".format(Cnind,abs(Cnmin))
+    #
+    roa_str = ""
+    roa_str += p_str + "\n"
+    roa_str += q_str + "\n"
+    roa_str += r_str + "\n"
+    splitter = "    " + "-"*38; roa_str += splitter + "\n"
+    roa_str += CLstr + "\n"
+    roa_str += CSstr + "\n"
+    roa_str += CDstr + "\n"
+    roa_str += Clstr + "\n"
+    roa_str += Cmstr + "\n"
+    roa_str += Cnstr + "\n"
+    print(roa_str)
+    run_str += roa_str + "\n"
+    roa_str = run_name + "\n" + splitter + "\n" + roa_str + "\n"
+
+    if save_data:
+        with open(file_folder+"/"+"roa_est.txt","a") as f:
+            f.write(roa_str)
+            f.close()
 
     # divide average responses
     if counter > 0:
@@ -6618,7 +6828,7 @@ def monte_carlo_perturbations(filename,rtdst_1sg=[5.,5.,5.],
             #     "plots/monte_carlo/"+run_name+".gif",writer="imagemagick",dpi=300.)
         plt.close(fig)
         plt.rcdefaults()
-    return
+    return roa_str
 
 
 def compare_aero_forces(filename,rtdst_1sg=[5.,5.,5.],

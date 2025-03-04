@@ -1,0 +1,14 @@
+   1 Dp =     9.134 Dq =     0.000 Dr =     0.000 |Dx| =     0.000,   Stable ->  q  p  r
+   2 Dp =   -15.392 Dq =     0.000 Dr =     0.000 |Dx| =    13.000, Unstable >> ->  r  q  p
+   3 Dp =     4.790 Dq =     0.000 Dr =     0.000 |Dx| =     0.000,   Stable ->  q  p  r
+   4 Dp =     0.348 Dq =     0.000 Dr =     0.000 |Dx| =     0.000,   Stable ->  q  p  r
+   5 Dp =     6.591 Dq =     0.000 Dr =     0.000 |Dx| =     0.000,   Stable ->  q  p  r
+   6 Dp =     1.928 Dq =     0.000 Dr =     0.000 |Dx| =     0.000,   Stable ->  q  p  r
+   7 Dp =     9.136 Dq =     0.000 Dr =     0.000 |Dx| =     0.000,   Stable ->  q  p  r
+   8 Dp =     0.159 Dq =     0.000 Dr =     0.000 |Dx| =     0.000,   Stable ->  q  p  r
+   9 Dp =    -2.581 Dq =     0.000 Dr =     0.000 |Dx| =     0.000,   Stable ->  r  p  q
+  10 Dp =     2.902 Dq =     0.000 Dr =     0.000 |Dx| =     0.000,   Stable ->  q  p  r
+   9/  10 cases stable
+|Dx| threshold is        1.0
+   7 cases tc early was not tc true
+
