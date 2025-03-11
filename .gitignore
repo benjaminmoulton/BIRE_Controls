@@ -167,10 +167,19 @@ cython_debug/
 # ignore fail plots
 controls/track_plots/monte_carlo/**/fail_plots/
 controls/stblz_plots/monte_carlo/**/fail_plots/
+controls/track_plots/saved_monte_carlo/**/fail_plots/
+controls/stblz_plots/saved_monte_carlo/**/fail_plots/
 # ignore png in monte_carlo runs
 controls/track_plots/monte_carlo/**/**/*.png
 controls/stblz_plots/monte_carlo/**/**/*.png
+controls/track_plots/saved_monte_carlo/**/**/*.png
+controls/stblz_plots/saved_monte_carlo/**/**/*.png
 # ignore determinant_data, png plots
 controls/determinant_data/*.csv
 controls/determinant_data/**/*.csv
 controls/determinant_data/**/*.png
+# ignore all current mc and single sim tracking cases
+controls/track_plots/monte_carlo/
+controls/track_plots/saved_monte_carlo/
+controls/track_plots/single_simulation/
+controls/track_plots/saved_single_simulation/

@@ -82,6 +82,7 @@ class Aircraft:
         self.uses_linear_control = True
         self.gain_scheduling = False
         self.additional_states = 0
+        self.is_monte_carlo = False
 
         # V tau controller initialize terms, only used with tracking contrls
         self.first_Vtau_step = True
@@ -1431,14 +1432,16 @@ class Aircraft:
         
         # plot V,a,b signals from 0 to tf
         t = np.linspace(0.0,self.tf,1000)
+        a_tr_deg = np.rad2deg(atan2(self.x_trim[2],self.x_trim[0]))
+        b_tr_deg = np.rad2deg(asin(self.x_trim[1]/self.V0))
         V =   np.array([self.r_ints[0](0,ti) for ti in t]) - self.V0
-        a = np.rad2deg([self.r_ints[1](1,ti) for ti in t])
-        b = np.rad2deg([self.r_ints[2](2,ti) for ti in t])
-        aero_axs.plot(t,V,c="k",ls= "-",label="$V_{ref} - V_{tr}$")
-        aero_axs.plot(t,a,c="k",ls="--",label=r"$\alpha_{ref}$")
-        aero_axs.plot(t,b,c="k",ls="-.",label=r"$\beta_{ref}$")
+        a = np.rad2deg([self.r_ints[1](1,ti) for ti in t]) - a_tr_deg
+        b = np.rad2deg([self.r_ints[2](2,ti) for ti in t]) - b_tr_deg
+        aero_axs.plot(t,V,c="k",ls= "-",label=r"$\Delta V_{ref}$")
+        aero_axs.plot(t,a,c="k",ls="--",label=r"$\Delta \alpha_{ref}$")
+        aero_axs.plot(t,b,c="k",ls="-.",label=r"$\Delta \beta_{ref}$")
         aero_axs.set_xlabel("Time ($t$), sec")
-        aero_axs.set_ylabel("Reference velocity and aerodynamic angles, ft/s or deg")
+        aero_axs.set_ylabel("Reference from trim, ft/s or deg")
         aero_axs.legend()
 
         # plot p,q,r signals from 0 to tf
@@ -1997,13 +2000,15 @@ class Aircraft:
             #     print("x =",x)
             #     quit()
             # # # # # # # CHECKING NDI # # # # # # 
-            if euler[1] > 1.3962634015954636: # 80dg # gimbal lock, raise error
+            if self.is_monte_carlo and euler[1] > 1.3962634015954636: # 80dg # gimbal lock, raise error
                 self.t_gimbal = t
+                # print("Hit gimbal lock")
                 raise ValueError("Hit gimbal lock t = {:> 8.4f}".format(t))
         else:
             ## INTSTATE
             if x[10] > 1.3962634015954636: # 80dg # gimbal lock, raise error
                 self.t_gimbal = t
+                # print("Hit gimbal lock")
                 raise ValueError("Hit gimbal lock t = {:> 8.4f}".format(t))
 
         # run dynamics
@@ -2317,6 +2322,7 @@ class Aircraft:
     def _build_linear_slf_model(self,rows=[3,4,5],cols=[0,1,2]):
         # rerun trim for slf
         placeholder = self.phi_trim*1.0; self.phi_trim = 0.0
+        FM_ph = self.FM_errors*1.0; self.FM_errors *= 0.0
         # run trim at condition
         u_trim,x_trim = self.run_trim(0.0,0.0,0.0,[0.0,0.0,0.0,0.0],
             verbose=self.verbose_trim,no_report=True)
@@ -2328,6 +2334,7 @@ class Aircraft:
         self.x_trim_euler_slf = x_trim_euler*1.0
         # return bank
         self.phi_trim = placeholder*1.0
+        self.FM_errors = FM_ph*1.0
 
         # build matrices
         placeholder = self.Lin_Model.report*1; self.Lin_Model.report = False
@@ -2346,7 +2353,7 @@ class Aircraft:
 
 
     def _build_Vtau_tracking_gains(self):
-        if self.first_Vtau_step:
+        if self.tracking and self.first_Vtau_step:
             self._build_tracking_gains()
             # vars that only need to be pulled out on first step
             V_xb_slf= self.x_trim_euler_slf[ 0]
@@ -2904,6 +2911,8 @@ class Aircraft:
         if isinstance(rs,str):
             rs = np.array([self._get_reference(ti) for ti in ts]).T
             rs[self.xicnv] = np.rad2deg(rs[self.xicnv])
+            rs[1] = np.rad2deg(rs[1])
+            rs[2] = np.rad2deg(rs[2])
         if shift_to_trim:
             xs = xs - self.x_trim_euler[:,None]
             us = us - self.u_trim[:,None]
@@ -2989,6 +2998,7 @@ class Aircraft:
         ]
         control_units = ["deg"]*3 + ["p-u"]
         Vab_names = ["V","M","alpha","beta"]
+        int2names = ["V","alpha","beta"] + state_names[3:]
         Vab_units = ["ft/s"] + [""] + ["deg"]*2
         counter = 0
 
@@ -3020,7 +3030,7 @@ class Aircraft:
             elif self.tracking and i in self.xPi_eul:
                 j = counter*1; counter += 1
                 vals = xerr[j,:]
-                name = int_names[i]
+                name = int2names[i]
                 unit = int_units[i]
                 max_val = vals[np.argmax(np.abs(vals))]
                 repstr += " ** mag{:^12s}= {:> 9.3f} {:<5s}".format(\
@@ -3143,16 +3153,17 @@ class Aircraft:
 
 
     def _add_to_delta_x0_VI(self,delta_x0):
-        ref = self._get_reference(0.0)[0]
-        V_xb_slf= self.x_trim_euler_slf[ 0]
-        V_yb_slf= self.x_trim_euler_slf[ 1]
-        V_zb_slf= self.x_trim_euler_slf[ 2]
-        V_slf   = np.sqrt(V_xb_slf**2+V_yb_slf**2+V_zb_slf**2)
-        Vref = ref - V_slf
-        #
-        VI = -(self.B_Vdot*(self.u_trim[3] - self.u_trim_slf[3]) + 
-            self.A_Vdot*Vref)/self.kVi
-        delta_x0[self.xIi[0]] += VI
+        if self.tracking:
+            ref = self._get_reference(0.0)[0]
+            V_xb_slf= self.x_trim_euler_slf[ 0]
+            V_yb_slf= self.x_trim_euler_slf[ 1]
+            V_zb_slf= self.x_trim_euler_slf[ 2]
+            V_slf   = np.sqrt(V_xb_slf**2+V_yb_slf**2+V_zb_slf**2)
+            Vref = ref - V_slf
+            #
+            VI = -(self.B_Vdot*(self.u_trim[3] - self.u_trim_slf[3]) + 
+                self.A_Vdot*Vref)/self.kVi
+            delta_x0[self.xIi[0]] += VI
         return delta_x0
 
 
@@ -3322,7 +3333,7 @@ class Aircraft:
                 #################################
                 # this is commented out for now
                 # if no gimbal lock, return
-                if x_euler[10] > 80.:
+                if self.is_monte_carlo and x_euler[10] > 80.:
                     return self.xarr[:,:i+1],self.uarr[:,:i+1]
                 ################################
                 # save to arrays
@@ -3370,7 +3381,7 @@ class Aircraft:
         xicnv = [3,4,5] + [12,13,14]*(self.order >=1) + \
             [16,17,18]*(self.order >1)
         for xPii in range(len(self.xPi_eul)):
-            if self.xPi_eul[xPii] in xicnv + [9,10,11]:
+            if self.xPi_eul[xPii] in xicnv + [1,2,9,10,11]:
                 xicnv += [self.xIi_eul[xPii]]
         self.xicnv = xicnv + [9,10,11]
         uicnv = [0,1,2]
@@ -3530,12 +3541,20 @@ class Aircraft:
             ref = np.array([self._get_reference(ti) for ti in tarr]).T
 
             ref[self.xicnv] = np.rad2deg(ref[self.xicnv])
+            ref[1] = np.rad2deg(ref[1])
+            ref[2] = np.rad2deg(ref[2])
             
             # determine error for all proportional states
             xerr = xarr[self.xPi_eul,:] - ref[self.xPi_eul,:]
-            if 0 in self.xPi_eul: xerr[0] = aerox[0,:] - ref[0,:]
-            if 1 in self.xPi_eul: xerr[1] = aerox[2,:] - ref[1,:]
-            if 2 in self.xPi_eul: xerr[2] = aerox[3,:] - ref[2,:]
+            if 0 in self.xPi_eul:
+                xerr[np.argwhere(np.array(self.xPi_eul) == 0)[0,0],:] \
+                    = aerox[0,:] - ref[0,:]
+            if 1 in self.xPi_eul:
+                xerr[np.argwhere(np.array(self.xPi_eul) == 1)[0,0],:] \
+                    = aerox[2,:] - ref[1,:]
+            if 2 in self.xPi_eul:
+                xerr[np.argwhere(np.array(self.xPi_eul) == 2)[0,0],:] \
+                    = aerox[3,:] - ref[2,:]
             
             # determine integral state for all integral states
             xigr = xarr[self.xIi_eul,:]
@@ -3665,16 +3684,16 @@ class Aircraft:
                 state = xarr
                 aero = aerox
                 if self.tracking:
-                    err = xerr
-                    igr = xigr
+                    err = xerr*1.0
+                    igr = xigr*1.0
             else:
                 c = "0.35"
                 lbl = second_label
                 state = zarr
                 aero = aeroz
                 if self.tracking:
-                    err = zerr
-                    igr = zigr
+                    err = zerr*1.0
+                    igr = zigr*1.0
             
             # # uvw plot
             if i==0:
@@ -3895,11 +3914,23 @@ class Aircraft:
             
             # # error plots
             lsy = [":","-","--","-.",]
+            csy = ["k","k","k","k",]
+            if hasattr(self,"track_beta"):
+                if self.track_beta:
+                    lsy = lsy[0:1] + [ "-." ] + lsy[1:]
+                    csy = csy[0:1] + ["0.35"] + csy[1:]
+                    err_ins = ", deg,"
+                    int_ins = ", deg-s,"
+                else:
+                    err_ins = int_ins = ""
+            else:
+                err_ins = ""
+                int_ins = ""
             sfl = dict(color="k",alpha=0.1)
             if self.tracking:
                 # axis labels, legends
                 errs_fig.supxlabel(r"Time, s")
-                errs_fig.supylabel(r"Error, ft/s or deg/s")
+                errs_fig.supylabel(r"Error, ft/s" + err_ins + r" or deg/s")
                 # xticks
                 errs_axs.set_xticks(ticks=xticks)
                 # grid, axis labels, legends
@@ -3907,22 +3938,22 @@ class Aircraft:
                 for j in range(len(self.xPi)):
                     # determine linestyle
                     lsj = lsy[j % len(lsy)]
+                    csj = csy[j % len(csy)]
                     # if not deltas:
                     #     errs_axs.text(tarr[ilbl ],err[j,ilbl ],
                     #         Del+r"$e_{"+names[self.xPi_eul[j]][1:-1]+r"}$",\
                     #         bbox=bbox_dict,**lbl_params)
-                    errs_axs.plot(tarr, err[j],c=c,ls=lsj,
+                    errs_axs.plot(tarr, err[j],c=csj,ls=lsj,
                         label=Del+r"$e_{"+names[self.xPi_eul[j]][1:-1]+r"}$")
                     if plot_ul_bounds:
                         errs_axs.fill_between(tarr,eupp[j],elow[j],**fill)
                         errs_axs.fill_between(tarr,eupp[j],elow[j],ls=lsj,**fil2)
                 errs_axs.legend()
-            
-            # # integrator plots
-            if self.tracking:
+                
+                # integrators
                 # axis labels, legends
                 igrs_fig.supxlabel(r"Time, s")
-                igrs_fig.supylabel(r"Integrator State, ft or deg")
+                igrs_fig.supylabel(r"Integrator State, ft" + int_ins + r" or deg")
                 # xticks
                 igrs_axs.set_xticks(ticks=xticks)
                 # grid, axis labels, legends
@@ -3930,12 +3961,13 @@ class Aircraft:
                 for j in range(len(self.xIi)):
                     # determine linestyle
                     lsj = lsy[j % len(lsy)]
+                    csj = csy[j % len(csy)]
                     # line var labels
                     # if not deltas:
                     #     igrs_axs.text(tarr[ilbl ],igr[j,ilbl ],
                     #         Del+r"$\int e_{"+names[self.xPi_eul[j]][1:-1]\
                     #         +r"}\, dt$",bbox=bbox_dict,**lbl_params)
-                    igrs_axs.plot(tarr, igr[j],c=c,ls=lsj,
+                    igrs_axs.plot(tarr, igr[j],c=csj,ls=lsj,
                         label=Del+r"$\int e_{"+names[self.xPi_eul[j]][1:-1]\
                             +r"}\, dt$")
                     if plot_ul_bounds:
@@ -4205,11 +4237,11 @@ class Aircraft:
                 ctrl_axs[1].set_ylim(ctrl_axs[1].get_ylim())
                 ctrl_axs[2].set_ylim(ctrl_axs[2].get_ylim())
                 ctrl_axs[3].set_ylim(ctrl_axs[3].get_ylim())
-            surf_axs   .plot(tarr, ctrl[0],c=c,ls= "-",
+            surf_axs   .plot(tarr, ctrl[0],zorder=zorder,c=c,ls= "-",
                 label=(i==0)*(r"$\delta_a$"       + ""))
-            surf_axs   .plot(tarr, ctrl[1],c=c,ls="--",
+            surf_axs   .plot(tarr, ctrl[1],zorder=zorder,c=c,ls="--",
                 label=(i==0)*(r"$\delta_"+de+r"$" + ""))
-            surf_axs   .plot(tarr, ctrl[2],c=c,ls="-.",
+            surf_axs   .plot(tarr, ctrl[2],zorder=zorder,c=c,ls="-.",
                 label=(i==0)*(r"$\delta_"+dr+r"$" + ""))
             if i==2:
                 ctrl_axs[0].legend()
@@ -5036,6 +5068,7 @@ def run_single_simulation(filename,rtdst_1sg=[20.,10.,5.],
     interpolation_type="linear",
     include_stall_derivatives=False,
     include_altitude_derivatives=False,
+    trim_type_guess="0",
     random_seed=None,
     turbulence_random_seed=None,
     error_random_seed=None,
@@ -5169,7 +5202,24 @@ def run_single_simulation(filename,rtdst_1sg=[20.,10.,5.],
         aircraft.phi_trim = np.deg2rad(P)
         # change guess to stay at tail near-zero trim condition
         if not(aircraft.SAS_on):
-            guesses["u_guess"] = np.array([0.0,aircraft.max_de*1.0,0.0,0.0]) # 
+            if   trim_type_guess == "0":
+                guesses.pop("b_guess",0.0)
+                guesses["u_guess"] = np.array([
+                    0.0,aircraft.max_de*1.0,0.0,0.0]) # 
+            elif (25.0 <= abs(P) <= 55.0) and trim_type_guess == "+":
+                guesses["b_guess"] = -np.sign(P)*np.deg2rad(1.0)
+                guesses["u_guess"] = np.array([
+                    0.0, aircraft.min_de*1.0, aircraft.max_dr*1.0,0.0]) # 
+            elif (25.0 <= abs(P) <= 55.0) and trim_type_guess == "-":
+                guesses["b_guess"] =  np.sign(P)*np.deg2rad(1.0)
+                guesses["u_guess"] = np.array([
+                    0.0, aircraft.min_de*1.0, aircraft.min_dr*1.0,0.0]) # 
+            else:
+                guesses.pop("b_guess",0.0)
+                guesses["u_guess"] = np.array([
+                    0.0,aircraft.max_de*1.0,0.0,0.0]) # 
+                # raise TypeError("trim_type_guess must be '0','+','-', not " + \
+                #     str(trim_type_guess))
         #
         H = perc*(final_altitude - initial_altitude) + initial_altitude
         aircraft.H0 = H
@@ -5247,6 +5297,7 @@ def run_single_simulation(filename,rtdst_1sg=[20.,10.,5.],
     run_name += "_wD"*has_turbulence + "_nD"*(not has_turbulence)
     run_name += ("_" + turbulence_setting[0])*has_turbulence
     run_name += name_end
+    sim_run_name = run_name*1
     file_folder = aircraft.fldr_prfx + "_" +"plots/single_simulation/"+run_name
     # saving folders
     delta_tf_folder = file_folder + "/delta"
@@ -5581,6 +5632,8 @@ def run_single_simulation(filename,rtdst_1sg=[20.,10.,5.],
         # pull out info
         rr = np.array([aircraft._get_reference(ti) for ti in aircraft.tarr]).T
         rr[aircraft.xicnv] = np.rad2deg(rr[aircraft.xicnv])
+        rr[1] = np.rad2deg(rr[1])
+        rr[2] = np.rad2deg(rr[2])
         
         # report max vals from trim
         xs = xr - np.array([aircraft.x_tr_deg_itp(w) for w in aircraft.tarr]).T
@@ -5592,6 +5645,11 @@ def run_single_simulation(filename,rtdst_1sg=[20.,10.,5.],
         rs[2] = rr[2] + Vs[3] - Vr[3]
         run_str += aircraft._report_simulation_deltas(xs=xs,Vs=Vs,us=us,rs=rs,
             shift_to_trim=False,file_folder=file_folder)
+        
+        # report case and run time one final time
+        run_str += aircraft.tm_str + "\n"; print(aircraft.tm_str)
+        run_str += "for case " + sim_run_name + "\n"
+        print("for case " + sim_run_name)
 
         # plot
         if save_data:
@@ -6083,6 +6141,8 @@ def monte_carlo_perturbations(filename,rtdst_1sg=[5.,5.,5.],
     itf = int(aircraft.tf/aircraft.dt)
     i_true = np.arange(0,itf+1,step=1,dtype=int)
     early_counter = 0
+    #####
+    aircraft.is_monte_carlo = True
     ############### tracking checker
     t_track_i = np.argwhere(\
         np.linspace(0.,aircraft.tf,int(aircraft.tf/aircraft.dt))\
@@ -6142,6 +6202,42 @@ def monte_carlo_perturbations(filename,rtdst_1sg=[5.,5.,5.],
                 dx = xr[:,t_track_i] - r_track
                 Dx_norm_track = np.matmul(dx.T,np.matmul(CEC,dx))
                 Dx_norm = max(Dx_norm_track,Dx_norm)
+        except ValueError:
+            if hasattr(aircraft,"t_gimbal"):
+                xr,ur = xupp*0.0,uupp*0.0
+                xr[0] = xr[0] + 1.0
+                x_zero = xr[:,-1]*1.
+                # Lin = aircraft.Lin_Model
+                if aircraft.tracking:
+                    dx = x_zero - r_track
+                else:
+                    dx = x_zero - (aircraft.x_trim_euler_deg)
+                Dx_norm = 13.0
+                del aircraft.t_gimbal
+            elif hasattr(aircraft.aero_model,"denom_error"):
+                xr,ur = xupp*0.0,uupp*0.0
+                xr[0] = xr[0] + 1.0
+                x_zero = xr[:,-1]*1.
+                # Lin = aircraft.Lin_Model
+                if aircraft.tracking:
+                    dx = x_zero - r_track
+                else:
+                    dx = x_zero - (aircraft.x_trim_euler_deg)
+                Dx_norm = 11.0
+                del aircraft.aero_model.denom_error
+            else:
+                xr,ur = xupp*0.0,uupp*0.0
+                xr[0] = xr[0] + 1.0
+                x_zero = xr[:,-1]*1.
+                # Lin = aircraft.Lin_Model
+                if aircraft.tracking:
+                    dx = x_zero - r_track
+                else:
+                    dx = x_zero - (aircraft.x_trim_euler_deg)
+                Dx_norm = 29.0
+                inv_str = "#"*40 + "Investigate the below case!!!"
+                run_str += inv_str + "\n"
+                r50_str += inv_str + "\n"
         except:
             xr,ur = xupp*0.0,uupp*0.0
             xr[0] = xr[0] + 1.0
@@ -6151,7 +6247,10 @@ def monte_carlo_perturbations(filename,rtdst_1sg=[5.,5.,5.],
                 dx = x_zero - r_track
             else:
                 dx = x_zero - (aircraft.x_trim_euler_deg)
-            Dx_norm = 13.0
+            Dx_norm = 17.0
+            inv_str = "#"*40 + "Investigate the below case!!!"
+            run_str += inv_str + "\n"
+            r50_str += inv_str + "\n"
         
         case_run_text += " |Dx| = {:>9.3f},".format(Dx_norm)
         is_stable = Dx_norm <= Dx_norm_stable_threshold
@@ -6357,7 +6456,14 @@ def monte_carlo_perturbations(filename,rtdst_1sg=[5.,5.,5.],
     tc_rep = "{:> 4d} cases tc early was not tc true\n".format(early_counter)
     print(tc_rep)
     run_str += tc_rep + "\n"
-    if save_data:
+    finished_sim = "finished simulating {}...".format(run_name)
+    print(finished_sim); run_str += finished_sim + "\n"
+    hr = int(duration_time//3600)
+    mn = int(int((duration_time/3600-hr)*3600)//60)
+    sc = float(duration_time%60)
+    timing = "    duration = {:>02d}:{:>02d}:{:>05.2f}".format(hr,mn,sc)
+    print(timing); run_str += timing + "\n"
+    if save_data: # first time, will write over it if possible
         with open(file_folder+"/"+
             "success_{:>04d}_of_{:>04d}.txt".format(counter,num),
             "a") as f:
@@ -6366,13 +6472,6 @@ def monte_carlo_perturbations(filename,rtdst_1sg=[5.,5.,5.],
         with open(file_folder+"/"+"terminal_output.txt","a") as f:
             f.write(r50_str)
             f.close()
-    finished_sim = "finished simulating {}...".format(run_name)
-    print(finished_sim); run_str += finished_sim + "\n"
-    hr = int(duration_time//3600)
-    mn = int(int((duration_time/3600-hr)*3600)//60)
-    sc = float(duration_time%60)
-    timing = "    duration = {:>02d}:{:>02d}:{:>05.2f}".format(hr,mn,sc)
-    print(timing); run_str += timing + "\n"
 
     # report on smallest unstable cases
     case_range = np.arange(num)
@@ -6552,6 +6651,15 @@ def monte_carlo_perturbations(filename,rtdst_1sg=[5.,5.,5.],
     print(roa_str)
     run_str += roa_str + "\n"
     roa_str = run_name + "\n" + splitter + "\n" + roa_str + "\n"
+    if save_data:
+        with open(file_folder+"/"+
+            "success_{:>04d}_of_{:>04d}.txt".format(counter,num),
+            "a") as f:
+            f.write(run_str)
+            f.close()
+        with open(file_folder+"/"+"terminal_output.txt","a") as f:
+            f.write(r50_str)
+            f.close()
 
     if save_data:
         with open(file_folder+"/"+"roa_est.txt","a") as f:

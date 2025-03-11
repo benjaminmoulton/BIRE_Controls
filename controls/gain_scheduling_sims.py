@@ -6,6 +6,7 @@ import mpl_toolkits.mplot3d.axes3d as ax3
 from matplotlib.animation import FuncAnimation
 from numpy import sign, matmul as mm
 from datetime import datetime
+from time import sleep
 import control as co
 from scipy.linalg import block_diag
 from scipy.integrate import ode, odeint
@@ -275,7 +276,7 @@ if __name__ == "__main__":
     # plot_vars["plot_input_limits_zoomed"] = False
     # # #
     di = [0.,0.,0.]
-    t_gain = 5.0 # 90.0 # 5.0 # 
+    t_gain = 5.0 # 10.0 # 90.0 # 5.0 # 
     adt = 0. # 
     scale = 1. # 
     offset = 15.0 # 
@@ -292,10 +293,10 @@ if __name__ == "__main__":
     # run_bire["final_mach"] = flight_conditions[f2]["m"]*1. # 1.5 # 
     # run_bire["final_altitude"] = flight_conditions[f2]["h"]*1. # 20000.0 # 
     run_bire["initial_bank"] = 0.0
-    run_bire["final_bank"] = 75.0 # 0.0 # 60.0 # 30.0 # 
+    run_bire["final_bank"] = 75.0 # -75.0 # 0.0 # 60.0 # 30.0 # 
     run_bire["t_gain_schedule"] = t_gain + adt # 0. # 
-    run_bire["gain_steps"] = 10 # # # # # # 40 # 
-    run_bire["trim_steps"] = 10 # # # # # # 40 # 
+    run_bire["gain_steps"] = 10 # 16 # # # # # # 40 # 
+    run_bire["trim_steps"] = 10 # 16 # # # # # # 40 # 
     run_bire["interpolation_type"] = "linear" # "next" # "nearest-up" # 
     run_bire["has_turbulence"] = False # True # 
     run_bire["turbulence_setting"] = "light" # "moderate" # "severe" # 
@@ -305,7 +306,8 @@ if __name__ == "__main__":
     run_bire["skip_simulation"] = False # True # 
     run_bire["save_data"] = True # False # 
     # # # bire_dict["aircraft"]["CG_shift[ft]"] = [+1.0,+0.0,0.0]
-    run_bire["name_end"] = "_" + f1 + "_GS" + "_dHdM_2o" # "_dP" # 
+    run_bire["name_end"] = "_" + f1 + "_GS" + "_dHdM_2o" # "_dmPm" # "_dPm" # "_dP" # 
+    run_bire["trim_type_guess"] = "0" # "-" # "+" # 
     # run_bire["mrrr"] = [1,3,5,6,7,9,11] # [6,7,11] # 
     # run_bire["mrrc"] = [2] # None # 
     bire_dict["controller"]["LQR"] = {
@@ -331,6 +333,7 @@ if __name__ == "__main__":
         plot_vars["format"] = "png" # 
         print("plotting pngs!!!!!!!!!!\n\n\n\n\n\n\n\n")
     #
+    # sleep(10.0) # 60.0) # 
     run_single_simulation(bire_dict,rtdst_1sg=di,**run_bire,**plot_vars)
     # run_single_simulation(base_dict,rtdst_1sg=di,**run_base,**plot_vars)
     quit()

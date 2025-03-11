@@ -268,7 +268,7 @@ class BIREAero:
         Cdict = self.Cm_coeffs["Cm_de"]
         [self.Cm_de_A, self.Cm_de_w, self.Cm_de_p, self.Cm_de_z, self.Cm_de_s,
         self.Cm_de_d] = [Cdict[c] for c in Cdict]
-
+        
         # Cn
         # Cn0
         Cdict = self.Cn_coeffs["Cn_0"]
@@ -1105,14 +1105,16 @@ class BIREAero:
     def _inc_aero_results(self, alpha, beta, pbar, qbar, rbar, da, de, dB, simplified):
         params = alpha, beta, pbar, qbar, rbar, da, de, dB
         if simplified:
+            Lparams = alpha, beta, pbar, qbar, rbar, 0.0, de, dB
             dparams = alpha, beta, pbar, qbar, rbar, da, de, dB, True
             lparams = alpha, beta, pbar, qbar, rbar, da, 0.0, dB
             mparams = alpha, beta, pbar, qbar, rbar, 0.0, de, dB
         else:
+            Lparams = params
             dparams = params
             lparams = params
             mparams = params
-        return [self._CL(*params), self._CS(*params), self._CD(*dparams),
+        return [self._CL(*Lparams), self._CS(*params), self._CD(*dparams),
                 self._Cl(*lparams), self._Cm(*mparams), self._Cn(*params)]
 
     def _stall_correction(self,a,CL,CD,Cm):
@@ -1214,7 +1216,11 @@ class BIREAero:
 
     def _uncorrect_Anderson(self, coeff, Lambda, RA, M):
         num = coeff*(1. - M**2.*cos(Lambda)**2)**0.5
-        denom = cos(Lambda)*(1. - 2.*coeff/pi/RA)**0.5
+        inner = 1. - 2.*coeff/pi/RA
+        if inner < 0.0:
+            self.denom_error = True
+            raise ValueError("denom Error in uncorrect Anderson")
+        denom = cos(Lambda)*(inner)**0.5
         return num/denom
 
     def _uncorrect_Prandtl_Glauert_subsonic(self, coeff, M):

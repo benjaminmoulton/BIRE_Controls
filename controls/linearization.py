@@ -343,8 +343,7 @@ class linearization:
         # report
         if self.report:
             print("    building state jacobian...")
-
-        # pull out evaluating condition
+        #  pull out evaluating condition
         if self.use_quats: u,v,w,p,q,r,x,y,z, e0, ex, ey,ez = x_eq[0:13]
         else:              u,v,w,p,q,r,x,y,z,phi,tht,psi    = x_eq[0:12]
         if self.is_bire: da, de, dB, tau = u_eq
