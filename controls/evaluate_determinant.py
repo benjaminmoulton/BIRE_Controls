@@ -24,6 +24,7 @@ from controller_simulation import Aircraft,run_single_simulation, \
     monte_carlo_perturbations, report_latex, report_eigprops, rep2D,BIREAero
 
 from os.path import isfile
+from os import listdir,remove
 
 
 if __name__ == "__main__":
@@ -40,7 +41,7 @@ if __name__ == "__main__":
     stall = True # False # 
     fitthrust = True # False # 
     phi_trim = 0.0 # 30.0 # 10.0 # 
-    cgshift = [0.0, 0.0, 0.0] # [1.0, 0.0, 0.0] # [0.5, 0.0, 0.0] # 
+    cgshift = [1.0, 0.0, 0.0] # [0.5, 0.0, 0.0] # [0.0, 0.0, 0.0] # 
     subfolder_end = "" # "_m" # "_p" # 
 
     # settings
@@ -55,8 +56,8 @@ if __name__ == "__main__":
     print_data_after_run = False # True # 
     show_plots = False # True # 
     save_plots = True # False # 
-    plot_type = "png" # "pdf" # 
-    plot_transparent = True if plot_type == "pdf" else False
+    plot_type = "pdf" # "png" # 
+    plot_transparent = False # True if plot_type == "pdf" else False
     plot_after_run = False # True # 
 
     #
@@ -457,8 +458,6 @@ if __name__ == "__main__":
             rep2D(dets_2D,"saving_data")
 
     if len(plot_cases) > 0:
-        # turn into 9D array
-        print("plotting...")
         
             # plots
         # change plot text parameters
@@ -479,7 +478,16 @@ if __name__ == "__main__":
         plt.rcParams['figure.dpi'] = 300.0
 
         # plot contours
-        cmap = "seismic" # "gray" # newcmap # "PuOr" # 
+        cmap = "gray" # "seismic" # newcmap # "PuOr" # 
+
+        # remove plots that are already there if they are the wrong file type
+        print("removing wrong plot types...")
+        for subfile in listdir(folder):
+            subfile_format = subfile.split(".")[-1]
+            if subfile_format in ["pdf","png"] and subfile_format != plot_type:
+                remove(folder + subfile)
+        
+        print("plotting...")
 
     for case in plot_cases: # if len(run_cases) == 0: # 
         # determine filename for case
@@ -557,6 +565,8 @@ if __name__ == "__main__":
             vmin = -maxval,vmax = maxval,
         )
         ax.clabel(cs, inline=1, fontsize=6,fmt="% 4.1f")
+        # center dot
+        ax.plot([0.0],[0.0],marker="o",ms=1.25,c="k",mfc="None",mew=0.5)
 
         # axis labels
         ax.set_xlabel(lbls[xi])

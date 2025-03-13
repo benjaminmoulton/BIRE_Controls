@@ -1219,7 +1219,7 @@ class BIREAero:
         inner = 1. - 2.*coeff/pi/RA
         if inner < 0.0:
             self.denom_error = True
-            raise ValueError("denom Error in uncorrect Anderson")
+            raise ValueError("denom Error in uncorrect Anderson, coeff = "+str(coeff))
         denom = cos(Lambda)*(inner)**0.5
         return num/denom
 

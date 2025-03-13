@@ -313,7 +313,7 @@ if __name__ == "__main__":
         # transparent = True, # False, # 
         dpi = 300.0,
     )
-    savedict["transparent"] = True if savedict["format"] == "pdf" else False
+    savedict["transparent"] = False # True if savedict["format"] == "pdf" else False
     for key in ctrl_types:
         for subkey in plot_types:
             fig,axs = plots[key][subkey]["fig"], plots[key][subkey]["axs"]

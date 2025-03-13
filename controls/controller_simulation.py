@@ -83,6 +83,7 @@ class Aircraft:
         self.gain_scheduling = False
         self.additional_states = 0
         self.is_monte_carlo = False
+        self.input_dict = input_dictionary
 
         # V tau controller initialize terms, only used with tracking contrls
         self.first_Vtau_step = True
@@ -249,6 +250,7 @@ class Aircraft:
         self.T_loc  = np.array(thrust.get("location[ft]", [0.0, 0.0, 0.0]))
         self.T_dir  = np.array(thrust.get("direction", [1.0, 0.0, 0.0]))
         self.tail_surface_multiplier = aircraft.get("surface_effectiveness_scaling", 1.0)
+        self.yaw_stability_offset_multiplier = aircraft.get("yaw_stability_offset_scaling",1.0)
         if self.is_BIRE:
             self.aero_model.Cm_de_A *= self.tail_surface_multiplier
             self.aero_model.Cm_de_z *= self.tail_surface_multiplier
@@ -256,8 +258,13 @@ class Aircraft:
             self.aero_model.Cn_de_A *= self.tail_surface_multiplier
             self.aero_model.Cn_de_z *= self.tail_surface_multiplier
             self.aero_model.Cn_de_d *= self.tail_surface_multiplier
+            self.aero_model.Cn_b_z  *= self.yaw_stability_offset_multiplier
+            self.aero_model.Cn_b_d  *= self.yaw_stability_offset_multiplier
         elif self.tail_surface_multiplier != 1.0:
-            print("you cannot make that change to this airplane!!!")
+            print("you cannot make that tail surface change to this airplane!!!")
+            quit()
+        elif self.yaw_stability_offset_multiplier != 1.0:
+            print("you cannot make that yaw stability change to this airplane!!!")
             quit()
         
         # store controller dictionary for Linear Model use
@@ -3080,8 +3087,9 @@ class Aircraft:
         if self.tracking:
             repstr += "-"*n + " error response " + "-"*n + "\n"
             # calc signal
-            info_txt = ("   {:<7s}  & {:^7s} & {:^7s}" + \
-                    " & {:^10s} \\\\ \n").format(" ","Trs [s]","Tst [s]","%OS")
+            info_txt = ("    {:<7s}  & {:^7s} & {:^7s}" + \
+                    " & {:^10s} & {:^7s} \\\\ \n").format(\
+                        " ","Trs [s]","Tst [s]","%OS","TPR")
             for i in range(len(self.xPi_eul)):
                 # determine when signal stops changing
                 xp = self.ref_data_xp[self.xPi_eul[i]]
@@ -3129,10 +3137,19 @@ class Aircraft:
                     posh = (np.max(np.abs(xerr[i,iT:] - xe0)))/abs(xe0) - 1.0
                 except:
                     posh = np.inf
+                # transient peak ratio
+                try:
+                    if xe0 < 0.0:
+                        i_hit = np.argwhere(xerr[i,iT:] >= 0.0)[0,0]
+                    else: # if xe0 < 0.0:
+                        i_hit = np.argwhere(xerr[i,iT:] <= 0.0)[0,0]
+                    tpr = - np.min(xerr[i,i_hit:])/np.max(xerr[i,i_hit:])
+                except:
+                    tpr = np.inf
                 info_txt+=("$e_{{{:<6s}}}$ & {:> 7.2f} & {:> 7.2f}" + \
                     " & {:> 7.1f}").format(
                     int_names[self.xPi_eul[i]],tris,tstl,posh*100.0
-                    ) + r" \%" + " \\\\ \n"
+                    ) + r" \%" + " & {:> 7.2f} \\\\ \n".format(tpr)
             repstr += info_txt
             # save to file
             with open(file_folder+"/signal_info.txt","w") as f:

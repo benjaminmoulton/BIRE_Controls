@@ -205,6 +205,8 @@ class UncoupledPIAircraft(Aircraft):
 
     def _controller_gains_report(self):
         repcon = ""
+        repcon += report_latex(np.diag(self.Z),"Z",diag=True,print_report=False)
+        repcon += report_latex(np.diag(self.W),r"\Omega",diag=True,print_report=False)
         repcon += report_latex(self.Binv,"B^{-1}",print_report=False)
         repcon += report_latex(self.Kp,"K_p",print_report=False)
         repcon += report_latex(self.Ki,"K_i",print_report=False)
@@ -255,10 +257,10 @@ class UncoupledPIAircraft(Aircraft):
         # ol
         repcon += report_latex(A_ol_evl,r"\lambda_{ol}",
             print_report=False)#,decimals=16)
-        # repcon += report_latex(A_ol_evc,r"\chi_{ol}",
-        #     predecimals=3,decimals=4,print_report=False,eigvecs=True)
-        # repcon += report_eigprops(A_ol_evl,n_a=n_a,
-        #     print_report=False)
+        repcon += report_latex(A_ol_evc,r"\chi_{ol}",
+            predecimals=3,decimals=4,print_report=False,eigvecs=True)
+        repcon += report_eigprops(A_ol_evl,n_a=n_a,
+            print_report=False)
         # # cl w/o integrators
         # repcon += report_latex(A_cl_evl,r"\lambda_{cl}",
         #     print_report=False)#,decimals=16)
@@ -302,75 +304,7 @@ class DynamicInversionAircraft(Aircraft):
         self.tracking = True
         self.first_step = True # False
         #
-        if input_dict.get("use_MACA_gains",False): # True: # 
-            # use LQR to design v
-            I = np.eye(3)
-            Z = np.zeros((3,3))
-            A = np.block([[Z,I],[Z,Z]])
-            B = np.block([[Z],[I]])
-            C = np.eye(6)
-            # ## # # vv as
-            Q = np.diag([1.0e+2,5.0e+2,5.0e+2] + [2.0e+0,5.0e+1,5.0e+1])
-            Q[0,2] = Q[2,0] = 1.0e+2
-            Q[1,2] = Q[2,1] = 3.5e+2
-            Q[3,5] = Q[5,3] = 1.0e+0 # potential increase, was 1.0e+0
-            Q[4,5] = Q[5,4] = 5.0e+0
-            # I don't think I want correlation here
-            Q[0,1] = Q[1,0] = 0.0e+00
-            Q[3,4] = Q[4,3] = 0.0e+00
-            # seem to have no effect
-            Q[0,3] = Q[3,0] = 0.0e+00
-            Q[1,4] = Q[4,1] = 0.0e+00
-            Q[2,5] = Q[5,2] = 0.0e+00
-            # e and int(e)
-            Q[0,4] = Q[4,0] = 0.0e+0
-            Q[0,5] = Q[5,0] = 0.0e+0 #
-            Q[1,3] = Q[3,1] = 0.0e+0
-            Q[1,5] = Q[5,1] = 0.0e+0 #
-            # Q[2,3] = Q[3,2] = 1.0e+2 # # remove this, from as, now ar
-            Q[2,4] = Q[4,2] = 0.0e+0 #
-            #
-            R = np.diag([1.0e+0,1.0e+0,2.5e+2])
-            R[0,1] = R[1,0] = 0.0
-            R[0,2] = R[2,0] = 0.0
-            R[1,2] = R[2,1] = 5.0e-2
-            #
-            # # # # # # # # # # vvvv OLD QR from optimization setup
-            # Q = np.diag([8.4e+2] + [4.2e+3]*2 + [4.0e+0] + [4.0e+1]*2)
-            # Q[0,2] = Q[2,0] = 1.0e2 # 5.0e2
-            # Q[1,2] = Q[2,1] = 5.0e2
-            # Q[3,5] = Q[5,3] = 1.0e+0 # 1.0e+1
-            # Q[4,5] = Q[5,4] = 1.0e+1
-            # R = np.diag([1.0e+0,1.0e+0,2.0e+3])
-            # # # # # # # # # # ^^^^ OLD QR from optimization setup
-            # # similar response to SMD system
-            # Q = np.diag([4.2e+3]*3 + [4.0e+1]*3)
-            # R = np.diag([1.0e+0,1.0e+0,1.0e+0])
-            self.A_cl = A*1.0
-            self.B_cl = B*1.0
-            self.Q_cl = Q*1.0
-            self.R_cl = R*1.0
-            K,_,K_eigs = co.lqr(A,B,Q,R)
-            self.Ki,self.Kp = K[:,0:3],K[:,3:6]
-        else:
-            I = np.eye(3)
-            Z = np.zeros((3,3))
-            A = np.block([[Z,I],[Z,Z]])
-            B = np.block([[Z],[I]])
-            Q = np.diag([1.0e+1,1.0e+3,2.0e+2] + [1.0e+3,1.0e+5,2.0e+4])
-            # Q[0,2] = Q[2,0] = 1.0e+0
-            Q[1,2] = Q[2,1] = -1.0e+2
-            # Q[3,5] = Q[5,3] = 1.0e+0
-            # Q[4,5] = Q[5,4] = 1.0e+0
-            R = np.diag([1.0e+0,1.0e+0] + [1.0e+3])
-            K,_,K_eigs = co.lqr(A,B,Q,R)
-            self.Ki,self.Kp = K[:,0:3],K[:,3:6]
-            # # print(K)
-            # print(self.Ki)
-            # print(self.Kp)
-            # print(K_eigs)
-            # # quit()
-    
+
     def _build_tracking_gains(self):
 
         # build controller
@@ -406,6 +340,76 @@ class DynamicInversionAircraft(Aircraft):
             self.A_model = A*1.0
             self.B_model = B*1.0
             self.Binv = np.linalg.inv(B)
+
+
+            if self.input_dict.get("use_MACA_gains",False): # True: # 
+                # use LQR to design v
+                I = np.eye(3)
+                Z = np.zeros((3,3))
+                A = np.block([[Z,I],[Z,Z]])
+                B = np.block([[Z],[I]])
+                C = np.eye(6)
+                # ## # # vv as
+                Q = np.diag([1.0e+2,5.0e+2,5.0e+2] + [2.0e+0,5.0e+1,5.0e+1])
+                Q[0,2] = Q[2,0] = 1.0e+2
+                Q[1,2] = Q[2,1] = 3.5e+2
+                Q[3,5] = Q[5,3] = 1.0e+0 # potential increase, was 1.0e+0
+                Q[4,5] = Q[5,4] = 5.0e+0
+                # I don't think I want correlation here
+                Q[0,1] = Q[1,0] = 0.0e+00
+                Q[3,4] = Q[4,3] = 0.0e+00
+                # seem to have no effect
+                Q[0,3] = Q[3,0] = 0.0e+00
+                Q[1,4] = Q[4,1] = 0.0e+00
+                Q[2,5] = Q[5,2] = 0.0e+00
+                # e and int(e)
+                Q[0,4] = Q[4,0] = 0.0e+0
+                Q[0,5] = Q[5,0] = 0.0e+0 #
+                Q[1,3] = Q[3,1] = 0.0e+0
+                Q[1,5] = Q[5,1] = 0.0e+0 #
+                # Q[2,3] = Q[3,2] = 1.0e+2 # # remove this, from as, now ar
+                Q[2,4] = Q[4,2] = 0.0e+0 #
+                #
+                R = np.diag([1.0e+0,1.0e+0,2.5e+2])
+                R[0,1] = R[1,0] = 0.0
+                R[0,2] = R[2,0] = 0.0
+                R[1,2] = R[2,1] = 5.0e-2
+                #
+                # # # # # # # # # # vvvv OLD QR from optimization setup
+                # Q = np.diag([8.4e+2] + [4.2e+3]*2 + [4.0e+0] + [4.0e+1]*2)
+                # Q[0,2] = Q[2,0] = 1.0e2 # 5.0e2
+                # Q[1,2] = Q[2,1] = 5.0e2
+                # Q[3,5] = Q[5,3] = 1.0e+0 # 1.0e+1
+                # Q[4,5] = Q[5,4] = 1.0e+1
+                # R = np.diag([1.0e+0,1.0e+0,2.0e+3])
+                # # # # # # # # # # ^^^^ OLD QR from optimization setup
+                # # similar response to SMD system
+                # Q = np.diag([4.2e+3]*3 + [4.0e+1]*3)
+                # R = np.diag([1.0e+0,1.0e+0,1.0e+0])
+            else:
+                I = np.eye(3)
+                Z = np.zeros((3,3))
+                A = np.block([[Z,I],[Z,Z]])
+                B = np.block([[Z],[I]])
+                Q = np.diag([1.0e+1,1.0e+3,2.0e+2] + [1.0e+3,1.0e+5,2.0e+4])
+                # Q[0,2] = Q[2,0] = 1.0e+0
+                Q[1,2] = Q[2,1] = -1.0e+2
+                # Q[3,5] = Q[5,3] = 1.0e+0
+                # Q[4,5] = Q[5,4] = 1.0e+0
+                R = np.diag([1.0e+0,1.0e+0] + [1.0e+3])
+                # # print(K)
+                # print(self.Ki)
+                # print(self.Kp)
+                # print(K_eigs)
+                # # quit()
+            #
+            K,_,K_eigs = co.lqr(A,B,Q,R)
+            self.Ki,self.Kp = K[:,0:3],K[:,3:6]
+            self.A_cl = A*1.0
+            self.B_cl = B*1.0
+            self.Q_cl = Q*1.0
+            self.R_cl = R*1.0
+        
 
             # flip bool
             self.first_step = False
@@ -518,6 +522,10 @@ class DynamicInversionAircraft(Aircraft):
     def _controller_gains_report(self):
         repcon = ""
         repcon += report_latex(self.Binv,"B^{-1}",print_report=False)
+        repcon += report_latex(self.A_cl,"A_{cl}",print_report=False)
+        repcon += report_latex(self.B_cl,"B_{cl}",print_report=False)
+        repcon += report_latex(self.Q_cl,"Q_{cl}",print_report=False)
+        repcon += report_latex(self.R_cl,"R_{cl}",print_report=False)
         repcon += report_latex(self.Kp,"K_p",print_report=False)
         repcon += report_latex(self.Ki,"K_i",print_report=False)
         
@@ -661,7 +669,7 @@ class LinearQuadraticTrackingAircraft(Aircraft):
             I = np.eye(3)
             A = np.block([[A_tr,Z],[I,Z]]) # np.block([[Z,I],[Z,A_tr]])
             B = np.block([[B_tr],[Z]])
-            H = np.block([[I,Z]])
+            H = np.block([[I,Z]])*10.0
             Q = mm(H.T,H)
             #
             Q[0:3,0:3] = np.diag([5.0e-1,1.0e+0,1.0e+0])
@@ -765,6 +773,12 @@ class LinearQuadraticTrackingAircraft(Aircraft):
             print(self.Kp)
             self.KC_LQT = np.matmul(K,C)
             self.KF_LQT = np.matmul(K,F)
+
+            # save for later use
+            self.A = A*1.0
+            self.B = B*1.0
+            self.Q = Q*1.0
+            self.R = R*1.0
             
             if False: # True: # 
                 # closed-loop simulation
@@ -924,6 +938,10 @@ class LinearQuadraticTrackingAircraft(Aircraft):
 
     def _controller_gains_report(self):
         repcon = ""
+        repcon += report_latex(self.A,"A",print_report=False)
+        repcon += report_latex(self.B,"B",print_report=False)
+        repcon += report_latex(self.Q,"Q",print_report=False)
+        repcon += report_latex(self.R,"R",print_report=False)
         repcon += report_latex(self.Kp,"K_p",print_report=False)
         repcon += report_latex(self.Ki,"K_i",print_report=False)
         
@@ -1081,9 +1099,17 @@ class LinearQuadraticRegulatorDynamicInversionAircraft(Aircraft):
             Q[1,3] = Q[3,1] = 5.0e-1
             Q[5,7] = Q[7,5] = 1.0e+1
             R = np.diag([1.0e+0,1.0e+0,1.0e+1]) # 5.0e-1]) # 
+            Q *= 100.0
+            R *= 100.0
             K,_,K_eigs = co.lqr(A,B,Q,R,method="scipy")
             self.Ki,self.Kp = K[:,0:4],K[:,4:8]
             # print(K_eigs)
+
+            # save for later use
+            self.A = A*1.0
+            self.B = B*1.0
+            self.Q = Q*1.0
+            self.R = R*1.0
 
             # flip bool
             self.first_step = False
@@ -1214,6 +1240,11 @@ class LinearQuadraticRegulatorDynamicInversionAircraft(Aircraft):
     def _controller_gains_report(self):
         repcon = ""
         repcon += report_latex(self.Bpinv,"B^{-1}",print_report=False)
+        repcon += report_latex(self.bT,r"T_\beta",print_report=False)
+        repcon += report_latex(self.A,"A",print_report=False)
+        repcon += report_latex(self.B,"B",print_report=False)
+        repcon += report_latex(self.Q,"Q",print_report=False)
+        repcon += report_latex(self.R,"R",print_report=False)
         repcon += report_latex(self.Kp,"K_p",print_report=False)
         repcon += report_latex(self.Ki,"K_i",print_report=False)
         
@@ -1580,9 +1611,16 @@ class ITPIAircraft(Aircraft):
 
     def _controller_gains_report(self):
         repcon = ""
+        repcon += report_latex(self.z,"Z",print_report=False)
+        repcon += report_latex(self.w,r"\Omega",print_report=False)
         repcon += report_latex(self.Binv,"B^{-1}",print_report=False)
+        repcon += report_latex(self.bT,r"T_\beta",print_report=False)
+        repcon += report_latex(self.T,"T_{alt}",print_report=False)
+        repcon += report_latex(self.A_model,"A",print_report=False)
+        repcon += report_latex(self.B_model,"B",print_report=False)
         repcon += report_latex(self.Kp,"K_p",print_report=False)
         repcon += report_latex(self.Ki,"K_i",print_report=False)
+        repcon += report_latex(self.altu_trim_slf,r"u_{alt \, tr}",print_report=False)
         
         # calculate eigenvalues
         rows = [0,1,2,3,4,5,8,9,10] # 6,7, 11,
@@ -2123,9 +2161,27 @@ class ControlAllocationMomentAssignmentAircraft(Aircraft):
         # self.add_tail_lag_eq = False # True # 
         # bire aero model for derivs
         self.dBAM = BIREAero(**self.aero_dict)
+        self.dBAM.Cm_de_A *= self.tail_surface_multiplier
+        self.dBAM.Cm_de_z *= self.tail_surface_multiplier
+        self.dBAM.Cm_de_d *= self.tail_surface_multiplier
+        self.dBAM.Cn_de_A *= self.tail_surface_multiplier
+        self.dBAM.Cn_de_z *= self.tail_surface_multiplier
+        self.dBAM.Cn_de_d *= self.tail_surface_multiplier
+        self.dBAM.Cn_b_z  *= self.yaw_stability_offset_multiplier
+        self.dBAM.Cn_b_d  *= self.yaw_stability_offset_multiplier
         self.dBAM.deriv = True
+        #
         self.ddBAM = BIREAero(**self.aero_dict)
+        self.ddBAM.Cm_de_A *= self.tail_surface_multiplier
+        self.ddBAM.Cm_de_z *= self.tail_surface_multiplier
+        self.ddBAM.Cm_de_d *= self.tail_surface_multiplier
+        self.ddBAM.Cn_de_A *= self.tail_surface_multiplier
+        self.ddBAM.Cn_de_z *= self.tail_surface_multiplier
+        self.ddBAM.Cn_de_d *= self.tail_surface_multiplier
+        self.ddBAM.Cn_b_z  *= self.yaw_stability_offset_multiplier
+        self.ddBAM.Cn_b_d  *= self.yaw_stability_offset_multiplier
         self.ddBAM._make_double_derivative_model()
+        #
         self.u_til_next_update = self.u_trim*1.0
         #
         self.prev_E = 0.0
@@ -4636,29 +4692,29 @@ if __name__ == "__main__":
     # di = [5.,10.,7.] # see below
     run_base_fs["num"] = run_bire_fs["num"] = 1
     # # #
-    run_bire_fs["aircraft_class"] = UncoupledPIAircraft
-    run_bire_fs["name_end"] = "_" + f1 + "_PI"
+    # run_bire_fs["aircraft_class"] = UncoupledPIAircraft
+    # run_bire_fs["name_end"] = "_" + f1 + "_PI"
     # # # #
     # run_bire_fs["aircraft_class"] = DynamicInversionAircraft
     # run_bire_fs["name_end"] = "_" + f1 + "_DI"
-    # # # # # # # #
+    # # # # # # # # # #
     # run_bire_fs["aircraft_class"] = LinearQuadraticTrackingAircraft
     # run_bire_fs["name_end"] = "_" + f1 + "_LQT"
-    # # # # # # # # # 
+    # # # # # # # # # # # # 
     # run_bire_fs["aircraft_class"] = LinearQuadraticRegulatorDynamicInversionAircraft
     # bire_fs_dict["controller"]["integral_states"] = [0,2,3,4,5]
     # run_bire_fs["name_end"] = "_" + f1 + "_LQRDI"
-    # # # # # # # # # # 
+    # # # # # # # # # # # # # 
     # bire_fs_dict["controller"]["integral_states"] = [0,3,4,5]
     # run_bire_fs["aircraft_class"] = ITPIAircraft
     # run_bire_fs["name_end"] = "_" + f1 + "_ITPI" # 1" # 
-    # # # # # left_roll = True # False # 
-    # # # # # ##
+    # # # # # # left_roll = True # False # 
+    # # # # # # # ##
     # run_bire_fs["aircraft_class"] = NonlinearDynamicInversionAircraft
     # run_bire_fs["name_end"] = "_" + f1 + "_NDI" # " # nolim" # 
-    # # # # 
-    # run_bire_fs["aircraft_class"] = ControlAllocationMomentAssignmentAircraft
-    # run_bire_fs["name_end"] = "_" + f1 + "_CAMA" # 2" # 
+    # # # # # # 
+    run_bire_fs["aircraft_class"] = ControlAllocationMomentAssignmentAircraft
+    run_bire_fs["name_end"] = "_" + f1 + "_CAMA" # 2" # 
     # # #
     # # #
     # # # 
@@ -4666,18 +4722,22 @@ if __name__ == "__main__":
     blm = 50.0 # 200.0 # 100.0 # 
     bire_fs_dict["actuators"]["BIRE"]["rate_limits[deg/s]"] = [-blm,blm]
     bire_fs_dict["aircraft"]["surface_effectiveness_scaling"] = ses = 1.0 # 1.2 # 1.1 # 
+    bire_fs_dict["aircraft"]["yaw_stability_offset_scaling"] = yss = 1.0 # -1.0 # 0.0 # 
     bire_fs_dict["controller"]["CAMA_coupled_weighting"] = cw = True # False # 
     bire_fs_dict["controller"]["CAMA_SAS_on"] = sason = False # True # 
     run_bire_fs[ "has_turbulence"] = False # True # 
+    representative_response = False # True # 
     # append name
     # # # # # run_bire_fs["name_end"] += "_wbeta"
     # # # # # run_bire_fs["name_end"] += "_to_50_fail"
-    run_bire_fs["name_end"] += "_banana"; plot_vars["format"] = "png"
-    run_bire_fs["name_end"] += "_CG" + str(int(10.0*cg[0])) if (cg[0] != 0.0) else ""
+    # run_bire_fs["name_end"] += "_banana"; plot_vars["format"] = "png"
+    run_bire_fs["name_end"] += "_CG" + "{:02d}".format(int(10.0*cg[0])) if (cg[0] != 0.0) else ""
     run_bire_fs["name_end"] += "_BR" + str(int(blm)) if (blm != 50.0) else ""
-    run_bire_fs["name_end"] += "_SE" + str(int(10.0*ses)) if (ses != 1.0) else ""
+    run_bire_fs["name_end"] += "_SE" + "{:02d}".format(int(10.0*ses)) if (ses != 1.0) else ""
+    run_bire_fs["name_end"] += "_YS" + "{:02d}".format(int(10.0*yss)) if (yss != 1.0) else ""
     run_bire_fs["name_end"] += "_UW" if not(cw) else ""
     run_bire_fs["name_end"] += "_WSAS" if sason else ""
+    run_bire_fs["name_end"] += "_RR" if representative_response else ""
     #
     elm = 60.0 # 120.0 # 
     bire_fs_dict["actuators"]["elevator"]["rate_limits[deg/s]"] = [-elm,elm]
@@ -4734,6 +4794,9 @@ if __name__ == "__main__":
     phi_degs[ "CAMA"][ "SE11"] = 30.0; phi_degs[ "CAMA"][ "SE12"] = 30.0
     phi_degs[ "CAMA"][   "UW"] = 20.0
     phi_degs[ "CAMA"][ "WSAS"] = 30.0
+    # phi_degs[ "CAMA"][ "YS00"] = 30.0
+    # phi_degs[ "CAMA"]["YS-10"] = 30.0
+    # bire_fs_dict["simulation"]["include_compressibility"] = False
     #
     # phi_degs[  "NDI"][  "NDI"] = 50.0
     # run_bire_fs["name_end"] += "_to_50_fail"
@@ -4766,10 +4829,14 @@ if __name__ == "__main__":
     #
     #
     #
-    try:
-        phi__deg = phi_degs[ctrl_type[0]][ctrl_type[-1]]
-    except:
-        raise ValueError("No case " + ctrl_type[0] + "-" + ctrl_type[-1] + "exists!")
+    if representative_response:
+        phi__deg = 10.0
+    else:
+        try:
+            phi__deg = phi_degs[ctrl_type[0]][ctrl_type[-1]]
+        except:
+            raise ValueError("No case " + ctrl_type[0] + "_" \
+                + ctrl_type[-1] + "exists!")
 
     # ensure tail near zero soln
     bire_fs_dict["initial"]["trim_guess"] = {
@@ -5033,45 +5100,43 @@ if __name__ == "__main__":
     #
     tf = 10.0 # 600.0 # 2.5 # 1.0 # 60.0 # 20.0 # 5.0 # 16.0 # 2.50 # 4.90 # 20.0 # 
     #########################################################################
-    if True:
-        run_bire_fs["track_check_time"] = run_bire_fs["final_time"] = tf
-        # bire_fs_dict["simulation"]["include_stall"] = False
-        # bire_fs_dict["simulation"]["include_compressibility"] = False
-        bire_fs_dict["simulation"]["integrator"] = "rk4"
-        # run_bire_fs["time_step"] = 0.001 # 0.0001 # 
-        # #
-        # bire_fs_dict["actuators"]["order"] = 0
-        # run_bire_fs["state_threshold"] = run_bire_fs["state_threshold"][:-4]
-        # run_bire_fs["name_end"] += "_noact"
-        if bire_fs_dict["actuators"]["order"] > 1:
-            state_threshold += [5., 5., 5., 0.05]
-        # #
-        # blm = 200.0 # 500.0 # 300.0 # 250.0 # 50.0 # 150.0 # 125.0 # 100.0 # 500.0 # 600.0 # 750.0 # 1000.0 # 1500.0 # 
-        # bire_fs_dict["actuators"][    "BIRE"]["rate_limits[deg/s]"] = [-blm,blm]
-        # alm = 5000.0 # 1000.0 # 870.0 # 50.0 # 150.0 # 125.0 # 100.0 # 250.0 # 500.0 # 600.0 # 750.0 # 1000.0 # 1500.0 # 
-        # bire_fs_dict["actuators"][    "BIRE"]["acceleration_limits[deg/s]"] = [-alm,alm]
-        # # # # # # # 
-        # elm = 50.0
-        # bire_fs_dict["actuators"]["elevator"]["rate_limits[deg/s]"] = [-elm,elm]
-        # # # # # # #
+    run_bire_fs["track_check_time"] = run_bire_fs["final_time"] = tf
+    # bire_fs_dict["simulation"]["include_stall"] = False
+    # bire_fs_dict["simulation"]["include_compressibility"] = False
+    bire_fs_dict["simulation"]["integrator"] = "rk4"
+    # run_bire_fs["time_step"] = 0.001 # 0.0001 # 
+    # #
+    # bire_fs_dict["actuators"]["order"] = 0
+    # run_bire_fs["state_threshold"] = run_bire_fs["state_threshold"][:-4]
+    # run_bire_fs["name_end"] += "_noact"
+    if bire_fs_dict["actuators"]["order"] > 1:
+        state_threshold += [5., 5., 5., 0.05]
+    # #
+    # blm = 200.0 # 500.0 # 300.0 # 250.0 # 50.0 # 150.0 # 125.0 # 100.0 # 500.0 # 600.0 # 750.0 # 1000.0 # 1500.0 # 
+    # bire_fs_dict["actuators"][    "BIRE"]["rate_limits[deg/s]"] = [-blm,blm]
+    # alm = 5000.0 # 1000.0 # 870.0 # 50.0 # 150.0 # 125.0 # 100.0 # 250.0 # 500.0 # 600.0 # 750.0 # 1000.0 # 1500.0 # 
+    # bire_fs_dict["actuators"][    "BIRE"]["acceleration_limits[deg/s]"] = [-alm,alm]
+    # # # # # # # 
+    # elm = 50.0
+    # bire_fs_dict["actuators"]["elevator"]["rate_limits[deg/s]"] = [-elm,elm]
+    # # # # # # #
 
-        # bire_fs_dict["simulation"][      "limit_input"] = False # True # 
-        # bire_fs_dict["simulation"]["limit_input_rates"] = False # True # 
-        # run_bire_fs["name_end"] += "_nolim"
-        # # # # # #
-        # bire_fs_dict["simulation"]["constant_density"] = True # False # 
-        # # # # # 
-        # run_bire_fs["has_turbulence"] = True # False # 
-        # run_bire_fs["has_model_error"] = False # True # 
-        # # #######################################################################
-    
-    
+    # bire_fs_dict["simulation"][      "limit_input"] = False # True # 
+    # bire_fs_dict["simulation"]["limit_input_rates"] = False # True # 
+    # run_bire_fs["name_end"] += "_nolim"
+    # # # # # #
+    # bire_fs_dict["simulation"]["constant_density"] = True # False # 
+    # # # # # 
+    # run_bire_fs["has_turbulence"] = True # False # 
+    # run_bire_fs["has_model_error"] = False # True # 
+    # # #######################################################################
+        
     # # # # # # zeros
     # bire_fs_dict["reference"] = {
     #     "deg2rad_states" : [1,2,3,4,5],
     #     "0" : [[ 0.0,   V_trim],[ 2.0,   V_trim],],
-    #     "1" : [[ 0.0, a_tr_deg],[ 2.0, a_tr_deg],],
-    #     "2" : [[ 0.0, b_tr_deg],[ 2.0, b_tr_deg],],
+    #     "1" : [[ 0.0, a_SLF_deg],[ 2.0, a_SLF_deg],],
+    #     "2" : [[ 0.0, 0.0],[ 2.0, 0.0],],
     #     "3" : [[0.0]*2]*2, "4" : [[0.0]*2]*2, "5" : [[0.0]*2]*2, "sct_on_5" : False
     # }
     # # # # starting in bank
@@ -5096,6 +5161,23 @@ if __name__ == "__main__":
     # # run_single_simulation(bire_rc_dict,rtdst_1sg=di,**run_bire_rc,**plot_vars)
     # # run_single_simulation(base_rc_dict,rtdst_1sg=di,**run_base_rc,**plot_vars)
     quit()
+    #
+    #
+    # # # # step input cases
+    # bire_fs_dict["reference"]["1"] = [[ 0.0, a_SLF_deg],[ 2.0, a_SLF_deg],]
+    # bire_fs_dict["reference"]["2"] = [[ 0.0, 0.0],[ 2.0, 0.0],]
+    # bire_fs_dict["reference"]["3"] = [[ 0.0, 0.0],[ 2.0, 0.0],]
+    # bire_fs_dict["reference"]["4"] = [[ 0.0, 0.0],[ 2.0, 0.0],]
+    # bire_fs_dict["reference"]["5"] = [[ 0.0, 0.0],[ 2.0, 0.0],]
+    # name_ends = ["p","q","r"]
+    # base_name = run_bire_fs["name_end"]*1
+    # run_bire_fs["track_check_time"] = run_bire_fs["final_time"] = 2.0
+    # for i in range(3,6):
+    #     run_bire_fs["name_end"] = base_name + "_" + name_ends[i-3] + "_step"
+    #     bire_fs_dict["reference"][str(i)] = [[0.0, 0.0], [0.0, 1.0]]
+    #     run_single_simulation(bire_fs_dict,rtdst_1sg=di,**run_bire_fs,**plot_vars)
+    #     bire_fs_dict["reference"][str(i)] = [[0.0, 0.0], [2.0, 0.0]]
+    # quit()
 
     # # # # run monte carlo perturbation analysis
     # plot_vars["format"] = "pdf" # "png" # 
@@ -5295,7 +5377,7 @@ if __name__ == "__main__":
     # current_name = run_bire_fs["name_end"]
     # roa_strs = []
     # slpdur = 0.0 # 
-    # # slpdur = 15.0*60.0*60.0 - 37.0*60.0 # 28.0*60.0*60.0  # 29.0*60.0*60.0  # - 38.0*60.0 # 
+    # slpdur = 7.0*60.0*60.0 # 15.0*60.0*60.0 - 37.0*60.0 # 28.0*60.0*60.0  # 29.0*60.0*60.0  # - 38.0*60.0 # 
     # tmstr = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
     # ftstr = datetime.now() + timedelta(seconds=slpdur)
     # print("sleeping",run_bire_fs["name_end"]," for",slpdur/60.0/60.0,"hours at",tmstr)
@@ -5306,7 +5388,7 @@ if __name__ == "__main__":
     # # a = "n"
     # # while a != "y":
     # #     a = input("type 'y' to run ")
-    # for i in range(3): # range(1,3): # [1]: # [2]: # [0]: # 
+    # for i in range(3): # [2]: # [1]: # [0]: # range(1,3): # 
     #     name = names[i]
     #     ds = disa[i]
     #     run_bire_fs["name_end"] = current_name + "_" + name
@@ -5437,6 +5519,25 @@ if __name__ == "__main__":
     #         di = [   4.0,  0.6,  0.3] # NDI_SE12
     #     else:
     #         no_subtype = True
+    # if   run_bire_fs["name_end"][3:8] == "_CAMA":
+    #     if   run_bire_fs["name_end"][8:] == "":
+    #         di = [   3.0,  0.5,  0.7] # CAMA
+    #     elif run_bire_fs["name_end"][8:] == "_CG05":
+    #         di = [  25.0,  0.5,  0.25] # CAMA_CG05
+    #     elif run_bire_fs["name_end"][8:] == "_CG10":
+    #         di = [  65.0, 25.0,  0.6] # CAMA_CG10
+    #     elif run_bire_fs["name_end"][8:] == "_BR100":
+    #         di = [  35.0,  0.5,  0.5] # CAMA_BR100
+    #     elif run_bire_fs["name_end"][8:] == "_BR200":
+    #         di = [  90.0,  0.5,  1.0] # CAMA_BR200
+    #     elif run_bire_fs["name_end"][8:] == "_SE11":
+    #         di = [   3.0,  0.5,  0.04] # CAMA_SE11
+    #     elif run_bire_fs["name_end"][8:] == "_SE12":
+    #         di = [   3.0,  0.5,  0.04] # CAMA_SE12
+    #     elif run_bire_fs["name_end"][8:] == "_UW":
+    #         di = [   8.0,  2.0,  0.25] # CAMA_UW
+    #     else:
+    #         no_subtype = True
     # else:
     #     print("uh-oh! Fix di for this controller"); quit()
     # if no_subtype:
@@ -5458,7 +5559,29 @@ if __name__ == "__main__":
     # run_bire_fs["plot_ul_bounds"] = True
     # current_name = run_bire_fs["name_end"]*1
     # roa_strs = []
-    # for i in range(len(names)): # [4,5]: # [2,3]: # [0,1]: # [5]: # [4,5]: # [1,2]: # [0]: # 
+    # #
+    # runrng = [0,1,2,3,4,5] # [4,5] # [2,3] # [0,1] # 
+    # print(np.array(names)[runrng])
+    # print("running",run_bire_fs["name_end"])
+    # got_dur = True # False # 
+    # sldur_hr = 0.0
+    # while not(got_dur):
+    #     slpdur_hr = input("type time to wait to run [in hrs] ")
+    #     try: 
+    #         slpdur_hr = float(slpdur_hr)
+    #         got_dur = True
+    #     except:
+    #         pass
+    # slpdur = slpdur_hr*60.0*60.0
+    # tmstr = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+    # ftstr = datetime.now() + timedelta(seconds=slpdur)
+    # print("sleeping",run_bire_fs["name_end"]," for",slpdur/60.0/60.0,"hours at",tmstr)
+    # print("            will run at",ftstr)
+    # sleep(slpdur)
+    # tmstr = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+    # print("slept   ",run_bire_fs["name_end"]," for",slpdur,"hours, running at",tmstr)
+    # #
+    # for i in runrng: # range(len(names)): # [4,5]: # [2,3]: # [0,1]: # [5]: # [4,5]: # [1,2]: # [0]: # 
     #     name = names[i]
     #     # create FM errors
     #     FM_error_list = np.zeros((6,))
