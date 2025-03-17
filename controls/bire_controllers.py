@@ -689,6 +689,8 @@ class LinearQuadraticTrackingAircraft(Aircraft):
             Kshape = (3,6)
             Kflat = (18,)
             k0,_,_ = co.lqr(A,B,Q,R)
+            self.k0 = k0*1.0
+            self.GK = GK*1.0
             #
             K0 = k0.reshape(Kflat)
             G = np.block([[ Z],[-I]])
@@ -942,6 +944,8 @@ class LinearQuadraticTrackingAircraft(Aircraft):
         repcon += report_latex(self.B,"B",print_report=False)
         repcon += report_latex(self.Q,"Q",print_report=False)
         repcon += report_latex(self.R,"R",print_report=False)
+        repcon += report_latex(self.k0,"K_0",print_report=False)
+        repcon += report_latex(self.GK,"G_K",print_report=False)
         repcon += report_latex(self.Kp,"K_p",print_report=False)
         repcon += report_latex(self.Ki,"K_i",print_report=False)
         
@@ -1615,7 +1619,7 @@ class ITPIAircraft(Aircraft):
         repcon += report_latex(self.w,r"\Omega",print_report=False)
         repcon += report_latex(self.Binv,"B^{-1}",print_report=False)
         repcon += report_latex(self.bT,r"T_\beta",print_report=False)
-        repcon += report_latex(self.T,"T_{alt}",print_report=False)
+        repcon += report_latex(self.T,r"\Delta T^{-1}",print_report=False)
         repcon += report_latex(self.A_model,"A",print_report=False)
         repcon += report_latex(self.B_model,"B",print_report=False)
         repcon += report_latex(self.Kp,"K_p",print_report=False)
@@ -2186,10 +2190,11 @@ class ControlAllocationMomentAssignmentAircraft(Aircraft):
         #
         self.prev_E = 0.0
         ###
-        self.time_check = 100.0 # 1.16 # 2.72 # 1.0 # 
+        self.time_check = 100.0 # 1.0 # 1.16 # 2.72 # 1.0 # 
         self.dt_check = 0.000001 # 0.1 # 0.05 # 0.01 # 
-        self._err_plot_pause_time = 0.25 # 0.1 # 0.000001 # 5.0 # 1.0 # 
-        self._end_plot_time = 1.18 # 2.76 # 1.5 # 
+        self._err_plot_pause_time = 0.000001 # 0.1 # 0.25 # 5.0 # 1.0 # 
+        self._end_plot_time = 4.0 # 1.18 # 2.76 # 1.5 # 
+        self._end_plot_time = self.time_check + self.dt_check
         self.have_saved = False
         self.log_scale = False # True # 
         self.symlog_scale = False # True # 
@@ -2214,8 +2219,13 @@ class ControlAllocationMomentAssignmentAircraft(Aircraft):
             plt.rcParams["mathtext.fontset"] = "dejavuserif"
             plt.rcParams['figure.dpi'] = 300.0
 
-            plt.figure(figsize = (3.25,3.5),constrained_layout = True)
+            # plt.figure(figsize = (3.25,3.5),constrained_layout = True)
             plt.rc('axes', prop_cycle=cycler('color', ["0.0","0.6","0.2","0.8","0.4"]))
+            subdict = {
+                "figsize" : (3.25,3.5),
+                "constrained_layout" : True
+            }
+            self.root_fig,self.root_axs = plt.subplots(1,1,**subdict)
 
         self.plot_alternate_solns = False # True # 
         self.poss_ts     = []
@@ -3640,6 +3650,9 @@ class ControlAllocationMomentAssignmentAircraft(Aircraft):
                         # #     dB_d = 0.0
                         dBbrack = np.deg2rad(90.0)
                         bracket = (-dBbrack, dB_d, dBbrack)
+                        # if np.deg2rad(25.0) <= x_euler[9] <= np.deg2rad(55.0):
+                        #     # dB_d = dB*1.0
+                        #     dB_d = 0.0
 
                     # if self._final_on_rk4 and self.plot_alternate_solns:
                     #     if self.save_poss_counter % self.save_poss_every == 0:
@@ -3908,13 +3921,13 @@ class ControlAllocationMomentAssignmentAircraft(Aircraft):
                     # print(t) # ,self.integrator) # 
                     if not(self.is_monte_carlo) and t >= self.time_check and t <= self._end_plot_time and not(self.have_saved):
                         if self.first_plot:
-                            plt.xlabel(r"Tail rotation $\delta_B$, deg")
-                            plt.ylabel("Evaluated function")# $E$")#  = ||M - M_d||$") # ^2$") # 
-                            plt.plot([-360,360],[0.0,0.0],"-",c="k",lw=0.5)
+                            self.root_axs.set_xlabel(r"Tail rotation $\delta_B$, deg") # plt.xlabel(r"Tail rotation $\delta_B$, deg") # 
+                            self.root_axs.set_ylabel("Evaluated function")# $E$")#  = ||M - M_d||$") # ^2$") #  # plt.ylabel("Evaluated function")# $E$")#  = ||M - M_d||$") # ^2$") #  # 
+                            self.root_axs.plot([-360,360],[0.0,0.0],"-",c="k",lw=0.5) # plt.plot([-360,360],[0.0,0.0],"-",c="k",lw=0.5) # 
                             if self.log_scale:
-                                plt.yscale("log")
+                                self.root_axs.set_yscale("log") # plt.yscale("log") # 
                             if self.symlog_scale:
-                                plt.yscale("symlog")
+                                self.root_axs.set_yscale("symlog") # plt.yscale("symlog") # 
                         if self.line_method == "Newton_Root":
                             E = lambda dBj : self.sine_fun(\
                                 rho,V,dBj,a,b,pbar,qbar,rbar,Md)[2]
@@ -3925,33 +3938,33 @@ class ControlAllocationMomentAssignmentAircraft(Aircraft):
                         dBvals_deg = np.linspace(-360.0,360.0,20000) # -90.0,90.0,10000) # 
                         dBvals = np.deg2rad(dBvals_deg)
                         Evals = [E(dBvals[i]) for i in range(len(dBvals))]
-                        dBcol = plt.plot(dBvals_deg,Evals)[0].get_color()
-                        plt.plot(np.rad2deg(dB),E(dB),"o",c="k",ms=2.0,mfc=dBcol)
-                        plt.plot(np.rad2deg(dB_d),E(dB_d),"o",c=dBcol,ms=2.0,mfc="w")
+                        dBcol = self.root_axs.plot(dBvals_deg,Evals)[0].get_color() # plt.plot(dBvals_deg,Evals)[0].get_color() # 
+                        self.root_axs.plot(np.rad2deg(dB),E(dB),"o",c="k",ms=2.0,mfc=dBcol) # plt.plot(np.rad2deg(dB),E(dB),"o",c="k",ms=2.0,mfc=dBcol) # 
+                        self.root_axs.plot(np.rad2deg(dB_d),E(dB_d),"o",c=dBcol,ms=2.0,mfc="w") # plt.plot(np.rad2deg(dB_d),E(dB_d),"o",c=dBcol,ms=2.0,mfc="w") # 
                         i_neg = int(abs((-np.pi*2.0-dB_d)/np.pi))
                         for ineg in range(i_neg):
                             dB_in = dB_d - (ineg+1)*np.pi
-                            plt.plot(np.rad2deg(dB_in),0.0,"o",c=dBcol,ms=2.0)#,mfc=dBcol)
+                            self.root_axs.plot(np.rad2deg(dB_in),0.0,"o",c=dBcol,ms=2.0)#,mfc=dBcol) # plt.plot(np.rad2deg(dB_in),0.0,"o",c=dBcol,ms=2.0)#,mfc=dBcol) # 
                         i_pos = int(abs(( np.pi*2.0-dB_d)/np.pi))
                         for ipos in range(i_pos):
                             dB_ip = dB_d + (ipos+1)*np.pi
-                            plt.plot(np.rad2deg(dB_ip),0.0,"o",c=dBcol,ms=2.0)#,mfc=dBcol)
+                            self.root_axs.plot(np.rad2deg(dB_ip),0.0,"o",c=dBcol,ms=2.0)#,mfc=dBcol) # plt.plot(np.rad2deg(dB_ip),0.0,"o",c=dBcol,ms=2.0)#,mfc=dBcol) # 
                         if self.line_method in self.scalar_options:
-                            plt.plot(np.rad2deg(bracket[0]),E(bracket[0]),"x",c=dBcol,ms=3.0)
-                            plt.plot(np.rad2deg(bracket[2]),E(bracket[2]),"x",c=dBcol,ms=3.0)
-                        plt.title("t = {:> 7.3f}".format(t))
+                            self.root_axs.plot(np.rad2deg(bracket[0]),E(bracket[0]),"x",c=dBcol,ms=3.0) # plt.plot(np.rad2deg(bracket[0]),E(bracket[0]),"x",c=dBcol,ms=3.0) # 
+                            self.root_axs.plot(np.rad2deg(bracket[2]),E(bracket[2]),"x",c=dBcol,ms=3.0) # plt.plot(np.rad2deg(bracket[2]),E(bracket[2]),"x",c=dBcol,ms=3.0) # 
+                        self.root_fig.suptitle("$t$ = {:> 7.3f} sec".format(t)) # plt.title("$t$ = {:> 7.3f} sec".format(t)) # 
                         #
-                        plt.show(block=False)
+                        # plt.show(block=False)
                         if not(self.have_saved) and \
                             self._end_plot_time - self.dt_check <= t:
                             print("end of times!!!")
                             now = datetime.now()
                             ct = now.strftime("%Y-%m-%d_%H-%M-%S")
-                            plt.savefig("/home/ben/Desktop/plotfig_"+ct+".pdf")
-                            plt.close()
+                            self.root_fig.savefig("/home/ben/Desktop/plotfig_"+ct+".pdf") # plt.savefig("/home/ben/Desktop/plotfig_"+ct+".pdf") # 
+                            plt.close(self.root_fig) # plt.close() # 
                             self.have_saved = True
-                        else:
-                            plt.pause(self._err_plot_pause_time)
+                        # else:
+                        #     plt.pause(self._err_plot_pause_time)
                         self.time_check += self.dt_check
                     # quit()
 
@@ -4715,7 +4728,12 @@ if __name__ == "__main__":
     # # # # # # 
     run_bire_fs["aircraft_class"] = ControlAllocationMomentAssignmentAircraft
     run_bire_fs["name_end"] = "_" + f1 + "_CAMA" # 2" # 
-    # # #
+    #
+    #
+    # #
+    # #
+    # plot_vars["format"] = "png"
+    # # # #
     # # #
     # # # 
     bire_fs_dict["aircraft"]["CG_shift[ft]"] = cg = [0.0, 0.0, 0.0] # [1.0, 0.0, 0.0] # [0.5, 0.0, 0.0] # 
@@ -4769,14 +4787,21 @@ if __name__ == "__main__":
     phi_degs["LQRDI"][ "CG05"] = 40.0; phi_degs["LQRDI"][ "CG10"] = 50.0
     phi_degs["LQRDI"]["BR100"] = 20.0; phi_degs["LQRDI"]["BR200"] = 20.0
     phi_degs["LQRDI"][ "SE11"] = 40.0; phi_degs["LQRDI"][ "SE12"] = 40.0
+    # phi_degs["LQRDI"][ "YS00"] = 40.0
     #
     phi_degs[ "ITPI"] = {}
-    phi_degs[ "ITPI"][ "ITPI"] =       phi_degs[ "ITPI"]["banana"]=  0.0
+    if f1 == "C2":
+        phi_degs[ "ITPI"][ "ITPI"] =       phi_degs[ "ITPI"]["banana"]=  0.0
+    elif f1 == "B1":
+        phi_degs[ "ITPI"][ "ITPI"] =       phi_degs[ "ITPI"]["banana"]= 60.0
     phi_degs[ "ITPI"][ "CG05"] = 40.0; phi_degs[ "ITPI"][ "CG10"] = 60.0
     # the rest _ _ _ _ _ _ don't bother!!
     #
     phi_degs[  "NDI"] = {}
-    phi_degs[  "NDI"][  "NDI"] =       phi_degs[  "NDI"]["banana"]= 40.0
+    if f1 == "C2":
+        phi_degs[  "NDI"][  "NDI"] =       phi_degs[  "NDI"]["banana"]= 40.0
+    elif f1 == "B1":
+        phi_degs[  "NDI"][  "NDI"] =       phi_degs[  "NDI"]["banana"]= 60.0
     phi_degs[  "NDI"][ "CG05"] = 60.0; phi_degs[  "NDI"][ "CG10"] = 60.0
     phi_degs[  "NDI"]["BR100"] = 40.0; phi_degs[  "NDI"]["BR200"] = 50.0
     phi_degs[  "NDI"][ "SE11"] = 40.0; phi_degs[  "NDI"][ "SE12"] = 40.0
@@ -4797,6 +4822,10 @@ if __name__ == "__main__":
     # phi_degs[ "CAMA"][ "YS00"] = 30.0
     # phi_degs[ "CAMA"]["YS-10"] = 30.0
     # bire_fs_dict["simulation"]["include_compressibility"] = False
+    #
+    #
+    # # # for root function plots
+    # phi_degs[ "CAMA"]["banana"]= 40.0
     #
     # phi_degs[  "NDI"][  "NDI"] = 50.0
     # run_bire_fs["name_end"] += "_to_50_fail"

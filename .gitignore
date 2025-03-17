@@ -178,8 +178,9 @@ controls/stblz_plots/saved_monte_carlo/**/**/*.png
 controls/determinant_data/*.csv
 controls/determinant_data/**/*.csv
 controls/determinant_data/**/*.png
-# ignore all current mc and single sim tracking cases
-controls/track_plots/monte_carlo/
+# # # ignore saved files
 controls/track_plots/saved_monte_carlo/
-controls/track_plots/single_simulation/
 controls/track_plots/saved_single_simulation/
+# # ignore all current mc and single sim tracking cases
+# controls/track_plots/monte_carlo/
+# controls/track_plots/single_simulation/

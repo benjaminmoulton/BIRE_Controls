@@ -41,7 +41,7 @@ if __name__ == "__main__":
     # list of controller types
     ctrl_types = ["PI","DI","LQT","LQRDI","ITPI","NDI","CAMA"]
     mod_types  = ["CG05","CG10","BR100","BR200","SE11","SE12"]
-    plot_types = ["CG","BR","SE"]
+    plot_types = ["CG","BR","SE","UW","3BEST"]
     pqr_cases = ["p","q","r"]
     CFM_cases = ["CL","CS","CD","Cell","Cm","Cn"]
 
@@ -154,6 +154,8 @@ if __name__ == "__main__":
     for key in ctrl_types:
         plots[key] = {}
         for subkey in plot_types:
+            if key != "ITPI" and subkey == "3BEST":
+                continue
             plots[key][subkey] = {}
             plots[key][subkey]["fig"], plots[key][subkey]["axs"] = \
                 plt.subplots(3,1,height_ratios=[1,3,6],**subdict)
@@ -164,45 +166,45 @@ if __name__ == "__main__":
         "DI"   :{"CG":1.0,"BR":1.0,"SE":1.0},
         "LQT"  :{"CG":1.0,"BR":1.0,"SE":1.0},
         "LQRDI":{"CG":1.0,"BR":1.0,"SE":1.0},
-        "ITPI" :{"CG":1.0,"BR":1.0,"SE":1.0},
+        "ITPI" :{"CG":1.0,"BR":1.0,"SE":1.0,"3BEST":1.0},
         "NDI"  :{"CG":1.0,"BR":1.0,"SE":1.0},
-        "CAMA" :{"CG":1.0,"BR":1.0,"SE":1.0},
+        "CAMA" :{"CG":1.0,"BR":1.0,"SE":1.0,"UW":1.0},
     }
     p_mlt = {
         "PI"   :{"CG":.01,"BR":1.0,"SE":1.0},
         "DI"   :{"CG":0.1,"BR":0.1,"SE":0.1},
         "LQT"  :{"CG":0.1,"BR":0.1,"SE":0.1},
         "LQRDI":{"CG":0.1,"BR":0.1,"SE":0.1},
-        "ITPI" :{"CG":1.0,"BR":1.0,"SE":1.0},
+        "ITPI" :{"CG":1.0,"BR":1.0,"SE":1.0,"3BEST":.01},
         "NDI"  :{"CG":0.1,"BR":1.0,"SE":1.0},
-        "CAMA" :{"CG":1.0,"BR":1.0,"SE":1.0},
+        "CAMA" :{"CG":.01,"BR":.01,"SE":1.0,"UW":1.0},
     }
     q_mlt = {
         "PI"   :{"CG":1.0,"BR":1.0,"SE":1.0},
         "DI"   :{"CG":1.0,"BR":1.0,"SE":1.0},
         "LQT"  :{"CG":1.0,"BR":1.0,"SE":1.0},
         "LQRDI":{"CG":0.1,"BR":0.1,"SE":0.1},
-        "ITPI" :{"CG":0.1,"BR":1.0,"SE":1.0},
+        "ITPI" :{"CG":0.1,"BR":1.0,"SE":1.0,"3BEST":.01},
         "NDI"  :{"CG":0.1,"BR":0.1,"SE":1.0},
-        "CAMA" :{"CG":1.0,"BR":1.0,"SE":1.0},
+        "CAMA" :{"CG":0.1,"BR":1.0,"SE":1.0,"UW":1.0},
     }
     r_mlt = {
         "PI"   :{"CG":1.0,"BR":10.0,"SE":10.0},
         "DI"   :{"CG":1.0,"BR":1.0,"SE":1.0},
         "LQT"  :{"CG":1.0,"BR":1.0,"SE":1.0},
         "LQRDI":{"CG":1.0,"BR":1.0,"SE":1.0},
-        "ITPI" :{"CG":1.0,"BR":1.0,"SE":1.0},
+        "ITPI" :{"CG":1.0,"BR":1.0,"SE":1.0,"3BEST":1.0},
         "NDI"  :{"CG":1.0,"BR":10.0,"SE":10.0},
-        "CAMA" :{"CG":1.0,"BR":1.0,"SE":1.0},
+        "CAMA" :{"CG":1.0,"BR":1.0,"SE":1.0,"UW":1.0},
     }
     pqr_lim = {
         "PI"   :{"CG":(20,5),"BR":(20,5),"SE":(20,5)},
         "DI"   :{"CG":(15,7),"BR":(10,5),"SE":(10,5)},
         "LQT"  :{"CG":(5,11),"BR":(5,11),"SE":(5,11)},
         "LQRDI":{"CG":(30,7),"BR":(10,5),"SE":(10,5)},
-        "ITPI" :{"CG":(40,5),"BR":(30,7),"SE":(30,7)},
+        "ITPI" :{"CG":(40,5),"BR":(30,7),"SE":(30,7),"3BEST":(5,11)},
         "NDI"  :{"CG":(15,7),"BR":(40,5),"SE":(50,5)},
-        "CAMA" :{"CG":(30,7),"BR":(30,7),"SE":(30,7)},
+        "CAMA" :{"CG":(10,5),"BR":(5,11),"SE":(30,7),"UW":(30,7)},
     }
     #
     mod_w_type = {
@@ -218,13 +220,16 @@ if __name__ == "__main__":
     # plot!
     for key in ctrl_types:
         for subkey in plot_types:
-            fig,axs = plots[key][subkey]["fig"], plots[key][subkey]["axs"]
-
             # skip some
-            if key == "ITPI" and subkey != "CG":
+            if key == "ITPI" and subkey not in ["CG","3BEST"]:
                 continue
-            if key == "CAMA":
+            if key != "CAMA" and subkey == "UW":
                 continue
+            if key != "ITPI" and subkey == "3BEST":
+                continue
+
+            # pull out plots
+            fig,axs = plots[key][subkey]["fig"], plots[key][subkey]["axs"]
 
             # modify plot limits
             i_pqrlim = pqr_lim[key][subkey]
@@ -242,40 +247,60 @@ if __name__ == "__main__":
             axs[2].xaxis.set_major_formatter(major_formatter)
             
             # plot bank angle
-            for mod in [key] + mod_w_type[subkey]:
+            counter = 0
+            if   key == "ITPI" and subkey == "3BEST": forlist = [subkey]*3
+            elif key == "CAMA" and subkey ==    "UW": forlist = [key] + [subkey]
+            else: forlist = [key] + mod_w_type[subkey]
+            for mod in forlist:
+                counter += 1
+
                 # determine colors
                 gray_ind = 0 # 1 # 
-                ec = "k" if mod in ctrl_types \
-                    else "0.5" if mod == mod_w_type[subkey][gray_ind] else "k"
-                c = "k" if mod in ctrl_types \
-                    else "k" if mod == mod_w_type[subkey][gray_ind] else "None"
-                h = None if mod in ctrl_types \
-                    else None if mod == mod_w_type[subkey][gray_ind] else "/"
-                a = 1.0 if mod in ctrl_types \
-                    else 0.5 if mod == mod_w_type[subkey][gray_ind] else 1.0
+                # change for ITPI 3BEST plot
+                if   key == "ITPI" and subkey == "3BEST":
+                    first_bool = counter == 1
+                    second_bool = counter < 3
+                elif key == "CAMA" and subkey ==    "UW":
+                    first_bool = mod in ctrl_types
+                    second_bool = counter < 3
+                else:
+                    first_bool = mod in ctrl_types
+                    second_bool = mod == mod_w_type[subkey][gray_ind]
+                ec = "k"  if first_bool else "0.5" if second_bool else "k"
+                c  = "k"  if first_bool else "0.5" if second_bool else "None"
+                h  = None if first_bool else None  if second_bool else "/"
+                a  = 1.0 # if first_bool else 0.5   if second_bool else 1.0
                 bardict = dict(color=c,edgecolor=ec,hatch=h,alpha=a)
-                mlt = -1.0 if mod in ctrl_types else 1.0
+                mlt = -1.0 if first_bool else 1.0
+
+                # determine which subdict to look at
+                if key == "ITPI" and subkey == "3BEST":
+                    nkey = "ITPI" if first_bool else "NDI" if second_bool else "CAMA"
+                    nmod = "CG10"
+                    ctrl_subdict = ctrl_props[nkey][nmod]
+                else:
+                    ctrl_subdict = ctrl_props[key][mod]
 
                 # bank angle
-                wid = ctrl_props[key][mod]["final_bank"]
+                wid = ctrl_subdict["final_bank"]
                 axs[0].barh("Bank angle, deg",width=mlt*wid,**bardict)
 
                 # plot p,q,r
-                wid = ctrl_props[key][mod]["r"]
+                wid = ctrl_subdict["r"]
                 r_ord = m.floor(m.log(1.0/r_mlt[key][subkey],10))
                 rep_r = r_ord != 0
                 axs[1].barh(r"$\Delta r$," \
                     + rep_r*" 10$^{:s}{:d}{:s}$".format("{",r_ord,"}")+" deg/s",\
                     width=mlt*wid*r_mlt[key][subkey],**bardict)
                 #
-                wid = ctrl_props[key][mod]["q"]
+                wid = ctrl_subdict["q"]
                 q_ord = m.floor(m.log(1.0/q_mlt[key][subkey],10))
                 rep_q = q_ord != 0
                 axs[1].barh(r"$\Delta q$," \
                     + rep_q*" 10$^{:s}{:d}{:s}$".format("{",q_ord,"}")+" deg/s",\
                     width=mlt*wid*q_mlt[key][subkey],**bardict)
                 #
-                wid = ctrl_props[key][mod]["p"]
+                wid = ctrl_subdict["p"]
                 p_ord = m.floor(m.log(1.0/p_mlt[key][subkey],10))
                 rep_p = p_ord != 0
                 axs[1].barh(r"$\Delta p$," \
@@ -283,22 +308,22 @@ if __name__ == "__main__":
                     width=mlt*wid*p_mlt[key][subkey],**bardict)
 
                 # plot CFM
-                wid = ctrl_props[key][mod]["Cn"]
+                wid = ctrl_subdict["Cn"]
                 axs[2].barh(r"$\Delta C_n$",width=mlt*wid,**bardict)
                 #
-                wid = ctrl_props[key][mod]["Cm"]
+                wid = ctrl_subdict["Cm"]
                 axs[2].barh(r"$\Delta C_m$",width=mlt*wid,**bardict)
                 #
-                wid = ctrl_props[key][mod]["Cl"]
+                wid = ctrl_subdict["Cl"]
                 axs[2].barh(r"$\Delta C_\ell$",width=mlt*wid,**bardict)
                 #
-                wid = ctrl_props[key][mod]["CD"]
+                wid = ctrl_subdict["CD"]
                 axs[2].barh(r"$\Delta C_D$",width=mlt*wid,**bardict)
                 #
-                wid = ctrl_props[key][mod]["CS"]
+                wid = ctrl_subdict["CS"]
                 axs[2].barh(r"$\Delta C_S$",width=mlt*wid,**bardict)
                 #
-                wid = ctrl_props[key][mod]["CL"]
+                wid = ctrl_subdict["CL"]
                 CL_ord = m.floor(m.log(1.0/CL_mlt[key][subkey],10))
                 rep_CL = CL_ord != 0
                 axs[2].barh(r"$\Delta C_L$" \
@@ -316,6 +341,13 @@ if __name__ == "__main__":
     savedict["transparent"] = False # True if savedict["format"] == "pdf" else False
     for key in ctrl_types:
         for subkey in plot_types:
+            if key != "CAMA" and subkey == "UW":
+                continue
+            if key != "ITPI" and subkey == "3BEST":
+                continue
+            if key == "ITPI" and subkey != ["CG","3BEST"]:
+                continue
+            
             fig,axs = plots[key][subkey]["fig"], plots[key][subkey]["axs"]
             
             # save figure
