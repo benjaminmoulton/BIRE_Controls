@@ -42,7 +42,7 @@ if __name__ == "__main__":
     run_sct  = True # False # 
     run_fs = True
     skip_run = True # False # 
-    skip_DOC = True # False # 
+    skip_CE = False # True # 
     if run_sct: trim_bank_degs = np.linspace(0.0,75.0,num=16).tolist() # [30.0] # np.linspace(0.0,60.0,num=13).tolist() # [0.0] # [10.0] # [60.0] # np.linspace(0.0,75.0,num=16).tolist() # 
     else: trim_beta_degs = np.linspace(0.0,16.0,num=9).tolist() # [6.0] # np.linspace(0.0,16.0,num=9).tolist() # [14.0,16.0] # [0.0] # 
     trim_climb_deg = 0.0 # 10.0 # 
@@ -57,7 +57,7 @@ if __name__ == "__main__":
     plotting_gammas = [0.0]
     plot_inverted_trims = False # True # 
     plot_alternate_trims = True # False # 
-    plot_base_DOC = True # False # 
+    plot_base_CE = True # False # 
     show_plots = False # True # 
     plot_format = "pdf" # "png" # 
     plot_transparent = True if plot_format == "pdf" else False # True # False # 
@@ -472,7 +472,7 @@ if __name__ == "__main__":
                 # print(craft,trims[craft]["ind_var"][j],tails,noninvs,any(noninvs),indsort,minind)
             
             # Determine eigendecomposed matrix
-            if not(skip_DOC):
+            if not(skip_CE):
                 for j,trim_set in enumerate(trims[craft]["dicts"]):
                     for trim_sol in trim_set:
                         solution = trim_set[trim_sol]
@@ -652,14 +652,14 @@ if __name__ == "__main__":
             fig_bp,axs_bp = plt.subplots(1,1,**plot_dict)
             fig_gs,axs_gs = plt.subplots(1,1,**plot_dict)
             fig_lg,axs_lg = plt.subplots(1,1,**plot_dict)
-            rows_DC = 9; cols_DC = 4
-            fig_DC = [[None for _ in range(cols_DC)] for _ in range(rows_DC)]
-            axs_DC = [[None for _ in range(cols_DC)] for _ in range(rows_DC)]
-            for i in range(rows_DC):
-                for j in range(cols_DC):
+            rows_CE = 9; cols_CE = 4
+            fig_CE = [[None for _ in range(cols_CE)] for _ in range(rows_CE)]
+            axs_CE = [[None for _ in range(cols_CE)] for _ in range(rows_CE)]
+            for i in range(rows_CE):
+                for j in range(cols_CE):
                     if j == 0: shares ={}
-                    else: shares ={"sharex":axs_DC[i][0],"sharey":axs_DC[i][0]}
-                    fig_DC[i][j],axs_DC[i][j] = plt.subplots(1,1,**shares,**plot_dict)
+                    else: shares ={"sharex":axs_CE[i][0],"sharey":axs_CE[i][0]}
+                    fig_CE[i][j],axs_CE[i][j] = plt.subplots(1,1,**shares,**plot_dict)
             axs = [axs_da,axs_de,axs_dB,axs_ta,axs_vr,axs_af]
             # # ctrb plots
             # ctrb_fig = {}
@@ -704,9 +704,9 @@ if __name__ == "__main__":
                 axs_2q.grid(which="major",lw=grid_lw,ls="-",c=grid_color)
                 axs_2r.grid(which="major",lw=grid_lw,ls="-",c=grid_color)
                 axs_2s.grid(which="major",lw=grid_lw,ls="-",c=grid_color)
-            for i in range(rows_DC):
-                for j in range(cols_DC):
-                    axs_DC[i][j].grid(which="major",lw=grid_lw,ls="-",
+            for i in range(rows_CE):
+                for j in range(cols_CE):
+                    axs_CE[i][j].grid(which="major",lw=grid_lw,ls="-",
                         c=grid_color)
 
             # plot points
@@ -981,10 +981,10 @@ if __name__ == "__main__":
                         #
                         # DOC
                         # # # if skip for base, then skip
-                        if cname == "base" and not(plot_base_DOC): continue
+                        if cname == "base" and not(plot_base_CE): continue
                         DOCval = 10.0
-                        if not(skip_DOC):
-                            for g in range(rows_DC):
+                        if not(skip_CE):
+                            for g in range(rows_CE):
                                 # to zero
                                 x0 = np.zeros((9,)); x0[g] = DOCval; xf = x0*0.0
                                 # info
@@ -1021,17 +1021,17 @@ if __name__ == "__main__":
                                 elif g in [3,4,5,7,8]: # put in radians
                                     x0[g] = np.deg2rad(DOCval)
                                 Wss = LinSys["Wss"]; Was = LinSys["Was"]
-                                for h in range(cols_DC):
+                                for h in range(cols_CE):
                                     rhos = np.abs(mm(xf,mm(Wss[h],xf)))
                                     rhoa = np.abs(mm(x0,mm(Was[h],x0)))
                                     rho = rhos + rhoa
-                                    axs_DC[g][h].plot(ivr,rho,**kdict)
+                                    axs_CE[g][h].plot(ivr,rho,**kdict)
                                 # # from zero
                                 # xf = x0*1.0; x0 *= 0.0
                                 # rhoss = [np.abs(mm(xf,mm(Wss[m],xf))) for m in range(len(Wss))]
                                 # rhoas = [np.abs(mm(x0,mm(Was[m],x0))) for m in range(len(Was))]
                                 # rhos = [rhoss[m] + rhoas[m] for m in range(len(rhoss))]
-                                # axs_DC[g][1].plot(ivr,np.min(rhos),**kdict)
+                                # axs_CE[g][1].plot(ivr,np.min(rhos),**kdict)
                         if len(trims[craft]["dicts"][i]) > 1:
                             # print(craft,ivr,xcg,np.rad2deg(sol["u_trim"][1]),
                             #     np.rad2deg(sol["u_trim"][2]),len(trims[craft]["dicts"][i])) #trims[craft]["dicts"][i])
@@ -1142,55 +1142,56 @@ if __name__ == "__main__":
             ctrl_names = ["da","de","dB","ta"]
             ctrl_vars = [r"$\delta_a$",r"$\delta_e^B$/$\delta_e$",
                 r"$\delta_B$/$\delta_r$",r"$\tau$"]
-            for g in range(rows_DC):
-                for h in range(cols_DC):
-                    axs_DC[g][h].set_xlabel(xlabel)
-                    axs_DC[g][h].set_ylabel(
-                        "DOC of "+state_vars[g]+" using "+ctrl_vars[h])# + state_names[g])
-                    axs_DC[g][h].set_yscale("log")
+            for g in range(rows_CE):
+                for h in range(cols_CE):
+                    axs_CE[g][h].set_xlabel(xlabel)
+                    axs_CE[g][h].set_ylabel(
+                        r"Control effort to regulate $\Delta$"+state_vars[g]
+                        +r" using $\Delta$"+ctrl_vars[h])# + state_names[g])
+                    axs_CE[g][h].set_yscale("log")
                     if g == 0:
-                        if run_sct: axs_DC[g][h].set_ylim((1.0e+2,1.0e-9 ))
-                        else      : axs_DC[g][h].set_ylim((1.0e+3,1.0e-10))
+                        if run_sct: axs_CE[g][h].set_ylim((1.0e+2,1.0e-9 ))
+                        else      : axs_CE[g][h].set_ylim((1.0e+3,1.0e-10))
                     elif g == 1:
-                        if run_sct: axs_DC[g][h].set_ylim((1.0e+7,1.0e-9))
-                        else      : axs_DC[g][h].set_ylim((1.0e+5,1.0e-9))
+                        if run_sct: axs_CE[g][h].set_ylim((1.0e+7,1.0e-9))
+                        else      : axs_CE[g][h].set_ylim((1.0e+5,1.0e-9))
                     elif g == 2:
                         if run_sct:
-                            if h != 3: axs_DC[g][h].set_ylim((1.0e+6 ,1.0e-10)) # no throttle 
-                            else     : axs_DC[g][h].set_ylim((1.0e+10,1.0e-10)) # throttle
+                            if h != 3: axs_CE[g][h].set_ylim((1.0e+6 ,1.0e-10)) # no throttle 
+                            else     : axs_CE[g][h].set_ylim((1.0e+10,1.0e-10)) # throttle
                         else:
-                            if h != 3: axs_DC[g][h].set_ylim((1.0e+4,1.0e-10)) # no throttle 
-                            else     : axs_DC[g][h].set_ylim((1.0e+6,1.0e-10)) # throttle
+                            if h != 3: axs_CE[g][h].set_ylim((1.0e+4,1.0e-10)) # no throttle 
+                            else     : axs_CE[g][h].set_ylim((1.0e+6,1.0e-10)) # throttle
                     elif g == 3:
                         if run_sct:
-                            if h != 3: axs_DC[g][h].set_ylim((1.0e+4,1.0e-8)) # no throttle
-                            else     : axs_DC[g][h].set_ylim((1.0e+7,1.0e-8)) # throttle
+                            if h != 3: axs_CE[g][h].set_ylim((1.0e+4,1.0e-8)) # no throttle
+                            else     : axs_CE[g][h].set_ylim((1.0e+7,1.0e-8)) # throttle
                         else:
-                            if h != 3: axs_DC[g][h].set_ylim((1.0e+4,1.0e-6)) # no throttle
-                            else     : axs_DC[g][h].set_ylim((1.0e+6,1.0e-6)) # throttle
+                            if h != 3: axs_CE[g][h].set_ylim((1.0e+4,1.0e-6)) # no throttle
+                            else     : axs_CE[g][h].set_ylim((1.0e+6,1.0e-6)) # throttle
                     elif g == 4:
-                        if run_sct: axs_DC[g][h].set_ylim((1.0e+5,1.0e-10))
-                        else      : axs_DC[g][h].set_ylim((1.0e+4,1.0e-6 ))
+                        if run_sct: axs_CE[g][h].set_ylim((1.0e+5,1.0e-10))
+                        else      : axs_CE[g][h].set_ylim((1.0e+4,1.0e-6 ))
                     elif g == 5:
                         if run_sct:
-                            if h != 3: axs_DC[g][h].set_ylim((1.0e+5 ,1.0e-7)) # no throttle
-                            else     : axs_DC[g][h].set_ylim((1.0e+10,1.0e-7)) # throttle
+                            if h != 3: axs_CE[g][h].set_ylim((1.0e+5 ,1.0e-7)) # no throttle
+                            else     : axs_CE[g][h].set_ylim((1.0e+10,1.0e-7)) # throttle
                         else:
-                            if h != 3: axs_DC[g][h].set_ylim((1.0e+5,1.0e-4)) # no throttle
-                            else     : axs_DC[g][h].set_ylim((1.0e+7,1.0e-4)) # throttle
+                            if h != 3: axs_CE[g][h].set_ylim((1.0e+5,1.0e-4)) # no throttle
+                            else     : axs_CE[g][h].set_ylim((1.0e+7,1.0e-4)) # throttle
                     elif g == 6:
-                        if run_sct: axs_DC[g][h].set_ylim((1.0e-13,1.0e-27))
-                        else      : axs_DC[g][h].set_ylim((1.0e-11,1.0e-23))
+                        if run_sct: axs_CE[g][h].set_ylim((1.0e-13,1.0e-27))
+                        else      : axs_CE[g][h].set_ylim((1.0e-11,1.0e-23))
                     elif g == 7:
                         if run_sct:
-                            if h != 3: axs_DC[g][h].set_ylim((1.0e+3,1.0e-7)) # no throttle # 
-                            else     : axs_DC[g][h].set_ylim((1.0e+7,1.0e-7)) # throttle
+                            if h != 3: axs_CE[g][h].set_ylim((1.0e+3,1.0e-7)) # no throttle # 
+                            else     : axs_CE[g][h].set_ylim((1.0e+7,1.0e-7)) # throttle
                         else:
-                            if h != 3: axs_DC[g][h].set_ylim((1.0e+4,1.0e-6)) # no throttle # 
-                            else     : axs_DC[g][h].set_ylim((1.0e+7,1.0e-6)) # throttle
+                            if h != 3: axs_CE[g][h].set_ylim((1.0e+4,1.0e-6)) # no throttle # 
+                            else     : axs_CE[g][h].set_ylim((1.0e+7,1.0e-6)) # throttle
                     elif g == 8:
-                        if run_sct: axs_DC[g][h].set_ylim((1.0e+2,1.0e-10))
-                        else      : axs_DC[g][h].set_ylim((1.0e+4,1.0e-7 ))
+                        if run_sct: axs_CE[g][h].set_ylim((1.0e+2,1.0e-10))
+                        else      : axs_CE[g][h].set_ylim((1.0e+4,1.0e-7 ))
             # legend
             min_cg = min(bire_plotting_xcgs)
             legcol = str(xcg_shade_inverter(min_cg))
@@ -1261,14 +1262,14 @@ if __name__ == "__main__":
             # axs[5].legend(**legdict)
             # axs_CD.legend(**legdict)
             # axs_eg.legend(**legdict)
-            # if plot_base_DOC:
+            # if plot_base_CE:
             #     legDOCdict = legdict
             # else:
             #     legDOCdict = dict(handles=sp[2:],labels=lbls[2:],loc=(1.0,0.0),
             #         borderpad=0.1,handletextpad=0.0)
-            # for g in range(rows_DC):
-            #     for h in range(cols_DC):
-            #         axs_DC[g][h].legend(**legDOCdict)
+            # for g in range(rows_CE):
+            #     for h in range(cols_CE):
+            #         axs_CE[g][h].legend(**legDOCdict)
             LEGdict = dict(handles=sp,labels=lbls,loc="lower center", #(1.0,0.0),
                 borderpad=0.1,handletextpad=0.0, 
                 handler_map={tuple: HandlerTuple(ndivide=None)})
@@ -1313,10 +1314,10 @@ if __name__ == "__main__":
                 axs_bb.set_xlim((-1.65, 1.65)); axs_bb.set_ylim((-0.36764186742069865, 0.4215223236673418)) # print("bb",axs_bb.get_xlim(),axs_bb.get_ylim())
                 axs_bp.set_xlim((-1.65, 1.65)); axs_bp.set_ylim((-3.75,78.75)) # print("bp",axs_bp.get_xlim(),axs_bp.get_ylim())
                 # print("lg",axs_lg.get_xlim(),axs_lg.get_ylim())
-                for g in range(rows_DC):
-                    for h in range(cols_DC):
-                        # print("    DC",g,h,axs_DC[g][h].get_xlim(),axs_DC[g][h].get_ylim())
-                        axs_DC[g][h].set_xlim((-3.75, 78.75))
+                for g in range(rows_CE):
+                    for h in range(cols_CE):
+                        # print("    DC",g,h,axs_CE[g][h].get_xlim(),axs_CE[g][h].get_ylim())
+                        axs_CE[g][h].set_xlim((-3.75, 78.75))
 
             # save plots
             # if plot type is different than previous, remove them
@@ -1357,9 +1358,9 @@ if __name__ == "__main__":
             fig_CD   .savefig(sv_fldr+"06_CD_wlg."+plot_format,**save_dict)
             axs_2D.legend(fontsize=8.0,**fr2dict)
             fig_2D   .savefig(sv_fldr+"06_CD_diff."+plot_format,**save_dict)
-            fig_Cl   .savefig(sv_fldr+"06_Cl."    +plot_format,**save_dict)
+            fig_Cl   .savefig(sv_fldr+"06_Cell."    +plot_format,**save_dict)
             axs_Cl.legend(fontsize=8.0,**legdict)
-            fig_Cl   .savefig(sv_fldr+"06_Cl_wlg."+plot_format,**save_dict)
+            fig_Cl   .savefig(sv_fldr+"06_Cell_wlg."+plot_format,**save_dict)
             fig_Cm   .savefig(sv_fldr+"06_Cm."    +plot_format,**save_dict)
             axs_Cm.legend(fontsize=8.0,**legdict)
             fig_Cm   .savefig(sv_fldr+"06_Cm_wlg."+plot_format,**save_dict)
@@ -1390,15 +1391,15 @@ if __name__ == "__main__":
                 fig_2p   .savefig(sv_fldr+"10_p_diff."+plot_format,**save_dict)
                 fig_2q   .savefig(sv_fldr+"10_q_diff."+plot_format,**save_dict)
                 fig_2r   .savefig(sv_fldr+"10_r_diff."+plot_format,**save_dict)
-            if not(skip_DOC):
-                for g in range(rows_DC):
-                    for h in range(cols_DC):
-                        F = "13_"+state_names[g]+"_"+ctrl_names[h]+"_DOC."
-                        fig_DC[g][h].savefig(sv_fldr+F+plot_format,**save_dict)
+            if not(skip_CE):
+                for g in range(rows_CE):
+                    for h in range(cols_CE):
+                        F = "13_"+state_names[g]+"_"+ctrl_names[h]+"_CE."
+                        fig_CE[g][h].savefig(sv_fldr+F+plot_format,**save_dict)
                         if h == 0:
-                            axs_DC[g][h].legend(fontsize=8.0,**legdict) # aileron
+                            axs_CE[g][h].legend(fontsize=8.0,**legdict) # aileron
                             F = F[:-1] + "_wlg."
-                            fig_DC[g][h].savefig(sv_fldr+F+plot_format,**save_dict)
+                            fig_CE[g][h].savefig(sv_fldr+F+plot_format,**save_dict)
             
             if show_plots:
                 plt.close(fig_da)
@@ -1430,10 +1431,10 @@ if __name__ == "__main__":
                     plt.close(fig_2q)
                     plt.close(fig_2r)
                     plt.close(fig_2s)
-                for g in range(rows_DC):
-                    for h in range(cols_DC):
+                for g in range(rows_CE):
+                    for h in range(cols_CE):
                         if g not in [6,7,8]: # [3,4,5]: # [0,1,2]: # # states
-                            plt.close(fig_DC[g][h])
+                            plt.close(fig_CE[g][h])
                 plt.show()
             else:
                 plt.close("all")

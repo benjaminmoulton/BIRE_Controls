@@ -435,11 +435,15 @@ class Aircraft:
         if self.phi_guess is not None: self.phi_guess = self.phi_guess*self.dtor
         # control
         da_guess = np.deg2rad(trim_guess.get("aileron[deg]",0.0))
-        de_guess = np.deg2rad(trim_guess.get("elevator[deg]",0.0))
         if ("BIRE[deg]" in trim_guess) and self.is_BIRE:
             u_key = "BIRE[deg]"
         else:
             u_key = "rudder[deg]"
+        if self.given_bank and self.phi_trim != 0.0:
+            de_default = np.rad2deg(self.max_de)
+        else:
+            de_default = 0.0
+        de_guess = np.deg2rad(trim_guess.get("elevator[deg]",de_default))
         u2_guess = np.deg2rad(trim_guess.get(u_key,0.0))
         tu_guess = np.deg2rad(trim_guess.get("throttle",0.0))
         self.u_guess = np.array([da_guess,de_guess,u2_guess,tu_guess])
@@ -447,7 +451,7 @@ class Aircraft:
             self.u_guess = None
 
         # determine state indices
-        n_states = 12 + 1*self.use_quaternions + 4*self.order
+        self.n_states4ref = n_states = 12 + 1*self.use_quaternions + 4*self.order
         self.xIi = []; self.xIi_eul = []
         self.xPi = []; self.xPi_eul = []
         for i in range(len(integral_states)):
@@ -466,47 +470,8 @@ class Aircraft:
         self.prev_integral = np.zeros((len(self.xIi),))
         self.prev_error    = np.zeros((len(self.xIi),))
 
-        # store reference signals
-        reference = input_dict.get("reference",{})
-        deg2rad_ref_inds = reference.get("deg2rad_states",[])
-        self.sct_on_5 = reference.get("sct_on_5",False)
-        self.r_ints = []
-        xp = []
-        fp = []
-        for i in range(n_states - 1*self.use_quaternions + len(self.xIi)):
-            data = np.array(reference.get(str(i),[[0.0,0.0],[1.0,0.0]]))
-            # define reference interpolation
-            xp.append(data[:,0]*1.)
-            if i in deg2rad_ref_inds:
-                data[:,1] = np.deg2rad(data[:,1])
-            fp.append(data[:,1]*1.)
-            ref = lambda j,t_i : np.interp(t_i,xp[j],fp[j])
-            self.r_ints.append(ref)
-        
-        self.ref_data_xp = xp
-        self.ref_data_fp = fp
-
-        # store reference signal derivative
-        self.dr_ints = []
-        dxp = []
-        dfp = []
-        for i in range(len(self.r_ints)):
-            # define derivative
-            dxpi = []; dfpi = []
-            for j in range(len(fp[i])-1):
-                if (xp[i][j+1] - xp[i][j]) != 0.0:
-                    der = (fp[i][j+1] - fp[i][j])/(xp[i][j+1] - xp[i][j])
-                else:
-                    der = 0.0
-                dxpi += [xp[i][j],xp[i][j+1]]
-                dfpi += [der,der]
-            # hold der at zero at end
-            dxpi += [xp[i][-1]]
-            dfpi += [0.0]
-            dxp.append(dxpi)
-            dfp.append(dfpi)
-            dref = lambda k,t_i : np.interp(t_i,dxp[k],dfp[k])
-            self.dr_ints.append(dref)
+        # reference signal
+        self._build_reference_signal(input_dict.get("reference",{}))
         
         # gust parameters
         gust = input_dict.get("gust",{})
@@ -590,6 +555,51 @@ class Aircraft:
                 self._get_dynamics = self._linear_quaternion_dynamics
             else:
                 self._get_dynamics = self._linear_euler_dynamics
+
+
+    def _build_reference_signal(self,reference):
+        # store reference signals
+        deg2rad_ref_inds = reference.get("deg2rad_states",[])
+        self.sct_on_5 = reference.get("sct_on_5",False)
+        self.r_ints = []
+        xp = []
+        fp = []
+        for i in range(self.n_states4ref-1*self.use_quaternions+len(self.xIi)):
+            data = np.array(reference.get(str(i),[[0.0,0.0],[1.0,0.0]]))
+            # define reference interpolation
+            xp.append(data[:,0]*1.)
+            if i in deg2rad_ref_inds:
+                data[:,1] = np.deg2rad(data[:,1])
+            fp.append(data[:,1]*1.)
+            ref = lambda j,t_i : np.interp(t_i,xp[j],fp[j])
+            self.r_ints.append(ref)
+        
+        self.ref_data_xp = xp
+        self.ref_data_fp = fp
+
+        # store reference signal derivative
+        self.dr_ints = []
+        dxp = []
+        dfp = []
+        for i in range(len(self.r_ints)):
+            # define derivative
+            dxpi = []; dfpi = []
+            for j in range(len(fp[i])-1):
+                if (xp[i][j+1] - xp[i][j]) != 0.0:
+                    der = (fp[i][j+1] - fp[i][j])/(xp[i][j+1] - xp[i][j])
+                else:
+                    der = 0.0
+                dxpi += [xp[i][j],xp[i][j+1]]
+                dfpi += [der,der]
+            # hold der at zero at end
+            dxpi += [xp[i][-1]]
+            dfpi += [0.0]
+            dxp.append(dxpi)
+            dfp.append(dfpi)
+            dref = lambda k,t_i : np.interp(t_i,dxp[k],dfp[k])
+            self.dr_ints.append(dref)
+
+        return
 
   
     def _given_state(self):
@@ -847,7 +857,9 @@ class Aircraft:
 
 
     def run_trim(self,a_guess=None,b_guess=None,phi_guess=None,u_guess=None,
-        verbose=True,no_report=False,imax="o"):
+        verbose=True,no_report=False,no_print_fail=False,imax="o"):
+        # verbose=True
+        # u_guess = [0.0,-np.deg2rad(25.0),np.deg2rad(10.0),0.0]
         # report
         if not no_report:
             print("running trim algorithm...")
@@ -866,8 +878,13 @@ class Aircraft:
             phi_guess = 0.
         if u_guess is None:
             da_guess = 0.
-            de_guess = 0.
-            dr_guess = 0.
+            if self.given_bank and self.phi_trim != 0.0:
+                de_guess = self.max_de*1.0
+                dr_guess = 0.0
+                print("yah!")
+            else:
+                de_guess = 0.
+                dr_guess = 0.
             tu_guess = 0.
         else:
             da_guess = u_guess[0]
@@ -978,8 +995,9 @@ class Aircraft:
             try:
                 DG[:n] = np.matmul(- np.linalg.solve(J[:n,:n],np.eye(n)),R[:n])
             except:
-                print("Trim Failed!!! phi = ",self.phi_trim*self.rtod, "deg",\
-                    "theta =",th*self.rtod,"deg")
+                if not(no_print_fail):
+                    print("Trim Failed!!! phi = ",self.phi_trim*self.rtod, "deg",\
+                        "theta =",th*self.rtod,"deg")
                 u = G*0.0
                 self.trim_failed = True
                 return G,x
@@ -1018,7 +1036,8 @@ class Aircraft:
         # fail if the trim solution is not converged
         self.trim_iter = iter
         if Rmag > self.NR_tol and iter >= imax:
-            print("Trim Failed, hit iteration limit")
+            if not(no_print_fail):
+                print("Trim Failed, hit iteration limit")
             u = G*0.0
             self.trim_failed = True
             return G,x
@@ -1059,10 +1078,11 @@ class Aircraft:
 
 
     def _initialize_state(self,a_guess=None,b_guess=None,phi_guess=None,
-        u_guess=None,run2=False,no_report=False):
+        u_guess=None,run2=False,no_report=False,no_print_fail=False):
         # run trim at condition
         u_trim,x_trim = self.run_trim(a_guess,b_guess,phi_guess,u_guess,
-            verbose=self.verbose_trim,no_report=no_report)
+            verbose=self.verbose_trim,no_report=no_report,
+            no_print_fail=no_print_fail)
         # # # modify state 
         if self.state_type == "trim":
             x_trim,u_trim = self._overwrite_initial_x_u(x_trim,u_trim)
@@ -2331,8 +2351,11 @@ class Aircraft:
         placeholder = self.phi_trim*1.0; self.phi_trim = 0.0
         FM_ph = self.FM_errors*1.0; self.FM_errors *= 0.0
         # run trim at condition
-        u_trim,x_trim = self.run_trim(0.0,0.0,0.0,[0.0,0.0,0.0,0.0],
-            verbose=self.verbose_trim,no_report=True)
+        if self.phi_trim != 0.0 and self.climb_trim != 0.0:
+            u_trim,x_trim = self.run_trim(0.0,0.0,0.0,[0.0,0.0,0.0,0.0],
+                verbose=self.verbose_trim,no_report=True)
+        else:
+            u_trim,x_trim = self.u_trim*1.0,self.x_trim*1.0
         ## INTSTATE
         x_trim_euler = np.delete(x_trim,9)
         x_trim_euler[9:12] = self._euler_angles(x_trim)
@@ -2903,8 +2926,8 @@ class Aircraft:
 
 
     def _report_simulation_deltas(self,
-        ts:str|np.ndarray="o",xs:str|np.ndarray="o",Vs:str|np.ndarray="o",
-        us:str|np.ndarray="o",rs:str|np.ndarray="o",
+        ts="o",xs="o",Vs="o",
+        us="o",rs="o",
         shift_to_trim:bool=True,file_folder:str=".",print_at_end=True):
         # pull in values or use member saved info
         if isinstance(ts,str):

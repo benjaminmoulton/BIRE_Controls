@@ -4604,9 +4604,13 @@ if __name__ == "__main__":
         "C1" : { "m" : 0.8 , "h" :  1000., "V" : 890., "Re" : 62563000. },
         "C2" : { "m" : 0.6 , "h" : 15000., "V" : 634., "Re" : 31324000. },
         "C3" : { "m" : 0.8 , "h" : 30000., "V" : 796., "Re" : 25828000. },
-        "B1" : { "m" : 0.8 , "h" : 15000., "V" : 634., "Re" : 31324000. },
+        "B1" : { "m" : 0.8 , "h" : 15000., "V" :   0., "Re" :        0. },
+        "B2" : { "m" : 0.2 , "h" :     0., "V" :   0., "Re" :        0. },
+        "B3" : { "m" : 0.4 , "h" :     0., "V" :   0., "Re" :        0. },
+        # "B4" : { "m" : 0.6 , "h" :     0., "V" :   0., "Re" :        0. },
+        # "B5" : { "m" : 0.8 , "h" :     0., "V" :   0., "Re" :        0. },
     }
-    f1 = "C2" # "B1" # 
+    f1 = "C2" # "B4" # "B5" # "C1" # "B3" # "B2" # "B1" # 
     f2 = "C3"
     state_threshold = [
         10., 15., 15.,
@@ -4717,7 +4721,7 @@ if __name__ == "__main__":
     # run_bire_fs["aircraft_class"] = LinearQuadraticRegulatorDynamicInversionAircraft
     # bire_fs_dict["controller"]["integral_states"] = [0,2,3,4,5]
     # run_bire_fs["name_end"] = "_" + f1 + "_LQRDI"
-    # # # # # # # # # # # # # 
+    # # # # # # # # # # # # # # 
     # bire_fs_dict["controller"]["integral_states"] = [0,3,4,5]
     # run_bire_fs["aircraft_class"] = ITPIAircraft
     # run_bire_fs["name_end"] = "_" + f1 + "_ITPI" # 1" # 
@@ -4733,6 +4737,7 @@ if __name__ == "__main__":
     # #
     # #
     # plot_vars["format"] = "png"
+    # cnb_scale = abs(-0.31764903243224546/(0.31301066324220633 - 0.0326))
     # # # #
     # # #
     # # # 
@@ -4740,7 +4745,7 @@ if __name__ == "__main__":
     blm = 50.0 # 200.0 # 100.0 # 
     bire_fs_dict["actuators"]["BIRE"]["rate_limits[deg/s]"] = [-blm,blm]
     bire_fs_dict["aircraft"]["surface_effectiveness_scaling"] = ses = 1.0 # 1.2 # 1.1 # 
-    bire_fs_dict["aircraft"]["yaw_stability_offset_scaling"] = yss = 1.0 # -1.0 # 0.0 # 
+    bire_fs_dict["aircraft"]["yaw_stability_offset_scaling"] = yss = 1.0 # 1.4 # 2.0 # cnb_scale # -1.0 # 0.0 # 
     bire_fs_dict["controller"]["CAMA_coupled_weighting"] = cw = True # False # 
     bire_fs_dict["controller"]["CAMA_SAS_on"] = sason = False # True # 
     run_bire_fs[ "has_turbulence"] = False # True # 
@@ -4748,7 +4753,7 @@ if __name__ == "__main__":
     # append name
     # # # # # run_bire_fs["name_end"] += "_wbeta"
     # # # # # run_bire_fs["name_end"] += "_to_50_fail"
-    # run_bire_fs["name_end"] += "_banana"; plot_vars["format"] = "png"
+    run_bire_fs["name_end"] += "_banana"; plot_vars["format"] = "png"
     run_bire_fs["name_end"] += "_CG" + "{:02d}".format(int(10.0*cg[0])) if (cg[0] != 0.0) else ""
     run_bire_fs["name_end"] += "_BR" + str(int(blm)) if (blm != 50.0) else ""
     run_bire_fs["name_end"] += "_SE" + "{:02d}".format(int(10.0*ses)) if (ses != 1.0) else ""
@@ -4787,41 +4792,59 @@ if __name__ == "__main__":
     phi_degs["LQRDI"][ "CG05"] = 40.0; phi_degs["LQRDI"][ "CG10"] = 50.0
     phi_degs["LQRDI"]["BR100"] = 20.0; phi_degs["LQRDI"]["BR200"] = 20.0
     phi_degs["LQRDI"][ "SE11"] = 40.0; phi_degs["LQRDI"][ "SE12"] = 40.0
-    # phi_degs["LQRDI"][ "YS00"] = 40.0
     #
     phi_degs[ "ITPI"] = {}
-    if f1 == "C2":
+    if   f1 == "C1":
+        phi_degs[ "ITPI"][ "ITPI"] =       phi_degs[ "ITPI"]["banana"]= 60.0
+    elif f1 == "C2":
         phi_degs[ "ITPI"][ "ITPI"] =       phi_degs[ "ITPI"]["banana"]=  0.0
     elif f1 == "B1":
+        phi_degs[ "ITPI"][ "ITPI"] =       phi_degs[ "ITPI"]["banana"]= 60.0
+    elif f1 == "B2":
+        phi_degs[ "ITPI"][ "ITPI"] =       phi_degs[ "ITPI"]["banana"]= 60.0
+    elif f1 == "B3":
         phi_degs[ "ITPI"][ "ITPI"] =       phi_degs[ "ITPI"]["banana"]= 60.0
     phi_degs[ "ITPI"][ "CG05"] = 40.0; phi_degs[ "ITPI"][ "CG10"] = 60.0
     # the rest _ _ _ _ _ _ don't bother!!
     #
     phi_degs[  "NDI"] = {}
-    if f1 == "C2":
+    if   f1 == "C1":
+        phi_degs[  "NDI"][  "NDI"] =       phi_degs[  "NDI"]["banana"]= 60.0
+    elif f1 == "C2":
         phi_degs[  "NDI"][  "NDI"] =       phi_degs[  "NDI"]["banana"]= 40.0
     elif f1 == "B1":
+        phi_degs[  "NDI"][  "NDI"] =       phi_degs[  "NDI"]["banana"]= 60.0
+    elif f1 == "B2":
+        phi_degs[  "NDI"][  "NDI"] =       phi_degs[  "NDI"]["banana"]= 60.0
+    elif f1 == "B3":
         phi_degs[  "NDI"][  "NDI"] =       phi_degs[  "NDI"]["banana"]= 60.0
     phi_degs[  "NDI"][ "CG05"] = 60.0; phi_degs[  "NDI"][ "CG10"] = 60.0
     phi_degs[  "NDI"]["BR100"] = 40.0; phi_degs[  "NDI"]["BR200"] = 50.0
     phi_degs[  "NDI"][ "SE11"] = 40.0; phi_degs[  "NDI"][ "SE12"] = 40.0
     #
     phi_degs[ "CAMA"] = {}
-    if f1 == "C2":
+    if   f1 == "C1":
+        phi_degs[ "CAMA"][ "CAMA"] =       phi_degs[ "CAMA"]["banana"]= 60.0
+    elif f1 == "C2":
         if run_bire_fs[ "has_turbulence"]:
             phi_degs[ "CAMA"][ "CAMA"] =       phi_degs[ "CAMA"]["banana"]= 10.0
         else:
             phi_degs[ "CAMA"][ "CAMA"] =       phi_degs[ "CAMA"]["banana"]= 30.0
     elif f1 == "B1":
         phi_degs[ "CAMA"][ "CAMA"] =       phi_degs[ "CAMA"]["banana"]= 60.0
+    elif f1 == "B2":
+        phi_degs[ "CAMA"][ "CAMA"] =       phi_degs[ "CAMA"]["banana"]= 60.0
+    elif f1 == "B3":
+        phi_degs[ "CAMA"][ "CAMA"] =       phi_degs[ "CAMA"]["banana"]= 60.0
     phi_degs[ "CAMA"][ "CG05"] = 60.0; phi_degs[ "CAMA"][ "CG10"] = 60.0
     phi_degs[ "CAMA"]["BR100"] = 50.0; phi_degs[ "CAMA"]["BR200"] = 60.0
     phi_degs[ "CAMA"][ "SE11"] = 30.0; phi_degs[ "CAMA"][ "SE12"] = 30.0
     phi_degs[ "CAMA"][   "UW"] = 20.0
     phi_degs[ "CAMA"][ "WSAS"] = 30.0
-    # phi_degs[ "CAMA"][ "YS00"] = 30.0
-    # phi_degs[ "CAMA"]["YS-10"] = 30.0
-    # bire_fs_dict["simulation"]["include_compressibility"] = False
+    # phi_degs[ "CAMA"][ "YS11"] = 30.0
+    # phi_degs[ "CAMA"][ "YS20"] = 10.0
+    # phi_degs[ "CAMA"][ "YS13"] = 50.0
+    phi_degs[ "CAMA"][ "YS14"] = 60.0
     #
     #
     # # # for root function plots
@@ -4865,7 +4888,7 @@ if __name__ == "__main__":
             phi__deg = phi_degs[ctrl_type[0]][ctrl_type[-1]]
         except:
             raise ValueError("No case " + ctrl_type[0] + "_" \
-                + ctrl_type[-1] + "exists!")
+                + ctrl_type[-1] + " exists!")
 
     # ensure tail near zero soln
     bire_fs_dict["initial"]["trim_guess"] = {
@@ -4887,16 +4910,38 @@ if __name__ == "__main__":
     # left_roll = True # False # 
     ###########################################################################
     # trim properties
-    if   f1 == "C2":
+    if   f1 == "C1":
+        V_trim = 890.0843173837532731 # B1, SLF
+        a_SLF_deg =  0.2218653843049645 # B1, SLF
+    elif f1 == "C2":
         V_trim = 634.4133153512273111
         a_SLF_deg =  2.6447774345356545
     elif f1 == "B1":
         V_trim = 845.8844204683031194 # B1, SLF
         a_SLF_deg =  0.8428726926131993 # B1, SLF
-    else: raise ValueError("f1 must be in ['C2','B1'], not " + str(f1))
+    elif f1 == "B2":
+        V_trim = 223.2899911643457926 # B2, SLF
+        a_SLF_deg = 19.9761233434501335 # B2, SLF
+    elif f1 == "B3":
+        V_trim = 446.5799823286915853 # B3, SLF
+        a_SLF_deg =  4.0402710922527971 # B3, SLF
+    else: raise ValueError("f1 must be in ['C2','B1','B2'], not " + str(f1))
     a_SLF_rad = np.deg2rad(a_SLF_deg)
     #
-    if   f1 == "C2":
+    if   f1 == "C1":
+        if   phi__deg ==   0.0: # #   0 deg bank fullscale BIRE
+            a_tr_deg =  0.2218653843049645
+            b_tr_deg =  0.0
+            p_tr_deg =  0.0
+            q_tr_deg =  0.0
+            r_tr_deg =  0.0
+        elif phi__deg ==  60.0: # #  60 deg bank fullscale BIRE
+            a_tr_deg =  1.1061067542177971
+            b_tr_deg =  0.0009142276046984
+            p_tr_deg = -0.0346684315030015
+            q_tr_deg =  3.1055972046896820
+            r_tr_deg =  1.7930173821221378
+    elif f1 == "C2":
         if   phi__deg ==   0.0: # #   0 deg bank fullscale BIRE
             a_tr_deg =  2.6447774345356545
             b_tr_deg =  0.0
@@ -5007,6 +5052,32 @@ if __name__ == "__main__":
             p_tr_deg = -0.0782415781128383
             q_tr_deg =  3.2607339316364152
             r_tr_deg =  1.8825856131860317
+    elif f1 == "B2":
+        if   phi__deg ==   0.0: # #   0 deg bank fullscale BIRE
+            a_tr_deg = 19.9761233434501335
+            b_tr_deg =  0.0
+            p_tr_deg =  0.0
+            q_tr_deg =  0.0
+            r_tr_deg =  0.0
+        elif phi__deg ==  60.0: # #  60 deg bank fullscale BIRE
+            a_tr_deg = 35.2415227086718374
+            b_tr_deg =  0.1538466652245341
+            p_tr_deg = -3.9073530967961800
+            q_tr_deg =  9.5025388975674421
+            r_tr_deg =  5.4862933904954536
+    elif f1 == "B3":
+        if   phi__deg ==   0.0: # #   0 deg bank fullscale BIRE
+            a_tr_deg =  4.0402710922527971
+            b_tr_deg =  0.0
+            p_tr_deg =  0.0
+            q_tr_deg =  0.0
+            r_tr_deg =  0.0
+        elif phi__deg ==  60.0: # #  60 deg bank fullscale BIRE
+            a_tr_deg =  8.8938589320100387
+            b_tr_deg =  0.0101262361323840
+            p_tr_deg = -0.5520641780910568
+            q_tr_deg =  6.0983959762207327
+            r_tr_deg =  3.5209105584959723
     else: ValueError("Maneuver not planned, f1 = "+str(f1)+", phi = "+str(phi__deg))
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
     if "left_roll" in locals():
@@ -5127,7 +5198,7 @@ if __name__ == "__main__":
     bire_fs_dict["reference"]["4"] = q_sig
     bire_fs_dict["reference"]["5"] = r_sig
     #
-    tf = 10.0 # 600.0 # 2.5 # 1.0 # 60.0 # 20.0 # 5.0 # 16.0 # 2.50 # 4.90 # 20.0 # 
+    tf = 10.0 # 60.0 # 30.0 # 600.0 # 
     #########################################################################
     run_bire_fs["track_check_time"] = run_bire_fs["final_time"] = tf
     # bire_fs_dict["simulation"]["include_stall"] = False
