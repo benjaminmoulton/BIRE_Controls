@@ -11,6 +11,35 @@ from linearization import linearization
 import control as co
 from scipy.linalg import block_diag
 from math import cos,asin,atan2,sin,tan
+from sympy import Matrix as symat
+
+def gauss_jordan(m, eps = 1.0/(10**10)):
+  """Puts given matrix (2D array) into the Reduced Row Echelon Form.
+     Returns True if successful, False if 'm' is singular.
+     NOTE: make sure all the matrix items support fractions! Int matrix will NOT work!
+     Written by Jarno Elonen in April 2005, released into Public Domain"""
+  (h, w) = (len(m), len(m[0]))
+  for y in range(0,h):
+    maxrow = y
+    for y2 in range(y+1, h):    # Find max pivot
+      if abs(m[y2][y]) > abs(m[maxrow][y]):
+        maxrow = y2
+    (m[y], m[maxrow]) = (m[maxrow], m[y])
+    if abs(m[y][y]) <= eps:     # Singular?
+      return False
+    for y2 in range(y+1, h):    # Eliminate column y
+      c = m[y2][y] / m[y][y]
+      for x in range(y, w):
+        m[y2][x] -= m[y][x] * c
+  for y in range(h-1, 0-1, -1): # Backsubstitute
+    c  = m[y][y]
+    for y2 in range(0,y):
+      for x in range(w-1, y-1, -1):
+        m[y2][x] -=  m[y][x] * m[y2][y] / c
+    m[y][y] /= c
+    for x in range(h, w):       # Normalize row y
+      m[y][x] /= c
+  return True
 
 if __name__ == "__main__":
 
@@ -485,14 +514,39 @@ if __name__ == "__main__":
                         # f = 2.0
                         # A = np.array([ [-1.,-f-1.,0.], [0.,0.,1.], [1.,2.,0.] ])
                         # B = np.array([ [1.,0.], [0.,0.], [-1.,-1.] ])
+                        rows = [3,4,5] # [0,1,2,3,4,5,7,8] # 
+                        cols = [0,1,2]
+                        A = (np.array(A)[rows])[:,rows].tolist()
+                        B = (np.array(B)[rows])[:,cols].tolist()
+                        # print(np.array(A).shape)
                         eigs,Q = np.linalg.eig(A)
+                        evals_real = True
+                        for eval in eigs:
+                            if np.imag(eval) != 0.0:
+                                print("uh-oh!",craft,np.imag(eval))
+                                evals_real = False
                         i_eigs = np.argsort(eigs)
                         i_s = list(range(len(eigs[eigs < 0.0])))
                         i_a = np.delete(range(len(eigs)),i_s).tolist()
                         eigs = eigs[i_eigs]; Q = Q[:,i_eigs]
                         Qinv = np.linalg.solve(Q,np.eye(Q.shape[0]))
-                        # A
                         AT = mm(Qinv,mm(A,Q))
+                        # #
+                        # try:
+                        #     P,Js = symat(A).jordan_form()
+                        #     print(Js)
+                        # except:
+                        #     pass
+                        # J = np.array(A)*1.0
+                        # work = gauss_jordan(J)
+                        # print(work)
+                        # print(J)
+                        # print()
+                        # print()
+                        # print(AT)
+                        # print()
+                        # quit()
+                        # #
                         As = (AT[i_s])[:,i_s]
                         Aa = (AT[i_a])[:,i_a]
                         # C
@@ -507,6 +561,7 @@ if __name__ == "__main__":
                             Bs = BT[i_s]
                             Ba = BT[i_a]
                             # solve for grammians co lyap is A X + X A^T + Q = 0
+                            # print(co.lyap(As,mm(Bs,Bs.conj().T),method="scipy"))
                             Wsinv = np.linalg.solve(co.lyap( \
                                 As,mm(Bs,Bs.conj().T),method="scipy"),np.eye(len(i_s)))
                             if len(i_a):
@@ -523,13 +578,29 @@ if __name__ == "__main__":
                             else:
                                 Wainvf = np.zeros((len(A),len(A)))
                             # print(Cs)
+                            if evals_real:
+                                for Wi in range(Wsinvf.shape[0]):
+                                    for Wj in range(Wsinvf[0].shape[0]):
+                                        if np.imag(Wsinvf[Wi][Wj]) != 0.0:
+                                            print("Uh-oh!!!")
+                            # print(craft)
+                            # print(eigs)
                             # print(Wsinvf)
                             # print(Wsinvf.shape)
-                            # print(Ca)
+                            # # print(Ca)
                             # print(Wainvf)
                             # print(Wainvf.shape)
-                            Wss.append(Wsinvf)
-                            Was.append(Wainvf)
+                            # print()
+                            # print()
+                            # ATn = AT - np.diag(np.diag(AT))
+                            # print(np.linalg.norm(ATn))
+                            # print()
+                            # print(Wsinvf)
+                            Wsinvf_reform = np.zeros((9,9)); Wsinvf_reform[3:6,3:6] = Wsinvf*1.0
+                            Wainvf_reform = np.zeros((9,9)); Wainvf_reform[3:6,3:6] = Wainvf*1.0
+                            Wss.append(Wsinvf_reform)
+                            Was.append(Wainvf_reform)
+                        trims[craft]["dicts"][j][trim_sol]["Linearized_system_trim"]["plotit"] = evals_real
                         trims[craft]["dicts"][j][trim_sol]["Linearized_system_trim"]["Wss"] = Wss
                         trims[craft]["dicts"][j][trim_sol]["Linearized_system_trim"]["Was"] = Was
                         # x0 = np.array([0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,1.0])
@@ -652,10 +723,10 @@ if __name__ == "__main__":
             fig_bp,axs_bp = plt.subplots(1,1,**plot_dict)
             fig_gs,axs_gs = plt.subplots(1,1,**plot_dict)
             fig_lg,axs_lg = plt.subplots(1,1,**plot_dict)
-            rows_CE = 9; cols_CE = 4
+            rows_CE = 9; cols_CE = 3 # 4 # 
             fig_CE = [[None for _ in range(cols_CE)] for _ in range(rows_CE)]
             axs_CE = [[None for _ in range(cols_CE)] for _ in range(rows_CE)]
-            for i in range(rows_CE):
+            for i in [3,4,5]: # range(rows_CE): # :
                 for j in range(cols_CE):
                     if j == 0: shares ={}
                     else: shares ={"sharex":axs_CE[i][0],"sharey":axs_CE[i][0]}
@@ -704,7 +775,7 @@ if __name__ == "__main__":
                 axs_2q.grid(which="major",lw=grid_lw,ls="-",c=grid_color)
                 axs_2r.grid(which="major",lw=grid_lw,ls="-",c=grid_color)
                 axs_2s.grid(which="major",lw=grid_lw,ls="-",c=grid_color)
-            for i in range(rows_CE):
+            for i in [3,4,5]: # range(rows_CE): # :
                 for j in range(cols_CE):
                     axs_CE[i][j].grid(which="major",lw=grid_lw,ls="-",
                         c=grid_color)
@@ -984,9 +1055,10 @@ if __name__ == "__main__":
                         if cname == "base" and not(plot_base_CE): continue
                         DOCval = 10.0
                         if not(skip_CE):
-                            for g in range(rows_CE):
+                            for g in [3,4,5]: # range(rows_CE): # :
                                 # to zero
                                 x0 = np.zeros((9,)); x0[g] = DOCval; xf = x0*0.0
+                                xf = x0/100.0
                                 # info
                                 Vxb,Vyb,Vzb = sol["x_trim_euler"][0:3]
                                 V = (Vxb**2. + Vyb**2. + Vzb**2.)**0.5
@@ -1026,6 +1098,12 @@ if __name__ == "__main__":
                                     rhoa = np.abs(mm(x0,mm(Was[h],x0)))
                                     rho = rhos + rhoa
                                     axs_CE[g][h].plot(ivr,rho,**kdict)
+                                    if rho == 0.0:
+                                        print(craft)
+                                        print(Wss[h])
+                                        print(xf)
+                                        print(x0)
+                                        print()
                                 # # from zero
                                 # xf = x0*1.0; x0 *= 0.0
                                 # rhoss = [np.abs(mm(xf,mm(Wss[m],xf))) for m in range(len(Wss))]
@@ -1142,13 +1220,24 @@ if __name__ == "__main__":
             ctrl_names = ["da","de","dB","ta"]
             ctrl_vars = [r"$\delta_a$",r"$\delta_e^B$/$\delta_e$",
                 r"$\delta_B$/$\delta_r$",r"$\tau$"]
-            for g in range(rows_CE):
+            for g in [3,4,5]: # range(rows_CE): # 
                 for h in range(cols_CE):
                     axs_CE[g][h].set_xlabel(xlabel)
                     axs_CE[g][h].set_ylabel(
                         r"Control effort to regulate $\Delta$"+state_vars[g]
                         +r" using $\Delta$"+ctrl_vars[h])# + state_names[g])
                     axs_CE[g][h].set_yscale("log")
+                    #
+                    if   g == 3:
+                        if run_sct: axs_CE[g][h].set_ylim((1.0e-5,1.0e+5)) # no throttle
+                        else      : axs_CE[g][h].set_ylim((1.0e-4,1.0e+7)) # no throttle
+                    elif g == 4:
+                        if run_sct: axs_CE[g][h].set_ylim((1.0e-5,1.0e+7))
+                        else      : axs_CE[g][h].set_ylim((1.0e-4,1.0e+5))
+                    elif g == 5:
+                        if run_sct: axs_CE[g][h].set_ylim((1.0e-6,1.0e+5)) # no throttle
+                        else      : axs_CE[g][h].set_ylim((1.0e-3,1.0e+7)) # no throttle
+                    continue
                     if g == 0:
                         if run_sct: axs_CE[g][h].set_ylim((1.0e+2,1.0e-9 ))
                         else      : axs_CE[g][h].set_ylim((1.0e+3,1.0e-10))
@@ -1237,7 +1326,7 @@ if __name__ == "__main__":
                 # add in marker
                 mk05 = (Line2D([0], [0],color=cg05col,marker=odrm,**rest_dict),
                     Line2D([0], [0],color=cg05col,marker=odBm,**rest_dict))
-                ln05 = r"$\Delta x_{cg} = 0.5$"
+                ln05 = r"$\Delta x_{cg} = 0.5$ ft"
                 sp   .append(mk05)
                 sp2  .append(mk05)
                 lbls .append(ln05)
@@ -1246,7 +1335,7 @@ if __name__ == "__main__":
                 # add in marker
                 mk10 = (Line2D([0], [0],color=cg10col,marker=odrm,**rest_dict),
                     Line2D([0], [0],color=cg10col,marker=odBm,**rest_dict))
-                ln10 = r"$\Delta x_{cg} = 1.0$"
+                ln10 = r"$\Delta x_{cg} = 1.0$ ft"
                 sp   .append(mk10)
                 sp2  .append(mk10)
                 lbls .append(ln10)
@@ -1267,7 +1356,7 @@ if __name__ == "__main__":
             # else:
             #     legDOCdict = dict(handles=sp[2:],labels=lbls[2:],loc=(1.0,0.0),
             #         borderpad=0.1,handletextpad=0.0)
-            # for g in range(rows_CE):
+            # for g in [3,4,5]: # range(rows_CE): # :
             #     for h in range(cols_CE):
             #         axs_CE[g][h].legend(**legDOCdict)
             LEGdict = dict(handles=sp,labels=lbls,loc="lower center", #(1.0,0.0),
@@ -1314,7 +1403,7 @@ if __name__ == "__main__":
                 axs_bb.set_xlim((-1.65, 1.65)); axs_bb.set_ylim((-0.36764186742069865, 0.4215223236673418)) # print("bb",axs_bb.get_xlim(),axs_bb.get_ylim())
                 axs_bp.set_xlim((-1.65, 1.65)); axs_bp.set_ylim((-3.75,78.75)) # print("bp",axs_bp.get_xlim(),axs_bp.get_ylim())
                 # print("lg",axs_lg.get_xlim(),axs_lg.get_ylim())
-                for g in range(rows_CE):
+                for g in [3,4,5]: # range(rows_CE): # :
                     for h in range(cols_CE):
                         # print("    DC",g,h,axs_CE[g][h].get_xlim(),axs_CE[g][h].get_ylim())
                         axs_CE[g][h].set_xlim((-3.75, 78.75))
@@ -1392,7 +1481,7 @@ if __name__ == "__main__":
                 fig_2q   .savefig(sv_fldr+"10_q_diff."+plot_format,**save_dict)
                 fig_2r   .savefig(sv_fldr+"10_r_diff."+plot_format,**save_dict)
             if not(skip_CE):
-                for g in range(rows_CE):
+                for g in [3,4,5]: # range(rows_CE): # 
                     for h in range(cols_CE):
                         F = "13_"+state_names[g]+"_"+ctrl_names[h]+"_CE."
                         fig_CE[g][h].savefig(sv_fldr+F+plot_format,**save_dict)
@@ -1431,7 +1520,7 @@ if __name__ == "__main__":
                     plt.close(fig_2q)
                     plt.close(fig_2r)
                     plt.close(fig_2s)
-                for g in range(rows_CE):
+                for g in [3,4,5]: # range(rows_CE): # :
                     for h in range(cols_CE):
                         if g not in [6,7,8]: # [3,4,5]: # [0,1,2]: # # states
                             plt.close(fig_CE[g][h])

@@ -42,12 +42,14 @@ if __name__ == "__main__":
 
     # settings
     run_cases = False # True # 
+    run_BIRE = True # False # 
+    cgshift = [0.0, 0.0, 0.0] # [1.0, 0.0, 0.0] # [0.5, 0.0, 0.0] # 
     skip_60_and_sim = True # False # 
     show_plots = False # True # 
     plot_format = "pdf" # "png"
     transparent = False # True # 
     save_folder = "de_vn_contour_plots/"
-    save_file = save_folder + "de_vn_contour_trims.mat"
+    save_file = "de_vn_contour_trims"
     alt_low = 0.0; alt_high = 50000.0; num_alt = 41 # 21 # 3 # 5 # 
     M_low   = 0.0; M_high   =     2.0; num_M   = 41 # 21 # 3 # 5 # 
     #
@@ -258,57 +260,62 @@ if __name__ == "__main__":
 
         # filenames 
         bire_fs_file = "bire_fs_in.json"
+        base_fs_file = "base_fs_in.json"
 
         # read in json to ensure no file changes while running
         bire_fs_dict = json.loads( open(bire_fs_file).read() )
+        base_fs_dict = json.loads( open(base_fs_file).read() )
 
         # initialize BIRE
         compr = True # False # 
         stall = True # False # 
         fitthrust = True # False # 
         phi_trim = 0.0 # 30.0 # 10.0 # 
-        cgshift = [0.0, 0.0, 0.0] # [1.0, 0.0, 0.0] # [0.5, 0.0, 0.0] # 
         subfolder_end = "" # "_m" # "_p" # 
-        bire_fs_dict["simulation"]["include_compressibility"] = compr
-        bire_fs_dict["simulation"]["include_stall"] = stall
-        bire_fs_dict["simulation"]["use_fitted_thrust_model"] = fitthrust
-        bire_fs_dict["aircraft"]["CG_shift[ft]"] = cgshift
-        bire_fs_dict["initial"]["mach"] = 0.6
-        bire_fs_dict["initial"]["altitude[ft]"] = 15000.0
-        bire_fs_dict["initial"]["trim"]["bank_angle[deg]"] = phi_trim
-        bire_fs_dict["initial"]["trim"]["type"] = "sct"
-        bire_fs_dict["initial"]["type"] = "trim"
-        bire_fs_dict["initial"]["trim_guess"] = {}
-        if   subfolder_end == "_m":
-            bire_fs_dict["initial"]["trim_guess"]["elevator[deg]"] = -25.0
-            bire_fs_dict["initial"]["trim_guess"]["BIRE[deg]"] = -70.0
-        elif subfolder_end == "_p":
-            bire_fs_dict["initial"]["trim_guess"]["elevator[deg]"] = -25.0
-            bire_fs_dict["initial"]["trim_guess"]["BIRE[deg]"] = 70.0
-        else: # ""
-            bire_fs_dict["initial"]["trim_guess"]["elevator[deg]"] = 20.0
-            bire_fs_dict["initial"]["trim_guess"]["BIRE[deg]"] = 0.0
-        # bire = Aircraft(bire_fs_dict)
-        bire_fs_dict["controller"] = {
-        "enforce_update_frequency" : False,
-        "update_frequency[hz]" : 100.0,
-        "type" : "gains",
-        "name" : "gains",
-        "integral_states" : [0,3,4,5],
-        "gains" : {
-            "K" : [ [ -10.0,  0.0,  12.0],
-                    [  0.0, -5.0, -4.0],
-                    [  0.0,  4.0, 30.0]],
-            "KI" :[ [ -1.0,  0.0,  0.0],
-                    [  0.0, -5.0,  0.0],
-                    [  0.0,  0.0,  5.0]]
-        }
-    }
-        bire = ControlAllocationMomentAssignmentAircraft(bire_fs_dict)
-        # bire = NonlinearDynamicInversionAircraft(bire_fs_dict)
-        # bire = ITPIAircraft(bire_fs_dict)
-        x0 = bire.x_trim_euler
-        u0 = bire.u_trim
+        for craftdict in [bire_fs_dict,base_fs_dict]:
+            craftdict["simulation"]["include_compressibility"] = compr
+            craftdict["simulation"]["include_stall"] = stall
+            craftdict["simulation"]["use_fitted_thrust_model"] = fitthrust
+            craftdict["aircraft"]["CG_shift[ft]"] = cgshift
+            craftdict["initial"]["mach"] = 0.6
+            craftdict["initial"]["altitude[ft]"] = 15000.0
+            craftdict["initial"]["trim"]["bank_angle[deg]"] = phi_trim
+            craftdict["initial"]["trim"]["type"] = "sct"
+            craftdict["initial"]["type"] = "trim"
+            craftdict["initial"]["trim_guess"] = {}
+            if   subfolder_end == "_m":
+                craftdict["initial"]["trim_guess"]["elevator[deg]"] = -25.0
+                craftdict["initial"]["trim_guess"]["BIRE[deg]"] = -70.0
+            elif subfolder_end == "_p":
+                craftdict["initial"]["trim_guess"]["elevator[deg]"] = -25.0
+                craftdict["initial"]["trim_guess"]["BIRE[deg]"] = 70.0
+            else: # ""
+                craftdict["initial"]["trim_guess"]["elevator[deg]"] = 20.0
+                craftdict["initial"]["trim_guess"]["BIRE[deg]"] = 0.0
+            # bire = Aircraft(craftdict)
+            craftdict["controller"] = {
+                "enforce_update_frequency" : False,
+                "update_frequency[hz]" : 100.0,
+                "type" : "gains",
+                "name" : "gains",
+                "integral_states" : [0,3,4,5],
+                "gains" : {
+                    "K" : [ [ -10.0,  0.0,  12.0],
+                            [  0.0, -5.0, -4.0],
+                            [  0.0,  4.0, 30.0]],
+                    "KI" :[ [ -1.0,  0.0,  0.0],
+                            [  0.0, -5.0,  0.0],
+                            [  0.0,  0.0,  5.0]]
+                }
+            }
+        if run_BIRE:
+            craft = ControlAllocationMomentAssignmentAircraft(bire_fs_dict)
+            # craft = NonlinearDynamicInversionAircraft(bire_fs_dict)
+            # craft = ITPIAircraft(bire_fs_dict)
+        else:
+            craft = Aircraft(base_fs_dict)
+        x0 = craft.x_trim_euler
+        u0 = craft.u_trim
         # error threshold
         state_threshold = [
         10., 15., 15.,
@@ -320,7 +327,7 @@ if __name__ == "__main__":
         controller_dict = bire_fs_dict.get("controller",{})
         l_i = len(controller_dict.get("integral_states",[]))
         E = np.diag(1./(np.array(state_threshold + [1.0]*l_i)**2.))
-        bire._build_controller(report=False,save_matrices=False,
+        craft._build_controller(report=False,save_matrices=False,
             drop_actrs=True,
             mrrr=[0,1,2,6,7,8,9,10,11],
             mrrc=[3],
@@ -329,9 +336,9 @@ if __name__ == "__main__":
             include_altitude_derivatives=True,
             skip_reporting=True,
             save_name_end="",save_folder="")
-        CTC = np.matmul(bire.Lin_Model.C.T,bire.Lin_Model.C)
+        CTC = np.matmul(craft.Lin_Model.C.T,craft.Lin_Model.C)
         CEC = np.matmul(CTC,np.matmul(E,CTC))
-        bire.is_monte_carlo = True
+        craft.is_monte_carlo = True
 
         # reference signal
         phi__deg = 60.0
@@ -357,7 +364,7 @@ if __name__ == "__main__":
         #
 
         # run trim cases
-        bire.verbose_trim = False
+        craft.verbose_trim = False
         # initialize
         x_trims = np.zeros((num_M,num_alt,x0.shape[0]))
         u_trims = np.zeros((num_M,num_alt,u0.shape[0]))
@@ -372,51 +379,51 @@ if __name__ == "__main__":
                 # run case
                 if not(run_mask[iM,iH]):
                     # modify trim values
-                    bire.H0 = run_alt[iH]
-                    bire.V0 = run_M[iM]*bire.stdatm(bire.H0)[5]
+                    craft.H0 = run_alt[iH]
+                    craft.V0 = run_M[iM]*craft.stdatm(craft.H0)[5]
 
                     # run trim
-                    bire._initialize_state(no_report=True,no_print_fail=True)
+                    craft._initialize_state(no_report=True,no_print_fail=True)
 
-                    slf_trim_failed = bire.trim_failed
+                    slf_trim_failed = craft.trim_failed
                     bire_60_bank_failed = False
                     Dx = 2.0
                     if slf_trim_failed:
                         run_mask[iM,iH] = True
                         # plt.plot(run_M[iM],run_alt[iH],"or")
                     else:
-                        u_trims[iM,iH] = bire.u_trim*1.0
-                        x_trims[iM,iH] = bire.x_trim_euler*1.0
+                        u_trims[iM,iH] = craft.u_trim*1.0
+                        x_trims[iM,iH] = craft.x_trim_euler*1.0
                         # aero info
-                        a = atan2(bire.x_trim_euler[2],bire.x_trim_euler[0])
-                        b = asin(bire.x_trim_euler[1]/bire.V0)
-                        sos = bire.stdatm(-bire.x_trim_euler[8])[5]
-                        M = bire.V0/sos
+                        a = atan2(craft.x_trim_euler[2],craft.x_trim_euler[0])
+                        b = asin(craft.x_trim_euler[1]/craft.V0)
+                        sos = craft.stdatm(-craft.x_trim_euler[8])[5]
+                        M = craft.V0/sos
                         # nondimensionalize rates
-                        pbar = (bire.x_trim_euler[3])*bire.bw/2./bire.V0
-                        qbar = (bire.x_trim_euler[4])*bire.cw/2./bire.V0
-                        rbar = (bire.x_trim_euler[5])*bire.bw/2./bire.V0
+                        pbar = (craft.x_trim_euler[3])*craft.bw/2./craft.V0
+                        qbar = (craft.x_trim_euler[4])*craft.cw/2./craft.V0
+                        rbar = (craft.x_trim_euler[5])*craft.bw/2./craft.V0
                         # pass in controls state
-                        ail = bire.u_trim[0]
-                        ele = bire.u_trim[1]
-                        rud = bire.u_trim[2]
-                        thr = bire.u_trim[3]
+                        ail = craft.u_trim[0]
+                        ele = craft.u_trim[1]
+                        rud = craft.u_trim[2]
+                        thr = craft.u_trim[3]
                         # use aircraft model
-                        CFM_trims[iM,iH] = bire.aero_model.aero_results(*[
+                        CFM_trims[iM,iH] = craft.aero_model.aero_results(*[
                             a,b,pbar,qbar,rbar,ail,ele,rud,
-                            bire.is_compressible,M,
-                            bire.use_anderson,bire.has_stall
+                            craft.is_compressible,M,
+                            craft.use_anderson,craft.has_stall
                         ])
                         # plt.plot(run_M[iM],run_alt[iH],"ok")
 
                         if not(skip_60_and_sim):
                             # get 60 deg bank info
-                            bire.phi_trim = phi__rad*1.0
-                            u60trim,x60trim = bire.run_trim(verbose=False,
+                            craft.phi_trim = phi__rad*1.0
+                            u60trim,x60trim = craft.run_trim(verbose=False,
                                 no_report=True,no_print_fail=True,
-                                imax=bire.trim_iter_max)
-                            bire.phi_trim = 0.0
-                            if bire.trim_failed:
+                                imax=craft.trim_iter_max)
+                            craft.phi_trim = 0.0
+                            if craft.trim_failed:
                                 bire_60_bank_failed = True
                             else:
                                 # build reference signal
@@ -425,7 +432,7 @@ if __name__ == "__main__":
                                 a_SLF_deg = np.rad2deg(a_SLF_rad)
                                 a_tr_deg = np.rad2deg(atan2(x60trim[2],
                                     x60trim[0]))
-                                b_tr_deg = np.rad2deg(asin(x60trim[1]/bire.V0))
+                                b_tr_deg = np.rad2deg(asin(x60trim[1]/craft.V0))
                                 p_tr_deg = np.rad2deg(x60trim[3])
                                 q_tr_deg = np.rad2deg(x60trim[4])
                                 r_tr_deg = np.rad2deg(x60trim[5])
@@ -451,20 +458,20 @@ if __name__ == "__main__":
                                 r_sig = np.vstack((t_tran,r_signal)).T.tolist()
                                 # create signal
                                 ref_dict["0"] = [
-                                    [ 0.0, bire.V0],[ 2.0, bire.V0],]
+                                    [ 0.0, craft.V0],[ 2.0, craft.V0],]
                                 ref_dict["1"] = a_sig
                                 ref_dict["2"] = b_sig
                                 ref_dict["3"] = p_sig
                                 ref_dict["4"] = q_sig
                                 ref_dict["5"] = r_sig
-                                bire._build_reference_signal(ref_dict)
+                                craft._build_reference_signal(ref_dict)
                             
                                 # run simulation, roll to 60 deg bank
-                                bire.first_step = True
+                                craft.first_step = True
 
                                 # call run sim
                                 try:
-                                    xr,ur = bire.run_simulation(
+                                    xr,ur = craft.run_simulation(
                                         report_simulation=False,
                                         report_controller=False,
                                         report_trim=False,
@@ -476,7 +483,7 @@ if __name__ == "__main__":
                                         actr_warm_start=False,
                                         report_simulation_deltas=False)
                                     #
-                                    r_track = bire._get_reference(bire.tf)
+                                    r_track = craft._get_reference(craft.tf)
                                     rows = [3,4,5,9,10,11]
                                     r_track[rows] = np.rad2deg(r_track[rows])
                                     
@@ -514,18 +521,39 @@ if __name__ == "__main__":
         cases_dict["trim_slf_success"] = trim_slf_success
         cases_dict["trim_sct_success"] = trim_sct_success
         cases_dict["CAMA_run_Dx"] = CAMA_run_Dx
-        savemat(save_file,cases_dict)
+        crftstr = "bire_" if run_BIRE else "base_"
+        xcgstr = "xcg" + "{:02d}_".format(int(10.0*cgshift[0]))
+        savemat(save_folder + crftstr + xcgstr + save_file + ".mat",cases_dict)
     else:
-        cases_dict = loadmat(save_file)
-        run_alt = cases_dict["run_alt"][0]; num_alt = len(run_alt)
-        run_M = cases_dict["run_M"][0]; num_M = len(run_M)
-        run_mask = cases_dict["run_mask"]
-        x_trims = cases_dict["x_trims"]
-        u_trims = cases_dict["u_trims"]
-        CFM_trims = cases_dict["CFM_trims"]
-        trim_slf_success = cases_dict.get("trim_slf_success",x_trims[:,:,0]*0.0)
-        trim_sct_success = cases_dict.get("trim_sct_success",x_trims[:,:,0]*0.0)
-        CAMA_run_Dx = cases_dict.get("CAMA_run_Dx",x_trims[:,:,0]*0.0 + 13.0)
+        bire_xcg00_cases_dict = loadmat(save_folder + "bire_xcg00_" + save_file + ".mat")
+        bire_xcg00_run_alt = bire_xcg00_cases_dict["run_alt"][0]
+        bire_xcg00_num_alt = len(bire_xcg00_run_alt)
+        bire_xcg00_run_M = bire_xcg00_cases_dict["run_M"][0]
+        bire_xcg00_num_M = len(bire_xcg00_run_M)
+        bire_xcg00_run_mask = bire_xcg00_cases_dict["run_mask"]
+        bire_xcg00_x_trims = bire_xcg00_cases_dict["x_trims"]
+        bire_xcg00_u_trims = bire_xcg00_cases_dict["u_trims"]
+        bire_xcg00_CFM_trims = bire_xcg00_cases_dict["CFM_trims"]
+        bire_xcg00_trim_slf_success = bire_xcg00_cases_dict.get("trim_slf_success",bire_xcg00_x_trims[:,:,0]*0.0)
+        bire_xcg00_trim_sct_success = bire_xcg00_cases_dict.get("trim_sct_success",bire_xcg00_x_trims[:,:,0]*0.0)
+        bire_xcg00_CAMA_run_Dx = bire_xcg00_cases_dict.get("CAMA_run_Dx",bire_xcg00_x_trims[:,:,0]*0.0 + 13.0)
+        #
+        bire_xcg10_cases_dict = loadmat(save_folder + "bire_xcg10_" + save_file + ".mat")
+        bire_xcg10_run_alt = bire_xcg10_cases_dict["run_alt"][0]
+        bire_xcg10_num_alt = len(bire_xcg10_run_alt)
+        bire_xcg10_run_M = bire_xcg10_cases_dict["run_M"][0]
+        bire_xcg10_num_M = len(bire_xcg10_run_M)
+        bire_xcg10_run_mask = bire_xcg10_cases_dict["run_mask"]
+        bire_xcg10_u_trims = bire_xcg10_cases_dict["u_trims"]
+        bire_xcg10_CFM_trims = bire_xcg10_cases_dict["CFM_trims"]
+        #
+        base_xcg00_cases_dict = loadmat(save_folder + "base_xcg00_" + save_file + ".mat")
+        base_xcg00_run_alt = base_xcg00_cases_dict["run_alt"][0]
+        base_xcg00_num_alt = len(base_xcg00_run_alt)
+        base_xcg00_run_M = base_xcg00_cases_dict["run_M"][0]
+        base_xcg00_num_M = len(base_xcg00_run_M)
+        base_xcg00_run_mask = base_xcg00_cases_dict["run_mask"]
+        base_xcg00_CFM_trims = base_xcg00_cases_dict["CFM_trims"]
 
         
         # change plot text parameters
@@ -546,16 +574,28 @@ if __name__ == "__main__":
         plt.rcParams['figure.dpi'] = 300.0
 
         # plot contours
-        cmap = "gray" # "seismic" # newcmap # "PuOr" # 
-        MH_fig,MH_axs = plt.subplots(figsize=(3.5,3.25),constrained_layout=True)
+        MH_fig,MH_axs = plt.subplots(figsize=(5.0,3.5), # (3.25,3.5), # 
+            constrained_layout=True)
+        M1_fig,M1_axs = plt.subplots(figsize=(5.0,3.5), # (3.25,3.5), # 
+            constrained_layout=True)
+        BD_fig,BD_axs = plt.subplots(figsize=(5.0,3.5), # (3.25,3.5), # 
+            constrained_layout=True)
+        F0_fig,F0_axs = plt.subplots(figsize=(5.0,3.5), # (3.25,3.5), # 
+            constrained_layout=True)
+        F1_fig,F1_axs = plt.subplots(figsize=(5.0,3.5), # (3.25,3.5), # 
+            constrained_layout=True)
 
         # plot flight envelope
         MH_axs.plot(fltenv[:,0],(fltenv[:,1])/1.0e3,"k",lw=1.0)
+        M1_axs.plot(fltenv[:,0],(fltenv[:,1])/1.0e3,"k",lw=1.0)
+        BD_axs.plot(fltenv[:,0],(fltenv[:,1])/1.0e3,"k",lw=1.0)
+        F0_axs.plot(fltenv[:,0],(fltenv[:,1])/1.0e3,"k",lw=1.0)
+        F1_axs.plot(fltenv[:,0],(fltenv[:,1])/1.0e3,"k",lw=1.0)
         
         # plot flight conditions
-        lbl_params = dict(ha="left",va="bottom",size=8.0)
         bbox_dict = dict(facecolor="w",linewidth=0,alpha=0.8,
             boxstyle="Square, pad=0.0")
+        lbl_params = dict(bbox=bbox_dict,ha="left",va="bottom",size=8.0)
         mdict = dict(c="k",marker="o",ms=2.0,mew=1.0,mfc="w")
         FC_H = [1000.0,15000.0,1000.0,15000.0,30000.0,]
         FC_M = [0.2,0.19,0.8,0.6,0.8,]
@@ -564,42 +604,185 @@ if __name__ == "__main__":
         kerf_H = 200.0
         for i in range(len(FC_H)):
             MH_axs.plot(FC_M[i],(FC_H[i])/1.0e3,**mdict)
-            MH_axs.text(FC_M[i]+kerf_M,(FC_H[i]+kerf_H)/1.0e3,FC_N[i],bbox=bbox_dict,**lbl_params)
+            MH_axs.text(FC_M[i]+kerf_M,(FC_H[i]+kerf_H)/1.0e3,FC_N[i],**lbl_params)
+            #
+            M1_axs.plot(FC_M[i],(FC_H[i])/1.0e3,**mdict)
+            M1_axs.text(FC_M[i]+kerf_M,(FC_H[i]+kerf_H)/1.0e3,FC_N[i],**lbl_params)
+            #
+            BD_axs.plot(FC_M[i],(FC_H[i])/1.0e3,**mdict)
+            BD_axs.text(FC_M[i]+kerf_M,(FC_H[i]+kerf_H)/1.0e3,FC_N[i],**lbl_params)
+            #
+            F0_axs.plot(FC_M[i],(FC_H[i])/1.0e3,**mdict)
+            F0_axs.text(FC_M[i]+kerf_M,(FC_H[i]+kerf_H)/1.0e3,FC_N[i],**lbl_params)
+            #
+            F1_axs.plot(FC_M[i],(FC_H[i])/1.0e3,**mdict)
+            F1_axs.text(FC_M[i]+kerf_M,(FC_H[i]+kerf_H)/1.0e3,FC_N[i],**lbl_params)
 
         # # plot all the points
-        # for i in range(num_alt):
-        #     for j in range(num_M):
-        #         MH_axs.plot(run_M[j],(run_alt[i])/1.0e3,c="k",marker="o",ms=1.0)
+        # for i in range(bire_xcg00_num_alt):
+        #     for j in range(bire_xcg00_num_M):
+        #         MH_axs.plot(bire_xcg00_run_M[j],(bire_xcg00_run_alt[i])/1.0e3,c="k",marker="o",ms=1.0)
 
         # test contourf
-        de_trims = np.rad2deg(abs(u_trims[:,:,1])) # np.rad2deg(u_trims[:,:,1]) # 
-        de_mask = np.ma.masked_array(de_trims,mask=run_mask).T
+        de_trims = np.rad2deg(abs(bire_xcg00_u_trims[:,:,1])) # np.rad2deg(bire_xcg00_u_trims[:,:,1]) # 
+        de_masked = np.ma.masked_array(de_trims,mask=bire_xcg00_run_mask).T
         # levels = [-25.0,-1.0,-0.5,-0.3,-0.2,-0.1,0.0,0.1,0.2,0.3,0.5,1.0,25.0]
         levels = [0.0,0.1,0.2,0.3,0.4,0.5,1.0,24.0,25.0] # ,25.0] # 
         # cmap = plt.get_cmap('viridis', len(levels) - 1)
         cmap = plt.get_cmap('gray', len(levels) - 1)
         norm = BoundaryNorm(levels, cmap.N)
-        cb = MH_axs.contourf(run_M,(run_alt)/1.0e3,de_mask,corner_mask=True,
+        cb = MH_axs.contourf(bire_xcg00_run_M,(bire_xcg00_run_alt)/1.0e3,de_masked,corner_mask=True,
             levels=levels,
             # cmap="viridis", # cmap="gray", # 
             cmap = cmap,
             norm=norm,
             ) # 
         fcb = MH_fig.colorbar(cb,)
+        fcb.set_label(r"Trim stabilator magnitude $|\delta_{e \, tr}^B|$, deg")
+        fcb.ax.minorticks_off()
+        #
+        de_trims = np.rad2deg(abs(bire_xcg10_u_trims[:,:,1])) # np.rad2deg(bire_xcg00_u_trims[:,:,1]) # 
+        de_masked = np.ma.masked_array(de_trims,mask=bire_xcg10_run_mask).T
+        # levels = [-25.0,-1.0,-0.5,-0.3,-0.2,-0.1,0.0,0.1,0.2,0.3,0.5,1.0,25.0]
+        levels = [0.0,0.5,0.75,1.0,1.5,24.0,25.0] # ,25.0] # 
+        # cmap = plt.get_cmap('viridis', len(levels) - 1)
+        cmap = plt.get_cmap('gray', len(levels) - 1)
+        norm = BoundaryNorm(levels, cmap.N)
+        # cmap = "gray"
+        cb = M1_axs.contourf(bire_xcg10_run_M,(bire_xcg10_run_alt)/1.0e3,
+            de_masked,corner_mask=True,
+            cmap = cmap,
+            levels=levels,
+            norm=norm,
+            ) # 
+        fcb = M1_fig.colorbar(cb,)
+        fcb.set_label(r"Trim stabilator magnitude $|\delta_{e \, tr}^B|$, deg")
         fcb.ax.minorticks_off()
         # MH_axs.clabel(cb, inline=True, fontsize=8)
+
+        # drag diff between BIRE xcg +1 and (-) xcg 0 ft
+        if np.linalg.norm(bire_xcg00_run_alt-bire_xcg10_run_alt) > 1.0:
+            raise ValueError("BIRE xcg10 and xcg00 run alts are different!!")
+        BIRE_CD_diff = bire_xcg00_CFM_trims[:,:,2] - bire_xcg10_CFM_trims[:,:,2]
+        BIRE_CD_combo_mask = np.logical_and(bire_xcg00_run_mask,bire_xcg10_run_mask)
+        BIRE_CD_masked = np.ma.masked_array(BIRE_CD_diff,mask=BIRE_CD_combo_mask).T
+        # cmap = "gray" # "PuOr" # "seismic" # newcmap # 
+        levels = [-1.2,-0.0001,-0.000075,-0.00005,-0.000025,0.0,0.001,0.002,0.01,0.16] # ,25.0] # 
+        levels = (-np.flip(levels)).tolist()
+        cmap = plt.get_cmap('gray', len(levels) - 1)
+        norm = BoundaryNorm(levels, cmap.N)
+        maxval = max(abs(np.max(BIRE_CD_masked)),abs(np.min(BIRE_CD_masked)))
+        cb = BD_axs.contourf(bire_xcg00_run_M,(bire_xcg00_run_alt)/1.0e3,
+            BIRE_CD_masked,corner_mask=True,
+            cmap = cmap,
+            levels=levels, # levels = 300, # 
+            norm=norm,
+            # vmin = -maxval, vmax = maxval,
+            ) # 
+        cs = BD_axs.contour(
+            bire_xcg00_run_M,(bire_xcg00_run_alt)/1.0e3,BIRE_CD_masked,
+            # cmap="seismic", # newcmap, # "PuOr", # "gray", # 
+            levels=[0.0], # 300, # 100, # 
+            colors="k",
+            linewidths=0.6,
+            # vmin = -maxval,vmax = maxval,
+        )
+        BD_axs.clabel(cs, inline=1, fontsize=6,fmt="% 4.1f")
+        fcb = BD_fig.colorbar(cb,format="%2.1e",)
+        fcb.set_label(r"Drag difference $\Delta C_D$") # $C_{D \, BIRE \, x_{cg} = 0 \text{ ft}} - C_{D \, BIRE \, x_{cg} = 1 \text{ ft}}$")
+        fcb.ax.minorticks_off()
+
+        # drag diff between base xcg 0 and (-) BIRE xcg 0 ft
+        if np.linalg.norm(base_xcg00_run_alt-bire_xcg00_run_alt) > 1.0:
+            raise ValueError("base xcg00 and BIRE xcg00 run alts are different!!")
+        F_B0_CD_diff = base_xcg00_CFM_trims[:,:,2] - bire_xcg00_CFM_trims[:,:,2]
+        F_B0_CD_combo_mask = np.logical_and(bire_xcg00_run_mask,base_xcg00_run_mask)
+        F_B0_CD_masked = np.ma.masked_array(F_B0_CD_diff,mask=F_B0_CD_combo_mask).T
+        # cmap = "gray" # "PuOr" # "seismic" # newcmap # 
+        levels = [-1.2,-0.02,-0.01,-0.004,0.0,0.0005,0.0007,0.0008,0.0009,0.16]#,0.01,0.02,0.16] # ,25.0] # 
+        cmap = plt.get_cmap('gray', len(levels) - 1)
+        norm = BoundaryNorm(levels, cmap.N)
+        maxval = max(abs(np.max(BIRE_CD_masked)),abs(np.min(BIRE_CD_masked)))
+        cb = F0_axs.contourf(bire_xcg00_run_M,(bire_xcg00_run_alt)/1.0e3,
+            F_B0_CD_masked,corner_mask=True,
+            cmap = cmap,
+            levels=levels, # levels = 300, # 
+            norm=norm,
+            ) # 
+        cs = F0_axs.contour(
+            bire_xcg00_run_M,(bire_xcg00_run_alt)/1.0e3,F_B0_CD_masked,
+            # cmap="seismic", # newcmap, # "PuOr", # "gray", # 
+            levels=[0.0], # 300, # 100, # 
+            colors="k",
+            linewidths=0.6,
+            # vmin = -maxval,vmax = maxval,
+        )
+        BD_axs.clabel(cs, inline=1, fontsize=6,fmt="% 4.1f")
+        fcb = F0_fig.colorbar(cb,format="%2.1e",)
+        fcb.set_label(r"Drag difference $\Delta C_D$") # $C_{D \, BIRE \, x_{cg} = 0 \text{ ft}} - C_{D \, BIRE \, x_{cg} = 1 \text{ ft}}$")
+        fcb.ax.minorticks_off()
+
+        # drag diff between base xcg 0 and (-) BIRE xcg 1 ft
+        if np.linalg.norm(base_xcg00_run_alt-bire_xcg10_run_alt) > 1.0:
+            raise ValueError("base xcg00 and BIRE xcg10 run alts are different!!")
+        F_B1_CD_diff = base_xcg00_CFM_trims[:,:,2] - bire_xcg10_CFM_trims[:,:,2]
+        F_B1_CD_combo_mask = np.logical_and(bire_xcg10_run_mask,base_xcg00_run_mask)
+        F_B1_CD_masked = np.ma.masked_array(F_B1_CD_diff,mask=F_B1_CD_combo_mask).T
+        # cmap = "gray" # "PuOr" # "seismic" # newcmap # 
+        levels = [-1.2,-0.02,-0.01,-0.004,0.0,0.0006,0.0008,0.00087,0.0009,0.16]#,0.01,0.02,0.16] # ,25.0] # 
+        cmap = plt.get_cmap('gray', len(levels) - 1)
+        norm = BoundaryNorm(levels, cmap.N)
+        maxval = max(abs(np.max(BIRE_CD_masked)),abs(np.min(BIRE_CD_masked)))
+        cb = F1_axs.contourf(bire_xcg10_run_M,(bire_xcg10_run_alt)/1.0e3,
+            F_B1_CD_masked,corner_mask=True,
+            cmap = cmap,
+            levels=levels, # levels = 300, # 
+            norm=norm,
+            ) # 
+        cs = F1_axs.contour(
+            bire_xcg10_run_M,(bire_xcg10_run_alt)/1.0e3,F_B1_CD_masked,
+            # cmap="seismic", # newcmap, # "PuOr", # "gray", # 
+            levels=[0.0], # 300, # 100, # 
+            colors="k",
+            linewidths=0.6,
+            # vmin = -maxval,vmax = maxval,
+        )
+        BD_axs.clabel(cs, inline=1, fontsize=6,fmt="% 4.1f")
+        fcb = F1_fig.colorbar(cb,format="%2.1e",)
+        fcb.set_label(r"Drag difference $\Delta C_D$") # $C_{D \, BIRE \, x_{cg} = 0 \text{ ft}} - C_{D \, BIRE \, x_{cg} = 1 \text{ ft}}$")
+        fcb.ax.minorticks_off()
 
         # bounds
         MH_axs.set_xlim((0.0,2.0))
         MH_axs.set_ylim((0.0,50.0)) # 50000.0
+        M1_axs.set_xlim((0.0,2.0))
+        M1_axs.set_ylim((0.0,50.0)) # 50000.0
+        BD_axs.set_xlim((0.0,2.0))
+        BD_axs.set_ylim((0.0,50.0)) # 50000.0
+        F0_axs.set_xlim((0.0,2.0))
+        F0_axs.set_ylim((0.0,50.0)) # 50000.0
+        F1_axs.set_xlim((0.0,2.0))
+        F1_axs.set_ylim((0.0,50.0)) # 50000.0
 
         # axes titles
         MH_axs.set_xlabel("Mach number")
         MH_axs.set_ylabel("Altitude, kft")
+        M1_axs.set_xlabel("Mach number")
+        M1_axs.set_ylabel("Altitude, kft")
+        BD_axs.set_xlabel("Mach number")
+        BD_axs.set_ylabel("Altitude, kft")
+        F0_axs.set_xlabel("Mach number")
+        F0_axs.set_ylabel("Altitude, kft")
+        F1_axs.set_xlabel("Mach number")
+        F1_axs.set_ylabel("Altitude, kft")
 
         # save plots
         plot_dict = dict(transparent=transparent,dpi=300.0)
-        MH_fig.savefig(save_folder + "M_H_plot." + plot_format,**plot_dict)
+        MH_fig.savefig(save_folder + "M_H_de_mag_xcg00." + plot_format,**plot_dict)
+        M1_fig.savefig(save_folder + "M_H_de_mag_xcg10." + plot_format,**plot_dict)
+        BD_fig.savefig(save_folder + "M_H_DCD_BIRE_xcg00m10." + plot_format,**plot_dict)
+        F0_fig.savefig(save_folder + "M_H_DCD_F16mBIRExcg00." + plot_format,**plot_dict)
+        F1_fig.savefig(save_folder + "M_H_DCD_F16mBIRExcg10." + plot_format,**plot_dict)
 
         # show plots
         if show_plots:

@@ -198,14 +198,14 @@ if __name__ == "__main__":
         "CAMA" :{"CG":1.0,"BR":1.0,"SE":1.0,"UW":1.0},
     }
     pqr_lim = {
-        "PI"   :{"CG":(20,5),"BR":(20,5),"SE":(20,5)},
-        "DI"   :{"CG":(15,7),"BR":(10,5),"SE":(10,5)},
+        "PI"   :{"CG":(20,5),"BR":(15,4),"SE":(15,4)},
+        "DI"   :{"CG":(15,7),"BR":(10,6),"SE":(10,6)},
         "LQT"  :{"CG":(5,11),"BR":(5,11),"SE":(5,11)},
-        "LQRDI":{"CG":(30,7),"BR":(10,5),"SE":(10,5)},
+        "LQRDI":{"CG":(30,7),"BR":(10,6),"SE":(10,6)},
         "ITPI" :{"CG":(40,5),"BR":(30,7),"SE":(30,7),"3BEST":(5,11)},
         "NDI"  :{"CG":(15,7),"BR":(40,5),"SE":(50,5)},
-        "CAMA" :{"CG":(10,5),"BR":(5,11),"SE":(10,5),"UW":(30,7)},
-    }
+        "CAMA" :{"CG":(10,6),"BR":(5,11),"SE":(10,6),"UW":(30,7)}, # CG was 3,4 before was 10,6
+    } # (10,5) # changed out to bar plots
     #
     mod_w_type = {
         "CG" : ["CG05","CG10"],
@@ -218,6 +218,7 @@ if __name__ == "__main__":
     # #######################################################################
     
     # plot!
+    height = 0.8
     for key in ctrl_types:
         for subkey in plot_types:
             # skip some
@@ -233,18 +234,18 @@ if __name__ == "__main__":
 
             # modify plot limits
             i_pqrlim = pqr_lim[key][subkey]
-            axs[0].set_xlim(-60.0,60.0)
-            tick_lbl = np.linspace(-60.0,60.0,num=7)
+            axs[0].set_xlim(0.0,60.0) # 60.0,60.0) # 
+            tick_lbl = np.linspace(0.0,60.0,num=7) # -60.0,60.0,num=7) # 
             axs[0].set_xticks(tick_lbl.astype(int))
-            axs[0].xaxis.set_major_formatter(major_formatter)
+            # axs[0].xaxis.set_major_formatter(major_formatter)
             #
-            axs[1].set_xlim(-i_pqrlim[0],i_pqrlim[0])
-            tick_lbl = np.linspace(-i_pqrlim[0],i_pqrlim[0],num=i_pqrlim[1])
+            axs[1].set_xlim(0.0,i_pqrlim[0]) # -i_pqrlim[0],i_pqrlim[0]) # 
+            tick_lbl = np.linspace(0.0,i_pqrlim[0],num=i_pqrlim[1]) # -i_pqrlim[0],i_pqrlim[0],num=i_pqrlim[1]) # 
             axs[1].set_xticks(tick_lbl.astype(int))
-            axs[1].xaxis.set_major_formatter(major_formatter)
+            # axs[1].xaxis.set_major_formatter(major_formatter)
             #
-            axs[2].set_xlim(-1,1)
-            axs[2].xaxis.set_major_formatter(major_formatter)
+            axs[2].set_xlim(0.0,1.0) # -1,1) # 
+            # axs[2].xaxis.set_major_formatter(major_formatter)
             
             # plot bank angle
             counter = 0
@@ -266,12 +267,16 @@ if __name__ == "__main__":
                 else:
                     first_bool = mod in ctrl_types
                     second_bool = mod == mod_w_type[subkey][gray_ind]
-                ec = "k"  if first_bool else "0.5" if second_bool else "k"
-                c  = "k"  if first_bool else "0.5" if second_bool else "None"
-                h  = None if first_bool else None  if second_bool else "/"
-                a  = 1.0 # if first_bool else 0.5   if second_bool else 1.0
-                bardict = dict(color=c,edgecolor=ec,hatch=h,alpha=a)
-                mlt = -1.0 if first_bool else 1.0
+                ec = "0.5" if first_bool else "k"    if second_bool else "k" # "k"  if first_bool else "0.5" if second_bool else "k" # 
+                c  = "0.5" if first_bool else "None" if second_bool else "None" # "k"  if first_bool else "0.5" if second_bool else "None" # 
+                h  = None  if first_bool else None   if second_bool else "/" # None if first_bool else None  if second_bool else "/" # 
+                a  = 1.0 # # # # # # # if first_bool else 0.5   if second_bool else 1.0
+                #
+                ht = 0.8   if first_bool else 0.4    if second_bool else -0.4
+                al = "center" if first_bool else "edge" if second_bool else "edge"
+                #
+                bardict = dict(color=c,edgecolor=ec,hatch=h,alpha=a,height=ht,align=al)
+                mlt = 1.0 # -1.0 if first_bool else 1.0 # 
 
                 # determine which subdict to look at
                 if key == "ITPI" and subkey == "3BEST":
@@ -283,50 +288,56 @@ if __name__ == "__main__":
 
                 # bank angle
                 wid = ctrl_subdict["final_bank"]
-                axs[0].barh("Bank angle, deg",width=mlt*wid,**bardict)
+                axs[0].barh("Bank angle",width=mlt*wid,**bardict) # , deg
+                #
+                if counter == 1:
+                    axs[0].text(x=-0.6/20.0*60.0,y=-0.8,s="deg",ha="right")
 
                 # plot p,q,r
                 wid = ctrl_subdict["r"]
                 r_ord = m.floor(m.log(1.0/r_mlt[key][subkey],10))
                 rep_r = r_ord != 0
-                axs[1].barh(r"$\Delta r$," \
-                    + rep_r*" 10$^{:s}{:d}{:s}$".format("{",r_ord,"}")+" deg/s",\
+                axs[1].barh(r"$\Delta r_0$" \
+                    + rep_r*", 10$^{:s}{:d}{:s}$".format("{",r_ord,"}"), # +" deg/s",
                     width=mlt*wid*r_mlt[key][subkey],**bardict)
                 #
                 wid = ctrl_subdict["q"]
                 q_ord = m.floor(m.log(1.0/q_mlt[key][subkey],10))
                 rep_q = q_ord != 0
-                axs[1].barh(r"$\Delta q$," \
-                    + rep_q*" 10$^{:s}{:d}{:s}$".format("{",q_ord,"}")+" deg/s",\
+                axs[1].barh(r"$\Delta q_0$" \
+                    + rep_q*", 10$^{:s}{:d}{:s}$".format("{",q_ord,"}"), # +" deg/s",
                     width=mlt*wid*q_mlt[key][subkey],**bardict)
                 #
                 wid = ctrl_subdict["p"]
                 p_ord = m.floor(m.log(1.0/p_mlt[key][subkey],10))
                 rep_p = p_ord != 0
-                axs[1].barh(r"$\Delta p$," \
-                    + rep_p*" 10$^{:s}{:d}{:s}$".format("{",p_ord,"}")+" deg/s",\
+                axs[1].barh(r"$\Delta p_0$" \
+                    + rep_p*", 10$^{:s}{:d}{:s}$".format("{",p_ord,"}"), # +" deg/s",
                     width=mlt*wid*p_mlt[key][subkey],**bardict)
+                #
+                if counter == 1:
+                    axs[1].text(x=-0.6/20.0*i_pqrlim[0],y=-1.0,s="deg/s",ha="right")
 
                 # plot CFM
                 wid = ctrl_subdict["Cn"]
-                axs[2].barh(r"$\Delta C_n$",width=mlt*wid,**bardict)
+                axs[2].barh(r"$\epsilon_{C_n}$",width=mlt*wid,**bardict)
                 #
                 wid = ctrl_subdict["Cm"]
-                axs[2].barh(r"$\Delta C_m$",width=mlt*wid,**bardict)
+                axs[2].barh(r"$\epsilon_{C_m}$",width=mlt*wid,**bardict)
                 #
                 wid = ctrl_subdict["Cl"]
-                axs[2].barh(r"$\Delta C_\ell$",width=mlt*wid,**bardict)
+                axs[2].barh(r"$\epsilon_{C_\ell}$",width=mlt*wid,**bardict)
                 #
                 wid = ctrl_subdict["CD"]
-                axs[2].barh(r"$\Delta C_D$",width=mlt*wid,**bardict)
+                axs[2].barh(r"$\epsilon_{C_D}$",width=mlt*wid,**bardict)
                 #
                 wid = ctrl_subdict["CS"]
-                axs[2].barh(r"$\Delta C_S$",width=mlt*wid,**bardict)
+                axs[2].barh(r"$\epsilon_{C_S}$",width=mlt*wid,**bardict)
                 #
                 wid = ctrl_subdict["CL"]
                 CL_ord = m.floor(m.log(1.0/CL_mlt[key][subkey],10))
                 rep_CL = CL_ord != 0
-                axs[2].barh(r"$\Delta C_L$" \
+                axs[2].barh(r"$\epsilon_{C_L}$" \
                     + rep_CL*", 10$^{:s}{:d}{:s}$".format("{",CL_ord,"}"),\
                     width=mlt*wid*CL_mlt[key][subkey],**bardict)
     
@@ -345,7 +356,7 @@ if __name__ == "__main__":
                 continue
             if key != "ITPI" and subkey == "3BEST":
                 continue
-            if key == "ITPI" and subkey != ["CG","3BEST"]:
+            if key == "ITPI" and subkey not in ["CG","3BEST"]:
                 continue
             
             fig,axs = plots[key][subkey]["fig"], plots[key][subkey]["axs"]

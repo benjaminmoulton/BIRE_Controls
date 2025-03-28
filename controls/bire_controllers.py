@@ -2121,6 +2121,30 @@ class NonlinearDynamicInversionAircraft(Aircraft):
         repcon += report_latex(self.K_FB_2[:,6:9],"K_d",print_report=False)
 
         repcon += "Min det(N) = {:>+16.4f}\n\n".format(self.mindet)
+
+        use_quat = self.use_quaternions*1; self.use_quaternions = False
+        function = lambda x : self._nonlinear_euler_dynamics(0.0,x,True,True,
+            self._get_control(0.0,x,True,False,"o",True)[0],True)
+        input = self.x_trim_euler_slf*1.0
+        Ai_cl = self.Lin_Model._calculate_jacobian(function,input,0.001)
+        self.use_quaternions = use_quat*1
+        rows = self.xIi_eul + [0,1,2,3,4,5,8,9,10] # 6,7, 11,
+        Ai_cl = (Ai_cl[rows,:])[:,rows]
+
+        Ai_cl_evl,Ai_cl_evc = np.linalg.eig(Ai_cl)
+
+        # report
+        W = self.inertia_model.W*1.
+        CW = W/0.5/self.rho0/self.V0**2./self.aero_model.S_w
+        n_a = self.aero_model._CL_alpha(self.u_trim_slf[2])/CW
+        # repcon += report_latex(Ai_cl,r"A_{i \, cl}",print_report=False)
+        # determine eigvals of closed loop system
+        repcon += report_latex(Ai_cl_evl,r"\lambda_{cl}",
+            print_report=False)#,decimals=16)
+        repcon += report_latex(Ai_cl_evc,r"\chi_{cl}",
+            predecimals=3,decimals=4,print_report=False,eigvecs=True)
+        repcon += report_eigprops(Ai_cl_evl,n_a=n_a,
+            print_report=False)
         
         return repcon
 
@@ -4112,6 +4136,31 @@ class ControlAllocationMomentAssignmentAircraft(Aircraft):
         repcon += report_latex(self.R_cl,"R_{cl}",print_report=False)
         repcon += report_latex(self.Kp,"K_p",print_report=False)
         repcon += report_latex(self.Ki,"K_i",print_report=False)
+
+        use_quat = self.use_quaternions*1; self.use_quaternions = False
+        function = lambda x : self._nonlinear_euler_dynamics(0.0,x,True,True,
+            self._get_control(0.0,x,True,False,"o",True)[0],True)
+        input = self.x_trim_euler_slf*1.0
+        Ai_cl = self.Lin_Model._calculate_jacobian(function,input,0.001)
+        self.use_quaternions = use_quat*1
+        rows = self.xIi_eul  + [0,1,2,3,4,5,8,9,10] # 6,7, 11,
+        Ai_cl = (Ai_cl[rows,:])[:,rows]
+
+        Ai_cl_evl,Ai_cl_evc = np.linalg.eig(Ai_cl)
+
+        # report
+        W = self.inertia_model.W*1.
+        CW = W/0.5/self.rho0/self.V0**2./self.aero_model.S_w
+        n_a = self.aero_model._CL_alpha(self.u_trim_slf[2])/CW
+        # repcon += report_latex(Ai_cl,r"A_{i \, cl}",print_report=False)
+        # determine eigvals of closed loop system
+        repcon += report_latex(Ai_cl_evl,r"\lambda_{cl}",
+            print_report=False)#,decimals=16)
+        repcon += report_latex(Ai_cl_evc,r"\chi_{cl}",
+            predecimals=3,decimals=4,print_report=False,eigvecs=True)
+        repcon += report_eigprops(Ai_cl_evl,n_a=n_a,
+            print_report=False)
+        
         return repcon
 
 
@@ -5231,14 +5280,16 @@ if __name__ == "__main__":
     # run_bire_fs["has_model_error"] = False # True # 
     # # #######################################################################
         
-    # # # # # # zeros
-    # bire_fs_dict["reference"] = {
-    #     "deg2rad_states" : [1,2,3,4,5],
-    #     "0" : [[ 0.0,   V_trim],[ 2.0,   V_trim],],
-    #     "1" : [[ 0.0, a_SLF_deg],[ 2.0, a_SLF_deg],],
-    #     "2" : [[ 0.0, 0.0],[ 2.0, 0.0],],
-    #     "3" : [[0.0]*2]*2, "4" : [[0.0]*2]*2, "5" : [[0.0]*2]*2, "sct_on_5" : False
-    # }
+    # # # # # zeros
+    bire_fs_dict["reference"] = {
+        "deg2rad_states" : [1,2,3,4,5],
+        "0" : [[ 0.0,   V_trim],[ 2.0,   V_trim],],
+        "1" : [[ 0.0, a_SLF_deg],[ 2.0, a_SLF_deg],],
+        "2" : [[ 0.0, 0.0],[ 2.0, 0.0],],
+        "3" : [[0.0]*2]*2, "4" : [[0.0]*2]*2, "5" : [[0.0]*2]*2, "sct_on_5" : False
+    }
+    run_bire_fs["track_check_time"] = run_bire_fs["final_time"] = 1.0
+    #
     # # # # starting in bank
     # bire_fs_dict["reference"] = {
     #     "deg2rad_states" : [1,2,3,4,5],

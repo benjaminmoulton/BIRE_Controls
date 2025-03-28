@@ -1517,7 +1517,7 @@ class linearization:
                 pass
             
         return A,B
-            
+
 
     def _analyze_controllability(self,A,B,is_minimal=True):
         # run controllability
