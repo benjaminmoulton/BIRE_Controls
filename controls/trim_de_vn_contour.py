@@ -663,12 +663,12 @@ if __name__ == "__main__":
         # drag diff between BIRE xcg +1 and (-) xcg 0 ft
         if np.linalg.norm(bire_xcg00_run_alt-bire_xcg10_run_alt) > 1.0:
             raise ValueError("BIRE xcg10 and xcg00 run alts are different!!")
-        BIRE_CD_diff = bire_xcg00_CFM_trims[:,:,2] - bire_xcg10_CFM_trims[:,:,2]
+        BIRE_CD_diff = bire_xcg10_CFM_trims[:,:,2] - bire_xcg00_CFM_trims[:,:,2]
         BIRE_CD_combo_mask = np.logical_and(bire_xcg00_run_mask,bire_xcg10_run_mask)
         BIRE_CD_masked = np.ma.masked_array(BIRE_CD_diff,mask=BIRE_CD_combo_mask).T
         # cmap = "gray" # "PuOr" # "seismic" # newcmap # 
         levels = [-1.2,-0.0001,-0.000075,-0.00005,-0.000025,0.0,0.001,0.002,0.01,0.16] # ,25.0] # 
-        levels = (-np.flip(levels)).tolist()
+        # levels = (-np.flip(levels)).tolist()
         cmap = plt.get_cmap('gray', len(levels) - 1)
         norm = BoundaryNorm(levels, cmap.N)
         maxval = max(abs(np.max(BIRE_CD_masked)),abs(np.min(BIRE_CD_masked)))
@@ -695,11 +695,12 @@ if __name__ == "__main__":
         # drag diff between base xcg 0 and (-) BIRE xcg 0 ft
         if np.linalg.norm(base_xcg00_run_alt-bire_xcg00_run_alt) > 1.0:
             raise ValueError("base xcg00 and BIRE xcg00 run alts are different!!")
-        F_B0_CD_diff = base_xcg00_CFM_trims[:,:,2] - bire_xcg00_CFM_trims[:,:,2]
+        F_B0_CD_diff = bire_xcg00_CFM_trims[:,:,2] - base_xcg00_CFM_trims[:,:,2]
         F_B0_CD_combo_mask = np.logical_and(bire_xcg00_run_mask,base_xcg00_run_mask)
         F_B0_CD_masked = np.ma.masked_array(F_B0_CD_diff,mask=F_B0_CD_combo_mask).T
         # cmap = "gray" # "PuOr" # "seismic" # newcmap # 
         levels = [-1.2,-0.02,-0.01,-0.004,0.0,0.0005,0.0007,0.0008,0.0009,0.16]#,0.01,0.02,0.16] # ,25.0] # 
+        levels = (-np.flip(levels)).tolist()
         cmap = plt.get_cmap('gray', len(levels) - 1)
         norm = BoundaryNorm(levels, cmap.N)
         maxval = max(abs(np.max(BIRE_CD_masked)),abs(np.min(BIRE_CD_masked)))
@@ -725,11 +726,12 @@ if __name__ == "__main__":
         # drag diff between base xcg 0 and (-) BIRE xcg 1 ft
         if np.linalg.norm(base_xcg00_run_alt-bire_xcg10_run_alt) > 1.0:
             raise ValueError("base xcg00 and BIRE xcg10 run alts are different!!")
-        F_B1_CD_diff = base_xcg00_CFM_trims[:,:,2] - bire_xcg10_CFM_trims[:,:,2]
+        F_B1_CD_diff = bire_xcg10_CFM_trims[:,:,2] - base_xcg00_CFM_trims[:,:,2]
         F_B1_CD_combo_mask = np.logical_and(bire_xcg10_run_mask,base_xcg00_run_mask)
         F_B1_CD_masked = np.ma.masked_array(F_B1_CD_diff,mask=F_B1_CD_combo_mask).T
         # cmap = "gray" # "PuOr" # "seismic" # newcmap # 
         levels = [-1.2,-0.02,-0.01,-0.004,0.0,0.0006,0.0008,0.00087,0.0009,0.16]#,0.01,0.02,0.16] # ,25.0] # 
+        levels = (-np.flip(levels)).tolist()
         cmap = plt.get_cmap('gray', len(levels) - 1)
         norm = BoundaryNorm(levels, cmap.N)
         maxval = max(abs(np.max(BIRE_CD_masked)),abs(np.min(BIRE_CD_masked)))
@@ -780,9 +782,9 @@ if __name__ == "__main__":
         plot_dict = dict(transparent=transparent,dpi=300.0)
         MH_fig.savefig(save_folder + "M_H_de_mag_xcg00." + plot_format,**plot_dict)
         M1_fig.savefig(save_folder + "M_H_de_mag_xcg10." + plot_format,**plot_dict)
-        BD_fig.savefig(save_folder + "M_H_DCD_BIRE_xcg00m10." + plot_format,**plot_dict)
-        F0_fig.savefig(save_folder + "M_H_DCD_F16mBIRExcg00." + plot_format,**plot_dict)
-        F1_fig.savefig(save_folder + "M_H_DCD_F16mBIRExcg10." + plot_format,**plot_dict)
+        BD_fig.savefig(save_folder + "M_H_DCD_BIRE_xcg10m00." + plot_format,**plot_dict)
+        F0_fig.savefig(save_folder + "M_H_DCD_BIRExcg00mF16." + plot_format,**plot_dict)
+        F1_fig.savefig(save_folder + "M_H_DCD_BIRExcg10mF16." + plot_format,**plot_dict)
 
         # show plots
         if show_plots:
