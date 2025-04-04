@@ -4802,7 +4802,7 @@ if __name__ == "__main__":
     # append name
     # # # # # run_bire_fs["name_end"] += "_wbeta"
     # # # # # run_bire_fs["name_end"] += "_to_50_fail"
-    run_bire_fs["name_end"] += "_banana"; plot_vars["format"] = "png"
+    # run_bire_fs["name_end"] += "_banana"; plot_vars["format"] = "png"
     run_bire_fs["name_end"] += "_CG" + "{:02d}".format(int(10.0*cg[0])) if (cg[0] != 0.0) else ""
     run_bire_fs["name_end"] += "_BR" + str(int(blm)) if (blm != 50.0) else ""
     run_bire_fs["name_end"] += "_SE" + "{:02d}".format(int(10.0*ses)) if (ses != 1.0) else ""

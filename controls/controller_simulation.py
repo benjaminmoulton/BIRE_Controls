@@ -20,6 +20,7 @@ from quat import quat_mult, euler_2_quat, quat_2_euler, quat_norm, \
     body_2_fixed, fixed_2_body, eulerdot_2_quatdot, quatdot_2_eulerdot
 from linearization import linearization as lin, Anderson_correction_der_coeff,\
     Anderson_correction_der_M
+from uuid import getnode
 
 import sys
 aero_directory = '../aerodynamics_model/'
@@ -3669,9 +3670,13 @@ class Aircraft:
         ornt_fig, ornt_axs = plt.subplots(n_eul_plots,1,**subdict)
         if self.tracking:
             errs_fig, errs_axs = plt.subplots(1,1,**subdict)
+            errP_fig, errP_axs = plt.subplots(1,1,**subdict)
+            errP_ax2 = errP_axs.twinx()
             igrs_fig, igrs_axs = plt.subplots(1,1,**subdict)
         else:
             errs_fig, errs_axs = "fig", "axs"
+            errP_fig, errP_axs = "fig", "axs"
+            errP_ax2 = "axs"
             igrs_fig, igrs_axs = "fig", "axs"
         ctrl_fig, ctrl_axs = plt.subplots(4,1,**subdict)
         surf_fig, surf_axs = plt.subplots(1,1,**subdict)
@@ -3989,6 +3994,31 @@ class Aircraft:
                         errs_axs.fill_between(tarr,eupp[j],elow[j],**fill)
                         errs_axs.fill_between(tarr,eupp[j],elow[j],ls=lsj,**fil2)
                 errs_axs.legend()
+
+                
+                # axis labels, legends
+                errP_fig.supxlabel(r"Time, s")
+                errP_fig.supylabel(r"Error, deg/s")
+                errP_ax2.set_ylabel(r"Bank angle, deg")
+                # xticks
+                errP_axs.set_xticks(ticks=xticks)
+                # grid, axis labels, legends
+                errP_axs.grid(which="major",lw=0.6,ls="-",c="0.75")
+                for j in range(len(self.xPi)):
+                    if j == 0: continue
+                    # determine linestyle
+                    lsj = lsy[j % len(lsy)]
+                    csj = csy[j % len(csy)]
+                    errP_axs.plot(tarr, err[j],c=csj,ls=lsj,
+                        label=Del+r"$e_{"+names[self.xPi_eul[j]][1:-1]+r"}$")
+                    if plot_ul_bounds:
+                        errP_axs.fill_between(tarr,eupp[j],elow[j],**fill)
+                        errP_axs.fill_between(tarr,eupp[j],elow[j],ls=lsj,**fil2)
+                # bank angle
+                errP_ax2.plot(tarr,state[9],c="0.5",ls="-",label=r"$\phi$")
+                h1, l1 = errP_axs.get_legend_handles_labels()
+                h2, l2 = errP_ax2.get_legend_handles_labels()
+                errP_ax2.legend(handles=h1+h2,labels=l1+l2)
                 
                 # integrators
                 # axis labels, legends
@@ -4160,9 +4190,11 @@ class Aircraft:
         path_axs.yaxis._axinfo["grid"].update({"linewidth":0.25, "color":gc})
         path_axs.zaxis._axinfo["grid"].update({"linewidth":0.25, "color":gc})
         #
-        path_axs.xaxis.set_pane_color(sky,alpha=0.2)
-        path_axs.yaxis.set_pane_color(sky,alpha=0.2)
-        path_axs.zaxis.set_pane_color(gnd,alpha=0.2)
+        mac_address=":".join(("%012X"%getnode())[i:i+2] for i in range(0,12,2))
+        if mac_address != "B9:AE:40:09:F3:D4":
+            path_axs.xaxis.set_pane_color(sky,alpha=0.2)
+            path_axs.yaxis.set_pane_color(sky,alpha=0.2)
+            path_axs.zaxis.set_pane_color(gnd,alpha=0.2)
         #
         path_axs.invert_zaxis()
         path_axs.invert_yaxis()
@@ -4581,6 +4613,7 @@ class Aircraft:
         rate_axs[  0].set_xlim((0.,perc_zoom*self.tf))
         if self.tracking:
             errs_axs    .set_xlim((0.,perc_zoom*self.tf))
+            errP_axs    .set_xlim((0.,perc_zoom*self.tf))
             igrs_axs    .set_xlim((0.,perc_zoom*self.tf))
         posn_axs[  0].set_xlim((0.,perc_zoom*self.tf))
         ornt_axs[  0].set_xlim((0.,perc_zoom*self.tf))
@@ -4596,6 +4629,7 @@ class Aircraft:
             rate_axs[0].legend(fontsize=fnt)
             if self.tracking:
                 errs_axs[0].legend(fontsize=fnt)
+                errP_axs[0].legend(fontsize=fnt)
                 igrs_axs[0].legend(fontsize=fnt)
             posn_axs[0].legend(fontsize=fnt)
             ornt_axs[0].legend(fontsize=fnt)
@@ -4609,6 +4643,7 @@ class Aircraft:
             rate_fig.savefig(predir+"rates."+format,**savedict)
             if self.tracking:
                 errs_fig.savefig(predir+"errors."+format,**savedict)
+                errP_fig.savefig(predir+"errors_with_bank."+format,**savedict)
                 igrs_fig.savefig(predir+"integrator_states."+format,**savedict)
             posn_fig.savefig(predir+"position."+format,**savedict)
             path_fig.savefig(predir+"flight_path."+format,**savedict)
@@ -5694,6 +5729,7 @@ def run_single_simulation(filename,rtdst_1sg=[20.,10.,5.],
         # plot
         if save_data:
             # readout
+            run_str = run_str.replace("\u0394","D")
             with open(file_folder+"/"+"terminal_output.txt","a") as f:
                 f.write(run_str)
                 f.close()
