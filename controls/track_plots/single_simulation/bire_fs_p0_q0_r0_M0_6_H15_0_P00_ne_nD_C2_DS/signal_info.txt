@@ -1,0 +1,5 @@
+             & Trs [s] & Tst [s] &    %OS     &   TPR   \\ 
+$e_{V     }$ &    0.01 &     inf &     inf \% & -7480.77 \\ 
+$e_{p     }$ &     inf &     inf &  -100.0 \% &     inf \\ 
+$e_{q     }$ &     inf &     inf &  -100.0 \% &     inf \\ 
+$e_{r     }$ &     inf &     inf &  -100.0 \% &     inf \\ 

@@ -17,10 +17,10 @@
         "full_scale" : false
     },
     "aircraft" : {
-        "wing_area[ft^2]" : 1.959,
-        "wing_span[ft]" : 3.03,
-        "wing_aerodynamic_mean_chord[ft]" : 1.14332,
-        "CG_shift[ft]" : [0.126, 0.0, 0.0],
+        "wing_area[ft^2]" : 2.98,
+        "wing_span[ft]" : 3.0,
+        "wing_aerodynamic_mean_chord[ft]" : 1.097,
+        "CG_shift[ft]" : [0.157916, 0.0, 0.0],
         "thrust" : {
             "location[ft]" : [0.0, 0.0, 0.0],
             "direction" : [1.0, 0.0, 0.0]
@@ -86,12 +86,14 @@
             "lag[s]" : 0.0495,
             "limits[deg]" : [-21.5,21.5],
             "rate_limits[deg/s]" : [-500.0,500.0],
+            "acceleration_limits[deg/s^2]" : [-800.0,800.0],
             "quantization_steps" : 1200
         },
         "elevator" : {
             "lag[s]" : 0.0495,
             "limits[deg]" : [-25.0,25.0],
             "rate_limits[deg/s]" : [-500.0,500.0],
+            "acceleration_limits[deg/s^2]" : [-800.0,800.0],
             "quantization_steps" : 1200
         },
         "BIRE" : {
@@ -103,8 +105,9 @@
         },
         "throttle" : {
             "lag[s]" : "model",
-            "limits[perc]" : [0.0,1.0],
-            "rate_limits[perc/s]" : [-1.0,1.0],
+            "limits[per-unit]" : [0.0,1.0],
+            "rate_limits[per-unit/s]" : [-1.0,1.0],
+            "acceleration_limits[per-unit/s^2]" : [-5.0,5.0],
             "quantization_steps" : 1200
         }
     },

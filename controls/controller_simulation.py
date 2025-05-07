@@ -1678,16 +1678,19 @@ class Aircraft:
         is_controlled=True,given_control=False,u="o",
         force_control_to_inputs=False):
 
-        # get control
-        u,inputs = self._get_control(t,x,is_controlled,given_control,u,
-            force_control_to_inputs = force_control_to_inputs)
-
         # disturbance model
         ## INTSTATE
         V = (x[0]**2. + x[1]**2. + x[2]**2.)**0.5
         Du,Dv,Dw,Dp,Dq,Dr = self.get_disturbance(t,V)
         Vg = [Du,Dv,Dw]
         Wg = [Dp,Dq,Dr]
+
+        # get control
+        xcontr = x*1.0
+        xcontr[0:3] += Vg
+        xcontr[3:6] += Wg
+        u,inputs = self._get_control(t,xcontr,is_controlled,given_control,u,
+            force_control_to_inputs = force_control_to_inputs)
 
         # get aero forces
         Fx,Fy,Fz,Mx,My,Mz,g = self._aerodynamics(x,inputs,Vg=Vg,Wg=Wg)
@@ -5123,6 +5126,8 @@ def check_linearization_assumption(filename,prtb_deg=5.,mrrr=None,
 
     return
 
+def empty_mod_fun(craft):
+    return craft
 
 def run_single_simulation(filename,rtdst_1sg=[20.,10.,5.],
     mrrr=None,mrrc=None,
@@ -5150,6 +5155,7 @@ def run_single_simulation(filename,rtdst_1sg=[20.,10.,5.],
     has_model_error=True,
     skip_simulation=False,
     aircraft_class=Aircraft,
+    modify_base_craft_object_function=empty_mod_fun,
     **plot_dict):
     # pull in json file
     input_vars_type = type(filename)
@@ -5328,6 +5334,8 @@ def run_single_simulation(filename,rtdst_1sg=[20.,10.,5.],
     aircraft.x0 = aircraft.x_trim*1.
     aircraft.u = aircraft.u_trim*1.
     aircraft.t_gs = t_gain_schedule
+
+    aircraft = modify_base_craft_object_function(aircraft)
 
     _,g,_,_,rho,_ = aircraft.stdatm(aircraft.H0)
     #

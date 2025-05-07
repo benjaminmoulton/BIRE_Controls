@@ -5,6 +5,7 @@ from matplotlib import pyplot as plt
 from matplotlib.lines import Line2D
 from matplotlib.legend_handler import HandlerTuple
 from matplotlib.markers import MarkerStyle
+import matplotlib.colors as mcolors
 from controller_simulation import Aircraft#,monte_carlo_perturbations,run_single_simulation
 from os import mkdir, rmdir, walk, remove, listdir
 from linearization import linearization
@@ -80,17 +81,17 @@ if __name__ == "__main__":
     include_compressibility =  True # False # 
     use_Anderson_corrections =  True # False # 
     include_stall =  True # False # 
-    bire_plotting_xcgs = [0.0,0.5,1.0] # [0.0] # [-1.5,-1.0,-0.5,0.0,0.5,1.0,1.5] # 
+    bire_plotting_xcgs = [0.0] # [0.0,0.5,1.0] # [-1.5,-1.0,-0.5,0.0,0.5,1.0,1.5] # 
     cg_v_bb_xcgs_bire = [-1.5,-1.0,-0.5,0.0,0.5,1.0,1.5]
-    base_plotting_xcgs = [0.0,0.5,1.0] # [0.0] # 
+    base_plotting_xcgs = [0.0] # [0.0,0.5,1.0] # 
     plotting_gammas = [0.0]
     plot_inverted_trims = False # True # 
     plot_alternate_trims = True # False # 
     plot_base_CE = True # False # 
     show_plots = False # True # 
-    plot_format = "pdf" # "png" # 
-    plot_transparent = True if plot_format == "pdf" else False # True # False # 
-    plot_dark = True # False # 
+    plot_format = "png" # "pdf" # 
+    plot_transparent = True #if plot_format == "pdf" else False # True # False # 
+    plot_dark = False # True # 
     skip_save_if_not_new = False # True # 
     add_to_guesses_list = False # True # 
     reset_guesses_list = False # True # 
@@ -128,7 +129,7 @@ if __name__ == "__main__":
     other_shade = ["r","b","g","m","c","y"]
     shades = {}; shades_counter = 0
     # xcg_shade = lambda xcg : "k" if xcg == 0.0 else ("r" if xcg == 0.5 else ("b" if xcg == 1.0 else "y"))
-    bire_prob_bins = (6,10)
+    bire_prob_bins = (6,10) # (12,20) # 
     base_prob_bins = (6,6)
     bire_bins = (np.linspace(-u_scale[1],u_scale[1],num=bire_prob_bins[0]+1),
         np.linspace(-u_scale[2],u_scale[2],num=bire_prob_bins[1]+1))
@@ -691,6 +692,9 @@ if __name__ == "__main__":
             # initialize plots
             plot_dict = dict(figsize=(width,3.5),dpi=300.0, # sharex=True,
                 constrained_layout=True)
+            CE_scale = .32/.45
+            CE_plot_dict = dict(figsize=(3.25*CE_scale,3.5*CE_scale),dpi=300.0, # sharex=True,
+                constrained_layout=True)
             prob_dict = dict(figsize=(3.25,3.5),dpi=300.0, # sharex=True,
                 constrained_layout=True)
             fig_da,axs_da = plt.subplots(1,1,**plot_dict)
@@ -721,7 +725,7 @@ if __name__ == "__main__":
             fig_eg,axs_eg = plt.subplots(1,1,**plot_dict)
             fig_bb,axs_bb = plt.subplots(1,1,**plot_dict)
             fig_bp,axs_bp = plt.subplots(1,1,**plot_dict)
-            fig_gs,axs_gs = plt.subplots(1,1,**plot_dict)
+            fig_gs,axs_gs = plt.subplots(1,1,**CE_plot_dict)
             fig_lg,axs_lg = plt.subplots(1,1,**plot_dict)
             rows_CE = 9; cols_CE = 3 # 4 # 
             fig_CE = [[None for _ in range(cols_CE)] for _ in range(rows_CE)]
@@ -730,7 +734,7 @@ if __name__ == "__main__":
                 for j in range(cols_CE):
                     if j == 0: shares ={}
                     else: shares ={"sharex":axs_CE[i][0],"sharey":axs_CE[i][0]}
-                    fig_CE[i][j],axs_CE[i][j] = plt.subplots(1,1,**shares,**plot_dict)
+                    fig_CE[i][j],axs_CE[i][j] = plt.subplots(1,1,**shares,**CE_plot_dict)
             axs = [axs_da,axs_de,axs_dB,axs_ta,axs_vr,axs_af]
             # # ctrb plots
             # ctrb_fig = {}
@@ -1048,7 +1052,7 @@ if __name__ == "__main__":
                         A_min = np.array(LinSys["A"])
                         # A_min = (A_min[ind,:])[:,ind]
                         evals,_ = np.linalg.eig(A_min)
-                        axs_eg.plot(np.max(np.real(evals)),ivr,**kdict)
+                        axs_eg.plot(ivr,np.max(np.real(evals)),**kdict)
                         #
                         # DOC
                         # # # if skip for base, then skip
@@ -1118,30 +1122,43 @@ if __name__ == "__main__":
                                 cmap = "gray_r"
                                 mec = "w"
                                 mfc = "k"
+                                colvals = np.linspace(0.5,0.0,8)
+                                snccol = ["1.0"]
                             else:
                                 cmap = "gray"
                                 mec = "k"
                                 mfc = "w"
-                            colmap = plt.get_cmap(cmap,color_bar_segs)
+                                colvals = np.linspace(0.5,1.0,8)
+                                snccol = ["0.0"]
+                            # colmap = plt.get_cmap(cmap,color_bar_segs)
+                            colstrs = [str(colvals[j]) for j in range(len(colvals))]
+                            colmap = mcolors.ListedColormap(colstrs)
+                            colmap.set_extremes(under=snccol[0])
+                            norm = mcolors.BoundaryNorm(colvals,colmap.N,extend="min")
                             pc = axs_gs.pcolormesh(X[j], Y[j], M[j],
-                                cmap=colmap,vmin=-1.0,vmax=1.0)
-                            # cb = fig_gs.colorbar(pc)
+                                cmap=colmap,
+                                vmin=0.0,
+                                vmax=1.0,
+                                )
+                            cb = fig_gs.colorbar(pc,pad=0.03,ticks=[0.0,0.5,1.0],extend="min")
+                            cb.ax.set_yticklabels(["0","0.5","1.0"])
+                            # cb.set_label(r"Solution likelihood")
                             axs_gs.plot(np.rad2deg(sol["u_trim"][1]),
                                         np.rad2deg(sol["u_trim"][2]),".",
                                         mec=mec,mfc=mfc)
                             if cname == "bire":
-                                axs_gs.set_xlabel(r"$\delta_e^B$ guess")
-                                axs_gs.set_ylabel(r"$\delta_B$ guess")
+                                axs_gs.set_xlabel(r"$\delta_e^B$ guess",labelpad=0.0)
+                                axs_gs.set_ylabel(r"$\delta_B$ guess",labelpad=0.0)
                             else:
-                                axs_gs.set_xlabel(r"$\delta_e$ guess")
-                                axs_gs.set_ylabel(r"$\delta_r$ guess")
+                                axs_gs.set_xlabel(r"$\delta_e$ guess",labelpad=0.0)
+                                axs_gs.set_ylabel(r"$\delta_r$ guess",labelpad=0.0)
                             # save fig / show
                             filename = trims[craft]["filenames"][i].replace(".json","")
                             file_desc = filename.split("_")
                             gs_fn = "_".join(file_desc[0:2] + file_desc[6:9])
                             # print(craft,j,gs_fn)
                             fig_gs.savefig(sv_fldr+"11_"+gs_fn+"_"+str(j)+"."+plot_format,**save_dict)
-                            # cb.remove()
+                            cb.remove()
                             axs_gs.cla()
             plt.close(fig_gs)
             # quit()
@@ -1205,8 +1222,8 @@ if __name__ == "__main__":
             axs_Cn.set_xlabel(xlabel)
             axs_Cn.set_ylabel(  r"Yawing moment coefficient ($C_n$)")
             #
-            axs_eg.set_ylabel(xlabel)
-            axs_eg.set_xlabel(r"$\max \left( \operatorname{real} \left( " + \
+            axs_eg.set_xlabel(xlabel)
+            axs_eg.set_ylabel(r"$\max \left( \operatorname{real} \left( " + \
                 r"\lambda \right) \right)$, 1/sec")
             #
             axs_bb.set_xlabel(r"Center of gravity shift ($\Delta x_{cg}$), ft")
@@ -1224,8 +1241,11 @@ if __name__ == "__main__":
                 for h in range(cols_CE):
                     axs_CE[g][h].set_xlabel(xlabel)
                     axs_CE[g][h].set_ylabel(
-                        r"Control effort to regulate $\Delta$"+state_vars[g]
-                        +r" using $\Delta$"+ctrl_vars[h])# + state_names[g])
+                        # r"Control effort to regulate $\Delta$"+state_vars[g]
+                        # r"Effort: regulate $\Delta$"+state_vars[g]
+                        # +r" with $\Delta$"+ctrl_vars[h])# + state_names[g])
+                        r"$\Delta$"+ctrl_vars[h] 
+                        +r" effort to regulate $\Delta$"+state_vars[g])# + state_names[g])
                     axs_CE[g][h].set_yscale("log")
                     #
                     if   g == 3:
@@ -1281,6 +1301,9 @@ if __name__ == "__main__":
                     elif g == 8:
                         if run_sct: axs_CE[g][h].set_ylim((1.0e+2,1.0e-10))
                         else      : axs_CE[g][h].set_ylim((1.0e+4,1.0e-7 ))
+            # eigvals
+            axs_eg.set_ylim((-0.12695491843259302, 2.6660532870844533))
+            #
             # legend
             min_cg = min(bire_plotting_xcgs)
             legcol = str(xcg_shade_inverter(min_cg))
@@ -1399,7 +1422,7 @@ if __name__ == "__main__":
                 axs_ps.set_xlim((-3.75,78.75)); axs_ps.set_ylim((-0.5290689994121346, 11.110448987654825)) # print("ps",axs_ps.get_xlim(),axs_ps.get_ylim())
                 axs_t2.set_xlim((22.5,  77.5)); axs_t2.set_ylim((-0.02785381718383647, 0.0008514152747926191)) # print("t2",axs_t2.get_xlim(),axs_t2.get_ylim())
                 axs_2D.set_xlim((22.5,  77.5)); axs_2D.set_ylim((-0.006579023400909361, 0.0002424589803903147)) # print("2D",axs_2D.get_xlim(),axs_2D.get_ylim())
-                axs_eg.set_xlim((-0.12695491843259302, 2.6660532870844533)); axs_eg.set_ylim((-3.75,78.75)) # print("eg",axs_eg.get_xlim(),axs_eg.get_ylim())
+                axs_eg.set_xlim((-3.75,78.75)); axs_eg.set_ylim((-0.12695491843259302, 2.6660532870844533)) # print("eg",axs_eg.get_xlim(),axs_eg.get_ylim())
                 axs_bb.set_xlim((-1.65, 1.65)); axs_bb.set_ylim((-0.36764186742069865, 0.4215223236673418)) # print("bb",axs_bb.get_xlim(),axs_bb.get_ylim())
                 axs_bp.set_xlim((-1.65, 1.65)); axs_bp.set_ylim((-3.75,78.75)) # print("bp",axs_bp.get_xlim(),axs_bp.get_ylim())
                 # print("lg",axs_lg.get_xlim(),axs_lg.get_ylim())

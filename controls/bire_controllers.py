@@ -1359,6 +1359,8 @@ class ITPIAircraft(Aircraft):
         self.track_beta = False # True # 
         self.first_step = True # False # 
         self.ref_rows = [3,4,5]
+
+        self.u_for_plots = []
         
         # add in beta?
         if self.track_beta:
@@ -1481,6 +1483,20 @@ class ITPIAircraft(Aircraft):
         delta_x0[self.xIi[1:]] += eI
         return delta_x0
 
+    def returns_zero(self,tarr,xarr,uarr,errs_axs,ctrl_axs,
+        subdict,xticks,perc_zoom,
+        predir,format,savedict,save_plot):
+        self.u_for_plots = np.array(self.u_for_plots)
+        
+        t_pts = self.u_for_plots[:,0]
+        u_pts = self.u_for_plots[:,1:]
+        u_pts[:,0:3] = np.rad2deg(u_pts[:,0:3])
+        # ctrl_axs[0].plot(t_pts,u_pts[:,0],"b")#.",ms=0.1)
+        # ctrl_axs[1].plot(t_pts,u_pts[:,1],"b")#.",ms=0.1)
+        # ctrl_axs[2].plot(t_pts,u_pts[:,2],"b")#.",ms=0.1)
+        # ctrl_axs[3].plot(t_pts,u_pts[:,3],"b")#.",ms=0.1)
+        return 0
+    
     def _get_control(self,t,x,is_controlled=True,given_control=False,u="o",
         force_control_to_inputs=False):
         # build control or pass through
@@ -1567,6 +1583,7 @@ class ITPIAircraft(Aircraft):
                 tcom = self._get_V_tau_control(t,x_euler)
                 #
                 u = np.concatenate((v,[tcom]))# #
+                self.u_for_plots += [[t] + u.tolist()]
                 # u = np.concatenate((self.u_trim[0:3],[tcom]))# #
 
 
@@ -3218,6 +3235,7 @@ class ControlAllocationMomentAssignmentAircraft(Aircraft):
             fevals = []
             nits = []
             devals = []
+            vvals = []
             for k in range(tarr.shape[0]):
                 x_at_t = xarr[:,k]*1.0
                 u_at_t = uarr[:,k]*1.0
@@ -3300,6 +3318,7 @@ class ControlAllocationMomentAssignmentAircraft(Aircraft):
                     rho,V,uvar,a,b,pbar,qbar,rbar,Md,False)[2])
                 MErrnew.append(self.delta_E_fun_sq(
                     rho,V,dB_commanded,a,b,pbar,qbar,rbar,Md,ignore_terms)[2])
+                vvals.append(v)
                 # if t == 1.0:
                 #     print(t,MErrnew[-1])
                 #     MErrnew[-1] = 1.0e-10
@@ -3308,6 +3327,7 @@ class ControlAllocationMomentAssignmentAircraft(Aircraft):
             dBdiff = np.array(dBdiff)
             dBcomm = uarr[2]
             dBnew = dBdiff + dBcomm
+            vvals = np.rad2deg(np.array(vvals))
             # print(dBcomm)
             # print(dBnew)
             #
@@ -3355,6 +3375,10 @@ class ControlAllocationMomentAssignmentAircraft(Aircraft):
             fevl_ax2.plot(tarr,nits,c=altcol,zorder=1)
             legend = fevl_axs.legend()
             legend.set_zorder(4)
+            #
+            # ctrl_axs[0].plot(tarr,vvals[:,0],"b",lw=0.6)
+            # ctrl_axs[1].plot(tarr,vvals[:,1],"b",lw=0.6)
+            # ctrl_axs[2].plot(tarr,vvals[:,2],"b",lw=0.6)
             #
             if self.plot_alternate_solns:
                 for i in range(len(self.poss_ts)):
@@ -4771,16 +4795,19 @@ if __name__ == "__main__":
     # bire_fs_dict["controller"]["integral_states"] = [0,2,3,4,5]
     # run_bire_fs["name_end"] = "_" + f1 + "_LQRDI"
     # # # # # # # # # # # # # # 
-    # bire_fs_dict["controller"]["integral_states"] = [0,3,4,5]
-    # run_bire_fs["aircraft_class"] = ITPIAircraft
-    # run_bire_fs["name_end"] = "_" + f1 + "_ITPI" # 1" # 
-    # # # # # # left_roll = True # False # 
+    bire_fs_dict["controller"]["integral_states"] = [0,3,4,5]
+    run_bire_fs["aircraft_class"] = ITPIAircraft
+    run_bire_fs["name_end"] = "_" + f1 + "_ITPI" # 1" # 
+    # # # # # plot_vars["show"] = True # False # 
+    # # # # # left_roll = True # False # 
     # # # # # # # ##
     # run_bire_fs["aircraft_class"] = NonlinearDynamicInversionAircraft
     # run_bire_fs["name_end"] = "_" + f1 + "_NDI" # " # nolim" # 
     # # # # # # 
-    run_bire_fs["aircraft_class"] = ControlAllocationMomentAssignmentAircraft
-    run_bire_fs["name_end"] = "_" + f1 + "_CAMA" # 2" # 
+    # run_bire_fs["aircraft_class"] = ControlAllocationMomentAssignmentAircraft
+    # run_bire_fs["name_end"] = "_" + f1 + "_CAMA" # 2" # 
+    #
+    plot_vars["show"] = False # True # 
     #
     #
     # #
@@ -4790,7 +4817,7 @@ if __name__ == "__main__":
     # # # #
     # # #
     # # # 
-    bire_fs_dict["aircraft"]["CG_shift[ft]"] = cg = [0.0, 0.0, 0.0] # [1.0, 0.0, 0.0] # [0.5, 0.0, 0.0] # 
+    bire_fs_dict["aircraft"]["CG_shift[ft]"] = cg = [0.5, 0.0, 0.0] # [0.0, 0.0, 0.0] # [1.0, 0.0, 0.0] # 
     blm = 50.0 # 200.0 # 100.0 # 
     bire_fs_dict["actuators"]["BIRE"]["rate_limits[deg/s]"] = [-blm,blm]
     bire_fs_dict["aircraft"]["surface_effectiveness_scaling"] = ses = 1.0 # 1.2 # 1.1 # 
@@ -4798,11 +4825,11 @@ if __name__ == "__main__":
     bire_fs_dict["controller"]["CAMA_coupled_weighting"] = cw = True # False # 
     bire_fs_dict["controller"]["CAMA_SAS_on"] = sason = False # True # 
     run_bire_fs[ "has_turbulence"] = False # True # 
-    representative_response = False # True # 
+    representative_response = True # False # 
     # append name
     # # # # # run_bire_fs["name_end"] += "_wbeta"
     # # # # # run_bire_fs["name_end"] += "_to_50_fail"
-    # run_bire_fs["name_end"] += "_banana"; plot_vars["format"] = "png"
+    run_bire_fs["name_end"] += "_banana"; plot_vars["format"] = "png"
     run_bire_fs["name_end"] += "_CG" + "{:02d}".format(int(10.0*cg[0])) if (cg[0] != 0.0) else ""
     run_bire_fs["name_end"] += "_BR" + str(int(blm)) if (blm != 50.0) else ""
     run_bire_fs["name_end"] += "_SE" + "{:02d}".format(int(10.0*ses)) if (ses != 1.0) else ""
@@ -5280,15 +5307,15 @@ if __name__ == "__main__":
     # run_bire_fs["has_model_error"] = False # True # 
     # # #######################################################################
         
-    # # # # # zeros
-    bire_fs_dict["reference"] = {
-        "deg2rad_states" : [1,2,3,4,5],
-        "0" : [[ 0.0,   V_trim],[ 2.0,   V_trim],],
-        "1" : [[ 0.0, a_SLF_deg],[ 2.0, a_SLF_deg],],
-        "2" : [[ 0.0, 0.0],[ 2.0, 0.0],],
-        "3" : [[0.0]*2]*2, "4" : [[0.0]*2]*2, "5" : [[0.0]*2]*2, "sct_on_5" : False
-    }
-    run_bire_fs["track_check_time"] = run_bire_fs["final_time"] = 1.0
+    # # # # # # zeros
+    # bire_fs_dict["reference"] = {
+    #     "deg2rad_states" : [1,2,3,4,5],
+    #     "0" : [[ 0.0,   V_trim],[ 2.0,   V_trim],],
+    #     "1" : [[ 0.0, a_SLF_deg],[ 2.0, a_SLF_deg],],
+    #     "2" : [[ 0.0, 0.0],[ 2.0, 0.0],],
+    #     "3" : [[0.0]*2]*2, "4" : [[0.0]*2]*2, "5" : [[0.0]*2]*2, "sct_on_5" : False
+    # }
+    # run_bire_fs["track_check_time"] = run_bire_fs["final_time"] = 1.0
     #
     # # # # starting in bank
     # bire_fs_dict["reference"] = {

@@ -267,11 +267,12 @@ if __name__ == "__main__":
 
     # run GS case
     # # # 
+    # plot_vars["show"] = True # False # 
     plot_vars["plot_full"] = True # False # 
     plot_vars["plot_delta"] = False # True # 
     plot_vars["zoom_deltas"] = False
     plot_vars["plot_norm"] = True
-    plot_vars["format"] = "pdf" # "png" # 
+    plot_vars["format"] = "png" # "pdf" # 
     # plot_vars["zoom_fraction"] = 1./15.
     # plot_vars["plot_input_limits_zoomed"] = False
     # # #
@@ -298,7 +299,7 @@ if __name__ == "__main__":
     run_bire["gain_steps"] = 10 # 16 # # # # # # 40 # 
     run_bire["trim_steps"] = 10 # 16 # # # # # # 40 # 
     run_bire["interpolation_type"] = "linear" # "next" # "nearest-up" # 
-    run_bire["has_turbulence"] = False # True # 
+    run_bire["has_turbulence"] = True # False # 
     run_bire["turbulence_setting"] = "light" # "moderate" # "severe" # 
     # run_bire["turbulence_random_seed"] = 25
     run_bire["has_model_error"] = False # True # 
@@ -306,7 +307,7 @@ if __name__ == "__main__":
     run_bire["skip_simulation"] = False # True # 
     run_bire["save_data"] = True # False # 
     # # # bire_dict["aircraft"]["CG_shift[ft]"] = [+1.0,+0.0,0.0]
-    run_bire["name_end"] = "_" + f1 + "_GS" + "_dHdM_2o" # "_dmPm" # "_dPm" # "_dP" # 
+    run_bire["name_end"] = "_" + f1 + "_GS" + "_dP_png_D2u" # "_dHdM_3o" # "_dmPm" # "_dPm" # "_dP" # 
     run_bire["trim_type_guess"] = "0" # "-" # "+" # 
     # run_bire["mrrr"] = [1,3,5,6,7,9,11] # [6,7,11] # 
     # run_bire["mrrc"] = [2] # None # 

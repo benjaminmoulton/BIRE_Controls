@@ -424,8 +424,8 @@ class VonKarmanTurbulence(ZeroTurbulence):
             aws.plot(self.p_freq,Phi_p_vals,label="$p$")
             aws.plot(self.q_freq,Phi_q_vals,label="$q$")
             aws.plot(self.r_freq,Phi_r_vals,label="$r$")
-            # avs.set_xscale("log")
-            # aws.set_xscale("log")
+            avs.set_xscale("log")
+            aws.set_xscale("log")
             avs.legend()
             aws.legend()
             avs.set_ylabel("Spectral Density [(ft/s)^2/(rad/ft)]")
@@ -440,11 +440,11 @@ class VonKarmanTurbulence(ZeroTurbulence):
             aws.set_yscale("log")
             fvs.savefig("PSD_plots/PSD_uvw.png",dpi=300.)#,transparent=True)
             fws.savefig("PSD_plots/PSD_pqr.png",dpi=300.)#,transparent=True)
-            plt.close()
+            # plt.close()
             # plt.show(block=False)
             # plt.pause(0.5)
             # plt.close()
-            # plt.show()
+            plt.show()
 
 
     def rebuild_turbulence_phases(self,update_precomputed=True):
