@@ -37,6 +37,42 @@ import shapely as sh
 
 if __name__ == "__main__":
 
+    # build bire
+    # filenames 
+    bire_fs_file = "bire_fs_in.json"
+    base_fs_file = "base_fs_in.json"
+    # read in json to ensure no file changes while running
+    bire_fs_dict = json.loads( open(bire_fs_file).read() )
+    base_fs_dict = json.loads( open(base_fs_file).read() )
+    # initialize
+    compr = True # False # 
+    stall = True # False # 
+    fitthrust = True # False # 
+    phi_trim = 0.0 # 30.0 # 10.0 # 
+    cgshift = [0.0, 0.0, 0.0] # 
+    #
+    base_fs_dict["simulation"]["include_compressibility"] = \
+        bire_fs_dict["simulation"]["include_compressibility"] = compr
+    base_fs_dict["simulation"]["include_stall"] = \
+        bire_fs_dict["simulation"]["include_stall"] = stall
+    base_fs_dict["simulation"]["use_fitted_thrust_model"] = \
+        bire_fs_dict["simulation"]["use_fitted_thrust_model"] = fitthrust
+    base_fs_dict["aircraft"]["CG_shift[ft]"] = \
+        bire_fs_dict["aircraft"]["CG_shift[ft]"] = cgshift
+    base_fs_dict["initial"]["mach"] = \
+        bire_fs_dict["initial"]["mach"] = 0.6
+    base_fs_dict["initial"]["altitude[ft]"] = \
+        bire_fs_dict["initial"]["altitude[ft]"] = 15000.0
+    base_fs_dict["initial"]["trim"]["bank_angle[deg]"] = \
+        bire_fs_dict["initial"]["trim"]["bank_angle[deg]"] = phi_trim
+    base_fs_dict["initial"]["trim"]["type"] = \
+        bire_fs_dict["initial"]["trim"]["type"] = "sct"
+    base_fs_dict["initial"]["type"] = \
+        bire_fs_dict["initial"]["type"] = "trim"
+    #
+    bire = Aircraft(bire_fs_dict)
+    base = Aircraft(base_fs_dict)
+
     # report
     print("running de vn contour...")
 
@@ -544,6 +580,7 @@ if __name__ == "__main__":
         bire_xcg10_run_M = bire_xcg10_cases_dict["run_M"][0]
         bire_xcg10_num_M = len(bire_xcg10_run_M)
         bire_xcg10_run_mask = bire_xcg10_cases_dict["run_mask"]
+        bire_xcg10_x_trims = bire_xcg10_cases_dict["x_trims"]
         bire_xcg10_u_trims = bire_xcg10_cases_dict["u_trims"]
         bire_xcg10_CFM_trims = bire_xcg10_cases_dict["CFM_trims"]
         #
@@ -553,9 +590,42 @@ if __name__ == "__main__":
         base_xcg00_run_M = base_xcg00_cases_dict["run_M"][0]
         base_xcg00_num_M = len(base_xcg00_run_M)
         base_xcg00_run_mask = base_xcg00_cases_dict["run_mask"]
+        base_xcg00_x_trims = base_xcg00_cases_dict["x_trims"]
         base_xcg00_CFM_trims = base_xcg00_cases_dict["CFM_trims"]
 
+        # calculate energy maneuverability
+        print("calculating maneuverability terms...")
+        bire_xcg00_EM = np.zeros(bire_xcg00_CFM_trims.shape[:-1])
+        bire_xcg10_EM = np.zeros(bire_xcg00_CFM_trims.shape[:-1])
+        base_xcg00_EM = np.zeros(bire_xcg00_CFM_trims.shape[:-1])
+        #
+        # print(bire_xcg00_CFM_trims.shape,bire_xcg00_num_M,bire_xcg00_num_alt)
+        for i in range(bire_xcg00_num_M):
+            for j in range(bire_xcg00_num_alt):
+                #
+                rho,sos = bire.stdatm(bire_xcg00_run_alt[j])[4:6]
+                V = bire_xcg00_run_M[i]*sos
+                TA = bire.aero_model.get_thrust(1.0,bire_xcg00_run_alt[j],V)
+                Wbire = bire.inertia_model.W
+                Wbase = base.inertia_model.W
+                #
+                if not(bire_xcg00_run_mask[i][j]):
+                    D = 0.5*rho*V*V*bire.Sw*bire_xcg00_CFM_trims[i][j][2]
+                    bire_xcg00_EM[i][j] = V*(TA - D)/Wbire
+                #
+                if not(bire_xcg10_run_mask[i][j]):
+                    D = 0.5*rho*V*V*bire.Sw*bire_xcg10_CFM_trims[i][j][2]
+                    bire_xcg10_EM[i][j] = V*(TA - D)/Wbire
+                #
+                if not(base_xcg00_run_mask[i][j]):
+                    D = 0.5*rho*V*V*base.Sw*base_xcg00_CFM_trims[i][j][2]
+                    base_xcg00_EM[i][j] = V*(TA - D)/Wbase
+
+        # calculate pitch control gradient
+
         
+        # plotting
+        print("plotting...")
         # change plot text parameters
         plt.rcParams["font.family"] = "Serif"
         plt.rcParams["font.size"] = 8.0
