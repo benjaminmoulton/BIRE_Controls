@@ -595,31 +595,77 @@ if __name__ == "__main__":
 
         # calculate energy maneuverability
         print("calculating maneuverability terms...")
-        bire_xcg00_EM = np.zeros(bire_xcg00_CFM_trims.shape[:-1])
-        bire_xcg10_EM = np.zeros(bire_xcg00_CFM_trims.shape[:-1])
-        base_xcg00_EM = np.zeros(bire_xcg00_CFM_trims.shape[:-1])
+        bire_xcg00_EM  = np.zeros(bire_xcg00_CFM_trims.shape[:-1])
+        bire_xcg10_EM  = np.zeros(bire_xcg00_CFM_trims.shape[:-1])
+        base_xcg00_EM  = np.zeros(bire_xcg00_CFM_trims.shape[:-1])
+        #
+        bire_xcg00_PCG = np.zeros(bire_xcg00_CFM_trims.shape[:-1])
+        bire_xcg10_PCG = np.zeros(bire_xcg00_CFM_trims.shape[:-1])
+        base_xcg00_PCG = np.zeros(bire_xcg00_CFM_trims.shape[:-1])
         #
         # print(bire_xcg00_CFM_trims.shape,bire_xcg00_num_M,bire_xcg00_num_alt)
         for i in range(bire_xcg00_num_M):
             for j in range(bire_xcg00_num_alt):
                 #
-                rho,sos = bire.stdatm(bire_xcg00_run_alt[j])[4:6]
+                _,g,_,_,rho,sos = bire.stdatm(bire_xcg00_run_alt[j])
                 V = bire_xcg00_run_M[i]*sos
                 TA = bire.aero_model.get_thrust(1.0,bire_xcg00_run_alt[j],V)
                 Wbire = bire.inertia_model.W
                 Wbase = base.inertia_model.W
                 #
+                CWbire = 0.0 if V == 0.0 else Wbire/0.5/rho/V/V/bire.Sw
+                CWbase = 0.0 if V == 0.0 else Wbase/0.5/rho/V/V/base.Sw
+                # bire coefficients
+                d_B = bire_xcg00_u_trims[i][j][2]
+                Rlon = 0.0 if V == 0.0 else bire.cw/2.0/V
+                CLa  = bire.aero_model._CL_alpha(d_B)
+                CLq  = bire.aero_model._CL_qbar (d_B)*Rlon
+                CLde = bire.aero_model._CL_de   (d_B)
+                Cma  = bire.aero_model._Cm_alpha(d_B)
+                Cmq  = bire.aero_model._Cm_qbar (d_B)*Rlon
+                Cmde = bire.aero_model._Cm_de   (d_B)
+                #
+                lnp = -Cma/CLa*bire.cw
+                #
+                xnp = lnp + 0.0
+                #
                 if not(bire_xcg00_run_mask[i][j]):
                     D = 0.5*rho*V*V*bire.Sw*bire_xcg00_CFM_trims[i][j][2]
                     bire_xcg00_EM[i][j] = V*(TA - D)/Wbire
+                    # pitch control gradient
+                    xdiff = xnp/bire.cw - 0.0/bire.cw
+                    bire_xcg00_PCG[i][j] = -(CWbire - CLq*g/V)/\
+                        (Cmde + CLde*xdiff)*(Cmq*g/V/(CWbire - CLq*g/V) - xdiff)
                 #
                 if not(bire_xcg10_run_mask[i][j]):
                     D = 0.5*rho*V*V*bire.Sw*bire_xcg10_CFM_trims[i][j][2]
                     bire_xcg10_EM[i][j] = V*(TA - D)/Wbire
+                    # pitch control gradient
+                    xdiff = xnp/bire.cw - 1.0/bire.cw
+                    bire_xcg10_PCG[i][j] = -(CWbire - CLq*g/V)/\
+                        (Cmde + CLde*xdiff)*(Cmq*g/V/(CWbire - CLq*g/V) - xdiff)
                 #
                 if not(base_xcg00_run_mask[i][j]):
                     D = 0.5*rho*V*V*base.Sw*base_xcg00_CFM_trims[i][j][2]
                     base_xcg00_EM[i][j] = V*(TA - D)/Wbase
+                    # pitch control gradient
+                    # coefficients
+                    Rlon = base.cw/2.0/V
+                    CLa  = base.aero_model.CLa
+                    CLq  = base.aero_model.CLq*Rlon
+                    CLde = base.aero_model.CLde
+                    Cma  = base.aero_model.Cma
+                    Cmq  = base.aero_model.Cmq*Rlon
+                    Cmde = base.aero_model.Cmde
+                    #
+                    lnp = -Cma/CLa*base.cw
+                    #
+                    xnp = lnp + 0.0
+                    #
+                    xdiff = xnp/base.cw - 0.0/base.cw
+                    base_xcg00_PCG[i][j] = -(CWbase - CLq*g/V)/\
+                        (Cmde + CLde*xdiff)*(Cmq*g/V/(CWbase - CLq*g/V) - xdiff)
+
 
         # calculate pitch control gradient
 
@@ -654,6 +700,17 @@ if __name__ == "__main__":
             constrained_layout=True)
         F1_fig,F1_axs = plt.subplots(figsize=(5.0,3.5), # (3.25,3.5), # 
             constrained_layout=True)
+        #
+        EB_fig,EB_axs = plt.subplots(figsize=(5.0,3.5), # (3.25,3.5), # 
+            constrained_layout=True)
+        EF_fig,EF_axs = plt.subplots(figsize=(5.0,3.5), # (3.25,3.5), # 
+            constrained_layout=True)
+        EW_fig,EW_axs = plt.subplots(figsize=(5.0,3.5), # (3.25,3.5), # 
+            constrained_layout=True)
+        GB_fig,GB_axs = plt.subplots(figsize=(5.0,3.5), # (3.25,3.5), # 
+            constrained_layout=True)
+        GF_fig,GF_axs = plt.subplots(figsize=(5.0,3.5), # (3.25,3.5), # 
+            constrained_layout=True)
 
         # plot flight envelope
         MH_axs.plot(fltenv[:,0],(fltenv[:,1])/1.0e3,"k",lw=1.0)
@@ -661,6 +718,12 @@ if __name__ == "__main__":
         BD_axs.plot(fltenv[:,0],(fltenv[:,1])/1.0e3,"k",lw=1.0)
         F0_axs.plot(fltenv[:,0],(fltenv[:,1])/1.0e3,"k",lw=1.0)
         F1_axs.plot(fltenv[:,0],(fltenv[:,1])/1.0e3,"k",lw=1.0)
+        #
+        EB_axs.plot(fltenv[:,0],(fltenv[:,1])/1.0e3,"k",lw=1.0)
+        EF_axs.plot(fltenv[:,0],(fltenv[:,1])/1.0e3,"k",lw=1.0)
+        EW_axs.plot(fltenv[:,0],(fltenv[:,1])/1.0e3,"k",lw=1.0)
+        GB_axs.plot(fltenv[:,0],(fltenv[:,1])/1.0e3,"k",lw=1.0)
+        GF_axs.plot(fltenv[:,0],(fltenv[:,1])/1.0e3,"k",lw=1.0)
         
         # plot flight conditions
         bbox_dict = dict(facecolor="w",linewidth=0,alpha=0.8,
@@ -687,6 +750,22 @@ if __name__ == "__main__":
             #
             F1_axs.plot(FC_M[i],(FC_H[i])/1.0e3,**mdict)
             F1_axs.text(FC_M[i]+kerf_M,(FC_H[i]+kerf_H)/1.0e3,FC_N[i],**lbl_params)
+            #
+            #
+            EB_axs.plot(FC_M[i],(FC_H[i])/1.0e3,**mdict)
+            EB_axs.text(FC_M[i]+kerf_M,(FC_H[i]+kerf_H)/1.0e3,FC_N[i],**lbl_params)
+            #
+            EF_axs.plot(FC_M[i],(FC_H[i])/1.0e3,**mdict)
+            EF_axs.text(FC_M[i]+kerf_M,(FC_H[i]+kerf_H)/1.0e3,FC_N[i],**lbl_params)
+            #
+            EW_axs.plot(FC_M[i],(FC_H[i])/1.0e3,**mdict)
+            EW_axs.text(FC_M[i]+kerf_M,(FC_H[i]+kerf_H)/1.0e3,FC_N[i],**lbl_params)
+            #
+            GB_axs.plot(FC_M[i],(FC_H[i])/1.0e3,**mdict)
+            GB_axs.text(FC_M[i]+kerf_M,(FC_H[i]+kerf_H)/1.0e3,FC_N[i],**lbl_params)
+            #
+            GF_axs.plot(FC_M[i],(FC_H[i])/1.0e3,**mdict)
+            GF_axs.text(FC_M[i]+kerf_M,(FC_H[i]+kerf_H)/1.0e3,FC_N[i],**lbl_params)
 
         # # plot all the points
         # for i in range(bire_xcg00_num_alt):
@@ -788,7 +867,7 @@ if __name__ == "__main__":
             linewidths=0.6,
             # vmin = -maxval,vmax = maxval,
         )
-        BD_axs.clabel(cs, inline=1, fontsize=6,fmt="% 4.1f")
+        F0_axs.clabel(cs, inline=1, fontsize=6,fmt="% 4.1f")
         fcb = F0_fig.colorbar(cb,format="%2.1e",)
         fcb.set_label(r"Drag difference $\Delta C_D$") # $C_{D \, BIRE \, x_{cg} = 0 \text{ ft}} - C_{D \, BIRE \, x_{cg} = 1 \text{ ft}}$")
         fcb.ax.minorticks_off()
@@ -819,10 +898,152 @@ if __name__ == "__main__":
             linewidths=0.6,
             # vmin = -maxval,vmax = maxval,
         )
-        BD_axs.clabel(cs, inline=1, fontsize=6,fmt="% 4.1f")
+        F1_axs.clabel(cs, inline=1, fontsize=6,fmt="% 4.1f")
         fcb = F1_fig.colorbar(cb,format="%2.1e",)
         fcb.set_label(r"Drag difference $\Delta C_D$") # $C_{D \, BIRE \, x_{cg} = 0 \text{ ft}} - C_{D \, BIRE \, x_{cg} = 1 \text{ ft}}$")
         fcb.ax.minorticks_off()
+
+        #### ENERGY MANEUVERABILITY
+        # diff between BIRE xcg +1 and (-) xcg 0 ft
+        BIRE_EM_diff = bire_xcg10_EM[:,:] - bire_xcg00_EM[:,:]
+        BIRE_EM_combo_mask = np.logical_and(bire_xcg00_run_mask,bire_xcg10_run_mask)
+        BIRE_EM_masked = np.ma.masked_array(BIRE_EM_diff,mask=BIRE_EM_combo_mask).T
+        # cmap = "gray" # "PuOr" # "seismic" # newcmap # 
+        levels = [-100.0,-5.0,-2.0,-1.0,0.0,1.0,2.0,5.0,10.0] # ,25.0] # 
+        # levels = (-np.flip(levels)).tolist()
+        cmap = plt.get_cmap('gray', len(levels) - 1)
+        norm = BoundaryNorm(levels, cmap.N)
+        cb = EB_axs.contourf(bire_xcg00_run_M,(bire_xcg00_run_alt)/1.0e3,
+            BIRE_EM_masked,corner_mask=True,
+            cmap = cmap,
+            levels=levels, # levels = 300, # 
+            norm=norm,
+            ) # 
+        cs = EB_axs.contour(
+            bire_xcg00_run_M,(bire_xcg00_run_alt)/1.0e3,BIRE_EM_masked,
+            # cmap="seismic", # newcmap, # "PuOr", # "gray", # 
+            levels=[0.0], # 300, # 100, # 
+            colors="k",
+            linewidths=0.6,
+        )
+        EB_axs.clabel(cs, inline=1, fontsize=6,fmt="% 4.1f")
+        fcb = EB_fig.colorbar(cb,format="%2.1f",)
+        fcb.set_label(r"Energy maneuverability difference, ft/s") # $C_{D \, BIRE \, x_{cg} = 0 \text{ ft}} - C_{D \, BIRE \, x_{cg} = 1 \text{ ft}}$")
+        fcb.ax.minorticks_off()
+        ######
+        ######
+        ######
+        # diff between base xcg 0 and (-) BIRE xcg 1 ft
+        F_B1_EM_diff = bire_xcg10_EM[:,:] - base_xcg00_EM[:,:]
+        F_B1_EM_combo_mask = np.logical_and(bire_xcg10_run_mask,base_xcg00_run_mask)
+        F_B1_EM_masked = np.ma.masked_array(F_B1_EM_diff,mask=F_B1_EM_combo_mask).T
+        # cmap = "gray" # "PuOr" # "seismic" # newcmap # 
+        levels = [-120.0,-15.0,-10.0,-5.0,-2.0,-1.0,0.0]
+        cmap = plt.get_cmap('gray', len(levels) - 1)
+        norm = BoundaryNorm(levels, cmap.N)
+        cb = EF_axs.contourf(bire_xcg10_run_M,(bire_xcg10_run_alt)/1.0e3,
+            F_B1_EM_masked,corner_mask=True,
+            cmap = cmap,
+            levels=levels, # levels = 300, # 
+            norm=norm,
+            ) # 
+        cs = EF_axs.contour(
+            bire_xcg10_run_M,(bire_xcg10_run_alt)/1.0e3,F_B1_EM_masked,
+            # cmap="seismic", # newcmap, # "PuOr", # "gray", # 
+            levels=[0.0], # 300, # 100, # 
+            colors="k",
+            linewidths=0.6,
+        )
+        EF_axs.clabel(cs, inline=1, fontsize=6,fmt="% 4.1f")
+        fcb = EF_fig.colorbar(cb,format="%2.1f",)
+        fcb.set_label(r"Energy maneuverability difference, ft/s") # $C_{D \, BIRE \, x_{cg} = 0 \text{ ft}} - C_{D \, BIRE \, x_{cg} = 1 \text{ ft}}$")
+        fcb.ax.minorticks_off()
+        #####
+        weight_drop = 100.0 # 0.0 # 
+        dW = bire.inertia_model.W/(base.inertia_model.W-weight_drop)
+        F_B1_EM_diff = bire_xcg10_EM[:,:]*dW - base_xcg00_EM[:,:]
+        F_B1_EM_masked = np.ma.masked_array(F_B1_EM_diff,mask=F_B1_EM_combo_mask).T
+        # cmap = "gray" # "PuOr" # "seismic" # newcmap # 
+        levels = [-120.0,-12.0,-1.0,0.0,1.0,5.0,10.0,20.0,35.0,50.0,100.0]
+        cmap = plt.get_cmap('gray', len(levels) - 1)
+        norm = BoundaryNorm(levels, cmap.N)
+        cb = EW_axs.contourf(bire_xcg10_run_M,(bire_xcg10_run_alt)/1.0e3,
+            F_B1_EM_masked,corner_mask=True,
+            cmap = cmap,
+            levels=levels, # levels = 300, # 
+            norm=norm,
+            ) # 
+        cs = EW_axs.contour(
+            bire_xcg10_run_M,(bire_xcg10_run_alt)/1.0e3,F_B1_EM_masked,
+            # cmap="seismic", # newcmap, # "PuOr", # "gray", # 
+            levels=[0.0], # 300, # 100, # 
+            colors="k",
+            linewidths=0.6,
+        )
+        EW_axs.clabel(cs, inline=1, fontsize=6,fmt="% 4.1f")
+        fcb = EW_fig.colorbar(cb,format="%2.1f",)
+        fcb.set_label(r"Energy maneuverability difference, ft/s") # $C_{D \, BIRE \, x_{cg} = 0 \text{ ft}} - C_{D \, BIRE \, x_{cg} = 1 \text{ ft}}$")
+        fcb.ax.minorticks_off()
+
+        #### ENERGY MANEUVERABILITY
+        # diff between BIRE xcg +1 and (-) xcg 0 ft
+        BIRE_PCG_diff = np.abs(bire_xcg10_PCG[:,:]) - np.abs(bire_xcg00_PCG[:,:])
+        BIRE_PCG_combo_mask = np.logical_and(bire_xcg00_run_mask,bire_xcg10_run_mask)
+        BIRE_PCG_masked = np.ma.masked_array(BIRE_PCG_diff,mask=BIRE_PCG_combo_mask).T
+        # cmap = "gray" # "PuOr" # "seismic" # newcmap # 
+        levels = [-10.0,0.0,0.5,1.0,2.0,5.0,10.0,15.0] # 
+        cmap = plt.get_cmap('gray', len(levels) - 1) # + 1) # 
+        # cmap.set_extremes(under="k",over="w")
+        norm = BoundaryNorm(levels, cmap.N)#,extend="both")
+        cb = GB_axs.contourf(bire_xcg00_run_M,(bire_xcg00_run_alt)/1.0e3,
+            np.rad2deg(BIRE_PCG_masked),corner_mask=True,
+            cmap = cmap,
+            levels=levels, # levels = 300, # 
+            norm=norm,
+            ) # 
+        cs = GB_axs.contour(
+            bire_xcg00_run_M,(bire_xcg00_run_alt)/1.0e3,np.rad2deg(BIRE_PCG_masked),
+            # cmap="seismic", # newcmap, # "PuOr", # "gray", # 
+            levels=[0.0], # 300, # 100, # 
+            colors="k",
+            linewidths=0.6,
+        )
+        GB_axs.clabel(cs, inline=1, fontsize=6,fmt="% 4.1f")
+        fcb = GB_fig.colorbar(cb,format="%2.1f",)#extend="both",)
+        fcb.set_label(r"Pitch control gradient magnitude difference, deg") # $C_{D \, BIRE \, x_{cg} = 0 \text{ ft}} - C_{D \, BIRE \, x_{cg} = 1 \text{ ft}}$")
+        fcb.ax.minorticks_off()
+        ######
+        ######
+        ######
+        # diff between base xcg 0 and (-) BIRE xcg 1 ft
+        F_B1_PCG_diff = np.abs(bire_xcg10_PCG[:,:]) - np.abs(base_xcg00_PCG[:,:])
+        F_B1_PCG_combo_mask = np.logical_and(bire_xcg10_run_mask,base_xcg00_run_mask)
+        F_B1_PCG_masked = np.ma.masked_array(F_B1_PCG_diff,mask=F_B1_PCG_combo_mask).T
+        cmap = "gray" # "PuOr" # "seismic" # newcmap # 
+        levels = [-10.0,0.0,0.5,1.0,2.0,5.0,10.0,15.0] # 
+        cmap = plt.get_cmap('gray', len(levels) - 1)
+        norm = BoundaryNorm(levels, cmap.N)
+        cb = GF_axs.contourf(bire_xcg10_run_M,(bire_xcg10_run_alt)/1.0e3,
+            np.rad2deg(F_B1_PCG_masked),corner_mask=True,
+            cmap = cmap,
+            levels=levels, # levels = 300, # 
+            norm=norm,
+            ) # 
+        cs = GF_axs.contour(
+            bire_xcg10_run_M,(bire_xcg10_run_alt)/1.0e3,np.rad2deg(F_B1_PCG_masked),
+            # cmap="seismic", # newcmap, # "PuOr", # "gray", # 
+            levels=[0.0], # 300, # 100, # 
+            colors="k",
+            linewidths=0.6,
+        )
+        GF_axs.clabel(cs, inline=1, fontsize=6,fmt="% 4.1f")
+        fcb = GF_fig.colorbar(cb,format="%2.1f",)
+        fcb.set_label(r"Pitch control gradient magnitude difference, deg") # $C_{D \, BIRE \, x_{cg} = 0 \text{ ft}} - C_{D \, BIRE \, x_{cg} = 1 \text{ ft}}$")
+        fcb.ax.minorticks_off()
+
+
+
+
 
         # bounds
         MH_axs.set_xlim((0.0,2.0))
@@ -835,6 +1056,17 @@ if __name__ == "__main__":
         F0_axs.set_ylim((0.0,50.0)) # 50000.0
         F1_axs.set_xlim((0.0,2.0))
         F1_axs.set_ylim((0.0,50.0)) # 50000.0
+        #
+        EB_axs.set_xlim((0.0,2.0))
+        EB_axs.set_ylim((0.0,50.0)) # 50000.0
+        EF_axs.set_xlim((0.0,2.0))
+        EF_axs.set_ylim((0.0,50.0)) # 50000.0
+        EW_axs.set_xlim((0.0,2.0))
+        EW_axs.set_ylim((0.0,50.0)) # 50000.0
+        GB_axs.set_xlim((0.0,2.0))
+        GB_axs.set_ylim((0.0,50.0)) # 50000.0
+        GF_axs.set_xlim((0.0,2.0))
+        GF_axs.set_ylim((0.0,50.0)) # 50000.0
 
         # axes titles
         MH_axs.set_xlabel("Mach number")
@@ -847,6 +1079,17 @@ if __name__ == "__main__":
         F0_axs.set_ylabel("Altitude, kft")
         F1_axs.set_xlabel("Mach number")
         F1_axs.set_ylabel("Altitude, kft")
+        #
+        EB_axs.set_xlabel("Mach number")
+        EB_axs.set_ylabel("Altitude, kft")
+        EF_axs.set_xlabel("Mach number")
+        EF_axs.set_ylabel("Altitude, kft")
+        EW_axs.set_xlabel("Mach number")
+        EW_axs.set_ylabel("Altitude, kft")
+        GB_axs.set_xlabel("Mach number")
+        GB_axs.set_ylabel("Altitude, kft")
+        GF_axs.set_xlabel("Mach number")
+        GF_axs.set_ylabel("Altitude, kft")
 
         # save plots
         plot_dict = dict(transparent=transparent,dpi=300.0)
@@ -855,6 +1098,11 @@ if __name__ == "__main__":
         BD_fig.savefig(save_folder + "M_H_DCD_BIRE_xcg10m00." + plot_format,**plot_dict)
         F0_fig.savefig(save_folder + "M_H_DCD_BIRExcg00mF16." + plot_format,**plot_dict)
         F1_fig.savefig(save_folder + "M_H_DCD_BIRExcg10mF16." + plot_format,**plot_dict)
+        EB_fig.savefig(save_folder + "M_H_EM_BIRExcg10m00." + plot_format,**plot_dict)
+        EF_fig.savefig(save_folder + "M_H_EM_BIRExcg10mF16." + plot_format,**plot_dict)
+        EW_fig.savefig(save_folder + "M_H_EM_BIRExcg10mF16_dW." + plot_format,**plot_dict)
+        GB_fig.savefig(save_folder + "M_H_PCG_BIRExcg10m00." + plot_format,**plot_dict)
+        GF_fig.savefig(save_folder + "M_H_PCG_BIRExcg10mF16." + plot_format,**plot_dict)
 
         # show plots
         if show_plots:

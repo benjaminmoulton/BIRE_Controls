@@ -1,7 +1,7 @@
 {
     "simulation" : {
         "constant_density" : false,
-        "time_step[sec]" : 0.001,
+        "time_step[sec]" : 0.01,
         "total_time[sec]" : 60.0,
         "integrator" : "rk4",
         "nonlinear_dynamics" : true,

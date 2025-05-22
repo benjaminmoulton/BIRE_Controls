@@ -70,7 +70,7 @@ class Aircraft:
 
 
     def __init__(self, input_dictionary={}, folder_prefix = "stblz", 
-        SAS_Cma = "o"):
+        SAS_Cma = "o",V_zeta = 1.0,V_wn = 0.5):
 
         # report
         if isinstance(input_dictionary,(str)):
@@ -88,8 +88,8 @@ class Aircraft:
 
         # V tau controller initialize terms, only used with tracking contrls
         self.first_Vtau_step = True
-        self.V_zeta =  1.0 # 0.7 # 
-        self.V_wn   =  0.5
+        self.V_zeta =  V_zeta # 1.0 # 0.7 # 
+        self.V_wn   =  V_wn # 0.5
 
         # get input variables
         self._get_input_vars(input_dictionary)
@@ -1230,7 +1230,8 @@ class Aircraft:
         My = MP[1] + Cm * dynF * self.cw
         Mz = MP[2] + Cn * dynF * self.bw
         # SAL ay
-        self._SAL_ay = Fy/self.inertia_model.W
+        self._prev_ay = self._SAL_ay = Fy/self.inertia_model.W
+        self._prev_az = Fz/self.inertia_model.W
 
         # add in CG effects
         cg = self.cgshift
@@ -1678,19 +1679,19 @@ class Aircraft:
         is_controlled=True,given_control=False,u="o",
         force_control_to_inputs=False):
 
+        # get control
+        # xcontr = x*1.0
+        # xcontr[0:3] += Vg
+        # # # # # # xcontr[3:6] += Wg # do not add in rates!!!
+        u,inputs = self._get_control(t,x,is_controlled,given_control,u,
+            force_control_to_inputs = force_control_to_inputs)
+
         # disturbance model
         ## INTSTATE
         V = (x[0]**2. + x[1]**2. + x[2]**2.)**0.5
         Du,Dv,Dw,Dp,Dq,Dr = self.get_disturbance(t,V)
         Vg = [Du,Dv,Dw]
         Wg = [Dp,Dq,Dr]
-
-        # get control
-        xcontr = x*1.0
-        xcontr[0:3] += Vg
-        xcontr[3:6] += Wg
-        u,inputs = self._get_control(t,xcontr,is_controlled,given_control,u,
-            force_control_to_inputs = force_control_to_inputs)
 
         # get aero forces
         Fx,Fy,Fz,Mx,My,Mz,g = self._aerodynamics(x,inputs,Vg=Vg,Wg=Wg)
@@ -5229,9 +5230,10 @@ def run_single_simulation(filename,rtdst_1sg=[20.,10.,5.],
                 "tolerance" : 1.0e-9
             },
             "verbose_trim" : False
-        },
-        "trim_guess" : input_dict.get("initial",{}).get("trim_guess",{})
+        }
     }
+    if simulation["full_scale"]:
+        initial["trim_guess"] = input_dict.get("initial",{}).get("trim_guess",{})
     #
     input_dict["simulation"] = simulation
     input_dict["initial"] = initial
@@ -5282,7 +5284,7 @@ def run_single_simulation(filename,rtdst_1sg=[20.,10.,5.],
         P = perc*(final_bank - initial_bank) + initial_bank
         aircraft.phi_trim = np.deg2rad(P)
         # change guess to stay at tail near-zero trim condition
-        if not(aircraft.SAS_on):
+        if not(aircraft.SAS_on) and not(aircraft.is_rc):
             if   trim_type_guess == "0":
                 guesses.pop("b_guess",0.0)
                 guesses["u_guess"] = np.array([
@@ -5834,9 +5836,10 @@ def monte_carlo_perturbations(filename,rtdst_1sg=[5.,5.,5.],
                 "tolerance" : 1.0e-9
             },
             "verbose_trim" : False
-        },
-        "trim_guess" : input_dict.get("initial",{}).get("trim_guess",{})
+        }
     }
+    if simulation["full_scale"]:
+        initial["trim_guess"] = input_dict.get("initial",{}).get("trim_guess",{})
     #
     input_dict["simulation"] = simulation
     input_dict["initial"] = initial

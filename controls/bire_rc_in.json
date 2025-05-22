@@ -1,7 +1,7 @@
 {
     "simulation" : {
         "constant_density" : false,
-        "time_step[sec]" : 0.001,
+        "time_step[sec]" : 0.01,
         "total_time[sec]" : 60.0,
         "integrator" : "rk4",
         "nonlinear_dynamics" : true,
@@ -17,9 +17,9 @@
         "full_scale" : false
     },
     "aircraft" : {
-        "wing_area[ft^2]" : 2.98,
+        "wing_area[ft^2]" : 3.0,
         "wing_span[ft]" : 3.0,
-        "wing_aerodynamic_mean_chord[ft]" : 1.097,
+        "wing_aerodynamic_mean_chord[ft]" : 1.132,
         "CG_shift[ft]" : [0.157916, 0.0, 0.0],
         "thrust" : {
             "location[ft]" : [0.0, 0.0, 0.0],
@@ -84,22 +84,22 @@
         "quantized_actuators" : false,
         "aileron" : {
             "lag[s]" : 0.0495,
-            "limits[deg]" : [-21.5,21.5],
-            "rate_limits[deg/s]" : [-500.0,500.0],
+            "limits[deg]" : [-15.0,15.0],
+            "rate_limits[deg/s]" : [-80.0,80.0],
             "acceleration_limits[deg/s^2]" : [-800.0,800.0],
             "quantization_steps" : 1200
         },
         "elevator" : {
             "lag[s]" : 0.0495,
-            "limits[deg]" : [-25.0,25.0],
-            "rate_limits[deg/s]" : [-500.0,500.0],
+            "limits[deg]" : [-15.0,15.0],
+            "rate_limits[deg/s]" : [-60.0,60.0],
             "acceleration_limits[deg/s^2]" : [-800.0,800.0],
             "quantization_steps" : 1200
         },
         "BIRE" : {
             "lag[s]" : 0.0495,
-            "limits[deg]" : [-90.0,90.0],
-            "rate_limits[deg/s]" : [-500.0,500.0],
+            "limits[deg]" : [-45.0,45.0],
+            "rate_limits[deg/s]" : [-120.0,120.0],
             "acceleration_limits[deg/s^2]" : [-5383.840093906387,5383.840093906387],
             "quantization_steps" : 1200
         },
@@ -112,10 +112,10 @@
         }
     },
     "initial" : {
-        "airspeed[ft/s]" : 80.0,
+        "airspeed[ft/s]" : 110.0,
         "longitude[deg]" : 0.0,
         "latitude[deg]" : 0.0,
-        "altitude[ft]" : 4500.0,
+        "altitude[ft]" : 4600.0,
         "heading[deg]" : 0.0,
         "type" : "trim",
         "state_types" : ["state", "trim"],
@@ -149,6 +149,10 @@
                 "tolerance" : 1.0e-9
             },
             "verbose_trim" : false
+        },
+        "trim_guess_bananas" : {
+            "elevator[deg]" : -15.0,
+            "BIRE[deg]" : 0.0
         }
     }
 }

@@ -1,0 +1,13 @@
+bire_rc_p40_q30_r3_n1000_M0_1_H04_6_P60_stat_we_nD_C2_CAMA_CG01_CL
+    --------------------------------------
+    case  802, p  stable <=    +0.323 deg/s
+    case   13, q  stable <=    +0.262 deg/s
+    case  859, r  stable <=    +0.067 deg/s
+    --------------------------------------
+    case  990, CL stable <=    +0.257
+    case    0, CS stable <=    +0.000
+    case    0, CD stable <=    +0.000
+    case    0, Cl stable <=    +0.000
+    case    0, Cm stable <=    +0.000
+    case    0, Cn stable <=    +0.000
+

@@ -334,6 +334,8 @@ if __name__ == "__main__":
         plot_vars["format"] = "png" # 
         print("plotting pngs!!!!!!!!!!\n\n\n\n\n\n\n\n")
     #
+    run_bire["time_step"] = 0.000005 # 0.01 # 
+    #
     # sleep(10.0) # 60.0) # 
     run_single_simulation(bire_dict,rtdst_1sg=di,**run_bire,**plot_vars)
     # run_single_simulation(base_dict,rtdst_1sg=di,**run_base,**plot_vars)
