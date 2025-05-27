@@ -1434,10 +1434,13 @@ if __name__ == "__main__":
     print("initializing...")
     case = BIREAero()
 
-    params = deg2rad([10., 10., 10., 10., 10., 10., 10., 10.])
+    params = deg2rad([0., 0., 0., 0., 0., 0., 0., 10.])
     M = 0.0
-    [CL, CS, CD, Cl, Cm, Cn] = case.aero_results(M=M,*params)
-    # print(CL, CS, CD, Cl, Cm, Cn)
+    [CL, CS, CD, Cl, Cm, Cn] = case.aero_results(*params,
+        compressible=False, M=113.0, use_Anderson=False, enforce_stall=False,
+        simplified=False)
+    print(CL, CS, CD, Cl, Cm, Cn)
+    quit()
 
     # # report coefficients in latex table format
     # case.report_coefficients_for_latex_table()

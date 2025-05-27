@@ -947,6 +947,33 @@ class linearization:
             [My_u, My_v, My_w],
             [Mz_u, Mz_v, Mz_w]
         ]))
+
+        # print("a_u",a_u)
+        # print("a_w",a_w)
+        # print("b_u",b_u)
+        # print("b_v",b_v)
+        # print("b_w",b_w)
+        # print(Iinv)
+        # print(np.array([
+        #     [Mx_u, Mx_v, Mx_w],
+        #     [My_u, My_v, My_w],
+        #     [Mz_u, Mz_v, Mz_w]
+        # ]))
+        # print("Qlat_u =",Qlat_u)
+        # print("Cl     =",Cl)
+        # print("Qlat   =",Qlat)
+        # print("Cl_u   =",Cl_u)
+        # print("Fy_u   =",Fy_u)
+        # print("Dzcg   =",Dzcg)
+        # print("Fz_u   =",Fz_u)
+        # print("Dycg   =",Dycg)
+
+        # print("Cn    =",Cn)
+        # print("Cn_u  =",Cn_u)
+        # print("Cn_v  =",Cn_v)
+        # print("Cn_w  =",Cn_w)
+
+        ######
         #
         A[3:6,rw] = np.matmul(Iinv,(np.array([
             [Mx_p, Mx_q, Mx_r],
@@ -1874,12 +1901,88 @@ def rep2D(array, name = "ans", predecimals = 5, decimals = 4,print_format="f"):
 
 
 if __name__ == "__main__":
-    np.set_printoptions(precision=16)
+    np.set_printoptions(precision=8)
     # test linearization
     x = np.ones((12,))
     u = np.ones((4,)) / 10.
     cg = np.ones((3,))
 
+    # dict of other vals
+    inputs = {
+        "compressible" : False,
+        "use_Anderson" : False,
+        "enforce_stall" : False,
+        "actuators_properties" : {
+            "order" : 0
+        },
+        "is_rc": True,
+        "include_stall":False,
+        "include_altitude_derivatives":False,
+        "use_simple_thrust_model": True,
+        "drop_actuators":True,
+        "run_frequency_analysis":False,
+        "turn_off_warnings":True
+    }
+
+    #
+    # v = 110.006050109863
+    # a = 0.057941429317
+    # b = 0.0
+    # x = np.array([
+    #     v*cos(a)*cos(b),
+    #     v*sin(b),
+    #     v*sin(a)*cos(b),
+    #     -0.000000000000e+00,
+    #      0.000000000000e+00,
+    #      0.000000000000e+00,
+    #      0.000000000000e+00,
+    #      0.000000000000e+00,
+    #     -4.600000000000e+03,
+    #      0.000000000000e+00,
+    #      np.deg2rad(3.264964609769e+00),
+    #      0.00000000000000000000
+    # ])
+    # u = np.array([
+    #      0.000000000000e+00,
+    #     -0.048324443400,
+    #      0.000000000000e+00,
+    #      0.447878330946
+    # ])
+
+    v = 103.0
+    a = 0.14
+    b = -0.3
+    x = np.array([
+        v*cos(a)*cos(b),
+        v*sin(b),
+        v*sin(a)*cos(b),
+        0.11,
+        -0.04,
+        0.055,
+         0.000000000000e+00,
+         0.000000000000e+00,
+        -4.600000000000e+03,
+         0.000000000000e+00,
+         np.deg2rad(3.264964609769e+00),
+         0.00000000000000000000
+    ])
+    u = np.array([
+        0.015,
+        0.11,
+        -0.045,
+        0.45
+    ])
+
+    cg = [0.157916, 0.0, 0.0]
+
+    BIRE_euler = linearization(x,u,cg,use_quaternion=False,is_bire=True,**inputs)
+    rows = [3,4,5]
+    cols = [0,1,2,3,4,5,8]
+    rep2D((BIRE_euler.A[rows])[:,cols],"  A  ",decimals=6) # 16)
+    rng = [0,1,2] # [2] # 
+    rep2D((BIRE_euler.B[rows])[:,rng],"  B  ",decimals=12) # 16)
+    quit()
+    
     # Christian trim result for the Baseline : 20 deg bank, 15000 ft, sct, M=0.6
     x = np.array([
         633.44608380577915340837,
