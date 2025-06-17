@@ -91,7 +91,7 @@ if __name__ == "__main__":
     show_plots = False # True # 
     plot_format = "pdf" # "png" # 
     plot_transparent = True if plot_format == "pdf" else False # True # False # 
-    plot_dark = True # False # 
+    plot_dark = False # True # 
     skip_save_if_not_new = False # True # 
     add_to_guesses_list = False # True # 
     reset_guesses_list = False # True # 
@@ -733,7 +733,8 @@ if __name__ == "__main__":
             for i in [3,4,5]: # range(rows_CE): # :
                 for j in range(cols_CE):
                     if j == 0: shares ={}
-                    else: shares ={"sharex":axs_CE[i][0],"sharey":axs_CE[i][0]}
+                    # else: shares = {"sharex":axs_CE[i][0],"sharey":axs_CE[i][0]}
+                    else: shares = {"sharex":"all","sharey":"all"}
                     fig_CE[i][j],axs_CE[i][j] = plt.subplots(1,1,**shares,**CE_plot_dict)
             axs = [axs_da,axs_de,axs_dB,axs_ta,axs_vr,axs_af]
             # # ctrb plots
@@ -1052,7 +1053,7 @@ if __name__ == "__main__":
                         A_min = np.array(LinSys["A"])
                         # A_min = (A_min[ind,:])[:,ind]
                         evals,_ = np.linalg.eig(A_min)
-                        axs_eg.plot(np.max(np.real(evals)),ivr,**kdict)
+                        axs_eg.plot(ivr,np.max(np.real(evals)),**kdict)
                         #
                         # DOC
                         # # # if skip for base, then skip
@@ -1222,8 +1223,8 @@ if __name__ == "__main__":
             axs_Cn.set_xlabel(xlabel)
             axs_Cn.set_ylabel(  r"Yawing moment coefficient ($C_n$)")
             #
-            axs_eg.set_ylabel(xlabel)
-            axs_eg.set_xlabel(r"$\max \left( \operatorname{real} \left( " + \
+            axs_eg.set_xlabel(xlabel)
+            axs_eg.set_ylabel(r"$\max \left( \operatorname{real} \left( " + \
                 r"\lambda \right) \right)$, 1/sec")
             #
             axs_bb.set_xlabel(r"Center of gravity shift ($\Delta x_{cg}$), ft")
@@ -1302,7 +1303,7 @@ if __name__ == "__main__":
                         if run_sct: axs_CE[g][h].set_ylim((1.0e+2,1.0e-10))
                         else      : axs_CE[g][h].set_ylim((1.0e+4,1.0e-7 ))
             # # eigvals
-            # axs_eg.set_xlim((-0.12695491843259302, 2.6660532870844533))
+            axs_eg.set_ylim((-0.12695491843259302, 2.6660532870844533))
             #
             # legend
             min_cg = min(bire_plotting_xcgs)
@@ -1422,7 +1423,7 @@ if __name__ == "__main__":
                 axs_ps.set_xlim((-3.75,78.75)); axs_ps.set_ylim((-0.5290689994121346, 11.110448987654825)) # print("ps",axs_ps.get_xlim(),axs_ps.get_ylim())
                 axs_t2.set_xlim((22.5,  77.5)); axs_t2.set_ylim((-0.02785381718383647, 0.0008514152747926191)) # print("t2",axs_t2.get_xlim(),axs_t2.get_ylim())
                 axs_2D.set_xlim((22.5,  77.5)); axs_2D.set_ylim((-0.006579023400909361, 0.0002424589803903147)) # print("2D",axs_2D.get_xlim(),axs_2D.get_ylim())
-                axs_eg.set_ylim((-3.75,78.75)); axs_eg.set_xlim((-0.12695491843259302, 2.6660532870844533)) # print("eg",axs_eg.get_xlim(),axs_eg.get_ylim())
+                axs_eg.set_xlim((-3.75,78.75)); axs_eg.set_ylim((-0.12695491843259302, 2.6660532870844533)) # print("eg",axs_eg.get_xlim(),axs_eg.get_ylim())
                 axs_bb.set_xlim((-1.65, 1.65)); axs_bb.set_ylim((-0.36764186742069865, 0.4215223236673418)) # print("bb",axs_bb.get_xlim(),axs_bb.get_ylim())
                 axs_bp.set_xlim((-1.65, 1.65)); axs_bp.set_ylim((-3.75,78.75)) # print("bp",axs_bp.get_xlim(),axs_bp.get_ylim())
                 # print("lg",axs_lg.get_xlim(),axs_lg.get_ylim())
