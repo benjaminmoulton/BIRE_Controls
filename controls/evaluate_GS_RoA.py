@@ -59,8 +59,8 @@ if __name__ == "__main__":
     bire_fs_dict["simulation"]["include_stall"] = stall
     bire_fs_dict["simulation"]["use_fitted_thrust_model"] = fitthrust
     bire_fs_dict["aircraft"]["CG_shift[ft]"] = cgshift
-    bire_fs_dict["initial"]["mach"] = 0.8 # 0.6 # 
-    bire_fs_dict["initial"]["altitude[ft]"] = 30000.0 # 15000.0 # 
+    bire_fs_dict["initial"]["mach"] = 0.6 # 0.8 # 
+    bire_fs_dict["initial"]["altitude[ft]"] = 15000.0 # 30000.0 # 
     bire_fs_dict["initial"]["trim"]["bank_angle[deg]"] = phi_trim
     bire_fs_dict["initial"]["trim"]["type"] = "sct"
     bire_fs_dict["initial"]["type"] = "trim"
@@ -85,8 +85,8 @@ if __name__ == "__main__":
         "R" : [5.0e0, 5.0e0, 5.0e0, 5.0e-2]
     }
     bire = Aircraft(bire_fs_dict)
-    x0 = bire.x_trim_euler
-    u0 = bire.u_trim
+    x0 = bire.x_trim_euler*1.0
+    u0 = bire.u_trim*1.0
     print("cg x, ft  =",cgshift[0])
     print("Bank, deg =",phi_trim)
     print("x0 =",x0)
@@ -110,10 +110,18 @@ if __name__ == "__main__":
     #
     K = Lin_Model.K*1.0
     P = Lin_Model.P*1.0
+    A = Lin_Model.A_min*1.0
+    B = Lin_Model.B_min*1.0
+    # #
+    # G = np.matmul(P,A-np.matmul(B,K))
+    # Geval,Gevec = np.linalg.eig(G)
+    # print(G)
+    # print(Geval)
+    # quit()
 
     # run settings
-    dVshift = 0.00; dVlim =  10.0 # dVlim = 400.0 # 
-    dzshift = 0.00; dzlim =  50.0
+    dVshift = 0.00; dVlim =   20.0 # dVlim =    0.1 # dVlim =   10.0 # dVlim =  400.0 # 
+    dzshift = 0.00; dzlim =  500.0 # dzlim = 1000.0 # dzlim =    1.0 # 
     #
     #
     report_every = 500 # 2500 # 
@@ -174,9 +182,14 @@ if __name__ == "__main__":
                 #
                 # calculate Vdot
                 xm    = np.delete(x-x0,[6,7,11,12,13,14,15])
-                # u = u0 - np.matmul(K,xm)
-                xdot = bire._nonlinear_euler_dynamics(0.0,x,True,True,u,True)
+                #
+                u = u0 - np.matmul(K,xm)
+                xdot = bire._nonlinear_euler_dynamics(0.0,x,True,True,u,True)#False)#
                 xdotm = np.delete(xdot,[6,7,11,12,13,14,15])
+                # #
+                # u = u0 - np.matmul(K,xm)
+                # xdotm = np.matmul(A,xm) + np.matmul(B,u)
+                #
                 Vdot  = np.matmul(xdotm.T,np.matmul(P,xm   ))
                 Vdot += np.matmul(xm   .T,np.matmul(P,xdotm))
                 Vdots[Ri,Ro] = Vdot*1.0
