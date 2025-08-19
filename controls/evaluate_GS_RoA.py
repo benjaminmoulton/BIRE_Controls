@@ -83,6 +83,14 @@ if __name__ == "__main__":
         "Q1a" : [0.0e0, 0.0e0, 0.0e0, 0.0e0],
         "Q2a" : [0.0, 0.0, 0.0, 0.0],
         "R" : [5.0e0, 5.0e0, 5.0e0, 5.0e-2]
+        # "note" : "_current",
+        # "Q" : [1.0e-6, 1.0e-6, 1.0e-6, # ### BK_3
+        #     1.0e0, 1.0e0, 1.0e0,
+        #     0.0, 0.0, 1.0e-6, 
+        #     1.0e0, 1.0e0, 0.0],
+        # "Q1a" : [0.0e0, 0.0e0, 0.0e0, 0.0e0],
+        # "Q2a" : [0.0, 0.0, 0.0, 0.0],
+        # "R" : [5.0e0, 5.0e0, 5.0e0, 5.0e-2]
     }
     bire = Aircraft(bire_fs_dict)
     x0 = bire.x_trim_euler*1.0
@@ -120,8 +128,10 @@ if __name__ == "__main__":
     # quit()
 
     # run settings
-    dVshift = 0.00; dVlim =   20.0 # dVlim =    0.1 # dVlim =   10.0 # dVlim =  400.0 # 
-    dzshift = 0.00; dzlim =  500.0 # dzlim = 1000.0 # dzlim =    1.0 # 
+    dVshift = 0.00; dVlim =   25.0 # dVlim =    0.1 # dVlim =   10.0 # dVlim =  400.0 # 
+    dzshift = 0.00; dzlim = 5000.0 # dzlim = 1000.0 # dzlim =    1.0 # 
+    c   = 8.5
+    cin = 150.0
     #
     #
     report_every = 500 # 2500 # 
@@ -140,6 +150,7 @@ if __name__ == "__main__":
         # #
     ]
     bire.use_quaternions = False
+    bire.integrator == "steve"
     
     for case in run_cases:
         # report
@@ -158,6 +169,7 @@ if __name__ == "__main__":
         if dznum == 1: dzs = np.array([0.0])
 
         Vdots = np.zeros((dVnum,dznum))
+        Vs    = np.zeros((dVnum,dznum))
 
         print("running...")
         print("# cases =",("{:>6s}, "*2).format("dVnum","dznum"))
@@ -174,18 +186,28 @@ if __name__ == "__main__":
         for Ri in range(dVnum):
             Vnew = V_trim + dVs[Ri]
             # print(Vnew,np.rad2deg(anew),np.rad2deg(bnew))
-            x[0] = Vnew*cos(a_trim)*cos(b_trim) # vx_trim + dVs[Ri] # 
-            x[1] = Vnew*sin(b_trim) # vy_trim # 
-            x[2] = Vnew*sin(a_trim)*cos(b_trim) # vz_trim # 
+            # x[0] = Vnew*cos(a_trim)*cos(b_trim) # vx_trim + dVs[Ri] # 
+            # x[1] = Vnew*sin(b_trim) # vy_trim # 
+            # x[2] = Vnew*sin(a_trim)*cos(b_trim) # vz_trim # 
+            x[10] = x0[10] + np.deg2rad(dVs[Ri])
             for Ro in range(dznum):
                 x[8] = x0[8] + dzs[Ro]
-                #
+                # # #
+                # x[10] = x0[10] + np.deg2rad(dzs[Ro])
                 # calculate Vdot
                 xm    = np.delete(x-x0,[6,7,11,12,13,14,15])
                 #
-                u = u0 - np.matmul(K,xm)
+                um = - np.matmul(K,xm)
+                # if um[3] < 0 and dzs[Ro] < 0:
+                #     print(dVs[Ri],dzs[Ro])
+                #     print(xm)
+                #     print(um)
+                #     print()
+                u = u0 + um
                 xdot = bire._nonlinear_euler_dynamics(0.0,x,True,True,u,True)#False)#
                 xdotm = np.delete(xdot,[6,7,11,12,13,14,15])
+                # inds = [6,7,11,12,13,14,15]
+                # print(xdot[inds])
                 # #
                 # u = u0 - np.matmul(K,xm)
                 # xdotm = np.matmul(A,xm) + np.matmul(B,u)
@@ -193,15 +215,20 @@ if __name__ == "__main__":
                 Vdot  = np.matmul(xdotm.T,np.matmul(P,xm   ))
                 Vdot += np.matmul(xm   .T,np.matmul(P,xdotm))
                 Vdots[Ri,Ro] = Vdot*1.0
+                Vs[Ri,Ro] = np.matmul(xm.T,np.matmul(P,xm))
                 #
                 if counter % report_every == 0:
                     # print(x-x0)
                     # print(xm[:,0])
-                    print(("i = {:>9d} / {:>9d}, Vdot = {:>+10.3e}")
-                        .format(counter,totalnum,Vdots[Ri,Ro]))
+                    print(("i = {:>9d} / {:>9d}, V = {:>+10.3e}, Vdot = {:>+10.3e}")
+                        .format(counter,totalnum,Vs[Ri,Ro],Vdots[Ri,Ro]))
                 counter += 1
     
     bire.use_quaternions = True
+
+    # print()
+    # print("Vdots =",Vdots)
+    # print()
         
 
     if len(plot_cases) > 0:
@@ -242,7 +269,7 @@ if __name__ == "__main__":
 
     for case in plot_cases: # if len(run_cases) == 0: # 
 
-        lbls = [r"Velocity ($\Delta V$), ft/s",
+        lbls = [r"Elevation angle ($\Delta \theta$), deg", # r"Velocity ($\Delta V$), ft/s",
                 r"Altitude ($\Delta z_f$), ft",
                 ]
         levels = 10
@@ -266,10 +293,14 @@ if __name__ == "__main__":
 
         for i in range(xs.shape[0]):
             for j in range(ys.shape[0]):
-                if zs[i][j] < 0.0:
-                    ax.plot(xs[i],ys[j],marker="o",
-                        ms=1.0, # ms=1.25, # 
-                        c="k")
+                if zs[i][j] < 0.0: # and Vs[i][j] < c:
+                    if Vs[i][j] < c: # cin < 
+                        mkr = "o"; col = "0.5"; mks = 1.0
+                    else:
+                        mkr = "o"; col = "k"; mks = 1.0
+                    ax.plot(xs[i],ys[j],marker=mkr,
+                        ms=mks, # ms=1.25, # 
+                        c=col)
         
         # # determine bounds for colorbar
         # cf = ax.contourf(xS,yS,zs)

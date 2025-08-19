@@ -1814,8 +1814,11 @@ class Aircraft:
         force_control_to_inputs=False):
 
         # get control
+        # print(u)
         u,inputs = self._get_control(t,x,is_controlled,given_control,u,
             force_control_to_inputs = force_control_to_inputs)
+        # print(u)
+        # print()
 
         # disturbance model
         ## INTSTATE
@@ -1829,17 +1832,17 @@ class Aircraft:
 
         # read in mass properties
         W = self.inertia_model.W
-        Ixx,Iyy,Izz,Ixy,Ixz,Iyz = self.inertia_model.inertia_results(u[3])
-        Im1 = self.inertia_model.inverse_tensor(u[3])
+        Ixx,Iyy,Izz,Ixy,Ixz,Iyz = self.inertia_model.inertia_results(inputs[3])
+        Im1 = self.inertia_model.inverse_tensor(inputs[3])
         hx,hy,hz = self.inertia_model.angular_momentum_results()
 
         ## INTSTATE
-        Vu = x[0]
-        Vv = x[1]
-        Vw = x[2]
-        p = x[3]
-        q = x[4]
-        r = x[5]
+        Vu = x[0]*1.0
+        Vv = x[1]*1.0
+        Vw = x[2]*1.0
+        p = x[3]*1.0
+        q = x[4]*1.0
+        r = x[5]*1.0
         
         dx = x * 0.
         
@@ -4195,7 +4198,7 @@ class Aircraft:
         path_axs.zaxis._axinfo["grid"].update({"linewidth":0.25, "color":gc})
         #
         mac_address=":".join(("%012X"%getnode())[i:i+2] for i in range(0,12,2))
-        if mac_address != "B9:AE:40:09:F3:D4":
+        if mac_address == "B9:AE:40:09:F3:D4":
             path_axs.xaxis.set_pane_color(sky,alpha=0.2)
             path_axs.yaxis.set_pane_color(sky,alpha=0.2)
             path_axs.zaxis.set_pane_color(gnd,alpha=0.2)
@@ -4841,7 +4844,8 @@ class GainSchedulingAircraft(Aircraft):
                 try:
                     x_tr = self.x_tr_itp(t)
                     u_tr = self.u_tr_itp(t)
-                    K_tr = self.K_tr_itp(t)
+                    K_tr = self.K_tr_itp(0.0) # self.K_tr_itp(t) # 
+                    # print(K_tr)
                 except:
                     raise TypeError("Error! Error! Error!")
                 #

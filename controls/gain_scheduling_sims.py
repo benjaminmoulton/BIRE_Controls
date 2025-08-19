@@ -277,11 +277,11 @@ if __name__ == "__main__":
     # plot_vars["plot_input_limits_zoomed"] = False
     # # #
     di = [0.,0.,0.]
-    t_gain = 5.0 # 10.0 # 90.0 # 5.0 # 
+    t_gain = 90.0 # 5.0 # 10.0 # 5.0 # 
     adt = 0. # 
     scale = 1. # 
     offset = 15.0 # 
-    # run_bire["aircraft_class"] = GainSchedulingAircraft
+    run_bire["aircraft_class"] = GainSchedulingAircraft
     run_bire["num"] = 1 # 1000 # 
     run_bire["final_time"] = (t_gain + adt)*scale + offset # 15. # 
     run_bire["trim_bank"] = 0.0
@@ -289,17 +289,17 @@ if __name__ == "__main__":
     run_bire["start_climbing"] = False # False # 
     run_bire["end_gs_climbing"] = False # True # 
     # run_bire["initial_mach"] = 1.5 
-    run_bire["final_mach"] = flight_conditions[f1]["m"]*1.
-    run_bire["final_altitude"] = flight_conditions[f1]["h"]*1.
-    # run_bire["final_mach"] = flight_conditions[f2]["m"]*1. # 1.5 # 
-    # run_bire["final_altitude"] = flight_conditions[f2]["h"]*1. # 20000.0 # 
+    # run_bire["final_mach"] = flight_conditions[f1]["m"]*1.
+    # run_bire["final_altitude"] = flight_conditions[f1]["h"]*1.
+    run_bire["final_mach"] = flight_conditions[f2]["m"]*1. # 1.5 # 
+    run_bire["final_altitude"] = flight_conditions[f2]["h"]*1. # 20000.0 # 
     run_bire["initial_bank"] = 0.0
-    run_bire["final_bank"] = 75.0 # -75.0 # 0.0 # 60.0 # 30.0 # 
+    run_bire["final_bank"] = 0.0 # 75.0 # -75.0 # 60.0 # 30.0 # 
     run_bire["t_gain_schedule"] = t_gain + adt # 0. # 
     run_bire["gain_steps"] = 10 # 16 # # # # # # 40 # 
     run_bire["trim_steps"] = 10 # 16 # # # # # # 40 # 
     run_bire["interpolation_type"] = "linear" # "next" # "nearest-up" # 
-    run_bire["has_turbulence"] = True # False # 
+    run_bire["has_turbulence"] = False # True # 
     run_bire["turbulence_setting"] = "light" # "moderate" # "severe" # 
     # run_bire["turbulence_random_seed"] = 25
     run_bire["has_model_error"] = False # True # 
@@ -307,15 +307,23 @@ if __name__ == "__main__":
     run_bire["skip_simulation"] = False # True # 
     run_bire["save_data"] = True # False # 
     # # # bire_dict["aircraft"]["CG_shift[ft]"] = [+1.0,+0.0,0.0]
-    run_bire["name_end"] = "_" + f1 + "_GS" + "_dP_png_D2u" # "_dHdM_3o" # "_dmPm" # "_dPm" # "_dP" # 
+    run_bire["name_end"] = "_" + f1 + "_GS" + "_dHdM_roa" # "_dP_png_D2u" # "_dHdM_3o" # "_dmPm" # "_dPm" # "_dP" # 
     run_bire["trim_type_guess"] = "0" # "-" # "+" # 
     # run_bire["mrrr"] = [1,3,5,6,7,9,11] # [6,7,11] # 
     # run_bire["mrrc"] = [2] # None # 
     bire_dict["controller"]["LQR"] = {
-        "note" : "_almost_current",
-        "Q" : [1.0e-3, 1.0e-6, 2.0e-4, # 
+        # "note" : "_almost_current",
+        # "Q" : [1.0e-3, 1.0e-6, 2.0e-4, # 
+        #     1.0e0, 1.0e0, 1.0e0,
+        #     0.0, 0.0, 5.0e-6,
+        #     1.0e0, 1.0e0, 0.0],
+        # "Q1a" : [0.0e0, 0.0e0, 0.0e0, 0.0e0],
+        # "Q2a" : [0.0, 0.0, 0.0, 0.0],
+        # "R" : [5.0e0, 5.0e0, 5.0e0, 5.0e-2]
+        "note" : "_current",
+        "Q" : [1.0e-6, 1.0e-6, 1.0e-6, # ### BK_3
             1.0e0, 1.0e0, 1.0e0,
-            0.0, 0.0, 5.0e-6,
+            0.0, 0.0, 1.0e-6, 
             1.0e0, 1.0e0, 0.0],
         "Q1a" : [0.0e0, 0.0e0, 0.0e0, 0.0e0],
         "Q2a" : [0.0, 0.0, 0.0, 0.0],
@@ -334,7 +342,7 @@ if __name__ == "__main__":
         plot_vars["format"] = "png" # 
         print("plotting pngs!!!!!!!!!!\n\n\n\n\n\n\n\n")
     #
-    run_bire["time_step"] = 0.000005 # 0.01 # 
+    run_bire["time_step"] = 0.01 # 0.000005 # 
     #
     # sleep(10.0) # 60.0) # 
     run_single_simulation(bire_dict,rtdst_1sg=di,**run_bire,**plot_vars)
