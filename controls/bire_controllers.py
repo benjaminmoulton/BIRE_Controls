@@ -3987,16 +3987,17 @@ class ControlAllocationMomentAssignmentAircraft(Aircraft):
                         dBvals = np.deg2rad(dBvals_deg)
                         Evals = [E(dBvals[i]) for i in range(len(dBvals))]
                         dBcol = self.root_axs.plot(dBvals_deg,Evals)[0].get_color() # plt.plot(dBvals_deg,Evals)[0].get_color() # 
-                        self.root_axs.plot(np.rad2deg(dB),E(dB),"o",c="k",ms=2.0,mfc=dBcol) # plt.plot(np.rad2deg(dB),E(dB),"o",c="k",ms=2.0,mfc=dBcol) # 
-                        self.root_axs.plot(np.rad2deg(dB_d),E(dB_d),"o",c=dBcol,ms=2.0,mfc="w") # plt.plot(np.rad2deg(dB_d),E(dB_d),"o",c=dBcol,ms=2.0,mfc="w") # 
+                        mksz = 4.0 # 2.0 # 
+                        self.root_axs.plot(np.rad2deg(dB),E(dB),"o",c="k",ms=mksz,mfc=dBcol) # plt.plot(np.rad2deg(dB),E(dB),"o",c="k",ms=mksz,mfc=dBcol) # 
+                        self.root_axs.plot(np.rad2deg(dB_d),E(dB_d),"o",c=dBcol,ms=mksz,mfc="w") # plt.plot(np.rad2deg(dB_d),E(dB_d),"o",c=dBcol,ms=mksz,mfc="w") # 
                         i_neg = int(abs((-np.pi*2.0-dB_d)/np.pi))
                         for ineg in range(i_neg):
                             dB_in = dB_d - (ineg+1)*np.pi
-                            self.root_axs.plot(np.rad2deg(dB_in),0.0,"o",c=dBcol,ms=2.0)#,mfc=dBcol) # plt.plot(np.rad2deg(dB_in),0.0,"o",c=dBcol,ms=2.0)#,mfc=dBcol) # 
+                            self.root_axs.plot(np.rad2deg(dB_in),0.0,"o",c=dBcol,ms=mksz)#,mfc=dBcol) # plt.plot(np.rad2deg(dB_in),0.0,"o",c=dBcol,ms=mksz)#,mfc=dBcol) # 
                         i_pos = int(abs(( np.pi*2.0-dB_d)/np.pi))
                         for ipos in range(i_pos):
                             dB_ip = dB_d + (ipos+1)*np.pi
-                            self.root_axs.plot(np.rad2deg(dB_ip),0.0,"o",c=dBcol,ms=2.0)#,mfc=dBcol) # plt.plot(np.rad2deg(dB_ip),0.0,"o",c=dBcol,ms=2.0)#,mfc=dBcol) # 
+                            self.root_axs.plot(np.rad2deg(dB_ip),0.0,"o",c=dBcol,ms=mksz)#,mfc=dBcol) # plt.plot(np.rad2deg(dB_ip),0.0,"o",c=dBcol,ms=mksz)#,mfc=dBcol) # 
                         if self.line_method in self.scalar_options:
                             self.root_axs.plot(np.rad2deg(bracket[0]),E(bracket[0]),"x",c=dBcol,ms=3.0) # plt.plot(np.rad2deg(bracket[0]),E(bracket[0]),"x",c=dBcol,ms=3.0) # 
                             self.root_axs.plot(np.rad2deg(bracket[2]),E(bracket[2]),"x",c=dBcol,ms=3.0) # plt.plot(np.rad2deg(bracket[2]),E(bracket[2]),"x",c=dBcol,ms=3.0) # 
@@ -4008,7 +4009,8 @@ class ControlAllocationMomentAssignmentAircraft(Aircraft):
                             print("end of times!!!")
                             now = datetime.now()
                             ct = now.strftime("%Y-%m-%d_%H-%M-%S")
-                            self.root_fig.savefig("/home/ben/Desktop/plotfig_"+ct+".pdf") # plt.savefig("/home/ben/Desktop/plotfig_"+ct+".pdf") # 
+                            # self.root_fig.savefig("/home/ben/Desktop/plotfig_"+ct+".pdf") # plt.savefig("/home/ben/Desktop/plotfig_"+ct+".pdf") # 
+                            self.root_fig.savefig(r"C:\Users\moult\Desktop\plotfig_"+ct+".pdf")
                             plt.close(self.root_fig) # plt.close() # 
                             self.have_saved = True
                         # else:
@@ -4817,7 +4819,7 @@ if __name__ == "__main__":
     # # # #
     # # #
     # # # 
-    bire_fs_dict["aircraft"]["CG_shift[ft]"] = cg = [0.5, 0.0, 0.0] # [0.0, 0.0, 0.0] # [1.0, 0.0, 0.0] # 
+    bire_fs_dict["aircraft"]["CG_shift[ft]"] = cg = [0.0, 0.0, 0.0] # [0.5, 0.0, 0.0] # [1.0, 0.0, 0.0] # 
     blm = 50.0 # 200.0 # 100.0 # 
     bire_fs_dict["actuators"]["BIRE"]["rate_limits[deg/s]"] = [-blm,blm]
     bire_fs_dict["aircraft"]["surface_effectiveness_scaling"] = ses = 1.0 # 1.2 # 1.1 # 
@@ -4905,7 +4907,7 @@ if __name__ == "__main__":
         if run_bire_fs[ "has_turbulence"]:
             phi_degs[ "CAMA"][ "CAMA"] =       phi_degs[ "CAMA"]["banana"]= 10.0
         else:
-            phi_degs[ "CAMA"][ "CAMA"] =       phi_degs[ "CAMA"]["banana"]= 30.0
+            phi_degs[ "CAMA"][ "CAMA"] =       phi_degs[ "CAMA"]["banana"]= 30.0 # 40.0 # 
     elif f1 == "B1":
         phi_degs[ "CAMA"][ "CAMA"] =       phi_degs[ "CAMA"]["banana"]= 60.0
     elif f1 == "B2":
