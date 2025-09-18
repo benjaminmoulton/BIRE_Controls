@@ -2234,6 +2234,7 @@ class ControlAllocationMomentAssignmentAircraft(Aircraft):
         self.time_check = 100.0 # 1.0 # 1.16 # 2.72 # 1.0 # 
         self.dt_check = 0.000001 # 0.1 # 0.05 # 0.01 # 
         self._err_plot_pause_time = 0.000001 # 0.1 # 0.25 # 5.0 # 1.0 # 
+        self._dB_bounds_deg = 180.0 # 360.0 # 
         self._end_plot_time = 4.0 # 1.18 # 2.76 # 1.5 # 
         self._end_plot_time = self.time_check + self.dt_check
         self.have_saved = False
@@ -3971,7 +3972,7 @@ class ControlAllocationMomentAssignmentAircraft(Aircraft):
                         if self.first_plot:
                             self.root_axs.set_xlabel(r"Tail rotation $\delta_B$, deg") # plt.xlabel(r"Tail rotation $\delta_B$, deg") # 
                             self.root_axs.set_ylabel("Evaluated function")# $E$")#  = ||M - M_d||$") # ^2$") #  # plt.ylabel("Evaluated function")# $E$")#  = ||M - M_d||$") # ^2$") #  # 
-                            self.root_axs.plot([-360,360],[0.0,0.0],"-",c="k",lw=0.5) # plt.plot([-360,360],[0.0,0.0],"-",c="k",lw=0.5) # 
+                            self.root_axs.plot([-self._dB_bounds_deg,self._dB_bounds_deg],[0.0,0.0],"-",c="k",lw=0.5) # plt.plot([-360,360],[0.0,0.0],"-",c="k",lw=0.5) # 
                             if self.log_scale:
                                 self.root_axs.set_yscale("log") # plt.yscale("log") # 
                             if self.symlog_scale:
@@ -3983,12 +3984,14 @@ class ControlAllocationMomentAssignmentAircraft(Aircraft):
                             E = lambda dBj : self.delta_E_fun_sq(\
                                 rho,V,dBj,a,b,pbar,qbar,rbar,Md)[2]
                         #
-                        dBvals_deg = np.linspace(-360.0,360.0,20000) # -90.0,90.0,10000) # 
+                        dBvals_deg = np.linspace(-self._dB_bounds_deg,self._dB_bounds_deg,20000) # -90.0,90.0,10000) # 
                         dBvals = np.deg2rad(dBvals_deg)
                         Evals = [E(dBvals[i]) for i in range(len(dBvals))]
                         dBcol = self.root_axs.plot(dBvals_deg,Evals)[0].get_color() # plt.plot(dBvals_deg,Evals)[0].get_color() # 
                         mksz = 4.0 # 2.0 # 
-                        self.root_axs.plot(np.rad2deg(dB),E(dB),"o",c="k",ms=mksz,mfc=dBcol) # plt.plot(np.rad2deg(dB),E(dB),"o",c="k",ms=mksz,mfc=dBcol) # 
+                        dB0 = self.u_til_next_update[2]
+                        self.root_axs.plot(np.rad2deg(dB),E(dB),"^",c="k",ms=mksz,mfc=dBcol) # plt.plot(np.rad2deg(dB),E(dB),"o",c="k",ms=mksz,mfc=dBcol) # 
+                        self.root_axs.plot(np.rad2deg(dB0),E(dB0),"s",c="k",ms=mksz,mfc=dBcol) # plt.plot(np.rad2deg(dB),E(dB),"o",c="k",ms=mksz,mfc=dBcol) # 
                         self.root_axs.plot(np.rad2deg(dB_d),E(dB_d),"o",c=dBcol,ms=mksz,mfc="w") # plt.plot(np.rad2deg(dB_d),E(dB_d),"o",c=dBcol,ms=mksz,mfc="w") # 
                         i_neg = int(abs((-np.pi*2.0-dB_d)/np.pi))
                         for ineg in range(i_neg):
@@ -4006,6 +4009,7 @@ class ControlAllocationMomentAssignmentAircraft(Aircraft):
                         # plt.show(block=False)
                         if not(self.have_saved) and \
                             self._end_plot_time - self.dt_check <= t:
+                            self.root_axs.set_xlim(-self._dB_bounds_deg,self._dB_bounds_deg)
                             print("end of times!!!")
                             now = datetime.now()
                             ct = now.strftime("%Y-%m-%d_%H-%M-%S")
@@ -4181,7 +4185,7 @@ class ControlAllocationMomentAssignmentAircraft(Aircraft):
         # repcon += report_latex(Ai_cl,r"A_{i \, cl}",print_report=False)
         # determine eigvals of closed loop system
         repcon += report_latex(Ai_cl_evl,r"\lambda_{cl}",
-            print_report=False)#,decimals=16)
+            print_report=False) # ,decimals=16) # 
         repcon += report_latex(Ai_cl_evc,r"\chi_{cl}",
             predecimals=3,decimals=4,print_report=False,eigvecs=True)
         repcon += report_eigprops(Ai_cl_evl,n_a=n_a,
@@ -4797,17 +4801,17 @@ if __name__ == "__main__":
     # bire_fs_dict["controller"]["integral_states"] = [0,2,3,4,5]
     # run_bire_fs["name_end"] = "_" + f1 + "_LQRDI"
     # # # # # # # # # # # # # # 
-    bire_fs_dict["controller"]["integral_states"] = [0,3,4,5]
-    run_bire_fs["aircraft_class"] = ITPIAircraft
-    run_bire_fs["name_end"] = "_" + f1 + "_ITPI" # 1" # 
+    # bire_fs_dict["controller"]["integral_states"] = [0,3,4,5]
+    # run_bire_fs["aircraft_class"] = ITPIAircraft
+    # run_bire_fs["name_end"] = "_" + f1 + "_ITPI" # 1" # 
     # # # # # plot_vars["show"] = True # False # 
     # # # # # left_roll = True # False # 
     # # # # # # # ##
     # run_bire_fs["aircraft_class"] = NonlinearDynamicInversionAircraft
     # run_bire_fs["name_end"] = "_" + f1 + "_NDI" # " # nolim" # 
     # # # # # # 
-    # run_bire_fs["aircraft_class"] = ControlAllocationMomentAssignmentAircraft
-    # run_bire_fs["name_end"] = "_" + f1 + "_CAMA" # 2" # 
+    run_bire_fs["aircraft_class"] = ControlAllocationMomentAssignmentAircraft
+    run_bire_fs["name_end"] = "_" + f1 + "_CAMA" # 2" # 
     #
     plot_vars["show"] = False # True # 
     #
@@ -4980,6 +4984,8 @@ if __name__ == "__main__":
         # "elevator[deg]" : -25.0,
         # "BIRE[deg]" : +90.0,
     }
+
+    # phi__deg = 60.0
 
 
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -5276,7 +5282,7 @@ if __name__ == "__main__":
     bire_fs_dict["reference"]["4"] = q_sig
     bire_fs_dict["reference"]["5"] = r_sig
     #
-    tf = 10.0 # 60.0 # 30.0 # 600.0 # 
+    tf = 10.0 # 60.0 # 30.0 # 600.0 # 2.0 # 
     #########################################################################
     run_bire_fs["track_check_time"] = run_bire_fs["final_time"] = tf
     # bire_fs_dict["simulation"]["include_stall"] = False
@@ -5318,7 +5324,7 @@ if __name__ == "__main__":
     #     "3" : [[0.0]*2]*2, "4" : [[0.0]*2]*2, "5" : [[0.0]*2]*2, "sct_on_5" : False
     # }
     # run_bire_fs["track_check_time"] = run_bire_fs["final_time"] = 1.0
-    #
+    # #
     # # # # starting in bank
     # bire_fs_dict["reference"] = {
     #     "deg2rad_states" : [1,2,3,4,5],
