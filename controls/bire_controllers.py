@@ -2245,6 +2245,8 @@ class ControlAllocationMomentAssignmentAircraft(Aircraft):
         if self.time_check < self.tf:
             # change plot text parameters
             plt.rcParams["font.family"] = "Serif"
+            # plt.rcParams['font.serif'] = ['Times New Roman'] # Specify a Type 1 font
+            plt.rcParams['pdf.fonttype'] = 42 # Embeds TrueType fonts (Type 42)
             plt.rcParams["font.size"] = 8.0
             plt.rcParams["axes.labelsize"] = 8.0
             plt.rcParams['axes.xmargin'] = 0
@@ -4831,11 +4833,11 @@ if __name__ == "__main__":
     bire_fs_dict["controller"]["CAMA_coupled_weighting"] = cw = True # False # 
     bire_fs_dict["controller"]["CAMA_SAS_on"] = sason = False # True # 
     run_bire_fs[ "has_turbulence"] = False # True # 
-    representative_response = True # False # 
+    representative_response = False # True # 
     # append name
     # # # # # run_bire_fs["name_end"] += "_wbeta"
     # # # # # run_bire_fs["name_end"] += "_to_50_fail"
-    run_bire_fs["name_end"] += "_banana"; plot_vars["format"] = "png"
+    # run_bire_fs["name_end"] += "_banana"; plot_vars["format"] = "png"
     run_bire_fs["name_end"] += "_CG" + "{:02d}".format(int(10.0*cg[0])) if (cg[0] != 0.0) else ""
     run_bire_fs["name_end"] += "_BR" + str(int(blm)) if (blm != 50.0) else ""
     run_bire_fs["name_end"] += "_SE" + "{:02d}".format(int(10.0*ses)) if (ses != 1.0) else ""
@@ -5282,7 +5284,7 @@ if __name__ == "__main__":
     bire_fs_dict["reference"]["4"] = q_sig
     bire_fs_dict["reference"]["5"] = r_sig
     #
-    tf = 10.0 # 60.0 # 30.0 # 600.0 # 2.0 # 
+    tf = 10.0 # 2.0 # 60.0 # 30.0 # 600.0 # 2.0 # 
     #########################################################################
     run_bire_fs["track_check_time"] = run_bire_fs["final_time"] = tf
     # bire_fs_dict["simulation"]["include_stall"] = False

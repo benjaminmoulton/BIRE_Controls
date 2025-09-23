@@ -1433,6 +1433,7 @@ class Aircraft:
 
         # plot params
         plt.rcParams["font.family"] = "Serif"
+        plt.rcParams['pdf.fonttype'] = 42 # Embeds TrueType fonts (Type 42)
         plt.rcParams["font.size"] = 8.0
         plt.rcParams["axes.labelsize"] = 8.0
         plt.rcParams['axes.xmargin'] = 0
@@ -3625,6 +3626,7 @@ class Aircraft:
 
         # change plot text parameters
         plt.rcParams["font.family"] = "Serif"
+        plt.rcParams['pdf.fonttype'] = 42 # Embeds TrueType fonts (Type 42)
         plt.rcParams["font.size"] = 8.0
         plt.rcParams["axes.labelsize"] = 8.0
         plt.rcParams['axes.xmargin'] = 0
@@ -4996,6 +4998,7 @@ def controllability_analysis(filename,H=15000.,M=0.6,aircraft_class=Aircraft):
         
     # change plot text parameters
     plt.rcParams["font.family"] = "Serif"
+    plt.rcParams['pdf.fonttype'] = 42 # Embeds TrueType fonts (Type 42)
     plt.rcParams["font.size"] = 8.0
     plt.rcParams["axes.labelsize"] = 8.0
     plt.rcParams['lines.linewidth'] = 1.0
@@ -6200,6 +6203,7 @@ def monte_carlo_perturbations(filename,rtdst_1sg=[5.,5.,5.],
     # plot setup
     plt.rcdefaults()
     plt.rcParams["font.family"] = "Serif"
+    plt.rcParams['pdf.fonttype'] = 42 # Embeds TrueType fonts (Type 42)
     plt.rcParams["font.size"] = 8.0
     plt.rcParams["axes.labelsize"] = 8.0
     plt.rcParams['lines.linewidth'] = 1.0
@@ -6870,6 +6874,7 @@ def monte_carlo_perturbations(filename,rtdst_1sg=[5.,5.,5.],
 
         #######################################################################
         plt.rcParams["font.family"] = "Serif"
+        plt.rcParams['pdf.fonttype'] = 42 # Embeds TrueType fonts (Type 42)
         plt.rcParams["font.size"] = 8.0
         plt.rcParams["axes.labelsize"] = 8.0
         plt.rcParams['lines.linewidth'] = 1.0

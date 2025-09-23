@@ -124,6 +124,7 @@ if __name__ == "__main__":
     # create plots
     # initialize rc params
     plt.rcParams["font.family"] = "Serif"
+    plt.rcParams['pdf.fonttype'] = 42 # Embeds TrueType fonts (Type 42)
     plt.rcParams["font.size"] = 8.0
     plt.rcParams["axes.labelsize"] = 8.0
     plt.rcParams['axes.xmargin'] = 0
