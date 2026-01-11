@@ -11,6 +11,7 @@ from os import mkdir, rmdir, walk, remove, listdir
 from linearization import linearization
 import control as co
 from scipy.linalg import block_diag
+from scipy.optimize import linear_sum_assignment
 from math import cos,asin,atan2,sin,tan
 from sympy import Matrix as symat
 
@@ -69,14 +70,14 @@ if __name__ == "__main__":
 
     # settings 
     run_bire = True # False # 
-    run_sct  = False # True # 
+    run_sct  = True # False # 
     run_fs = True
     skip_run = True # False # 
     skip_CE = False # True # 
     if run_sct: trim_bank_degs = np.linspace(0.0,75.0,num=16).tolist() # [30.0] # np.linspace(0.0,60.0,num=13).tolist() # [0.0] # [10.0] # [60.0] # np.linspace(0.0,75.0,num=16).tolist() # 
     else: trim_beta_degs = np.linspace(0.0,16.0,num=9).tolist() # [6.0] # np.linspace(0.0,16.0,num=9).tolist() # [14.0,16.0] # [0.0] # 
     trim_climb_deg = 0.0 # 10.0 # 
-    fc = "T1" # "C2" # "S1" # "E2" # "F1" # "U1" # "A1" # 
+    fc = "C2" # "T1" # "S1" # "E2" # "F1" # "U1" # "A1" # 
     cgshift = [0.0,0.0,0.0] # [1.0,0.0,0.0] # [0.5,0.0,0.0] # 
     include_compressibility =  True # False # 
     use_Anderson_corrections =  True # False # 
@@ -88,7 +89,7 @@ if __name__ == "__main__":
     plot_inverted_trims = False # True # 
     plot_alternate_trims = True # False # 
     plot_base_CE = True # False # 
-    show_plots = False # True # 
+    show_plots = True # False # 
     plot_format = "pdf" # "png" # 
     plot_transparent = True if plot_format == "pdf" else False # True # False # 
     plot_dark = False # True # 
@@ -97,7 +98,8 @@ if __name__ == "__main__":
     reset_guesses_list = False # True # 
     # the above only affects whether previously found trim solution guesses are saved
     # all new trim solution guesses are saved automatically
-    plot_diff_pqrpsi_plots = False # True # 
+    plot_diff_pqrpsi_plots = True # False # 
+    scale_markers_cg_plot = 2.0 # 1.5
     #
     # other settings
     run_num = 10 # 1000 # 30 # 
@@ -138,6 +140,22 @@ if __name__ == "__main__":
     color_bar_segs = 16
     #
     max_open_figs_warn = 65
+    #
+    lon_inds = [0,2,4,6,8]
+    lat_inds = [1,3,5,7]
+
+    # root locus evals dict
+    rlocus = {}
+    rlocus["bire"] = {}
+    for cg in bire_plotting_xcgs:
+        rlocus["bire"][str(cg)] = {
+            "m":{"var":[],"eval":[],"evec":[]},
+            "o":{"var":[],"eval":[],"evec":[]},
+            "p":{"var":[],"eval":[],"evec":[]}
+        }
+    rlocus["base"] = {}
+    for cg in base_plotting_xcgs:
+        rlocus["base"][str(cg)] = {"o" : {"var":[],"eval":[],"evec":[]} }
 
     # # rename files to include climb angle in file name
     # trim_files_folder = "./trim_files"
@@ -688,6 +706,14 @@ if __name__ == "__main__":
             save_dict = dict(transparent=plot_transparent,dpi=300.0)
             sv_fldr = "plots" if plot_type == "default" else "plots_inv"
             sv_fldr = folder + sv_fldr + "/"
+            prefix = fc + "_"
+            if run_sct:
+                prefix += "sct_"
+            else:
+                prefix += "shss_"
+            #
+            if fc != "C2" or not(run_sct):
+                prefix = ""
 
             # initialize plots
             plot_dict = dict(figsize=(width,3.5),dpi=300.0, # sharex=True,
@@ -703,8 +729,10 @@ if __name__ == "__main__":
             fig_dB,axs_dB = plt.subplots(1,1,**plot_dict)
             fig_ta,axs_ta = plt.subplots(1,1,**plot_dict)
             fig_t2,axs_t2 = plt.subplots(1,1,**plot_dict)
+            fig_tP,axs_tP = plt.subplots(1,1,**plot_dict)
             fig_vr,axs_vr = plt.subplots(1,1,**plot_dict)
             fig_af,axs_af = plt.subplots(1,1,**plot_dict)
+            fig_aP,axs_aP = plt.subplots(1,1,**plot_dict)
             fig_th,axs_th = plt.subplots(1,1,**plot_dict)
             fig_wp,axs_wp = plt.subplots(1,1,**plot_dict)
             fig_wq,axs_wq = plt.subplots(1,1,**plot_dict)
@@ -719,10 +747,14 @@ if __name__ == "__main__":
             fig_CS,axs_CS = plt.subplots(1,1,**plot_dict)
             fig_CD,axs_CD = plt.subplots(1,1,**plot_dict)
             fig_2D,axs_2D = plt.subplots(1,1,**plot_dict)
+            fig_PD,axs_PD = plt.subplots(1,1,**plot_dict)
             fig_Cl,axs_Cl = plt.subplots(1,1,**plot_dict)
             fig_Cm,axs_Cm = plt.subplots(1,1,**plot_dict)
             fig_Cn,axs_Cn = plt.subplots(1,1,**plot_dict)
             fig_eg,axs_eg = plt.subplots(1,1,**plot_dict)
+            fig_e0,axs_e0 = plt.subplots(1,1,**plot_dict)
+            fig_e5,axs_e5 = plt.subplots(1,1,**plot_dict)
+            fig_e1,axs_e1 = plt.subplots(1,1,**plot_dict)
             fig_bb,axs_bb = plt.subplots(1,1,**plot_dict)
             fig_bp,axs_bp = plt.subplots(1,1,**plot_dict)
             fig_gs,axs_gs = plt.subplots(1,1,**CE_plot_dict)
@@ -758,16 +790,22 @@ if __name__ == "__main__":
             axs_dB.grid(which="major",lw=grid_lw,ls="-",c=grid_color)
             axs_ta.grid(which="major",lw=grid_lw,ls="-",c=grid_color)
             axs_t2.grid(which="major",lw=grid_lw,ls="-",c=grid_color)
+            axs_tP.grid(which="major",lw=grid_lw,ls="-",c=grid_color)
             axs_vr.grid(which="major",lw=grid_lw,ls="-",c=grid_color)
             axs_af.grid(which="major",lw=grid_lw,ls="-",c=grid_color)
+            axs_aP.grid(which="major",lw=grid_lw,ls="-",c=grid_color)
             axs_CL.grid(which="major",lw=grid_lw,ls="-",c=grid_color)
             axs_CS.grid(which="major",lw=grid_lw,ls="-",c=grid_color)
             axs_CD.grid(which="major",lw=grid_lw,ls="-",c=grid_color)
             axs_2D.grid(which="major",lw=grid_lw,ls="-",c=grid_color)
+            axs_PD.grid(which="major",lw=grid_lw,ls="-",c=grid_color)
             axs_Cl.grid(which="major",lw=grid_lw,ls="-",c=grid_color)
             axs_Cm.grid(which="major",lw=grid_lw,ls="-",c=grid_color)
             axs_Cn.grid(which="major",lw=grid_lw,ls="-",c=grid_color)
             axs_eg.grid(which="major",lw=grid_lw,ls="-",c=grid_color)
+            axs_e0.grid(which="major",lw=grid_lw,ls="-",c=grid_color)
+            axs_e5.grid(which="major",lw=grid_lw,ls="-",c=grid_color)
+            axs_e1.grid(which="major",lw=grid_lw,ls="-",c=grid_color)
             axs_bb.grid(which="major",lw=grid_lw,ls="-",c=grid_color)
             axs_bp.grid(which="major",lw=grid_lw,ls="-",c=grid_color)
             axs_th.grid(which="major",lw=grid_lw,ls="-",c=grid_color)
@@ -863,14 +901,17 @@ if __name__ == "__main__":
                         if cname == "bire" and xcg in cg_v_bb_xcgs_bire:
                             temp_c = kdict["color"]*1
                             temp_m = kdict["marker"]*1
+                            temp_s = kdict["ms"]*1
                             kdict["color"] = str(xcg_shade_inverter(0.0))
                             kdict["color"] = str(xcg_shade_inverter(0.0))
                             if j != trims[craft]["min_ind"][i] and sol["u_trim"][2] < 0.0:
                                 kdict["marker"] = ndBA
+                            kdict["ms"] = temp_s*scale_markers_cg_plot
                             axs_bb.plot(xcg,np.rad2deg(sol["angles"][1]),**kdict)
                             axs_bp.plot(xcg,np.rad2deg(sol["angles"][2]),**kdict)
                             kdict["color"] = temp_c
                             kdict["marker"] = temp_m
+                            kdict["ms"] = temp_s
                         # #
                         if cname == "bire" and xcg not in bire_plotting_xcgs:
                             continue
@@ -999,10 +1040,16 @@ if __name__ == "__main__":
                             name = str(trims[craft]["min_ind"][i])
                             tau_zro = trims[craft]["dicts"][i][name]["u_trim"][3]
                             axs_t2.plot(ivr,sol["u_trim"][3] - tau_zro,**kdict)
+                            axs_tP.plot(ivr,(sol["u_trim"][3] - tau_zro)/tau_zro*100.0,**kdict)
                         # sideslip / bank
                         axs[4].plot(ivr,np.rad2deg(sol["angles"][k]),**kdict)
                         # aoa
                         axs[5].plot(ivr,np.rad2deg(sol["angles"][0]),**kdict)
+                        # aoa perc diff
+                        if cname == "bire" and j != trims[craft]["min_ind"][i]:
+                            name = str(trims[craft]["min_ind"][i])
+                            af_zro = trims[craft]["dicts"][i][name]["angles"][0]
+                            axs_aP.plot(ivr,(sol["angles"][0] - af_zro)/af_zro*100.0,**kdict)
                         # theta
                         axs_th.plot(ivr,np.rad2deg(sol["x_trim_euler"][10]),
                             **kdict)
@@ -1047,14 +1094,40 @@ if __name__ == "__main__":
                             name = str(trims[craft]["min_ind"][i])
                             CD_zro = trims[craft]["dicts"][i][name]["CFM_trim"][2]
                             axs_2D.plot(ivr,sol["CFM_trim"][2] - CD_zro,**kdict)
+                            axs_PD.plot(ivr,(sol["CFM_trim"][2] - CD_zro)/CD_zro*100.0,**kdict)
                         #
                         # most unstable eigenvalue
                         LinSys = sol["Linearized_system_trim"]
                         A_min = np.array(LinSys["A"])
                         # A_min = (A_min[ind,:])[:,ind]
-                        evals,_ = np.linalg.eig(A_min)
+                        evals,evecs = np.linalg.eig(A_min)
                         axs_eg.plot(ivr,np.max(np.real(evals)),**kdict)
-                        #
+
+                        # Add to dictionary
+                        if cname == "base" or j == trims[craft]["min_ind"][i]:
+                            dBtype = "o"
+                        elif sol["u_trim"][2] > 0.0:
+                            dBtype = "p"
+                        else: # if sol["u_trim"][2] < 0.0:
+                            dBtype = "m"
+                        rlocus[cname][str(xcg)][dBtype][ "var"].append(ivr)
+                        rlocus[cname][str(xcg)][dBtype]["eval"].append(evals)
+                        rlocus[cname][str(xcg)][dBtype]["evec"].append(evecs)
+                        # for evali in range(len(evals)):
+                        #     lon_norms = np.linalg.norm(evecs[lon_inds,evali])
+                        #     lat_norms = np.linalg.norm(evecs[lat_inds,evali])
+                        #     if cname != "bire":
+                        #         continue
+                        #     if xcg not in [0.0]:
+                        #         continue
+                        #     if ivr != 0.0:
+                        #         continue
+                            # axs_e0.plot(np.real(evals[evali]),np.imag(evals[evali]),**kdict)
+                            # if lon_norms > lat_norms:
+                            #     axs_e0.plot(np.real(evals[evali]),np.imag(evals[evali]),**kdict)
+                            # else:
+                            #     axs_e5.plot(np.real(evals[evali]),np.imag(evals[evali]),**kdict)
+                        
                         # DOC
                         # # # if skip for base, then skip
                         if cname == "base" and not(plot_base_CE): continue
@@ -1158,11 +1231,84 @@ if __name__ == "__main__":
                             file_desc = filename.split("_")
                             gs_fn = "_".join(file_desc[0:2] + file_desc[6:9])
                             # print(craft,j,gs_fn)
-                            fig_gs.savefig(sv_fldr+"11_"+gs_fn+"_"+str(j)+"."+plot_format,**save_dict)
+                            fig_gs.savefig(sv_fldr+prefix+"11_"+gs_fn+"_"+str(j)+"."+plot_format,**save_dict)
                             cb.remove()
                             axs_gs.cla()
             plt.close(fig_gs)
             # quit()
+
+            # root locus plots
+            cg00col = str(xcg_shade_inverter(0.0))
+            cg05col = str(xcg_shade_inverter(0.5))
+            cg10col = str(xcg_shade_inverter(1.0))
+            odBmdict = dict(marker=odBm,**rest_dict)
+            pdBmdict = dict(marker=pdBm,**rest_dict)
+            ndBmdict = dict(marker=ndBA,**rest_dict)
+            rllw = 0.3
+            for craft in rlocus.keys():
+                for cg in rlocus[craft].keys():
+                    for dBtype in rlocus[craft][cg].keys():
+                        varss = np.array(rlocus[craft][cg][dBtype][ "var"])
+                        evals = np.array(rlocus[craft][cg][dBtype]["eval"])
+                        evecs = np.array(rlocus[craft][cg][dBtype]["evec"])
+
+                        # # sort
+                        # inds = np.argsort(varss)
+                        # evalsort = evals[inds]
+                        # evaltrack = evals[inds]
+                        # plotinds = np.zeros(evals.shape,dtype=int)
+
+                        # sing = craft == "bire" and cg == "0.0" and run_sct # and dBtype == "o" # 
+                        # if not sing:
+                        #     continue
+                        
+                        # # print(craft,dBtype,varss)
+                        # plotinds[0,:] = np.array(range(evals.shape[1]))
+
+                        # # step through for each ind, find nearest neighbor points
+                        # for i in range(1,len(inds)):
+                        #     preveval = evalsort[i-1]
+                        #     curreval = evalsort[i]
+                        #     dists = np.abs(preveval[:, None] - curreval[None, :])
+                        #     rowi, coli = linear_sum_assignment(dists)
+                        #     evaltrack[i] = curreval[coli]
+                        #     # subinds = np.argsort(dists,axis=1)
+                            
+                        #     # usedinds = []
+                        #     # # step through subinds, remove as needed
+                        #     # for j in range(subinds.shape[0]):
+                        #     #     counter = 0
+                        #     #     for k in range(subinds.shape[0]):
+                        #     #         print(craft,cg,dBtype,j,k,counter,subinds[j,counter],usedinds)
+                        #     #         if subinds[j,k] in usedinds:
+                        #     #             counter += 1
+                        #     #         else:
+                        #     #             break
+                        #     #     plotinds[i,j] = subinds[j,counter]
+                        #     #     usedinds.append(plotinds[i,j])
+                            
+                        #     # # breakpoint()
+                        
+                        # plot
+                        if craft == "bire":
+                            if   dBtype == "o": mdict = odBmdict
+                            elif dBtype == "p": mdict = pdBmdict
+                            else              : mdict = ndBmdict
+                            #
+                            if   cg == "0.0" : mcol,axs_rlc = cg00col,axs_e0
+                            elif cg == "0.5" : mcol,axs_rlc = cg05col,axs_e5
+                            elif cg == "1.0" : mcol,axs_rlc = cg10col,axs_e1
+                            else             : continue
+                            for qz in range(evals.shape[1]):
+                                ev = evals[:,qz]
+                                axs_rlc.plot(np.real(ev),np.imag(ev),color=mcol,**mdict)
+
+
+            # aspect ratio
+            axs_e0.set_aspect('equal',adjustable='datalim')
+            axs_e5.set_aspect('equal',adjustable='datalim')
+            axs_e1.set_aspect('equal',adjustable='datalim')
+
             
             # other plot params
             if trim_type == "sct": 
@@ -1179,11 +1325,17 @@ if __name__ == "__main__":
             axs[4].set_ylabel(vrylbl)
             axs[5].set_ylabel(r"Angle of attack ($\alpha$), deg")
             #
+            axs_aP.set_xlabel(xlabel)
+            axs_aP.set_ylabel(r"Angle of attack percent difference ($\frac{\alpha - \alpha_{n0}}{\alpha_{n0}}$), %")
+            #
             axs_nN.set_xlabel(xlabel)
             axs_nN.set_ylabel(r"Additional load factor ($\Delta n_N$)")
             #
             axs_t2.set_xlabel(xlabel)
             axs_t2.set_ylabel(r"Throttle difference ($\tau - \tau_{n0}$), per-unit")
+            #
+            axs_tP.set_xlabel(xlabel)
+            axs_tP.set_ylabel(r"Throttle percent difference ($\frac{\tau - \tau_{n0}}{\tau_{n0}}$), %")
             #
             axs_th.set_xlabel(xlabel)
             axs_th.set_ylabel(r"Elevation angle ($\theta$), deg")
@@ -1216,6 +1368,9 @@ if __name__ == "__main__":
             axs_2D.set_xlabel(xlabel)
             axs_2D.set_ylabel(      r"Drag difference ($C_D - C_{D \, n0}$)")
             #
+            axs_PD.set_xlabel(xlabel)
+            axs_PD.set_ylabel(      r"Drag percent difference ($\frac{C_D - C_{D \, n0}}{C_{D \, n0}}$), %")
+            #
             axs_Cl.set_xlabel(xlabel)
             axs_Cl.set_ylabel( r"Rolling moment coefficient ($C_\ell$)")
             axs_Cm.set_xlabel(xlabel)
@@ -1226,6 +1381,18 @@ if __name__ == "__main__":
             axs_eg.set_xlabel(xlabel)
             axs_eg.set_ylabel(r"$\max \left( \operatorname{real} \left( " + \
                 r"\lambda \right) \right)$, 1/sec")
+            axs_e0.set_xlabel(r"$\operatorname{real} \left( " + \
+                r"\lambda \right)$, 1/sec")
+            axs_e0.set_ylabel(r"$\operatorname{imag} \left( " + \
+                r"\lambda \right)$, 1/sec")
+            axs_e5.set_xlabel(r"$\operatorname{real} \left( " + \
+                r"\lambda \right)$, 1/sec")
+            axs_e5.set_ylabel(r"$\operatorname{imag} \left( " + \
+                r"\lambda \right)$, 1/sec")
+            axs_e1.set_xlabel(r"$\operatorname{real} \left( " + \
+                r"\lambda \right)$, 1/sec")
+            axs_e1.set_ylabel(r"$\operatorname{imag} \left( " + \
+                r"\lambda \right)$, 1/sec")
             #
             axs_bb.set_xlabel(r"Center of gravity shift ($\Delta x_{cg}$), ft")
             axs_bb.set_ylabel(r"Sideslip angle ($\beta$), deg")
@@ -1304,6 +1471,8 @@ if __name__ == "__main__":
                         else      : axs_CE[g][h].set_ylim((1.0e+4,1.0e-7 ))
             # # eigvals
             axs_eg.set_ylim((-0.12695491843259302, 2.6660532870844533))
+            # axs_e0.set_ylim((-0.12695491843259302, 2.6660532870844533))
+            # axs_e5.set_ylim((-0.12695491843259302, 2.6660532870844533))
             #
             # legend
             min_cg = min(bire_plotting_xcgs)
@@ -1395,7 +1564,11 @@ if __name__ == "__main__":
             spcmp = sp*1
             spcmp[3] = Line2D([0], [0],color=legcol,marker=ndBA,**rest_dict)
             cmpdict = dict(handles=spcmp[1:4],labels=lbls[1:4],#loc="lower center", #(1.0,0.0),
-                borderpad=0.1,handletextpad=0.0, 
+                borderpad=0.1,handletextpad=0.0,
+                markerscale=scale_markers_cg_plot,
+                handler_map={tuple: HandlerTuple(ndivide=None)})
+            rlcdict = dict(handles=spcmp[1:4],labels=lbls[1:4],#loc="lower center", #(1.0,0.0),
+                borderpad=0.1,handletextpad=0.0,
                 handler_map={tuple: HandlerTuple(ndivide=None)})
             axs_lg.legend(**LEGdict)
             axs_lg.axis("off")
@@ -1423,7 +1596,10 @@ if __name__ == "__main__":
                 axs_ps.set_xlim((-3.75,78.75)); axs_ps.set_ylim((-0.5290689994121346, 11.110448987654825)) # print("ps",axs_ps.get_xlim(),axs_ps.get_ylim())
                 axs_t2.set_xlim((22.5,  77.5)); axs_t2.set_ylim((-0.02785381718383647, 0.0008514152747926191)) # print("t2",axs_t2.get_xlim(),axs_t2.get_ylim())
                 axs_2D.set_xlim((22.5,  77.5)); axs_2D.set_ylim((-0.006579023400909361, 0.0002424589803903147)) # print("2D",axs_2D.get_xlim(),axs_2D.get_ylim())
+                axs_PD.set_xlim((22.5,  77.5)); print("PD",axs_PD.get_xlim(),axs_PD.get_ylim()) #axs_PD.set_ylim((-0.006579023400909361, 0.0002424589803903147)) # print("PD",axs_2D.get_xlim(),axs_2D.get_ylim())
                 axs_eg.set_xlim((-3.75,78.75)); axs_eg.set_ylim((-0.12695491843259302, 2.6660532870844533)) # print("eg",axs_eg.get_xlim(),axs_eg.get_ylim())
+                # axs_e0.set_xlim((-3.75,78.75)); axs_e0.set_ylim((-0.12695491843259302, 2.6660532870844533)) # print("eg",axs_eg.get_xlim(),axs_eg.get_ylim())
+                # axs_e5.set_xlim((-3.75,78.75)); axs_e5.set_ylim((-0.12695491843259302, 2.6660532870844533)) # print("eg",axs_eg.get_xlim(),axs_eg.get_ylim())
                 axs_bb.set_xlim((-1.65, 1.65)); axs_bb.set_ylim((-0.36764186742069865, 0.4215223236673418)) # print("bb",axs_bb.get_xlim(),axs_bb.get_ylim())
                 axs_bp.set_xlim((-1.65, 1.65)); axs_bp.set_ylim((-3.75,78.75)) # print("bp",axs_bp.get_xlim(),axs_bp.get_ylim())
                 # print("lg",axs_lg.get_xlim(),axs_lg.get_ylim())
@@ -1438,81 +1614,93 @@ if __name__ == "__main__":
                 if filename.split(".")[-1] != plot_format:
                     remove(sv_fldr+filename)
             nm = "beta" if trim_type == "sct" else "phi"
-            fig_da   .savefig(sv_fldr+"00_da."    +plot_format,**save_dict)
+            fig_da   .savefig(sv_fldr+prefix+"00_da."    +plot_format,**save_dict)
             axs[0].legend(fontsize=8.0,**legdict) # aileron
-            fig_da   .savefig(sv_fldr+"00_da_wlg."+plot_format,**save_dict)
-            fig_de   .savefig(sv_fldr+"01_de."    +plot_format,**save_dict)
-            fig_nN   .savefig(sv_fldr+"01_nN."    +plot_format,**save_dict)
+            fig_da   .savefig(sv_fldr+prefix+"00_da_wlg."+plot_format,**save_dict)
+            fig_de   .savefig(sv_fldr+prefix+"01_de."    +plot_format,**save_dict)
+            fig_nN   .savefig(sv_fldr+prefix+"01_nN."    +plot_format,**save_dict)
             axs_nN.legend(fontsize=8.0,**legdict) # normal load factor
-            fig_nN   .savefig(sv_fldr+"01_nN_wlg."+plot_format,**save_dict)
-            fig_dB   .savefig(sv_fldr+"02_dB."    +plot_format,**save_dict)
-            fig_ta   .savefig(sv_fldr+"03_tau."   +plot_format,**save_dict)
+            fig_nN   .savefig(sv_fldr+prefix+"01_nN_wlg."+plot_format,**save_dict)
+            fig_dB   .savefig(sv_fldr+prefix+"02_dB."    +plot_format,**save_dict)
+            fig_ta   .savefig(sv_fldr+prefix+"03_tau."   +plot_format,**save_dict)
             axs_t2.legend(fontsize=8.0,**fr2dict)
-            fig_t2   .savefig(sv_fldr+"03_tau_diff."+plot_format,**save_dict)
+            fig_t2   .savefig(sv_fldr+prefix+"03_tau_diff."+plot_format,**save_dict)
+            axs_tP.legend(fontsize=8.0,**fr2dict)
+            fig_tP   .savefig(sv_fldr+prefix+"03_tau_perc."+plot_format,**save_dict)
             #
-            fig_vr   .savefig(sv_fldr+"04_"+nm+"."+plot_format,**save_dict)
+            fig_vr   .savefig(sv_fldr+prefix+"04_"+nm+"."+plot_format,**save_dict)
             axs_vr.legend(fontsize=8.0,**legdict)
-            fig_vr   .savefig(sv_fldr+"04_"+nm+"_wlg."+plot_format,**save_dict)
-            fig_th   .savefig(sv_fldr+"04_theta."+plot_format,**save_dict)
+            fig_vr   .savefig(sv_fldr+prefix+"04_"+nm+"_wlg."+plot_format,**save_dict)
+            fig_th   .savefig(sv_fldr+prefix+"04_theta."+plot_format,**save_dict)
             axs_th.legend(fontsize=8.0,**legdict)
-            fig_th   .savefig(sv_fldr+"04_theta_wlg."+plot_format,**save_dict)
-            fig_af   .savefig(sv_fldr+"05_alpha." +plot_format,**save_dict)
+            fig_th   .savefig(sv_fldr+prefix+"04_theta_wlg."+plot_format,**save_dict)
+            fig_af   .savefig(sv_fldr+prefix+"05_alpha." +plot_format,**save_dict)
             axs_af.legend(fontsize=8.0,**legdict)
-            fig_af   .savefig(sv_fldr+"05_alpha_wlg." +plot_format,**save_dict)
+            fig_af   .savefig(sv_fldr+prefix+"05_alpha_wlg." +plot_format,**save_dict)
+            axs_aP.legend(fontsize=8.0,**fr2dict)
+            fig_aP   .savefig(sv_fldr+prefix+"05_alpha_perc."+plot_format,**save_dict)
             #
-            fig_CL   .savefig(sv_fldr+"06_CL."    +plot_format,**save_dict)
+            fig_CL   .savefig(sv_fldr+prefix+"06_CL."    +plot_format,**save_dict)
             axs_CL.legend(fontsize=8.0,**legdict)
-            fig_CL   .savefig(sv_fldr+"06_CL_wlg."+plot_format,**save_dict)
-            fig_CS   .savefig(sv_fldr+"06_CS."    +plot_format,**save_dict)
+            fig_CL   .savefig(sv_fldr+prefix+"06_CL_wlg."+plot_format,**save_dict)
+            fig_CS   .savefig(sv_fldr+prefix+"06_CS."    +plot_format,**save_dict)
             axs_CS.legend(fontsize=8.0,**legdict)
-            fig_CS   .savefig(sv_fldr+"06_CS_wlg."+plot_format,**save_dict)
-            fig_CD   .savefig(sv_fldr+"06_CD."    +plot_format,**save_dict)
+            fig_CS   .savefig(sv_fldr+prefix+"06_CS_wlg."+plot_format,**save_dict)
+            fig_CD   .savefig(sv_fldr+prefix+"06_CD."    +plot_format,**save_dict)
             axs_CD.legend(fontsize=8.0,**legdict)
-            fig_CD   .savefig(sv_fldr+"06_CD_wlg."+plot_format,**save_dict)
+            fig_CD   .savefig(sv_fldr+prefix+"06_CD_wlg."+plot_format,**save_dict)
             axs_2D.legend(fontsize=8.0,**fr2dict)
-            fig_2D   .savefig(sv_fldr+"06_CD_diff."+plot_format,**save_dict)
-            fig_Cl   .savefig(sv_fldr+"06_Cell."    +plot_format,**save_dict)
+            fig_2D   .savefig(sv_fldr+prefix+"06_CD_diff."+plot_format,**save_dict)
+            axs_PD.legend(fontsize=8.0,**fr2dict)
+            fig_PD   .savefig(sv_fldr+prefix+"06_CD_perc."+plot_format,**save_dict)
+            fig_Cl   .savefig(sv_fldr+prefix+"06_Cell."    +plot_format,**save_dict)
             axs_Cl.legend(fontsize=8.0,**legdict)
-            fig_Cl   .savefig(sv_fldr+"06_Cell_wlg."+plot_format,**save_dict)
-            fig_Cm   .savefig(sv_fldr+"06_Cm."    +plot_format,**save_dict)
+            fig_Cl   .savefig(sv_fldr+prefix+"06_Cell_wlg."+plot_format,**save_dict)
+            fig_Cm   .savefig(sv_fldr+prefix+"06_Cm."    +plot_format,**save_dict)
             axs_Cm.legend(fontsize=8.0,**legdict)
-            fig_Cm   .savefig(sv_fldr+"06_Cm_wlg."+plot_format,**save_dict)
-            fig_Cn   .savefig(sv_fldr+"06_Cn."    +plot_format,**save_dict)
+            fig_Cm   .savefig(sv_fldr+prefix+"06_Cm_wlg."+plot_format,**save_dict)
+            fig_Cn   .savefig(sv_fldr+prefix+"06_Cn."    +plot_format,**save_dict)
             axs_Cn.legend(fontsize=8.0,**legdict)
-            fig_Cn   .savefig(sv_fldr+"06_Cn_wlg."+plot_format,**save_dict)
+            fig_Cn   .savefig(sv_fldr+prefix+"06_Cn_wlg."+plot_format,**save_dict)
             #
-            fig_eg   .savefig(sv_fldr+"07_maxeig."+plot_format,**save_dict)
+            fig_eg   .savefig(sv_fldr+prefix+"07_maxeig."+plot_format,**save_dict)
             axs_eg.legend(fontsize=8.0,**legdict)
-            fig_eg   .savefig(sv_fldr+"07_maxeig_wlg."+plot_format,**save_dict)
+            fig_eg   .savefig(sv_fldr+prefix+"07_maxeig_wlg."+plot_format,**save_dict)
+            axs_e0.legend(fontsize=8.0,**rlcdict)
+            fig_e0   .savefig(sv_fldr+prefix+"07_eig_cg00_wlg."+plot_format,**save_dict)
+            axs_e5.legend(fontsize=8.0,**rlcdict)
+            fig_e5   .savefig(sv_fldr+prefix+"07_eig_cg05_wlg."+plot_format,**save_dict)
+            axs_e1.legend(fontsize=8.0,**rlcdict)
+            fig_e1   .savefig(sv_fldr+prefix+"07_eig_cg10_wlg."+plot_format,**save_dict)
             #
-            fig_lg   .savefig(sv_fldr+"08_legend."+plot_format,**save_dict)
+            fig_lg   .savefig(sv_fldr+prefix+"08_legend."+plot_format,**save_dict)
             #
             axs_bb.legend(fontsize=8.0,**cmpdict)
-            fig_bb   .savefig(sv_fldr+"08_cg_v_beta."+plot_format,**save_dict)
+            fig_bb   .savefig(sv_fldr+prefix+"08_cg_v_beta."+plot_format,**save_dict)
             axs_bp.legend(fontsize=8.0,**cmpdict)
-            fig_bp   .savefig(sv_fldr+"08_cg_v_phi."+plot_format,**save_dict)
+            fig_bp   .savefig(sv_fldr+prefix+"08_cg_v_phi."+plot_format,**save_dict)
             #
-            fig_ps   .savefig(sv_fldr+"09_psidot."+plot_format,**save_dict)
+            fig_ps   .savefig(sv_fldr+prefix+"09_psidot."+plot_format,**save_dict)
             axs_ps.legend(fontsize=8.0,**legdict)
-            fig_ps   .savefig(sv_fldr+"09_psidot_wlg."+plot_format,**save_dict)
-            fig_wp   .savefig(sv_fldr+"10_p."+plot_format,**save_dict)
-            fig_wq   .savefig(sv_fldr+"10_q."+plot_format,**save_dict)
-            fig_wr   .savefig(sv_fldr+"10_r."+plot_format,**save_dict)
+            fig_ps   .savefig(sv_fldr+prefix+"09_psidot_wlg."+plot_format,**save_dict)
+            fig_wp   .savefig(sv_fldr+prefix+"10_p."+plot_format,**save_dict)
+            fig_wq   .savefig(sv_fldr+prefix+"10_q."+plot_format,**save_dict)
+            fig_wr   .savefig(sv_fldr+prefix+"10_r."+plot_format,**save_dict)
             if plot_diff_pqrpsi_plots:
                 axs_2s.legend(fontsize=8.0,**fr3dict)
-                fig_2s   .savefig(sv_fldr+"09_psidot_diff_wlg."+plot_format,**save_dict)
-                fig_2p   .savefig(sv_fldr+"10_p_diff."+plot_format,**save_dict)
-                fig_2q   .savefig(sv_fldr+"10_q_diff."+plot_format,**save_dict)
-                fig_2r   .savefig(sv_fldr+"10_r_diff."+plot_format,**save_dict)
+                fig_2s   .savefig(sv_fldr+prefix+"09_psidot_diff_wlg."+plot_format,**save_dict)
+                fig_2p   .savefig(sv_fldr+prefix+"10_p_diff."+plot_format,**save_dict)
+                fig_2q   .savefig(sv_fldr+prefix+"10_q_diff."+plot_format,**save_dict)
+                fig_2r   .savefig(sv_fldr+prefix+"10_r_diff."+plot_format,**save_dict)
             if not(skip_CE):
                 for g in [3,4,5]: # range(rows_CE): # 
                     for h in range(cols_CE):
                         F = "13_"+state_names[g]+"_"+ctrl_names[h]+"_CE."
-                        fig_CE[g][h].savefig(sv_fldr+F+plot_format,**save_dict)
+                        fig_CE[g][h].savefig(sv_fldr+prefix+F+plot_format,**save_dict)
                         if h == 0:
                             axs_CE[g][h].legend(fontsize=8.0,**legdict) # aileron
                             F = F[:-1] + "_wlg."
-                            fig_CE[g][h].savefig(sv_fldr+F+plot_format,**save_dict)
+                            fig_CE[g][h].savefig(sv_fldr+prefix+F+plot_format,**save_dict)
             
             if show_plots:
                 plt.close(fig_da)
@@ -1521,16 +1709,22 @@ if __name__ == "__main__":
                 plt.close(fig_dB)
                 plt.close(fig_ta)
                 plt.close(fig_t2)
+                plt.close(fig_tP)
                 plt.close(fig_vr)
                 plt.close(fig_af)
+                plt.close(fig_aP)
                 plt.close(fig_CL)
                 plt.close(fig_CS)
                 plt.close(fig_CD)
                 plt.close(fig_2D)
+                plt.close(fig_PD)
                 plt.close(fig_Cl)
                 plt.close(fig_Cm)
                 plt.close(fig_Cn)
                 plt.close(fig_eg)
+                # plt.close(fig_e0)
+                plt.close(fig_e5)
+                plt.close(fig_e1)
                 plt.close(fig_bb)
                 plt.close(fig_bp)
                 plt.close(fig_lg)

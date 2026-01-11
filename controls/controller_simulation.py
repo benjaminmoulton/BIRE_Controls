@@ -976,18 +976,14 @@ class Aircraft:
                 u = G * 1.0
                 u[i] = G[i] * 1.0 + self.NR_dx
                 if self.trim_type == "vc" or self.given_bank:
-                    forces_ip1 = self._trim_forces(u[4],u[5],ph,th,\
-                        g,x,u)
+                    forces_ip1 = self._trim_forces(u[4],u[5],ph,th,g,x,u)
                 else:
-                    forces_ip1 = self._trim_forces(u[4],b_,u[5],th,\
-                        g,x,u)
+                    forces_ip1 = self._trim_forces(u[4],b_,u[5],th,g,x,u)
                 u[i] = G[i] * 1.0 - self.NR_dx
                 if self.trim_type == "vc" or self.given_bank:
-                    forces_im1 = self._trim_forces(u[4],u[5],ph,th,\
-                        g,x,u)
+                    forces_im1 = self._trim_forces(u[4],u[5],ph,th,g,x,u)
                 else:
-                    forces_im1 = self._trim_forces(u[4],b_,u[5],th,\
-                        g,x,u)
+                    forces_im1 = self._trim_forces(u[4],b_,u[5],th,g,x,u)
 
                 # assign to jacobian
                 J[:,i] = (forces_ip1 - forces_im1) / 2. / self.NR_dx
@@ -2257,6 +2253,7 @@ class Aircraft:
                 r"\delta_{tr}",comquad=True,transpose=True,print_report=report)
             repstr += report_latex(u_trim[:,np.newaxis].T,"u_{tr}",
                 transpose=True,print_report=report)
+            # trim condition in deg and deg/s
             # # dynamical matrices
             # repstr += report_latex(Lin_Model.A[0:n][:,0:6],"A_{dyn \, 1}",
             #     predecimals=5,align=True,endln=True,print_report=report)
@@ -5293,18 +5290,22 @@ def run_single_simulation(filename,rtdst_1sg=[20.,10.,5.],
         # change guess to stay at tail near-zero trim condition
         if not(aircraft.SAS_on) and not(aircraft.is_rc):
             if   trim_type_guess == "0":
+                print("guess zero")
                 guesses.pop("b_guess",0.0)
                 guesses["u_guess"] = np.array([
                     0.0,aircraft.max_de*1.0,0.0,0.0]) # 
             elif (25.0 <= abs(P) <= 55.0) and trim_type_guess == "+":
+                print("guess positive")
                 guesses["b_guess"] = -np.sign(P)*np.deg2rad(1.0)
                 guesses["u_guess"] = np.array([
                     0.0, aircraft.min_de*1.0, aircraft.max_dr*1.0,0.0]) # 
             elif (25.0 <= abs(P) <= 55.0) and trim_type_guess == "-":
+                print("guess negative")
                 guesses["b_guess"] =  np.sign(P)*np.deg2rad(1.0)
                 guesses["u_guess"] = np.array([
                     0.0, aircraft.min_de*1.0, aircraft.min_dr*1.0,0.0]) # 
             else:
+                print("guess nothing")
                 guesses.pop("b_guess",0.0)
                 guesses["u_guess"] = np.array([
                     0.0,aircraft.max_de*1.0,0.0,0.0]) # 
@@ -7599,7 +7600,7 @@ def report_latex(M, name="M", predecimals=4, decimals=4, diag=False,
                 if sci:
                     string = "{:> {}.{}e}".format(M[i,j],decimals+7,decimals)
                     pre_exp,post_exp = string.split("e")
-                    if int(pre_exp.split(".")[1]) == 0:
+                    if decimals != 0 and int(pre_exp.split(".")[1]) == 0:
                         pre_exp = pre_exp.split(".")[0]
                     print_string = pre_exp 
                     if int(post_exp) != 0:
@@ -8116,6 +8117,75 @@ if __name__ == "__main__":
     run_bire["inertia_model_errors"] = bire_iner
     run_bire["FM_errors"] = bire_FM_errs
 
+    ######## Run trim
+    di = [0.0,0.0,0.0]
+    run_bire["aircraft_class"] = Aircraft
+    bire_dict["aircraft"]["CG_shift[ft]"] = [0.5,0.0,0.0] # [1.0,0.0,0.0] # [0.0,0.0,0.0] # 
+    bire_dict["simulation"]["include_compressibility"] = True # False # 
+    bire_dict["simulation"]["use_Anderson_corrections"] = True # False # 
+    bire_dict["simulation"]["include_stall"] = True # False # 
+    bire_dict["simulation"]["use_fitted_thrust_model"] = True # False # 
+    run_bire["skip_simulation"] = True
+    run_bire["save_data"] = False
+    # run_base.pop("trim_bank"); run_bire.pop("trim_bank")
+    run_bire["num"] = 1
+    run_bire["gain_steps"] = 5 # 
+    run_bire["trim_steps"] = 5 # 
+    # #
+    # #
+    # bire_dict["initial"]["trim_guess"] = {}
+    # bire_dict["initial"]["trim_guess"]["BIRE[deg]"] = 10.0 # -10.0 # 
+    # bire_dict["initial"]["trim_guess"]["elevator[deg]"] = -25.0
+    # run_bire["trim_type_guess"] = "+" # "-" # "0" # 
+    # run_bire["trim_bank"] = run_bire["initial_bank"] = \
+    #     run_bire["final_bank"] = 30.0
+    # run_bire["initial_mach"] = run_bire["final_mach"] = 0.6
+    # run_bire["initial_altitude"] = run_bire["final_altitude"] = 15000.0
+    # #
+    bire_dict["initial"]["trim_guess"] = {}
+    bire_dict["initial"]["trim_guess"]["BIRE[deg]"] =  0.0 # --15.0 #30.0 # -10.0 # 
+    bire_dict["initial"]["trim_guess"]["elevator[deg]"] = 25.0 # -10.0 # -25.0 # 
+    run_bire.pop("trim_bank") # run_bire.pop("initial_bank"); run_bire.pop("final_bank")
+    bire_dict["initial"]["mach"] = run_bire["initial_mach"] = run_bire["final_mach"] = 0.2
+    bire_dict["initial"]["altitude[ft]"] = run_bire["initial_altitude"] = run_bire["final_altitude"] = 1000.0
+    bire_dict["initial"]["trim"]["type"] = "shss"
+    bire_dict["initial"]["trim"].pop("bank_angle[deg]")
+    bire_dict["initial"]["trim"]["sideslip_angle[deg]"] = 10.9 # 3.6 # 3.5 # 3.0 # 4.0 # 12.0 # 
+    bire_dict["initial"]["trim"]["verbose_trim"] = True
+    bire = Aircraft(bire_dict)
+    bire._initialize_state(bire.a_guess,bire.b_guess,bire.phi_guess,bire.u_guess)
+    bire._report_trim_solution()
+    #
+    report = True; repstr = ""; n = 12
+    x_trim_euler_deg = bire.x_trim_euler[:,np.newaxis]*1.0
+    deg_inds = [3,4,5,9,10,11,12,13,14]
+    x_trim_euler_deg[deg_inds] = np.rad2deg(x_trim_euler_deg[deg_inds])
+    kft_inds = [6,7,8]
+    x_trim_euler_deg[kft_inds] = x_trim_euler_deg[kft_inds]/1000.0
+    pcn_inds = [15]
+    x_trim_euler_deg[pcn_inds] = x_trim_euler_deg[pcn_inds]*100.0
+    repstr += report_latex(x_trim_euler_deg[:n].T,"x_{tr \, deg}",
+        decimals=3,endln=True,transpose=True,print_report=report)
+    repstr += report_latex(x_trim_euler_deg[n:].T,"u_{tr \, deg}",
+        decimals=3,transpose=True,print_report=report)
+    # x and u dot
+    use_quat_temp = bire.use_quaternions*1
+    bire.use_quaternions = False
+    xdot_trim_euler = bire._nonlinear_euler_dynamics(0.0,bire.x_trim_euler,True,True,bire.u_trim,True)
+    bire.use_quaternions = use_quat_temp*1
+    xdot_trim_euler_deg = xdot_trim_euler[:,np.newaxis]*1.0
+    xdot_trim_euler_deg[deg_inds] = np.rad2deg(xdot_trim_euler_deg[deg_inds])
+    xdot_trim_euler_deg[kft_inds] = xdot_trim_euler_deg[kft_inds]/1000.0
+    xdot_trim_euler_deg[pcn_inds] = xdot_trim_euler_deg[pcn_inds]*100.0
+    repstr += report_latex(xdot_trim_euler_deg[:n].T,"\dot{x}_{tr \, deg}",
+        decimals=0,endln=True,transpose=True,sci=True,print_report=report)
+    repstr += report_latex(xdot_trim_euler_deg[n:].T,"\dot{u}_{tr \, deg}",
+        decimals=0,transpose=True,sci=True,print_report=report)
+    # #
+    # run_single_simulation(bire_dict,rtdst_1sg=di,**run_bire,**plot_vars)
+    quit()
+    ####
+
     # #### Troy Run
     # di = [0.0,0.0,0.0]
     # base_dict["aircraft"]["CG_shift[ft]"] = \
@@ -8161,8 +8231,8 @@ if __name__ == "__main__":
     run_base["initial_velocity"] = run_bire["initial_velocity"] = 350.0
     run_base["initial_altitude"] = run_bire["initial_altitude"] = 5000.0
     run_base["final_altitude"] = run_bire["final_altitude"] = 5000.0
-    # run_single_simulation(bire_dict,rtdst_1sg=di,**run_bire,**plot_vars)
-    run_single_simulation(base_dict,rtdst_1sg=di,**run_base,**plot_vars)
+    run_single_simulation(bire_dict,rtdst_1sg=di,**run_bire,**plot_vars)
+    # run_single_simulation(base_dict,rtdst_1sg=di,**run_base,**plot_vars)
     quit()
     ####
 
@@ -8900,7 +8970,7 @@ if __name__ == "__main__":
     #     [0.1,0.1,0.1,0.1,0.1,0.1]
     plot_vars["save_states"] = True
     run_single_simulation(bire_dict,rtdst_1sg=di,**run_bire,**plot_vars)
-    run_single_simulation(base_dict,rtdst_1sg=di,**run_base,**plot_vars)
+    # run_single_simulation(base_dict,rtdst_1sg=di,**run_base,**plot_vars)
     quit()
 
     # # run forces analysis
